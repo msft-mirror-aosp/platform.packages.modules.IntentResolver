@@ -16,79 +16,27 @@
 
 package com.android.intentresolver;
 
-import android.app.ActivityTaskManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.util.Log;
+import android.os.StrictMode;
+
+import androidx.annotation.Nullable;
 
 /**
  * Activity for selecting which application ought to handle an ACTION_SEND intent.
- *
- * TODO: this temporary implementation inherits from the system-side ChooserActivity to avoid
- * duplicating code while we're validating the feasibility of the unbundling plans. Architecturally,
- * this is almost exactly equivalent to the "unbundling phase" in which the chooser UI is
- * implemented in the new project. Once we can verify that this works at (or near) parity, we can
- * copy over the source code of the original ChooserActivity instead of inheriting from it here, and
- * then we'll be able to make divergent changes much more quickly. See TODO comments in this file
- * for notes on performing that refactoring step.
  */
 public class ChooserActivity extends com.android.internal.app.ChooserActivity {
-    private static final String TAG = "ChooserActivity";
-
-    private IBinder mPermissionToken;
-    private boolean mIsAppPredictionServiceAvailable;
-
-    /* TODO: the first section of this file contains overrides for ChooserActivity methods that need
-     * to be implemented differently in the delegated version. When the two classes are merged
-     * together, the implementations given here should replace the originals. Rationales for the
-     * replacements are provided in implementation comments (which could be removed later). */
-
-    /* The unbundled chooser needs to use the permission-token-based API to start activities. */
-    @Override
-    public boolean startAsCallerImpl(Intent intent, Bundle options, boolean ignoreTargetSecurity,
-            int userId) {
-        ChooserHelper.onTargetSelected(
-                this, intent, options, mPermissionToken, ignoreTargetSecurity, userId);
-        return true;
-    }
-
-    /* TODO: the remaining methods below include some implementation details specifically related to
-     * the temporary inheritance-based design, which may need to be removed or adapted when the two
-     * classes are merged together. */
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        boolean shouldShowUi = processIntent();
-        if (shouldShowUi) {
-            super.onCreate(savedInstanceState);
-        } else {
-            super_onCreate(savedInstanceState);  // Skip up to Activity::onCreate().
-            finish();
+    public void startActivityAsCaller(Intent intent, @Nullable Bundle options,
+            boolean ignoreTargetSecurity, int userId) {
+        // We're dispatching intents that might be coming from legacy apps, so
+        // (as in com.android.internal.app.ResolverActivity) exempt ourselves from death.
+        StrictMode.disableDeathOnFileUriExposure();
+        try {
+            super.startActivityAsCaller(intent, options, ignoreTargetSecurity, userId);
+        } finally {
+            StrictMode.enableDeathOnFileUriExposure();
         }
-    }
-
-    @Override
-    public boolean isAppPredictionServiceAvailable() {
-        return mIsAppPredictionServiceAvailable;
-    }
-
-    /**
-     * Process the intent that was used to launch the unbundled chooser, and return true if the
-     * chooser should continue to initialize as in the full Sharesheet UI, or false if the activity
-     * should exit immediately.
-     */
-    private boolean processIntent() {
-        mPermissionToken = getIntent().getExtras().getBinder(
-                ActivityTaskManager.EXTRA_PERMISSION_TOKEN);
-        mIsAppPredictionServiceAvailable = getIntent().getExtras().getBoolean(
-                EXTRA_IS_APP_PREDICTION_SERVICE_AVAILABLE);
-
-        if (mPermissionToken == null) {
-            Log.e(TAG, "No permission token to launch activities from chooser");
-            return false;
-        }
-
-        return true;
     }
 }
