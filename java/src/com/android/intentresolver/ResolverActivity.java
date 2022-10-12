@@ -55,6 +55,7 @@ import android.content.pm.UserInfo;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Insets;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -90,18 +91,18 @@ import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.viewpager.widget.ViewPager;
+
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.Profile;
 import com.android.intentresolver.chooser.ChooserTargetInfo;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
-
+import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.content.PackageMonitor;
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto;
 import com.android.internal.util.LatencyTracker;
-import com.android.internal.widget.ResolverDrawerLayout;
-import com.android.internal.widget.ViewPager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1475,14 +1476,21 @@ public class ResolverActivity extends Activity implements
                 mMultiProfilePagerAdapter.getActiveListAdapter().mDisplayList.get(0);
         boolean inWorkProfile = getCurrentProfile() == PROFILE_WORK;
 
-        ResolverListAdapter inactiveAdapter = mMultiProfilePagerAdapter.getInactiveListAdapter();
-        DisplayResolveInfo otherProfileResolveInfo = inactiveAdapter.mDisplayList.get(0);
+        final ResolverListAdapter inactiveAdapter =
+                mMultiProfilePagerAdapter.getInactiveListAdapter();
+        final DisplayResolveInfo otherProfileResolveInfo = inactiveAdapter.mDisplayList.get(0);
 
         // Load the icon asynchronously
         ImageView icon = findViewById(com.android.internal.R.id.icon);
-        ResolverListAdapter.LoadIconTask iconTask = inactiveAdapter.new LoadIconTask(
-                        otherProfileResolveInfo, new ResolverListAdapter.ViewHolder(icon));
-        iconTask.execute();
+        inactiveAdapter.new LoadIconTask(otherProfileResolveInfo) {
+            @Override
+            protected void onPostExecute(Drawable drawable) {
+                if (!isDestroyed()) {
+                    otherProfileResolveInfo.setDisplayIcon(drawable);
+                    new ResolverListAdapter.ViewHolder(icon).bindIcon(otherProfileResolveInfo);
+                }
+            }
+        }.execute();
 
         ((TextView) findViewById(com.android.internal.R.id.open_cross_profile)).setText(
                 getResources().getString(
