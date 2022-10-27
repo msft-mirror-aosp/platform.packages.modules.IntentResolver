@@ -138,6 +138,7 @@ import java.net.URISyntaxException;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -190,6 +191,11 @@ public class ChooserActivity extends ResolverActivity implements
 
     private static final String IMAGE_EDITOR_SHARED_ELEMENT = "screenshot_preview_image";
 
+    // TODO: these data structures are for one-time use in shuttling data from where they're
+    // populated in `ShortcutToChooserTargetConverter` to where they're consumed in
+    // `ShortcutSelectionLogic` which packs the appropriate elements into the final `TargetInfo`.
+    // That flow should be refactored so that `ChooserActivity` isn't responsible for holding their
+    // intermediate data, and then these members can be removed.
     private Map<ChooserTarget, AppTarget> mDirectShareAppTargetCache;
     private Map<ChooserTarget, ShortcutInfo> mDirectShareShortcutInfoCache;
 
@@ -493,8 +499,10 @@ public class ChooserActivity extends ResolverActivity implements
                             if (adapterForUserHandle != null) {
                                 adapterForUserHandle.addServiceResults(
                                         resultInfo.originalTarget,
-                                        resultInfo.resultTargets, msg.arg1,
-                                        mDirectShareShortcutInfoCache);
+                                        resultInfo.resultTargets,
+                                        msg.arg1,
+                                        emptyIfNull(mDirectShareShortcutInfoCache),
+                                        emptyIfNull(mDirectShareAppTargetCache));
                             }
                         }
                     }
@@ -1683,7 +1691,8 @@ public class ChooserActivity extends ResolverActivity implements
                     /* origTarget */ null,
                     Lists.newArrayList(mCallerChooserTargets),
                     TARGET_TYPE_DEFAULT,
-                    /* directShareShortcutInfoCache */ null);
+                    /* directShareShortcutInfoCache */ Collections.emptyMap(),
+                    /* directShareAppTargetCache */ Collections.emptyMap());
         }
     }
 
@@ -2164,12 +2173,15 @@ public class ChooserActivity extends ResolverActivity implements
         List<TargetInfo> surfacedTargetInfo = adapter.getSurfacedTargetInfo();
         List<AppTargetId> targetIds = new ArrayList<>();
         for (TargetInfo chooserTargetInfo : surfacedTargetInfo) {
-            ChooserTarget chooserTarget = chooserTargetInfo.getChooserTarget();
-            ComponentName componentName = chooserTarget.getComponentName();
-            if (mDirectShareShortcutInfoCache.containsKey(chooserTarget)) {
-                String shortcutId = mDirectShareShortcutInfoCache.get(chooserTarget).getId();
+            ShortcutInfo shortcutInfo = chooserTargetInfo.getDirectShareShortcutInfo();
+            if (shortcutInfo != null) {
+                ComponentName componentName =
+                        chooserTargetInfo.getChooserTarget().getComponentName();
                 targetIds.add(new AppTargetId(
-                        String.format("%s/%s/%s", shortcutId, componentName.flattenToString(),
+                        String.format(
+                                "%s/%s/%s",
+                                shortcutInfo.getId(),
+                                componentName.flattenToString(),
                                 SHORTCUT_TARGET)));
             }
         }
@@ -2186,13 +2198,12 @@ public class ChooserActivity extends ResolverActivity implements
         if (directShareAppPredictor == null) {
             return;
         }
-        ChooserTarget chooserTarget = targetInfo.getChooserTarget();
-        AppTarget appTarget = null;
-        if (mDirectShareAppTargetCache != null) {
-            appTarget = mDirectShareAppTargetCache.get(chooserTarget);
+        if (!targetInfo.isChooserTargetInfo()) {
+            return;
         }
-        // This is a direct share click that was provided by the APS
+        AppTarget appTarget = targetInfo.getDirectShareAppTarget();
         if (appTarget != null) {
+            // This is a direct share click that was provided by the APS
             directShareAppPredictor.notifyAppTargetEvent(
                     new AppTargetEvent.Builder(appTarget, AppTargetEvent.ACTION_LAUNCH)
                         .setLaunchLocation(LAUNCH_LOCATION_DIRECT_SHARE)
@@ -4012,5 +4023,9 @@ public class ChooserActivity extends ResolverActivity implements
 
     private boolean shouldNearbyShareBeIncludedAsActionButton() {
         return !shouldNearbyShareBeFirstInRankedRow();
+    }
+
+    private static <K, V> Map<K, V> emptyIfNull(@Nullable Map<K, V> map) {
+        return map == null ? Collections.emptyMap() : map;
     }
 }
