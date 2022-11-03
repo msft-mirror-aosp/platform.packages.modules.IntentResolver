@@ -242,12 +242,6 @@ public class ChooserActivity extends ResolverActivity implements
             SystemUiDeviceConfigFlags.HASH_SALT_MAX_DAYS,
             DEFAULT_SALT_EXPIRATION_DAYS);
 
-    private static final boolean DEFAULT_IS_NEARBY_SHARE_FIRST_TARGET_IN_RANKED_APP = false;
-    private boolean mIsNearbyShareFirstTargetInRankedApp =
-            DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_SYSTEMUI,
-                    SystemUiDeviceConfigFlags.IS_NEARBY_SHARE_FIRST_TARGET_IN_RANKED_APP,
-                    DEFAULT_IS_NEARBY_SHARE_FIRST_TARGET_IN_RANKED_APP);
-
     private static final int DEFAULT_LIST_VIEW_UPDATE_DELAY_MS = 0;
 
     private static final int URI_PERMISSION_INTENT_FLAGS = Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -265,7 +259,7 @@ public class ChooserActivity extends ResolverActivity implements
     private IntentSender mRefinementIntentSender;
     private RefinementResultReceiver mRefinementResultReceiver;
     private ChooserTarget[] mCallerChooserTargets;
-    private ComponentName[] mFilteredComponentNames;
+    private ArrayList<ComponentName> mFilteredComponentNames;
 
     private Intent mReferrerFillInIntent;
 
@@ -276,8 +270,6 @@ public class ChooserActivity extends ResolverActivity implements
     private Insets mLastAppliedInsets = null;
     private int mLastNumberOfChildren = -1;
     private int mMaxTargetsPerRow = 1;
-
-    private static final String TARGET_DETAILS_FRAGMENT_TAG = "targetDetailsFragment";
 
     private static final int MAX_LOG_RANK_POSITION = 12;
 
@@ -619,32 +611,22 @@ public class ChooserActivity extends ResolverActivity implements
 
         mPinnedSharedPrefs = getPinnedSharedPrefs(this);
 
-        pa = intent.getParcelableArrayExtra(Intent.EXTRA_EXCLUDE_COMPONENTS);
-
-
-        // Exclude out Nearby from main list if chip is present, to avoid duplication
-        ComponentName nearbySharingComponent = getNearbySharingComponent();
-        boolean shouldFilterNearby = !shouldNearbyShareBeFirstInRankedRow()
-                && nearbySharingComponent != null;
-
-        if (pa != null) {
-            ComponentName[] names = new ComponentName[pa.length + (shouldFilterNearby ? 1 : 0)];
-            for (int i = 0; i < pa.length; i++) {
-                if (!(pa[i] instanceof ComponentName)) {
-                    Log.w(TAG, "Filtered component #" + i + " not a ComponentName: " + pa[i]);
-                    names = null;
-                    break;
-                }
-                names[i] = (ComponentName) pa[i];
+        mFilteredComponentNames = new ArrayList<>();
+        try {
+            ComponentName[] exclodedComponents = intent.getParcelableArrayExtra(
+                    Intent.EXTRA_EXCLUDE_COMPONENTS,
+                    ComponentName.class);
+            if (exclodedComponents != null) {
+                Collections.addAll(mFilteredComponentNames, exclodedComponents);
             }
-            if (shouldFilterNearby) {
-                names[names.length - 1] = nearbySharingComponent;
-            }
+        } catch (ClassCastException e) {
+            Log.e(TAG, "Excluded components must be of type ComponentName[]", e);
+        }
 
-            mFilteredComponentNames = names;
-        } else if (shouldFilterNearby) {
-            mFilteredComponentNames = new ComponentName[1];
-            mFilteredComponentNames[0] = nearbySharingComponent;
+        // Exclude Nearby from main list if chip is present, to avoid duplication
+        ComponentName nearby = getNearbySharingComponent();
+        if (nearby != null) {
+            mFilteredComponentNames.add(nearby);
         }
 
         pa = intent.getParcelableArrayExtra(Intent.EXTRA_CHOOSER_TARGETS);
@@ -1325,9 +1307,7 @@ public class ChooserActivity extends ResolverActivity implements
         final ViewGroup actionRow =
                 (ViewGroup) contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
         addActionButton(actionRow, createCopyButton());
-        if (shouldNearbyShareBeIncludedAsActionButton()) {
-            addActionButton(actionRow, createNearbyButton(targetIntent));
-        }
+        addActionButton(actionRow, createNearbyButton(targetIntent));
 
         CharSequence sharingText = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         if (sharingText == null) {
@@ -1378,9 +1358,7 @@ public class ChooserActivity extends ResolverActivity implements
         final ViewGroup actionRow =
                 (ViewGroup) contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
         //TODO: addActionButton(actionRow, createCopyButton());
-        if (shouldNearbyShareBeIncludedAsActionButton()) {
-            addActionButton(actionRow, createNearbyButton(targetIntent));
-        }
+        addActionButton(actionRow, createNearbyButton(targetIntent));
         addActionButton(actionRow, createEditButton(targetIntent));
 
         mPreviewCoord = new ContentPreviewCoordinator(contentPreviewLayout, false);
@@ -1500,9 +1478,7 @@ public class ChooserActivity extends ResolverActivity implements
         final ViewGroup actionRow =
                 (ViewGroup) contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
         //TODO(b/120417119): addActionButton(actionRow, createCopyButton());
-        if (shouldNearbyShareBeIncludedAsActionButton()) {
-            addActionButton(actionRow, createNearbyButton(targetIntent));
-        }
+        addActionButton(actionRow, createNearbyButton(targetIntent));
 
         String action = targetIntent.getAction();
         if (Intent.ACTION_SEND.equals(action)) {
@@ -1740,33 +1716,28 @@ public class ChooserActivity extends ResolverActivity implements
             return;
         }
 
-        ChooserTargetActionsDialogFragment fragment = new ChooserTargetActionsDialogFragment();
-        Bundle bundle = new Bundle();
+        // TODO: implement these type-conditioned behaviors polymorphically, and consider moving
+        // the logic into `ChooserTargetActionsDialogFragment.show()`.
+        boolean isShortcutPinned = targetInfo.isSelectableTargetInfo() && targetInfo.isPinned();
+        IntentFilter intentFilter =
+                targetInfo.isSelectableTargetInfo() ? getTargetIntentFilter() : null;
+        String shortcutTitle = targetInfo.isSelectableTargetInfo()
+                ? targetInfo.getDisplayLabel().toString() : null;
+        String shortcutIdKey = targetInfo.isSelectableTargetInfo()
+                ? targetInfo
+                        .getChooserTarget()
+                        .getIntentExtras()
+                        .getString(Intent.EXTRA_SHORTCUT_ID)
+                : null;
 
-        bundle.putParcelable(ChooserTargetActionsDialogFragment.USER_HANDLE_KEY,
-                mChooserMultiProfilePagerAdapter.getCurrentUserHandle());
-        bundle.putParcelableArrayList(ChooserTargetActionsDialogFragment.TARGET_INFOS_KEY,
-                new ArrayList<>(targetList));
-
-        if (targetInfo.isSelectableTargetInfo()) {
-            // TODO: migrate this condition to polymorphic calls on TargetInfo (maybe in some cases
-            // we can safely drop the `isSelectableTargetInfo()` condition and populate the bundle
-            // with any non-null values we find, regardless of the target type?)
-            bundle.putString(ChooserTargetActionsDialogFragment.SHORTCUT_ID_KEY,
-                    targetInfo.getChooserTarget().getIntentExtras().getString(
-                            Intent.EXTRA_SHORTCUT_ID));
-            bundle.putBoolean(ChooserTargetActionsDialogFragment.IS_SHORTCUT_PINNED_KEY,
-                    targetInfo.isPinned());
-            bundle.putParcelable(ChooserTargetActionsDialogFragment.INTENT_FILTER_KEY,
-                    getTargetIntentFilter());
-            if (targetInfo.getDisplayLabel() != null) {
-                bundle.putString(ChooserTargetActionsDialogFragment.SHORTCUT_TITLE_KEY,
-                        targetInfo.getDisplayLabel().toString());
-            }
-        }
-
-        fragment.setArguments(bundle);
-        fragment.show(getSupportFragmentManager(), TARGET_DETAILS_FRAGMENT_TAG);
+        ChooserTargetActionsDialogFragment.show(
+                getSupportFragmentManager(),
+                targetList,
+                mChooserMultiProfilePagerAdapter.getCurrentUserHandle(),
+                shortcutIdKey,
+                shortcutTitle,
+                isShortcutPinned,
+                intentFilter);
     }
 
     private void modifyTargetIntent(Intent in) {
@@ -1823,16 +1794,11 @@ public class ChooserActivity extends ResolverActivity implements
         if (targetInfo.isMultiDisplayResolveInfo()) {
             MultiDisplayResolveInfo mti = (MultiDisplayResolveInfo) targetInfo;
             if (!mti.hasSelected()) {
-                ChooserStackedAppDialogFragment f = new ChooserStackedAppDialogFragment();
-                Bundle b = new Bundle();
-                b.putParcelable(ChooserTargetActionsDialogFragment.USER_HANDLE_KEY,
+                ChooserStackedAppDialogFragment.show(
+                        getSupportFragmentManager(),
+                        mti,
+                        which,
                         mChooserMultiProfilePagerAdapter.getCurrentUserHandle());
-                b.putObject(ChooserStackedAppDialogFragment.MULTI_DRI_KEY,
-                        mti);
-                b.putInt(ChooserStackedAppDialogFragment.WHICH_KEY, which);
-                f.setArguments(b);
-
-                f.show(getSupportFragmentManager(), TARGET_DETAILS_FRAGMENT_TAG);
                 return;
             }
         }
@@ -2324,26 +2290,12 @@ public class ChooserActivity extends ResolverActivity implements
 
         @Override
         boolean isComponentFiltered(ComponentName name) {
-            if (mFilteredComponentNames == null) {
-                return false;
-            }
-            for (ComponentName filteredComponentName : mFilteredComponentNames) {
-                if (name.equals(filteredComponentName)) {
-                    return true;
-                }
-            }
-            return false;
+            return mFilteredComponentNames != null && mFilteredComponentNames.contains(name);
         }
 
         @Override
         public boolean isComponentPinned(ComponentName name) {
             return mPinnedSharedPrefs.getBoolean(name.flattenToString(), false);
-        }
-
-        @Override
-        public boolean isFixedAtTop(ComponentName name) {
-            return name != null && name.equals(getNearbySharingComponent())
-                    && shouldNearbyShareBeFirstInRankedRow();
         }
     }
 
@@ -2899,22 +2851,13 @@ public class ChooserActivity extends ResolverActivity implements
                             .targetInfoForPosition(mListPosition, /* filtered */ true);
 
                     // This should always be the case for ItemViewHolder, check for validity
-                    if (ti.isDisplayResolveInfo() && shouldShowTargetDetails(ti)) {
-                        showTargetDetails((DisplayResolveInfo) ti);
+                    if (ti.isDisplayResolveInfo()) {
+                        showTargetDetails(ti);
                     }
                     return true;
                 });
             }
         }
-    }
-
-    private boolean shouldShowTargetDetails(TargetInfo ti) {
-        ComponentName nearbyShare = getNearbySharingComponent();
-        //  Suppress target details for nearby share to hide pin/unpin action
-        boolean isNearbyShare = nearbyShare != null && nearbyShare.equals(
-                ti.getResolvedComponentName()) && shouldNearbyShareBeFirstInRankedRow();
-        return ti.isSelectableTargetInfo()
-                || (ti.isDisplayResolveInfo() && !isNearbyShare);
     }
 
     /**
@@ -3279,9 +3222,7 @@ public class ChooserActivity extends ResolverActivity implements
                 v.setOnLongClickListener(v1 -> {
                     TargetInfo ti = mChooserListAdapter.targetInfoForPosition(
                             holder.getItemIndex(column), true);
-                    if (shouldShowTargetDetails(ti)) {
-                        showTargetDetails(ti);
-                    }
+                    showTargetDetails(ti);
                     return true;
                 });
 
@@ -4037,14 +3978,6 @@ public class ChooserActivity extends ResolverActivity implements
     @Override
     protected void maybeLogProfileChange() {
         getChooserActivityLogger().logSharesheetProfileChanged();
-    }
-
-    private boolean shouldNearbyShareBeFirstInRankedRow() {
-        return ActivityManager.isLowRamDeviceStatic() && mIsNearbyShareFirstTargetInRankedApp;
-    }
-
-    private boolean shouldNearbyShareBeIncludedAsActionButton() {
-        return !shouldNearbyShareBeFirstInRankedRow();
     }
 
     private static <K, V> Map<K, V> emptyIfNull(@Nullable Map<K, V> map) {
