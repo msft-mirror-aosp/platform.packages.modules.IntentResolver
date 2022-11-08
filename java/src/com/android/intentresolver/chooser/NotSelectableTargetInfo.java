@@ -25,6 +25,7 @@ import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.service.chooser.ChooserTarget;
 
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverActivity;
@@ -45,8 +46,13 @@ public abstract class NotSelectableTargetInfo extends ChooserTargetInfo {
                 }
 
                 @Override
-                public Drawable getDisplayIcon() {
+                public Drawable getDisplayIcon(Context context) {
                     return null;
+                }
+
+                @Override
+                public boolean hasDisplayIcon() {
+                    return false;
                 }
             };
     }
@@ -55,7 +61,7 @@ public abstract class NotSelectableTargetInfo extends ChooserTargetInfo {
      * Create a non-selectable {@link TargetInfo} with placeholder content to be displayed
      * unless/until it can be replaced by the result of a pending asynchronous load.
      */
-    public static TargetInfo newPlaceHolderTargetInfo(Context context) {
+    public static TargetInfo newPlaceHolderTargetInfo() {
         return new NotSelectableTargetInfo() {
                 @Override
                 public boolean isPlaceHolderTargetInfo() {
@@ -63,7 +69,7 @@ public abstract class NotSelectableTargetInfo extends ChooserTargetInfo {
                 }
 
                 @Override
-                public Drawable getDisplayIcon() {
+                public Drawable getDisplayIcon(Context context) {
                     AnimatedVectorDrawable avd = (AnimatedVectorDrawable)
                             context.getDrawable(R.drawable.chooser_direct_share_icon_placeholder);
                     avd.start();  // Start animation after generation.
@@ -123,6 +129,10 @@ public abstract class NotSelectableTargetInfo extends ChooserTargetInfo {
 
     public float getModifiedScore() {
         return -0.1f;
+    }
+
+    public ChooserTarget getChooserTarget() {
+        return null;
     }
 
     public boolean isSuspended() {

@@ -27,16 +27,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.LabeledIntent;
-import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
 import android.os.AsyncTask;
 import android.os.Trace;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.DeviceConfig;
 import android.service.chooser.ChooserTarget;
@@ -46,13 +43,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.annotation.WorkerThread;
-
 import com.android.intentresolver.ResolverActivity.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.NotSelectableTargetInfo;
-import com.android.intentresolver.chooser.SelectableTargetInfo;
 import com.android.intentresolver.chooser.SelectableTargetInfo.SelectableTargetInfoCommunicator;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.internal.annotations.VisibleForTesting;
@@ -91,9 +85,12 @@ public class ChooserListAdapter extends ResolverListAdapter {
     private final Map<TargetInfo, AsyncTask> mIconLoaders = new HashMap<>();
 
     // Reserve spots for incoming direct share targets by adding placeholders
-    private final TargetInfo mPlaceHolderTargetInfo;
+    private TargetInfo mPlaceHolderTargetInfo =
+            NotSelectableTargetInfo.newPlaceHolderTargetInfo();
     private final List<TargetInfo> mServiceTargets = new ArrayList<>();
     private final List<DisplayResolveInfo> mCallerTargets = new ArrayList<>();
+
+    private boolean mListViewDataChanged = false;
 
     // Sorted list of DisplayResolveInfos for the alphabetical app section.
     private List<DisplayResolveInfo> mSortedList = new ArrayList<>();
@@ -148,7 +145,6 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 resolverListController, chooserListCommunicator, false);
 
         mChooserListCommunicator = chooserListCommunicator;
-        mPlaceHolderTargetInfo = NotSelectableTargetInfo.newPlaceHolderTargetInfo(context);
         createPlaceHolders();
         mSelectableTargetInfoCommunicator = selectableTargetInfoCommunicator;
         mChooserActivityLogger = chooserActivityLogger;
@@ -229,6 +225,21 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     }
 
+    @Override
+    public void notifyDataSetChanged() {
+        if (!mListViewDataChanged) {
+            mChooserListCommunicator.sendListViewUpdateMessage(getUserHandle());
+            mListViewDataChanged = true;
+        }
+    }
+
+    void refreshListView() {
+        if (mListViewDataChanged) {
+            super.notifyDataSetChanged();
+        }
+        mListViewDataChanged = false;
+    }
+
     private void createPlaceHolders() {
         mServiceTargets.clear();
         for (int i = 0; i < mChooserListCommunicator.getMaxRankedTargets(); i++) {
@@ -263,7 +274,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
                     extendedInfo != null ? extendedInfo : "", appName);
             holder.updateContentDescription(contentDescription);
             if (!info.hasDisplayIcon()) {
-                loadDirectShareIcon((SelectableTargetInfo) info);
+                loadDirectShareIcon(info);
             }
         } else if (info.isDisplayResolveInfo()) {
             DisplayResolveInfo dri = (DisplayResolveInfo) info;
@@ -309,7 +320,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
-    private void loadDirectShareIcon(SelectableTargetInfo info) {
+    private void loadDirectShareIcon(TargetInfo info) {
         LoadDirectShareIconTask task = (LoadDirectShareIconTask) mIconLoaders.get(info);
         if (task == null) {
             task = createLoadDirectShareIconTask(info);
@@ -319,10 +330,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
     }
 
     @VisibleForTesting
-    protected LoadDirectShareIconTask createLoadDirectShareIconTask(SelectableTargetInfo info) {
-        return new LoadDirectShareIconTask(
-                mContext.createContextAsUser(getUserHandle(), 0),
-                info);
+    protected LoadDirectShareIconTask createLoadDirectShareIconTask(TargetInfo info) {
+        return new LoadDirectShareIconTask(info);
     }
 
     void updateAlphabeticalList() {
@@ -554,8 +563,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 directShareToShortcutInfos,
                 directShareToAppTargets,
                 mContext.createContextAsUser(getUserHandle(), 0),
-                mSelectableTargetInfoCommunicator.getTargetIntent(),
-                mSelectableTargetInfoCommunicator.getReferrerFillInIntent(),
+                mSelectableTargetInfoCommunicator,
                 mChooserListCommunicator.getMaxRankedTargets(),
                 mServiceTargets);
         if (isUpdated) {
@@ -644,6 +652,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
         int getMaxRankedTargets();
 
+        void sendListViewUpdateMessage(UserHandle userHandle);
+
         boolean isSendAction(Intent targetIntent);
     }
 
@@ -651,74 +661,23 @@ public class ChooserListAdapter extends ResolverListAdapter {
      * Loads direct share targets icons.
      */
     @VisibleForTesting
-    public class LoadDirectShareIconTask extends AsyncTask<Void, Void, Drawable> {
-        private final Context mContext;
-        private final SelectableTargetInfo mTargetInfo;
+    public class LoadDirectShareIconTask extends AsyncTask<Void, Void, Boolean> {
+        private final TargetInfo mTargetInfo;
 
-        private LoadDirectShareIconTask(Context context, SelectableTargetInfo targetInfo) {
-            mContext = context;
+        private LoadDirectShareIconTask(TargetInfo targetInfo) {
             mTargetInfo = targetInfo;
         }
 
         @Override
-        protected Drawable doInBackground(Void... voids) {
-            return getChooserTargetIconDrawable(
-                    mContext,
-                    mTargetInfo.getChooserTargetIcon(),
-                    mTargetInfo.getChooserTargetComponentName(),
-                    mTargetInfo.getDirectShareShortcutInfo());
+        protected Boolean doInBackground(Void... voids) {
+            return mTargetInfo.loadIcon();
         }
 
         @Override
-        protected void onPostExecute(@Nullable Drawable icon) {
-            if (icon != null && !mTargetInfo.hasDisplayIcon()) {
-                mTargetInfo.setDisplayIcon(icon);
+        protected void onPostExecute(Boolean isLoaded) {
+            if (isLoaded) {
                 notifyDataSetChanged();
             }
-        }
-
-        @WorkerThread
-        private Drawable getChooserTargetIconDrawable(
-                Context context,
-                @Nullable Icon icon,
-                ComponentName targetComponentName,
-                @Nullable ShortcutInfo shortcutInfo) {
-            Drawable directShareIcon = null;
-
-            // First get the target drawable and associated activity info
-            if (icon != null) {
-                directShareIcon = icon.loadDrawable(context);
-            } else if (shortcutInfo != null) {
-                LauncherApps launcherApps = context.getSystemService(LauncherApps.class);
-                if (launcherApps != null) {
-                    directShareIcon = launcherApps.getShortcutIconDrawable(shortcutInfo, 0);
-                }
-            }
-
-            if (directShareIcon == null) {
-                return null;
-            }
-
-            ActivityInfo info = null;
-            try {
-                info = context.getPackageManager().getActivityInfo(targetComponentName, 0);
-            } catch (PackageManager.NameNotFoundException error) {
-                Log.e(TAG, "Could not find activity associated with ChooserTarget");
-            }
-
-            if (info == null) {
-                return null;
-            }
-
-            // Now fetch app icon and raster with no badging even in work profile
-            Bitmap appIcon = makePresentationGetter(info).getIconBitmap(null);
-
-            // Raster target drawable with appIcon as a badge
-            SimpleIconFactory sif = SimpleIconFactory.obtain(context);
-            Bitmap directShareBadgedIcon = sif.createAppBadgedIconBitmap(directShareIcon, appIcon);
-            sif.recycle();
-
-            return new BitmapDrawable(context.getResources(), directShareBadgedIcon);
         }
 
         /**

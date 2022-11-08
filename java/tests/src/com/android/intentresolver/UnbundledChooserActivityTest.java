@@ -636,7 +636,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test @Ignore
-    public void hasOtherProfileOneOption() {
+    public void hasOtherProfileOneOption() throws Exception {
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(2, /* userId */ 10);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(4);
@@ -662,6 +662,7 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> stableCopy =
                 createResolvedComponentsForTestWithOtherProfile(2, /* userId= */ 10);
         waitForIdle();
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
 
         onView(first(withText(stableCopy.get(1).getResolveInfoAt(0).activityInfo.name)))
                 .perform(click());
@@ -1277,7 +1278,7 @@ public class UnbundledChooserActivityTest {
 
     // This test is too long and too slow and should not be taken as an example for future tests.
     @Test @Ignore
-    public void testDirectTargetSelectionLogging() {
+    public void testDirectTargetSelectionLogging() throws InterruptedException {
         Intent sendIntent = createSendTextIntent();
         // We need app targets for direct targets to get displayed
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -1320,6 +1321,11 @@ public class UnbundledChooserActivityTest {
                         /* directShareToAppTargets */ null)
         );
 
+        // Thread.sleep shouldn't be a thing in an integration test but it's
+        // necessary here because of the way the code is structured
+        // TODO: restructure the tests b/129870719
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
+
         assertThat("Chooser should have 3 targets (2 apps, 1 direct)",
                 activity.getAdapter().getCount(), is(3));
         assertThat("Chooser should have exactly one selectable direct target",
@@ -1350,7 +1356,7 @@ public class UnbundledChooserActivityTest {
 
     // This test is too long and too slow and should not be taken as an example for future tests.
     @Test @Ignore
-    public void testDirectTargetLoggingWithRankedAppTarget() {
+    public void testDirectTargetLoggingWithRankedAppTarget() throws InterruptedException {
         Intent sendIntent = createSendTextIntent();
         // We need app targets for direct targets to get displayed
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -1393,6 +1399,10 @@ public class UnbundledChooserActivityTest {
                         directShareToShortcutInfos,
                         /* directShareToAppTargets */ null)
         );
+        // Thread.sleep shouldn't be a thing in an integration test but it's
+        // necessary here because of the way the code is structured
+        // TODO: restructure the tests b/129870719
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
 
         assertThat("Chooser should have 3 targets (2 apps, 1 direct)",
                 activity.getAdapter().getCount(), is(3));
@@ -1419,7 +1429,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test @Ignore
-    public void testShortcutTargetWithApplyAppLimits() {
+    public void testShortcutTargetWithApplyAppLimits() throws InterruptedException {
         // Set up resources
         ChooserActivityOverrideData.getInstance().resources = Mockito.spy(
                 InstrumentationRegistry.getInstrumentation().getContext().getResources());
@@ -1472,6 +1482,10 @@ public class UnbundledChooserActivityTest {
                         directShareToShortcutInfos,
                         /* directShareToAppTargets */ null)
         );
+        // Thread.sleep shouldn't be a thing in an integration test but it's
+        // necessary here because of the way the code is structured
+        // TODO: restructure the tests b/129870719
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
 
         assertThat("Chooser should have 3 targets (2 apps, 1 direct)",
                 wrapper.getAdapter().getCount(), is(3));
@@ -1484,7 +1498,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test @Ignore
-    public void testShortcutTargetWithoutApplyAppLimits() {
+    public void testShortcutTargetWithoutApplyAppLimits() throws InterruptedException {
         setDeviceConfigProperty(
                 SystemUiDeviceConfigFlags.APPLY_SHARING_APP_LIMITS_IN_SYSUI,
                 Boolean.toString(false));
@@ -1540,6 +1554,10 @@ public class UnbundledChooserActivityTest {
                         directShareToShortcutInfos,
                         /* directShareToAppTargets */ null)
         );
+        // Thread.sleep shouldn't be a thing in an integration test but it's
+        // necessary here because of the way the code is structured
+        // TODO: restructure the tests b/129870719
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
 
         assertThat("Chooser should have 4 targets (2 apps, 2 direct)",
                 wrapper.getAdapter().getCount(), is(4));
@@ -1586,7 +1604,8 @@ public class UnbundledChooserActivityTest {
     }
 
     private void testDirectTargetLoggingWithAppTargetNotRanked(
-            int orientation, int appTargetsExpected) {
+            int orientation, int appTargetsExpected
+    ) throws InterruptedException {
         Configuration configuration =
                 new Configuration(InstrumentationRegistry.getInstrumentation().getContext()
                         .getResources().getConfiguration());
@@ -1624,8 +1643,9 @@ public class UnbundledChooserActivityTest {
         ResolveInfo ri = ResolverDataProvider.createResolveInfo(16, 0);
 
         // Start activity
-        final IChooserWrapper wrapper = (IChooserWrapper)
+        final IChooserWrapper activity = (IChooserWrapper)
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        final IChooserWrapper wrapper = (IChooserWrapper) activity;
         // Insert the direct share target
         Map<ChooserTarget, ShortcutInfo> directShareToShortcutInfos = new HashMap<>();
         directShareToShortcutInfos.put(serviceTargets.get(0), null);
@@ -1642,6 +1662,10 @@ public class UnbundledChooserActivityTest {
                         directShareToShortcutInfos,
                         /* directShareToAppTargets */ null)
         );
+        // Thread.sleep shouldn't be a thing in an integration test but it's
+        // necessary here because of the way the code is structured
+        // TODO: restructure the tests b/129870719
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
 
         assertThat(
                 String.format("Chooser should have %d targets (%d apps, 1 direct, 15 A-Z)",
@@ -1740,7 +1764,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test @Ignore
-    public void testWorkTab_selectingWorkTabAppOpensAppInWorkProfile() {
+    public void testWorkTab_selectingWorkTabAppOpensAppInWorkProfile() throws InterruptedException {
         markWorkProfileUserAvailable();
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
@@ -1756,10 +1780,13 @@ public class UnbundledChooserActivityTest {
             return true;
         };
 
-        mActivityRule.launchActivity(Intent.createChooser(sendIntent, "work tab test"));
+        final IChooserWrapper activity = (IChooserWrapper)
+                mActivityRule.launchActivity(Intent.createChooser(sendIntent, "work tab test"));
         waitForIdle();
         onView(withText(R.string.resolver_work_tab)).perform(click());
         waitForIdle();
+        // wait for the share sheet to expand
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
 
         onView(first(allOf(
                 withText(workResolvedComponentInfos.get(0)
@@ -1930,7 +1957,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test @Ignore
-    public void testDirectTargetLogging() {
+    public void testDirectTargetLogging() throws InterruptedException {
         Intent sendIntent = createSendTextIntent();
         // We need app targets for direct targets to get displayed
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -1970,6 +1997,10 @@ public class UnbundledChooserActivityTest {
                         directShareToShortcutInfos,
                         /* directShareToAppTargets */ null)
         );
+        // Thread.sleep shouldn't be a thing in an integration test but it's
+        // necessary here because of the way the code is structured
+        // TODO: restructure the tests b/129870719
+        Thread.sleep(((ChooserActivity) activity).mListViewUpdateDelayMs);
 
         assertThat("Chooser should have 3 targets (2 apps, 1 direct)",
                 activity.getAdapter().getCount(), is(3));
