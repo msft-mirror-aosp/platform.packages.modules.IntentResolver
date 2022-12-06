@@ -148,7 +148,7 @@ public abstract class AbstractMultiProfilePagerAdapter extends PagerAdapter {
 
     @VisibleForTesting
     public UserHandle getCurrentUserHandle() {
-        return getActiveListAdapter().getUserHandle();
+        return getActiveListAdapter().mResolverListController.getUserHandle();
     }
 
     @Override
@@ -263,7 +263,7 @@ public abstract class AbstractMultiProfilePagerAdapter extends PagerAdapter {
     }
 
     private int userHandleToPageIndex(UserHandle userHandle) {
-        if (userHandle.equals(getPersonalListAdapter().getUserHandle())) {
+        if (userHandle.equals(getPersonalListAdapter().mResolverListController.getUserHandle())) {
             return PROFILE_PERSONAL;
         } else {
             return PROFILE_WORK;

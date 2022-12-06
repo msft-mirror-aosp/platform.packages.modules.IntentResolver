@@ -28,6 +28,7 @@ import android.view.animation.AccelerateInterpolator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.intentresolver.ChooserActivity;
+import com.android.intentresolver.ChooserListAdapter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,14 +47,14 @@ public class DirectShareViewHolder extends ItemGroupViewHolder {
 
     private final boolean[] mCellVisibility;
 
-    private final Supplier<Integer> mDeferredTargetCountSupplier;
+    private final Supplier<ChooserListAdapter> mListAdapterSupplier;
 
     public DirectShareViewHolder(
             ViewGroup parent,
             List<ViewGroup> rows,
             int cellCountPerRow,
             int viewType,
-            Supplier<Integer> deferredTargetCountSupplier) {
+            Supplier<ChooserListAdapter> listAdapterSupplier) {
         super(rows.size() * cellCountPerRow, parent, viewType);
 
         this.mParent = parent;
@@ -61,7 +62,7 @@ public class DirectShareViewHolder extends ItemGroupViewHolder {
         this.mCellCountPerRow = cellCountPerRow;
         this.mCellVisibility = new boolean[rows.size() * cellCountPerRow];
         Arrays.fill(mCellVisibility, true);
-        this.mDeferredTargetCountSupplier = deferredTargetCountSupplier;
+        this.mListAdapterSupplier = listAdapterSupplier;
     }
 
     public ViewGroup addView(int index, View v) {
@@ -135,7 +136,8 @@ public class DirectShareViewHolder extends ItemGroupViewHolder {
 
             // only expand if we have more than maxTargetsPerRow, and delay that decision
             // until they start to scroll
-            final int validTargets = this.mDeferredTargetCountSupplier.get();
+            ChooserListAdapter adapter = mListAdapterSupplier.get();
+            int validTargets = adapter.getSelectableServiceTargetCount();
             if (validTargets <= maxTargetsPerRow) {
                 mHideDirectShareExpansion = true;
                 return;

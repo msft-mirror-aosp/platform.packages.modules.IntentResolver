@@ -59,16 +59,8 @@ public class ResolverWrapperActivity extends ResolverActivity {
     public ResolverListAdapter createResolverListAdapter(Context context,
             List<Intent> payloadIntents, Intent[] initialIntents, List<ResolveInfo> rList,
             boolean filterLastUsed, UserHandle userHandle) {
-        return new ResolverWrapperAdapter(
-                context,
-                payloadIntents,
-                initialIntents,
-                rList,
-                filterLastUsed,
-                createListController(userHandle),
-                userHandle,
-                payloadIntents.get(0),  // TODO: extract upstream
-                this);
+        return new ResolverWrapperAdapter(context, payloadIntents, initialIntents, rList,
+                filterLastUsed, createListController(userHandle), this);
     }
 
     @Override

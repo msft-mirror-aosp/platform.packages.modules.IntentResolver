@@ -851,6 +851,7 @@ public class ResolverActivity extends FragmentActivity implements
         }
     }
 
+    @Override // SelectableTargetInfoCommunicator ResolverListCommunicator
     public Intent getTargetIntent() {
         return mIntents.isEmpty() ? null : mIntents.get(0);
     }
@@ -1531,16 +1532,8 @@ public class ResolverActivity extends FragmentActivity implements
         Intent startIntent = getIntent();
         boolean isAudioCaptureDevice =
                 startIntent.getBooleanExtra(EXTRA_IS_AUDIO_CAPTURE_DEVICE, false);
-        return new ResolverListAdapter(
-                context,
-                payloadIntents,
-                initialIntents,
-                rList,
-                filterLastUsed,
-                createListController(userHandle),
-                userHandle,
-                getTargetIntent(),
-                this,
+        return new ResolverListAdapter(context, payloadIntents, initialIntents, rList,
+                filterLastUsed, createListController(userHandle), this,
                 isAudioCaptureDevice);
     }
 
@@ -1604,13 +1597,12 @@ public class ResolverActivity extends FragmentActivity implements
         setContentView(mLayoutId);
 
         DisplayResolveInfo sameProfileResolveInfo =
-                mMultiProfilePagerAdapter.getActiveListAdapter().getFirstDisplayResolveInfo();
+                mMultiProfilePagerAdapter.getActiveListAdapter().mDisplayList.get(0);
         boolean inWorkProfile = getCurrentProfile() == PROFILE_WORK;
 
         final ResolverListAdapter inactiveAdapter =
                 mMultiProfilePagerAdapter.getInactiveListAdapter();
-        final DisplayResolveInfo otherProfileResolveInfo =
-                inactiveAdapter.getFirstDisplayResolveInfo();
+        final DisplayResolveInfo otherProfileResolveInfo = inactiveAdapter.mDisplayList.get(0);
 
         // Load the icon asynchronously
         ImageView icon = findViewById(com.android.internal.R.id.icon);
@@ -1661,29 +1653,31 @@ public class ResolverActivity extends FragmentActivity implements
                 || mMultiProfilePagerAdapter.getInactiveListAdapter() == null) {
             return false;
         }
-        ResolverListAdapter sameProfileAdapter =
-                mMultiProfilePagerAdapter.getActiveListAdapter();
-        ResolverListAdapter otherProfileAdapter =
-                mMultiProfilePagerAdapter.getInactiveListAdapter();
+        List<DisplayResolveInfo> sameProfileList =
+                mMultiProfilePagerAdapter.getActiveListAdapter().mDisplayList;
+        List<DisplayResolveInfo> otherProfileList =
+                mMultiProfilePagerAdapter.getInactiveListAdapter().mDisplayList;
 
-        if (sameProfileAdapter.getDisplayResolveInfoCount() == 0) {
+        if (sameProfileList.isEmpty()) {
             Log.d(TAG, "No targets in the current profile");
             return false;
         }
 
-        if (otherProfileAdapter.getDisplayResolveInfoCount() != 1) {
-            Log.d(TAG, "Other-profile count: " + otherProfileAdapter.getDisplayResolveInfoCount());
+        if (otherProfileList.size() != 1) {
+            Log.d(TAG, "Found " + otherProfileList.size() + " resolvers in the other profile");
             return false;
         }
 
-        if (otherProfileAdapter.allResolveInfosHandleAllWebDataUri()) {
+        if (otherProfileList.get(0).getResolveInfo().handleAllWebDataURI) {
             Log.d(TAG, "Other profile is a web browser");
             return false;
         }
 
-        if (!sameProfileAdapter.allResolveInfosHandleAllWebDataUri()) {
-            Log.d(TAG, "Non-browser found in this profile");
-            return false;
+        for (DisplayResolveInfo info : sameProfileList) {
+            if (!info.getResolveInfo().handleAllWebDataURI) {
+                Log.d(TAG, "Non-browser found in this profile");
+                return false;
+            }
         }
 
         return true;
