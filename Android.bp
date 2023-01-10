@@ -36,6 +36,7 @@ android_library {
     min_sdk_version: "current",
     srcs: [
         "java/src/**/*.java",
+        "java/src/**/*.kt",
     ],
     resource_dirs: [
         "java/res",
@@ -45,6 +46,18 @@ android_library {
 
     static_libs: [
         "androidx.annotation_annotation",
+        "androidx.concurrent_concurrent-futures",
+        "androidx.recyclerview_recyclerview",
+        "androidx.viewpager_viewpager",
+        "androidx.lifecycle_lifecycle-common-java8",
+        "androidx.lifecycle_lifecycle-extensions",
+        "androidx.lifecycle_lifecycle-runtime-ktx",
+        "androidx.lifecycle_lifecycle-viewmodel-ktx",
+        "kotlin-stdlib",
+        "kotlinx_coroutines",
+        "kotlinx-coroutines-android",
+        "//external/kotlinc:kotlin-annotations",
+        "guava",
     ],
 
     plugins: ["java_api_finder"],
@@ -66,6 +79,9 @@ android_app {
     static_libs: [
         "IntentResolver-core",
     ],
+    optimize: {
+        enabled: true,
+    },
     apex_available: [
         "//apex_available:platform",
         "com.android.intentresolver",
