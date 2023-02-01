@@ -7,7 +7,7 @@ android_test {
     name: "IntentResolverUnitTests",
 
     // Include all test java files.
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.java", "src/**/*.kt"],
 
     libs: [
         "android.test.runner",
@@ -19,17 +19,20 @@ android_test {
 
     static_libs: [
         "IntentResolver-core",
-        "ChooserActivityTestsLib",
         "androidx.test.rules",
+        "androidx.test.ext.junit",
         "mockito-target-minus-junit4",
         "androidx.test.espresso.core",
+       "androidx.lifecycle_lifecycle-common-java8",
+       "androidx.lifecycle_lifecycle-extensions",
+       "androidx.lifecycle_lifecycle-runtime-ktx",
         "truth-prebuilt",
         "testables",
         "testng",
+        "kotlinx_coroutines_test",
     ],
     test_suites: ["general-tests"],
     sdk_version: "core_platform",
-    platform_apis: true,
     compile_multilib: "both",
 
     dont_merge_manifests: true,
