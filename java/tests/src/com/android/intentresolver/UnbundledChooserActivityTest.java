@@ -101,9 +101,13 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.intentresolver.ResolverActivity.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
+import com.android.intentresolver.flags.FeatureFlagRepository;
+import com.android.intentresolver.flags.Flags;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
+import com.android.systemui.flags.ReleasedFlag;
+import com.android.systemui.flags.UnreleasedFlag;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -968,6 +972,51 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    public void testImageAndTextPreview() {
+        ChooserActivityOverrideData.getInstance().featureFlagRepository =
+                new FeatureFlagRepository() {
+                    @Override
+                    public boolean isEnabled(@NonNull UnreleasedFlag flag) {
+                        return Flags.SHARESHEET_IMAGE_AND_TEXT_PREVIEW.equals(flag)
+                                || flag.getDefault();
+                    }
+
+                    @Override
+                    public boolean isEnabled(@NonNull ReleasedFlag flag) {
+                        return false;
+                    }
+                };
+        final Uri uri = Uri.parse("android.resource://com.android.frameworks.coretests/"
+                + R.drawable.test320x240);
+        final String sharedText = "text-" + System.currentTimeMillis();
+
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(uri);
+
+        Intent sendIntent = createSendUriIntentWithPreview(uris);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
+        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        ChooserActivityOverrideData.getInstance().isImageType = true;
+
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+
+        when(
+                ChooserActivityOverrideData
+                        .getInstance()
+                        .resolverListController
+                        .getResolversForIntent(
+                                Mockito.anyBoolean(),
+                                Mockito.anyBoolean(),
+                                Mockito.anyBoolean(),
+                                Mockito.isA(List.class)))
+                .thenReturn(resolvedComponentInfos);
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        waitForIdle();
+        onView(withText(sharedText))
+                .check(matches(isDisplayed()));
+    }
+
+    @Test
     public void testOnCreateLogging() {
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
@@ -1673,9 +1722,18 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testLaunchWithCustomAction() throws InterruptedException {
-        if (!ChooserActivity.ENABLE_CUSTOM_ACTIONS) {
-            return;
-        }
+        ChooserActivityOverrideData.getInstance().featureFlagRepository =
+            new FeatureFlagRepository() {
+                @Override
+                public boolean isEnabled(@NonNull UnreleasedFlag flag) {
+                    return Flags.SHARESHEET_CUSTOM_ACTIONS.equals(flag) || flag.getDefault();
+                }
+
+                @Override
+                public boolean isEnabled(@NonNull ReleasedFlag flag) {
+                    return false;
+                }
+            };
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         when(
                 ChooserActivityOverrideData
@@ -1720,6 +1778,64 @@ public class UnbundledChooserActivityTest {
 
         try {
             onView(withText(customActionLabel)).perform(click());
+            broadcastInvoked.await();
+        } finally {
+            testContext.unregisterReceiver(testReceiver);
+        }
+    }
+
+    @Test
+    public void testLaunchWithPayloadReselection() throws InterruptedException {
+        ChooserActivityOverrideData.getInstance().featureFlagRepository =
+                new FeatureFlagRepository() {
+                    @Override
+                    public boolean isEnabled(@NonNull UnreleasedFlag flag) {
+                        return Flags.SHARESHEET_RESELECTION_ACTION.equals(flag)
+                                || flag.getDefault();
+                    }
+
+                    @Override
+                    public boolean isEnabled(@NonNull ReleasedFlag flag) {
+                        return false;
+                    }
+                };
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+        when(
+                ChooserActivityOverrideData
+                        .getInstance()
+                        .resolverListController
+                        .getResolversForIntent(
+                                Mockito.anyBoolean(),
+                                Mockito.anyBoolean(),
+                                Mockito.anyBoolean(),
+                                Mockito.isA(List.class)))
+                .thenReturn(resolvedComponentInfos);
+
+        Context testContext = InstrumentationRegistry.getInstrumentation().getContext();
+        final String reselectionAction = "test-broadcast-receiver-action";
+        Intent chooserIntent = Intent.createChooser(createSendTextIntent(), null);
+        chooserIntent.putExtra(
+                Intent.EXTRA_CHOOSER_PAYLOAD_RESELECTION_ACTION,
+                PendingIntent.getBroadcast(
+                        testContext,
+                        123,
+                        new Intent(reselectionAction),
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT));
+        // Start activity
+        mActivityRule.launchActivity(chooserIntent);
+        waitForIdle();
+
+        final CountDownLatch broadcastInvoked = new CountDownLatch(1);
+        BroadcastReceiver testReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                broadcastInvoked.countDown();
+            }
+        };
+        testContext.registerReceiver(testReceiver, new IntentFilter(reselectionAction));
+
+        try {
+            onView(withText(R.string.select_text)).perform(click());
             broadcastInvoked.await();
         } finally {
             testContext.unregisterReceiver(testReceiver);
