@@ -33,6 +33,7 @@ import android.provider.Downloads;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.text.util.Linkify;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.util.PluralsMessageFormatter;
 import android.view.LayoutInflater;
@@ -98,10 +99,10 @@ public final class ChooserContentPreviewUi {
         List<ActionRow.Action> createCustomActions();
 
         /**
-         * Provides a re-selection action, if any.
+         * Provides a share modification action, if any.
          */
         @Nullable
-        Runnable getReselectionAction();
+        Runnable getModifyShareAction();
 
         /**
          * <p>
@@ -254,13 +255,13 @@ public final class ChooserContentPreviewUi {
             default:
                 Log.e(TAG, "Unexpected content preview type: " + previewType);
         }
-        Runnable reselectionAction = actionFactory.getReselectionAction();
-        if (reselectionAction != null && layout != null
+        Runnable modifyShareAction = actionFactory.getModifyShareAction();
+        if (modifyShareAction != null && layout != null
                 && mFeatureFlagRepository.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)) {
-            View reselectionView = layout.findViewById(R.id.reselection_action);
-            if (reselectionView != null) {
-                reselectionView.setVisibility(View.VISIBLE);
-                reselectionView.setOnClickListener(view -> reselectionAction.run());
+            View modifyShareView = layout.findViewById(R.id.reselection_action);
+            if (modifyShareView != null) {
+                modifyShareView.setVisibility(View.VISIBLE);
+                modifyShareView.setOnClickListener(view -> modifyShareAction.run());
             }
         }
 
@@ -440,6 +441,7 @@ public final class ChooserContentPreviewUi {
             shareTextAction.accept(false);
             actionView.setOnCheckedChangeListener((view, isChecked) -> {
                 view.setText(actionLabels[isChecked ? 1 : 0]);
+                TransitionManager.beginDelayedTransition((ViewGroup) textView.getParent());
                 textView.setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 shareTextAction.accept(!isChecked);
             });
