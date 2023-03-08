@@ -49,7 +49,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.intentresolver.ResolverActivity.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.internal.annotations.VisibleForTesting;
@@ -289,11 +288,7 @@ public class ResolverListAdapter extends BaseAdapter {
                     mBaseResolveList);
             return currentResolveList;
         } else {
-            return mResolverListController.getResolversForIntent(
-                            /* shouldGetResolvedFilter= */ true,
-                            mResolverListCommunicator.shouldGetActivityMetadata(),
-                            mResolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                            mIntents);
+            return getResolversForUser(mUserHandle);
         }
     }
 
@@ -804,10 +799,12 @@ public class ResolverListAdapter extends BaseAdapter {
     }
 
     protected List<ResolvedComponentInfo> getResolversForUser(UserHandle userHandle) {
-        return mResolverListController.getResolversForIntentAsUser(true,
+        return mResolverListController.getResolversForIntentAsUser(
+                /* shouldGetResolvedFilter= */ true,
                 mResolverListCommunicator.shouldGetActivityMetadata(),
                 mResolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                mIntents, userHandle);
+                mIntents,
+                userHandle);
     }
 
     protected List<Intent> getIntents() {

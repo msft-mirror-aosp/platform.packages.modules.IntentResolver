@@ -48,6 +48,8 @@ public class ChooserActivityLogger {
     public static final int SELECTION_TYPE_COPY = 4;
     public static final int SELECTION_TYPE_NEARBY = 5;
     public static final int SELECTION_TYPE_EDIT = 6;
+    public static final int SELECTION_TYPE_MODIFY_SHARE = 7;
+    public static final int SELECTION_TYPE_CUSTOM_ACTION = 8;
 
     /**
      * This shim is provided only for testing. In production, clients will only ever use a
@@ -68,7 +70,7 @@ public class ChooserActivityLogger {
                 int previewType,
                 int intentType,
                 int numCustomActions,
-                boolean reselectionActionProvided);
+                boolean modifyShareActionProvided);
 
         /** Overload to use for logging {@code FrameworkStatsLog.RANKING_SELECTED}. */
         void write(
@@ -116,9 +118,16 @@ public class ChooserActivityLogger {
     }
 
     /** Logs a UiEventReported event for the system sharesheet completing initial start-up. */
-    public void logShareStarted(int eventId, String packageName, String mimeType,
-            int appProvidedDirect, int appProvidedApp, boolean isWorkprofile, int previewType,
-            String intent) {
+    public void logShareStarted(
+            String packageName,
+            String mimeType,
+            int appProvidedDirect,
+            int appProvidedApp,
+            boolean isWorkprofile,
+            int previewType,
+            String intent,
+            int customActionCount,
+            boolean modifyShareActionProvided) {
         mFrameworkStatsLogger.write(FrameworkStatsLog.SHARESHEET_STARTED,
                 /* event_id = 1 */ SharesheetStartedEvent.SHARE_STARTED.getId(),
                 /* package_name = 2 */ packageName,
@@ -129,8 +138,23 @@ public class ChooserActivityLogger {
                 /* is_workprofile = 7 */ isWorkprofile,
                 /* previewType = 8 */ typeFromPreviewInt(previewType),
                 /* intentType = 9 */ typeFromIntentString(intent),
-                /* num_provided_custom_actions = 10 */ 0,
-                /* reselection_action_provided = 11 */ false);
+                /* num_provided_custom_actions = 10 */ customActionCount,
+                /* modify_share_action_provided = 11 */ modifyShareActionProvided);
+    }
+
+    /**
+     * Log that a custom action has been tapped by the user.
+     *
+     * @param positionPicked index of the custom action within the list of custom actions.
+     */
+    public void logCustomActionSelected(int positionPicked) {
+        mFrameworkStatsLogger.write(FrameworkStatsLog.RANKING_SELECTED,
+                /* event_id = 1 */
+                SharesheetTargetSelectedEvent.SHARESHEET_CUSTOM_ACTION_SELECTED.getId(),
+                /* package_name = 2 */ null,
+                /* instance_id = 3 */ getInstanceId().getId(),
+                /* position_picked = 4 */ positionPicked,
+                /* is_pinned = 5 */ false);
     }
 
     /**
@@ -332,7 +356,11 @@ public class ChooserActivityLogger {
         @UiEvent(doc = "User selected the nearby target.")
         SHARESHEET_NEARBY_TARGET_SELECTED(626),
         @UiEvent(doc = "User selected the edit target.")
-        SHARESHEET_EDIT_TARGET_SELECTED(669);
+        SHARESHEET_EDIT_TARGET_SELECTED(669),
+        @UiEvent(doc = "User selected the modify share target.")
+        SHARESHEET_MODIFY_SHARE_SELECTED(1316),
+        @UiEvent(doc = "User selected a custom action.")
+        SHARESHEET_CUSTOM_ACTION_SELECTED(1317);
 
         private final int mId;
         SharesheetTargetSelectedEvent(int id) {
@@ -356,6 +384,10 @@ public class ChooserActivityLogger {
                     return SHARESHEET_NEARBY_TARGET_SELECTED;
                 case SELECTION_TYPE_EDIT:
                     return SHARESHEET_EDIT_TARGET_SELECTED;
+                case SELECTION_TYPE_MODIFY_SHARE:
+                    return SHARESHEET_MODIFY_SHARE_SELECTED;
+                case SELECTION_TYPE_CUSTOM_ACTION:
+                    return SHARESHEET_CUSTOM_ACTION_SELECTED;
                 default:
                     return INVALID;
             }
@@ -469,7 +501,7 @@ public class ChooserActivityLogger {
                 int previewType,
                 int intentType,
                 int numCustomActions,
-                boolean reselectionActionProvided) {
+                boolean modifyShareActionProvided) {
             FrameworkStatsLog.write(
                     frameworkEventId,
                     /* event_id = 1 */ appEventId,
@@ -482,7 +514,7 @@ public class ChooserActivityLogger {
                     /* previewType = 8 */ previewType,
                     /* intentType = 9 */ intentType,
                     /* num_provided_custom_actions = 10 */ numCustomActions,
-                    /* reselection_action_provided = 11 */ reselectionActionProvided);
+                    /* modify_share_action_provided = 11 */ modifyShareActionProvided);
         }
 
         @Override
