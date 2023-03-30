@@ -18,6 +18,7 @@ package com.android.intentresolver;
 
 import static android.content.Context.ACTIVITY_SERVICE;
 
+import android.animation.ObjectAnimator;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.ActivityManager;
@@ -42,6 +43,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
@@ -924,6 +926,7 @@ public class ResolverListAdapter extends BaseAdapter {
      */
     @VisibleForTesting
     public static class ViewHolder {
+        private static final long IMAGE_FADE_IN_MILLIS = 150;
         public View itemView;
         public Drawable defaultItemViewBackground;
 
@@ -961,12 +964,23 @@ public class ResolverListAdapter extends BaseAdapter {
             itemView.setContentDescription(description);
         }
 
-        /**
-         * Bind view holder to a TargetInfo.
-         */
         public void bindIcon(TargetInfo info) {
+            bindIcon(info, false);
+        }
+
+        /**
+         * Bind view holder to a TargetInfo, run icon reveal animation, if required.
+         */
+        public void bindIcon(TargetInfo info, boolean animate) {
             Drawable displayIcon = info.getDisplayIconHolder().getDisplayIcon();
+            boolean runAnimation = animate && (icon.getDrawable() == null) && (displayIcon != null);
             icon.setImageDrawable(displayIcon);
+            if (runAnimation) {
+                ObjectAnimator animator = ObjectAnimator.ofFloat(icon, "alpha", 0.0f, 1.0f);
+                animator.setInterpolator(new DecelerateInterpolator(1.0f));
+                animator.setDuration(IMAGE_FADE_IN_MILLIS);
+                animator.start();
+            }
             if (info.isSuspended()) {
                 icon.setColorFilter(getSuspendedColorMatrix());
             } else {

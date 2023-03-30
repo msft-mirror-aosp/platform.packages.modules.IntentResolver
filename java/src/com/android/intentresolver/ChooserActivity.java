@@ -276,15 +276,14 @@ public class ChooserActivity extends ResolverActivity implements
                 mChooserRequest.getRefinementIntentSender(),
                 (validatedRefinedTarget) -> {
                     maybeRemoveSharedText(validatedRefinedTarget);
-
-                    // We already block suspended targets from going to refinement, and we probably
-                    // can't recover a Chooser session if that's the reason the refined target fails
-                    // to launch now. Fire-and-forget the refined launch; ignore the return value
-                    // and just make sure the Sharesheet session gets cleaned up regardless.
-                    super.onTargetSelected(validatedRefinedTarget, false);
-                    finish();
+                    if (super.onTargetSelected(validatedRefinedTarget, false)) {
+                        finish();
+                    }
                 },
-                this::finish);
+                () -> {
+                    mRefinementManager.destroy();
+                    finish();
+                });
 
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 mChooserRequest.getTargetIntent(),
@@ -624,15 +623,6 @@ public class ChooserActivity extends ResolverActivity implements
         super.onResume();
         Log.d(TAG, "onResume: " + getComponentName().flattenToShortString());
         maybeCancelFinishAnimation();
-
-        if (mRefinementManager.isAwaitingRefinementResult()) {
-            // This can happen if the refinement activity terminates without ever sending a response
-            // to our `ResultReceiver`. We're probably not prepared to return the user into a valid
-            // Chooser session, so we'll treat it as a cancellation instead.
-            Log.w(TAG, "Chooser resumed while awaiting refinement result; aborting");
-            mRefinementManager.destroy();
-            finish();
-        }
     }
 
     @Override
