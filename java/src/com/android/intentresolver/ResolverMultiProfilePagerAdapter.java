@@ -43,15 +43,17 @@ public class ResolverMultiProfilePagerAdapter extends
             Context context,
             ResolverListAdapter adapter,
             EmptyStateProvider emptyStateProvider,
-            QuietModeManager quietModeManager,
-            UserHandle workProfileUserHandle) {
+            Supplier<Boolean> workProfileQuietModeChecker,
+            UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle) {
         this(
                 context,
                 ImmutableList.of(adapter),
                 emptyStateProvider,
-                quietModeManager,
+                workProfileQuietModeChecker,
                 /* defaultProfile= */ 0,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                 new BottomPaddingOverrideSupplier());
     }
 
@@ -59,16 +61,18 @@ public class ResolverMultiProfilePagerAdapter extends
             ResolverListAdapter personalAdapter,
             ResolverListAdapter workAdapter,
             EmptyStateProvider emptyStateProvider,
-            QuietModeManager quietModeManager,
+            Supplier<Boolean> workProfileQuietModeChecker,
             @Profile int defaultProfile,
-            UserHandle workProfileUserHandle) {
+            UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle) {
         this(
                 context,
                 ImmutableList.of(personalAdapter, workAdapter),
                 emptyStateProvider,
-                quietModeManager,
+                workProfileQuietModeChecker,
                 defaultProfile,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                 new BottomPaddingOverrideSupplier());
     }
 
@@ -76,9 +80,10 @@ public class ResolverMultiProfilePagerAdapter extends
             Context context,
             ImmutableList<ResolverListAdapter> listAdapters,
             EmptyStateProvider emptyStateProvider,
-            QuietModeManager quietModeManager,
+            Supplier<Boolean> workProfileQuietModeChecker,
             @Profile int defaultProfile,
             UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle,
             BottomPaddingOverrideSupplier bottomPaddingOverrideSupplier) {
         super(
                 context,
@@ -86,9 +91,10 @@ public class ResolverMultiProfilePagerAdapter extends
                         (listView, bindAdapter) -> listView.setAdapter(bindAdapter),
                 listAdapters,
                 emptyStateProvider,
-                quietModeManager,
+                workProfileQuietModeChecker,
                 defaultProfile,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                         () -> (ViewGroup) LayoutInflater.from(context).inflate(
                                 R.layout.resolver_list_per_profile, null, false),
                 bottomPaddingOverrideSupplier);

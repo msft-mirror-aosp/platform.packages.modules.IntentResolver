@@ -32,6 +32,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
+import com.android.intentresolver.flags.FeatureFlagRepository;
+import com.android.intentresolver.flags.Flags;
+
 import com.google.common.collect.ImmutableList;
 
 import java.net.URISyntaxException;
@@ -67,11 +70,14 @@ public class ChooserRequestParameters {
             Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 
     private final Intent mTarget;
+    private final ChooserIntegratedDeviceComponents mIntegratedDeviceComponents;
+    private final String mReferrerPackageName;
     private final Pair<CharSequence, Integer> mTitleSpec;
     private final Intent mReferrerFillInIntent;
     private final ImmutableList<ComponentName> mFilteredComponentNames;
     private final ImmutableList<ChooserTarget> mCallerChooserTargets;
-    private final ImmutableList<ChooserAction> mChooserActions;
+    private final @NonNull ImmutableList<ChooserAction> mChooserActions;
+    private final ChooserAction mModifyShareAction;
     private final boolean mRetainInOnStop;
 
     @Nullable
@@ -97,12 +103,17 @@ public class ChooserRequestParameters {
 
     public ChooserRequestParameters(
             final Intent clientIntent,
+            String referrerPackageName,
             final Uri referrer,
-            @Nullable final ComponentName nearbySharingComponent,
-            boolean extractCustomActions) {
+            ChooserIntegratedDeviceComponents integratedDeviceComponents,
+            FeatureFlagRepository featureFlags) {
         final Intent requestedTarget = parseTargetIntentExtra(
                 clientIntent.getParcelableExtra(Intent.EXTRA_INTENT));
         mTarget = intentWithModifiedLaunchFlags(requestedTarget);
+
+        mIntegratedDeviceComponents = integratedDeviceComponents;
+
+        mReferrerPackageName = referrerPackageName;
 
         mAdditionalTargets = intentsWithModifiedLaunchFlagsFromExtraIfPresent(
                 clientIntent, Intent.EXTRA_ALTERNATE_INTENTS);
@@ -123,7 +134,8 @@ public class ChooserRequestParameters {
         mRefinementIntentSender = clientIntent.getParcelableExtra(
                 Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER);
 
-        mFilteredComponentNames = getFilteredComponentNames(clientIntent, nearbySharingComponent);
+        mFilteredComponentNames = getFilteredComponentNames(
+                clientIntent, mIntegratedDeviceComponents.getNearbySharingComponent());
 
         mCallerChooserTargets = parseCallerTargetsFromClientIntent(clientIntent);
 
@@ -134,9 +146,12 @@ public class ChooserRequestParameters {
 
         mTargetIntentFilter = getTargetIntentFilter(mTarget);
 
-        mChooserActions = extractCustomActions
+        mChooserActions = featureFlags.isEnabled(Flags.SHARESHEET_CUSTOM_ACTIONS)
                 ? getChooserActions(clientIntent)
                 : ImmutableList.of();
+        mModifyShareAction = featureFlags.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)
+                ? getModifyShareAction(clientIntent)
+                : null;
     }
 
     public Intent getTargetIntent() {
@@ -155,6 +170,10 @@ public class ChooserRequestParameters {
     @Nullable
     public String getTargetType() {
         return getTargetIntent().getType();
+    }
+
+    public String getReferrerPackageName() {
+        return mReferrerPackageName;
     }
 
     @Nullable
@@ -178,12 +197,18 @@ public class ChooserRequestParameters {
         return mCallerChooserTargets;
     }
 
+    @NonNull
     public ImmutableList<ChooserAction> getChooserActions() {
         return mChooserActions;
     }
 
+    @Nullable
+    public ChooserAction getModifyShareAction() {
+        return mModifyShareAction;
+    }
+
     /**
-     * Whether the {@link ChooserActivity.EXTRA_PRIVATE_RETAIN_IN_ON_STOP} behavior was requested.
+     * Whether the {@link ChooserActivity#EXTRA_PRIVATE_RETAIN_IN_ON_STOP} behavior was requested.
      */
     public boolean shouldRetainInOnStop() {
         return mRetainInOnStop;
@@ -230,6 +255,10 @@ public class ChooserRequestParameters {
     @Nullable
     public IntentFilter getTargetIntentFilter() {
         return mTargetIntentFilter;
+    }
+
+    public ChooserIntegratedDeviceComponents getIntegratedDeviceComponents() {
+        return mIntegratedDeviceComponents;
     }
 
     private static boolean isSendAction(@Nullable String action) {
@@ -280,8 +309,7 @@ public class ChooserRequestParameters {
             requestedTitle = null;
         }
 
-        int defaultTitleRes =
-                (requestedTitle == null) ? com.android.internal.R.string.chooseActivity : 0;
+        int defaultTitleRes = (requestedTitle == null) ? R.string.chooseActivity : 0;
 
         return Pair.create(requestedTitle, defaultTitleRes);
     }
@@ -311,6 +339,7 @@ public class ChooserRequestParameters {
                 .collect(toImmutableList());
     }
 
+    @NonNull
     private static ImmutableList<ChooserAction> getChooserActions(Intent intent) {
         return streamParcelableArrayExtra(
                 intent,
@@ -319,6 +348,21 @@ public class ChooserRequestParameters {
                 true,
                 true)
             .collect(toImmutableList());
+    }
+
+    @Nullable
+    private static ChooserAction getModifyShareAction(Intent intent) {
+        try {
+            return intent.getParcelableExtra(
+                    Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION,
+                    ChooserAction.class);
+        } catch (Throwable t) {
+            Log.w(
+                    TAG,
+                    "Unable to retrieve Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION argument",
+                    t);
+            return null;
+        }
     }
 
     private static <T> Collector<T, ?, ImmutableList<T>> toImmutableList() {

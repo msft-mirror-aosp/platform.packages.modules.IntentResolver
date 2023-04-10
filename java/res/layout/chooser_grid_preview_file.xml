@@ -27,6 +27,8 @@
     android:paddingBottom="@dimen/chooser_view_spacing"
     android:background="?android:attr/colorBackground">
 
+  <include layout="@layout/chooser_headline_row" />
+
   <LinearLayout
       android:layout_width="@dimen/chooser_preview_width"
       android:layout_height="wrap_content"
@@ -65,7 +67,8 @@
         android:ellipsize="middle"
         android:gravity="start|top"
         android:paddingRight="24dp"
-        android:singleLine="true"/>
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.ChooserDefault" />
   </LinearLayout>
 
   <ViewStub

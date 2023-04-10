@@ -31,13 +31,34 @@ license {
     ],
 }
 
+filegroup {
+    name: "ReleaseSources",
+    srcs: [
+        "java/src-release/**/*.kt",
+    ],
+}
+
+filegroup {
+    name: "DebugSources",
+    srcs: [
+        "java/src-debug/**/*.kt",
+    ],
+}
+
 android_library {
     name: "IntentResolver-core",
     min_sdk_version: "current",
     srcs: [
         "java/src/**/*.java",
         "java/src/**/*.kt",
+        ":ReleaseSources",
     ],
+    product_variables: {
+        debuggable: {
+            srcs: [":DebugSources"],
+            exclude_srcs: [":ReleaseSources"],
+        }
+    },
     resource_dirs: [
         "java/res",
     ],
@@ -47,6 +68,7 @@ android_library {
     static_libs: [
         "androidx.annotation_annotation",
         "androidx.concurrent_concurrent-futures",
+        "androidx-constraintlayout_constraintlayout",
         "androidx.recyclerview_recyclerview",
         "androidx.viewpager_viewpager",
         "androidx.lifecycle_lifecycle-common-java8",
@@ -58,10 +80,11 @@ android_library {
         "kotlinx-coroutines-android",
         "//external/kotlinc:kotlin-annotations",
         "guava",
+        "SystemUIFlagsLib",
     ],
 
     lint: {
-        strict_updatability_linting: true,
+        strict_updatability_linting: false,
     },
 }
 

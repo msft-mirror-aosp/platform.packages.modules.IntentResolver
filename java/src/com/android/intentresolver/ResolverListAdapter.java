@@ -47,7 +47,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.intentresolver.ResolverActivity.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.internal.annotations.VisibleForTesting;
@@ -96,6 +95,8 @@ public class ResolverListAdapter extends BaseAdapter {
     private boolean mFilterLastUsed;
     private Runnable mPostListReadyRunnable;
     private boolean mIsTabLoaded;
+    // Represents the UserSpace in which the Initial Intents should be resolved.
+    private final UserHandle mInitialIntentsUserSpace;
 
     public ResolverListAdapter(
             Context context,
@@ -107,7 +108,8 @@ public class ResolverListAdapter extends BaseAdapter {
             UserHandle userHandle,
             Intent targetIntent,
             ResolverListCommunicator resolverListCommunicator,
-            boolean isAudioCaptureDevice) {
+            boolean isAudioCaptureDevice,
+            UserHandle initialIntentsUserSpace) {
         mContext = context;
         mIntents = payloadIntents;
         mInitialIntents = initialIntents;
@@ -124,6 +126,7 @@ public class ResolverListAdapter extends BaseAdapter {
         final ActivityManager am = (ActivityManager) mContext.getSystemService(ACTIVITY_SERVICE);
         mIconDpi = am.getLauncherLargeIconDensity();
         mPresentationFactory = new TargetPresentationGetter.Factory(mContext, mIconDpi);
+        mInitialIntentsUserSpace = initialIntentsUserSpace;
     }
 
     public final DisplayResolveInfo getFirstDisplayResolveInfo() {
@@ -175,19 +178,25 @@ public class ResolverListAdapter extends BaseAdapter {
     }
 
     /**
-     * Returns the app share score of the given {@code componentName}.
+     * Returns the app share score of the given {@code targetInfo}.
      */
-    public float getScore(ComponentName componentName) {
-        return mResolverListController.getScore(componentName);
+    public float getScore(TargetInfo targetInfo) {
+        return mResolverListController.getScore(targetInfo);
     }
 
-    public void updateModel(ComponentName componentName) {
-        mResolverListController.updateModel(componentName);
+    /**
+     * Updates the model about the chosen {@code targetInfo}.
+     */
+    public void updateModel(TargetInfo targetInfo) {
+        mResolverListController.updateModel(targetInfo);
     }
 
-    public void updateChooserCounts(String packageName, String action) {
+    /**
+     * Updates the model about Chooser Activity selection.
+     */
+    public void updateChooserCounts(String packageName, String action, UserHandle userHandle) {
         mResolverListController.updateChooserCounts(
-                packageName, getUserHandle().getIdentifier(), action);
+                packageName, userHandle, action);
     }
 
     List<ResolvedComponentInfo> getUnfilteredResolveList() {
@@ -287,11 +296,7 @@ public class ResolverListAdapter extends BaseAdapter {
                     mBaseResolveList);
             return currentResolveList;
         } else {
-            return mResolverListController.getResolversForIntent(
-                            /* shouldGetResolvedFilter= */ true,
-                            mResolverListCommunicator.shouldGetActivityMetadata(),
-                            mResolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                            mIntents);
+            return getResolversForUser(mUserHandle);
         }
     }
 
@@ -471,6 +476,7 @@ public class ResolverListAdapter extends BaseAdapter {
                         ri.icon = 0;
                     }
 
+                    ri.userHandle = mInitialIntentsUserSpace;
                     addResolveInfo(DisplayResolveInfo.newDisplayResolveInfo(
                             ii,
                             ri,
@@ -764,8 +770,10 @@ public class ResolverListAdapter extends BaseAdapter {
     }
 
     Drawable loadIconForResolveInfo(ResolveInfo ri) {
-        // Load icons based on the current process. If in work profile icons should be badged.
-        return mPresentationFactory.makePresentationGetter(ri).getIcon(getUserHandle());
+        // Load icons based on userHandle from ResolveInfo. If in work profile/clone profile, icons
+        // should be badged.
+        return mPresentationFactory.makePresentationGetter(ri)
+                .getIcon(ResolverActivity.getResolveInfoUserHandle(ri, getUserHandle()));
     }
 
     protected final Drawable loadIconPlaceholder() {
@@ -802,10 +810,12 @@ public class ResolverListAdapter extends BaseAdapter {
     }
 
     protected List<ResolvedComponentInfo> getResolversForUser(UserHandle userHandle) {
-        return mResolverListController.getResolversForIntentAsUser(true,
+        return mResolverListController.getResolversForIntentAsUser(
+                /* shouldGetResolvedFilter= */ true,
                 mResolverListCommunicator.shouldGetActivityMetadata(),
                 mResolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                mIntents, userHandle);
+                mIntents,
+                userHandle);
     }
 
     protected List<Intent> getIntents() {
@@ -951,8 +961,12 @@ public class ResolverListAdapter extends BaseAdapter {
             itemView.setContentDescription(description);
         }
 
+        /**
+         * Bind view holder to a TargetInfo.
+         */
         public void bindIcon(TargetInfo info) {
-            icon.setImageDrawable(info.getDisplayIconHolder().getDisplayIcon());
+            Drawable displayIcon = info.getDisplayIconHolder().getDisplayIcon();
+            icon.setImageDrawable(displayIcon);
             if (info.isSuspended()) {
                 icon.setColorFilter(getSuspendedColorMatrix());
             } else {

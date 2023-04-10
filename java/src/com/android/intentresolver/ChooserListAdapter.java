@@ -49,7 +49,6 @@ import android.widget.TextView;
 
 import androidx.annotation.WorkerThread;
 
-import com.android.intentresolver.ResolverActivity.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.NotSelectableTargetInfo;
@@ -99,6 +98,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
     // Sorted list of DisplayResolveInfos for the alphabetical app section.
     private List<DisplayResolveInfo> mSortedList = new ArrayList<>();
 
+    private final ItemRevealAnimationTracker mAnimationTracker = new ItemRevealAnimationTracker();
+
     // For pinned direct share labels, if the text spans multiple lines, the TextView will consume
     // the full width, even if the characters actually take up less than that. Measure the actual
     // line widths and constrain the View's width based upon that so that the pin doesn't end up
@@ -143,7 +144,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
             PackageManager packageManager,
             ChooserActivityLogger chooserActivityLogger,
             ChooserRequestParameters chooserRequest,
-            int maxRankedTargets) {
+            int maxRankedTargets,
+            UserHandle initialIntentsUserSpace) {
         // Don't send the initial intents through the shared ResolverActivity path,
         // we want to separate them into a different section.
         super(
@@ -156,7 +158,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 userHandle,
                 targetIntent,
                 resolverListCommunicator,
-                false);
+                false,
+                initialIntentsUserSpace);
 
         mChooserRequest = chooserRequest;
         mMaxRankedTargets = maxRankedTargets;
@@ -223,6 +226,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
                     ri.noResourceId = true;
                     ri.icon = 0;
                 }
+                ri.userHandle = initialIntentsUserSpace;
                 DisplayResolveInfo displayResolveInfo = DisplayResolveInfo.newDisplayResolveInfo(
                         ii, ri, ii, mPresentationFactory.makePresentationGetter(ri));
                 mCallerTargets.add(displayResolveInfo);
@@ -239,6 +243,15 @@ public class ChooserListAdapter extends ResolverListAdapter {
         createPlaceHolders();
         mResolverListCommunicator.onHandlePackagesChanged(this);
 
+    }
+
+    @Override
+    protected boolean rebuildList(boolean doPostProcessing) {
+        mAnimationTracker.reset();
+        mSortedList.clear();
+        boolean result = super.rebuildList(doPostProcessing);
+        notifyDataSetChanged();
+        return result;
     }
 
     private void createPlaceHolders() {
@@ -264,7 +277,17 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
 
         holder.bindLabel(info.getDisplayLabel(), info.getExtendedInfo(), alwaysShowSubLabel());
+        mAnimationTracker.animateLabel(holder.text, info);
+        if (holder.text2.getVisibility() == View.VISIBLE) {
+            mAnimationTracker.animateLabel(holder.text2, info);
+        }
         holder.bindIcon(info);
+        if (info.getDisplayIconHolder().getDisplayIcon() != null) {
+            mAnimationTracker.animateIcon(holder.icon, info);
+        } else {
+            holder.icon.clearAnimation();
+        }
+
         if (info.isSelectableTargetInfo()) {
             // direct share targets should append the application name for a better readout
             DisplayResolveInfo rInfo = info.getDisplayResolveInfo();
@@ -352,6 +375,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                         .collect(Collectors.groupingBy(target ->
                                 target.getResolvedComponentName().getPackageName()
                                 + "#" + target.getDisplayLabel()
+                                + '#' + ResolverActivity.getResolveInfoUserHandle(
+                                        target.getResolveInfo(), getUserHandle()).getIdentifier()
                         ))
                         .values()
                         .stream()

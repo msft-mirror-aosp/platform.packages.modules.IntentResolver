@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import android.annotation.Nullable;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
@@ -28,10 +29,9 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.util.Pair;
 
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.CrossProfileIntentsChecker;
-import com.android.intentresolver.AbstractMultiProfilePagerAdapter.MyUserIdProvider;
-import com.android.intentresolver.AbstractMultiProfilePagerAdapter.QuietModeManager;
 import com.android.intentresolver.chooser.TargetInfo;
 
 import java.util.List;
@@ -68,15 +68,8 @@ public class ResolverWrapperActivity extends ResolverActivity {
                 createListController(userHandle),
                 userHandle,
                 payloadIntents.get(0),  // TODO: extract upstream
-                this);
-    }
-
-    @Override
-    protected MyUserIdProvider createMyUserIdProvider() {
-        if (sOverrides.mMyUserIdProvider != null) {
-            return sOverrides.mMyUserIdProvider;
-        }
-        return super.createMyUserIdProvider();
+                this,
+                userHandle);
     }
 
     @Override
@@ -88,11 +81,11 @@ public class ResolverWrapperActivity extends ResolverActivity {
     }
 
     @Override
-    protected QuietModeManager createQuietModeManager() {
-        if (sOverrides.mQuietModeManager != null) {
-            return sOverrides.mQuietModeManager;
+    protected WorkProfileAvailabilityManager createWorkProfileAvailabilityManager() {
+        if (sOverrides.mWorkProfileAvailability != null) {
+            return sOverrides.mWorkProfileAvailability;
         }
-        return super.createQuietModeManager();
+        return super.createWorkProfileAvailabilityManager();
     }
 
     ResolverWrapperAdapter getAdapter() {
@@ -119,21 +112,20 @@ public class ResolverWrapperActivity extends ResolverActivity {
     }
 
     @Override
-    public void safelyStartActivity(TargetInfo cti) {
-        if (sOverrides.onSafelyStartCallback != null &&
-                sOverrides.onSafelyStartCallback.apply(cti)) {
+    public void safelyStartActivityInternal(TargetInfo cti, UserHandle user,
+            @Nullable Bundle options) {
+        if (sOverrides.onSafelyStartInternalCallback != null
+                && sOverrides.onSafelyStartInternalCallback.apply(new Pair<>(cti, user))) {
             return;
         }
-        super.safelyStartActivity(cti);
+        super.safelyStartActivityInternal(cti, user, options);
     }
 
     @Override
     protected ResolverListController createListController(UserHandle userHandle) {
         if (userHandle == UserHandle.SYSTEM) {
-            when(sOverrides.resolverListController.getUserHandle()).thenReturn(UserHandle.SYSTEM);
             return sOverrides.resolverListController;
         }
-        when(sOverrides.workResolverListController.getUserHandle()).thenReturn(userHandle);
         return sOverrides.workResolverListController;
     }
 
@@ -155,8 +147,19 @@ public class ResolverWrapperActivity extends ResolverActivity {
     }
 
     @Override
+    protected UserHandle getCloneProfileUserHandle() {
+        return sOverrides.cloneProfileUserHandle;
+    }
+
+    @Override
     public void startActivityAsUser(Intent intent, Bundle options, UserHandle user) {
         super.startActivityAsUser(intent, options, user);
+    }
+
+    @Override
+    protected List<UserHandle> getResolverRankerServiceUserHandleListInternal(UserHandle
+            userHandle) {
+        return super.getResolverRankerServiceUserHandleListInternal(userHandle);
     }
 
     /**
@@ -167,55 +170,54 @@ public class ResolverWrapperActivity extends ResolverActivity {
     static class OverrideData {
         @SuppressWarnings("Since15")
         public Function<PackageManager, PackageManager> createPackageManager;
-        public Function<TargetInfo, Boolean> onSafelyStartCallback;
+        public Function<Pair<TargetInfo, UserHandle>, Boolean> onSafelyStartInternalCallback;
         public ResolverListController resolverListController;
         public ResolverListController workResolverListController;
         public Boolean isVoiceInteraction;
         public UserHandle workProfileUserHandle;
+        public UserHandle cloneProfileUserHandle;
+        public UserHandle tabOwnerUserHandleForLaunch;
         public Integer myUserId;
         public boolean hasCrossProfileIntents;
         public boolean isQuietModeEnabled;
-        public QuietModeManager mQuietModeManager;
-        public MyUserIdProvider mMyUserIdProvider;
+        public WorkProfileAvailabilityManager mWorkProfileAvailability;
         public CrossProfileIntentsChecker mCrossProfileIntentsChecker;
 
         public void reset() {
-            onSafelyStartCallback = null;
+            onSafelyStartInternalCallback = null;
             isVoiceInteraction = null;
             createPackageManager = null;
             resolverListController = mock(ResolverListController.class);
             workResolverListController = mock(ResolverListController.class);
             workProfileUserHandle = null;
+            cloneProfileUserHandle = null;
+            tabOwnerUserHandleForLaunch = null;
             myUserId = null;
             hasCrossProfileIntents = true;
             isQuietModeEnabled = false;
 
-            mQuietModeManager = new QuietModeManager() {
+            mWorkProfileAvailability = new WorkProfileAvailabilityManager(null, null, null) {
                 @Override
-                public boolean isQuietModeEnabled(UserHandle workProfileUserHandle) {
+                public boolean isQuietModeEnabled() {
                     return isQuietModeEnabled;
                 }
 
                 @Override
-                public void requestQuietModeEnabled(boolean enabled,
-                        UserHandle workProfileUserHandle) {
+                public boolean isWorkProfileUserUnlocked() {
+                    return true;
+                }
+
+                @Override
+                public void requestQuietModeEnabled(boolean enabled) {
                     isQuietModeEnabled = enabled;
                 }
 
                 @Override
-                public void markWorkProfileEnabledBroadcastReceived() {
-                }
+                public void markWorkProfileEnabledBroadcastReceived() {}
 
                 @Override
                 public boolean isWaitingToEnableWorkProfile() {
                     return false;
-                }
-            };
-
-            mMyUserIdProvider = new MyUserIdProvider() {
-                @Override
-                public int getMyUserId() {
-                    return myUserId != null ? myUserId : UserHandle.myUserId();
                 }
             };
 

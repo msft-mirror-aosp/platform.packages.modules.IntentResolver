@@ -28,9 +28,8 @@ import android.graphics.Bitmap;
 import android.os.UserHandle;
 
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.CrossProfileIntentsChecker;
-import com.android.intentresolver.AbstractMultiProfilePagerAdapter.MyUserIdProvider;
-import com.android.intentresolver.AbstractMultiProfilePagerAdapter.QuietModeManager;
 import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.flags.FeatureFlagRepository;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 
 import java.util.function.Consumer;
@@ -55,11 +54,12 @@ public class ChooserActivityOverrideData {
 
     @SuppressWarnings("Since15")
     public Function<PackageManager, PackageManager> createPackageManager;
+    public Function<TargetInfo, Boolean> onSafelyStartInternalCallback;
     public Function<TargetInfo, Boolean> onSafelyStartCallback;
     public Function2<UserHandle, Consumer<ShortcutLoader.Result>, ShortcutLoader>
             shortcutLoaderFactory = (userHandle, callback) -> null;
-    public ResolverListController resolverListController;
-    public ResolverListController workResolverListController;
+    public ChooserActivity.ChooserListController resolverListController;
+    public ChooserActivity.ChooserListController workResolverListController;
     public Boolean isVoiceInteraction;
     public boolean isImageType;
     public Cursor resolverCursor;
@@ -69,47 +69,54 @@ public class ChooserActivityOverrideData {
     public int alternateProfileSetting;
     public Resources resources;
     public UserHandle workProfileUserHandle;
+    public UserHandle cloneProfileUserHandle;
+    public UserHandle tabOwnerUserHandleForLaunch;
     public boolean hasCrossProfileIntents;
     public boolean isQuietModeEnabled;
     public Integer myUserId;
-    public QuietModeManager mQuietModeManager;
-    public MyUserIdProvider mMyUserIdProvider;
+    public WorkProfileAvailabilityManager mWorkProfileAvailability;
     public CrossProfileIntentsChecker mCrossProfileIntentsChecker;
     public PackageManager packageManager;
+    public FeatureFlagRepository featureFlagRepository;
 
     public void reset() {
-        onSafelyStartCallback = null;
+        onSafelyStartInternalCallback = null;
         isVoiceInteraction = null;
         createPackageManager = null;
         previewThumbnail = null;
         isImageType = false;
         resolverCursor = null;
         resolverForceException = false;
-        resolverListController = mock(ResolverListController.class);
-        workResolverListController = mock(ResolverListController.class);
+        resolverListController = mock(ChooserActivity.ChooserListController.class);
+        workResolverListController = mock(ChooserActivity.ChooserListController.class);
         chooserActivityLogger = mock(ChooserActivityLogger.class);
         alternateProfileSetting = 0;
         resources = null;
         workProfileUserHandle = null;
+        cloneProfileUserHandle = null;
+        tabOwnerUserHandleForLaunch = null;
         hasCrossProfileIntents = true;
         isQuietModeEnabled = false;
         myUserId = null;
         packageManager = null;
-        mQuietModeManager = new QuietModeManager() {
+        mWorkProfileAvailability = new WorkProfileAvailabilityManager(null, null, null) {
             @Override
-            public boolean isQuietModeEnabled(UserHandle workProfileUserHandle) {
+            public boolean isQuietModeEnabled() {
                 return isQuietModeEnabled;
             }
 
             @Override
-            public void requestQuietModeEnabled(boolean enabled,
-                    UserHandle workProfileUserHandle) {
+            public boolean isWorkProfileUserUnlocked() {
+                return true;
+            }
+
+            @Override
+            public void requestQuietModeEnabled(boolean enabled) {
                 isQuietModeEnabled = enabled;
             }
 
             @Override
-            public void markWorkProfileEnabledBroadcastReceived() {
-            }
+            public void markWorkProfileEnabledBroadcastReceived() {}
 
             @Override
             public boolean isWaitingToEnableWorkProfile() {
@@ -118,16 +125,10 @@ public class ChooserActivityOverrideData {
         };
         shortcutLoaderFactory = ((userHandle, resultConsumer) -> null);
 
-        mMyUserIdProvider = new MyUserIdProvider() {
-            @Override
-            public int getMyUserId() {
-                return myUserId != null ? myUserId : UserHandle.myUserId();
-            }
-        };
-
         mCrossProfileIntentsChecker = mock(CrossProfileIntentsChecker.class);
         when(mCrossProfileIntentsChecker.hasCrossProfileIntents(any(), anyInt(), anyInt()))
                 .thenAnswer(invocation -> hasCrossProfileIntents);
+        featureFlagRepository = null;
     }
 
     private ChooserActivityOverrideData() {}

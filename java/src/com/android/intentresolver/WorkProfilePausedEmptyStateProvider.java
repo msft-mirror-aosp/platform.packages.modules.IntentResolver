@@ -26,11 +26,9 @@ import android.content.Context;
 import android.os.UserHandle;
 import android.stats.devicepolicy.nano.DevicePolicyEnums;
 
-import com.android.internal.R;
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.EmptyState;
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.EmptyStateProvider;
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.OnSwitchOnWorkSelectedListener;
-import com.android.intentresolver.AbstractMultiProfilePagerAdapter.QuietModeManager;
 
 /**
  * Chooser/ResolverActivity empty state provider that returns empty state which is shown when
@@ -39,19 +37,19 @@ import com.android.intentresolver.AbstractMultiProfilePagerAdapter.QuietModeMana
 public class WorkProfilePausedEmptyStateProvider implements EmptyStateProvider {
 
     private final UserHandle mWorkProfileUserHandle;
-    private final QuietModeManager mQuietModeManager;
+    private final WorkProfileAvailabilityManager mWorkProfileAvailability;
     private final String mMetricsCategory;
     private final OnSwitchOnWorkSelectedListener mOnSwitchOnWorkSelectedListener;
     private final Context mContext;
 
     public WorkProfilePausedEmptyStateProvider(@NonNull Context context,
             @Nullable UserHandle workProfileUserHandle,
-            @NonNull QuietModeManager quietModeManager,
+            @NonNull WorkProfileAvailabilityManager workProfileAvailability,
             @Nullable OnSwitchOnWorkSelectedListener onSwitchOnWorkSelectedListener,
             @NonNull String metricsCategory) {
         mContext = context;
         mWorkProfileUserHandle = workProfileUserHandle;
-        mQuietModeManager = quietModeManager;
+        mWorkProfileAvailability = workProfileAvailability;
         mMetricsCategory = metricsCategory;
         mOnSwitchOnWorkSelectedListener = onSwitchOnWorkSelectedListener;
     }
@@ -60,7 +58,7 @@ public class WorkProfilePausedEmptyStateProvider implements EmptyStateProvider {
     @Override
     public EmptyState getEmptyState(ResolverListAdapter resolverListAdapter) {
         if (!resolverListAdapter.getUserHandle().equals(mWorkProfileUserHandle)
-                || !mQuietModeManager.isQuietModeEnabled(mWorkProfileUserHandle)
+                || !mWorkProfileAvailability.isQuietModeEnabled()
                 || resolverListAdapter.getCount() == 0) {
             return null;
         }
@@ -74,7 +72,7 @@ public class WorkProfilePausedEmptyStateProvider implements EmptyStateProvider {
             if (mOnSwitchOnWorkSelectedListener != null) {
                 mOnSwitchOnWorkSelectedListener.onSwitchOnWorkSelected();
             }
-            mQuietModeManager.requestQuietModeEnabled(false, mWorkProfileUserHandle);
+            mWorkProfileAvailability.requestQuietModeEnabled(false);
         }, mMetricsCategory);
     }
 
