@@ -26,6 +26,8 @@ import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasSibling;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
+import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
@@ -79,6 +81,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
@@ -90,7 +93,7 @@ import android.util.HashedStringCache;
 import android.util.Pair;
 import android.util.SparseArray;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
@@ -98,12 +101,12 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.BoundedDiagnosingMatcher;
+import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.intentresolver.ResolverActivity.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
-import com.android.intentresolver.flags.Flags;
+import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
@@ -126,6 +129,7 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,6 +160,8 @@ public class UnbundledChooserActivityTest {
      * --------
      */
 
+    private static final UserHandle PERSONAL_USER_HANDLE = InstrumentationRegistry
+            .getInstrumentation().getTargetContext().getUser();
     private static final Function<PackageManager, PackageManager> DEFAULT_PM = pm -> pm;
     private static final Function<PackageManager, PackageManager> NO_APP_PREDICTION_SERVICE_PM =
             pm -> {
@@ -165,11 +171,7 @@ public class UnbundledChooserActivityTest {
             };
 
     private static final List<BooleanFlag> ALL_FLAGS =
-            Arrays.asList(
-                    Flags.SHARESHEET_CUSTOM_ACTIONS,
-                    Flags.SHARESHEET_RESELECTION_ACTION,
-                    Flags.SHARESHEET_IMAGE_AND_TEXT_PREVIEW,
-                    Flags.SHARESHEET_SCROLLABLE_IMAGE_PREVIEW);
+            Arrays.asList();
 
     private static final Map<BooleanFlag, Boolean> ALL_FLAGS_OFF =
             createAllFlagsOverride(false);
@@ -178,6 +180,15 @@ public class UnbundledChooserActivityTest {
 
     @Parameterized.Parameters
     public static Collection packageManagers() {
+        if (ALL_FLAGS.isEmpty()) {
+            // No flags to toggle between, so just two configurations.
+            return Arrays.asList(new Object[][] {
+                    // Default PackageManager and all flags off
+                    { DEFAULT_PM, ALL_FLAGS_OFF},
+                    // No App Prediction Service and all flags off
+                    { NO_APP_PREDICTION_SERVICE_PM, ALL_FLAGS_OFF },
+            });
+        }
         return Arrays.asList(new Object[][] {
                 // Default PackageManager and all flags off
                 { DEFAULT_PM, ALL_FLAGS_OFF},
@@ -351,7 +362,7 @@ public class UnbundledChooserActivityTest {
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, "chooser test"));
         waitForIdle();
         onView(withId(android.R.id.title))
-                .check(matches(withText(com.android.internal.R.string.whichSendApplication)));
+                .check(matches(withText(R.string.whichSendApplication)));
     }
 
     @Test
@@ -363,7 +374,7 @@ public class UnbundledChooserActivityTest {
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
         onView(withId(android.R.id.title))
-                .check(matches(withText(com.android.internal.R.string.whichSendApplication)));
+                .check(matches(withText(R.string.whichSendApplication)));
     }
 
     @Test
@@ -416,10 +427,12 @@ public class UnbundledChooserActivityTest {
     @Test
     public void visiblePreviewTitleAndThumbnail() throws InterruptedException {
         String previewTitle = "My Content Preview Title";
-        Intent sendIntent = createSendTextIntentWithPreview(previewTitle,
-                Uri.parse("android.resource://com.android.frameworks.coretests/"
-                        + R.drawable.test320x240));
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        Uri uri = Uri.parse(
+                "android.resource://com.android.frameworks.coretests/"
+                        + R.drawable.test320x240);
+        Intent sendIntent = createSendTextIntentWithPreview(previewTitle, uri);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
         setupResolverControllers(resolvedComponentInfos);
@@ -446,7 +459,7 @@ public class UnbundledChooserActivityTest {
         onView(withId(com.android.internal.R.id.profile_button)).check(doesNotExist());
 
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -473,7 +486,7 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> infosToStack = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             ResolveInfo resolveInfo = ResolverDataProvider.createResolveInfo(i,
-                    UserHandle.USER_CURRENT);
+                    UserHandle.USER_CURRENT, PERSONAL_USER_HANDLE);
             resolveInfo.activityInfo.applicationInfo.name = appName;
             resolveInfo.activityInfo.applicationInfo.packageName = packageName;
             resolveInfo.activityInfo.packageName = packageName;
@@ -492,7 +505,7 @@ public class UnbundledChooserActivityTest {
         assertThat(activity.getAdapter().getCount(), is(6));
 
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -523,17 +536,21 @@ public class UnbundledChooserActivityTest {
         verify(ChooserActivityOverrideData.getInstance().resolverListController, times(1))
                 .topK(any(List.class), anyInt());
         assertThat(activity.getIsSelected(), is(false));
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             return true;
         };
         ResolveInfo toChoose = resolvedComponentInfos.get(0).getResolveInfoAt(0);
+        DisplayResolveInfo testDri =
+                activity.createTestDisplayResolveInfo(sendIntent, toChoose, "testLabel", "testInfo",
+                        sendIntent, /* resolveInfoPresentationGetter */ null);
         onView(withText(toChoose.activityInfo.name))
                 .perform(click());
         waitForIdle();
         verify(ChooserActivityOverrideData.getInstance().resolverListController, times(1))
-                .updateChooserCounts(Mockito.anyString(), anyInt(), Mockito.anyString());
+                .updateChooserCounts(Mockito.anyString(), any(UserHandle.class),
+                        Mockito.anyString());
         verify(ChooserActivityOverrideData.getInstance().resolverListController, times(1))
-                .updateModel(toChoose.activityInfo.getComponentName());
+                .updateModel(testDri);
         assertThat(activity.getIsSelected(), is(true));
     }
 
@@ -561,7 +578,7 @@ public class UnbundledChooserActivityTest {
     @Test
     public void autoLaunchSingleResult() throws InterruptedException {
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -596,7 +613,7 @@ public class UnbundledChooserActivityTest {
         assertThat(activity.getAdapter().getCount(), is(1));
 
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -631,7 +648,7 @@ public class UnbundledChooserActivityTest {
         assertThat(activity.getAdapter().getCount(), is(2));
 
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -662,7 +679,7 @@ public class UnbundledChooserActivityTest {
         assertThat(activity.getAdapter().getCount(), is(2));
 
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -677,24 +694,23 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_IMAGE_AND_TEXT_PREVIEW_NAME },
-            values = { true })
     public void testImagePlusTextSharing_ExcludeText() {
-        Intent sendIntent = createSendImageIntent(
-                Uri.parse("android.resource://com.android.frameworks.coretests/"
-                        + R.drawable.test320x240));
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        Uri uri = Uri.parse(
+                "android.resource://com.android.frameworks.coretests/"
+                        + R.drawable.test320x240);
+        Intent sendIntent = createSendImageIntent(uri);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
         sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
 
         List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
                 ResolverDataProvider.createResolvedComponentInfo(
                         new ComponentName("org.imageviewer", "ImageTarget"),
-                        sendIntent),
+                        sendIntent, PERSONAL_USER_HANDLE),
                 ResolverDataProvider.createResolvedComponentInfo(
                         new ComponentName("org.textviewer", "UriTarget"),
-                        new Intent("VIEW_TEXT"))
+                        new Intent("VIEW_TEXT"), PERSONAL_USER_HANDLE)
         );
 
         setupResolverControllers(resolvedComponentInfos);
@@ -708,7 +724,7 @@ public class UnbundledChooserActivityTest {
         waitForIdle();
 
         AtomicReference<Intent> launchedIntentRef = new AtomicReference<>();
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             launchedIntentRef.set(targetInfo.getTargetIntent());
             return true;
         };
@@ -720,14 +736,13 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_IMAGE_AND_TEXT_PREVIEW_NAME },
-            values = { true })
     public void testImagePlusTextSharing_RemoveAndAddBackText() {
-        Intent sendIntent = createSendImageIntent(
-                Uri.parse("android.resource://com.android.frameworks.coretests/"
-                        + R.drawable.test320x240));
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        Uri uri = Uri.parse(
+                "android.resource://com.android.frameworks.coretests/"
+                        + R.drawable.test320x240);
+        Intent sendIntent = createSendImageIntent(uri);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
         final String text = "https://google.com/search?q=google";
         sendIntent.putExtra(Intent.EXTRA_TEXT, text);
@@ -735,10 +750,10 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
                 ResolverDataProvider.createResolvedComponentInfo(
                         new ComponentName("org.imageviewer", "ImageTarget"),
-                        sendIntent),
+                        sendIntent, PERSONAL_USER_HANDLE),
                 ResolverDataProvider.createResolvedComponentInfo(
                         new ComponentName("org.textviewer", "UriTarget"),
-                        new Intent("VIEW_TEXT"))
+                        new Intent("VIEW_TEXT"), PERSONAL_USER_HANDLE)
         );
 
         setupResolverControllers(resolvedComponentInfos);
@@ -755,7 +770,7 @@ public class UnbundledChooserActivityTest {
         waitForIdle();
 
         AtomicReference<Intent> launchedIntentRef = new AtomicReference<>();
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             launchedIntentRef.set(targetInfo.getTargetIntent());
             return true;
         };
@@ -767,14 +782,13 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_IMAGE_AND_TEXT_PREVIEW_NAME },
-            values = { true })
     public void testImagePlusTextSharing_TextExclusionDoesNotAffectAlternativeIntent() {
-        Intent sendIntent = createSendImageIntent(
-                Uri.parse("android.resource://com.android.frameworks.coretests/"
-                        + R.drawable.test320x240));
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        Uri uri = Uri.parse(
+                "android.resource://com.android.frameworks.coretests/"
+                        + R.drawable.test320x240);
+        Intent sendIntent = createSendImageIntent(uri);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
         sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
 
@@ -785,10 +799,10 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
                 ResolverDataProvider.createResolvedComponentInfo(
                         new ComponentName("org.imageviewer", "ImageTarget"),
-                        sendIntent),
+                        sendIntent, PERSONAL_USER_HANDLE),
                 ResolverDataProvider.createResolvedComponentInfo(
                         new ComponentName("org.textviewer", "UriTarget"),
-                        alternativeIntent)
+                        alternativeIntent, PERSONAL_USER_HANDLE)
         );
 
         setupResolverControllers(resolvedComponentInfos);
@@ -802,7 +816,7 @@ public class UnbundledChooserActivityTest {
         waitForIdle();
 
         AtomicReference<Intent> launchedIntentRef = new AtomicReference<>();
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             launchedIntentRef.set(targetInfo.getTargetIntent());
             return true;
         };
@@ -811,6 +825,42 @@ public class UnbundledChooserActivityTest {
                 .perform(click());
         waitForIdle();
         assertThat(launchedIntentRef.get().getStringExtra(Intent.EXTRA_TEXT)).isEqualTo(text);
+    }
+
+    @Test
+    public void testImagePlusTextSharing_failedThumbnailAndExcludedText_textRemainsVisible() {
+        Uri uri = Uri.parse(
+                "android.resource://com.android.frameworks.coretests/"
+                        + R.drawable.test320x240);
+        Intent sendIntent = createSendImageIntent(uri);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                new TestPreviewImageLoader(Collections.emptyMap());
+        ChooserActivityOverrideData.getInstance().isImageType = true;
+        sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
+
+        List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
+                ResolverDataProvider.createResolvedComponentInfo(
+                        new ComponentName("org.imageviewer", "ImageTarget"),
+                        sendIntent, PERSONAL_USER_HANDLE),
+                ResolverDataProvider.createResolvedComponentInfo(
+                        new ComponentName("org.textviewer", "UriTarget"),
+                        new Intent("VIEW_TEXT"), PERSONAL_USER_HANDLE)
+        );
+
+        setupResolverControllers(resolvedComponentInfos);
+
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        waitForIdle();
+
+        onView(withId(R.id.include_text_action))
+                .check(matches(isDisplayed()))
+                .perform(click());
+        waitForIdle();
+
+        onView(withId(R.id.image_view))
+                .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
+        onView(withId(R.id.content_preview_text))
+                .check(matches(allOf(isDisplayed(), not(isEnabled()))));
     }
 
     @Test
@@ -878,11 +928,12 @@ public class UnbundledChooserActivityTest {
 
     @Test @Ignore
     public void testEditImageLogs() throws Exception {
-        Intent sendIntent = createSendImageIntent(
-                Uri.parse("android.resource://com.android.frameworks.coretests/"
-                        + R.drawable.test320x240));
-
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        Uri uri = Uri.parse(
+                "android.resource://com.android.frameworks.coretests/"
+                        + R.drawable.test320x240);
+        Intent sendIntent = createSendImageIntent(uri);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -909,7 +960,8 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createWideBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -917,31 +969,27 @@ public class UnbundledChooserActivityTest {
         setupResolverControllers(resolvedComponentInfos);
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
-        onView(withId(com.android.internal.R.id.content_preview_image_area))
+        onView(withId(R.id.scrollable_image_preview))
                 .check((view, exception) -> {
                     if (exception != null) {
                         throw exception;
                     }
-                    ViewGroup parent = (ViewGroup) view;
-                    ArrayList<View> visibleViews = new ArrayList<>();
-                    for (int i = 0, count = parent.getChildCount(); i < count; i++) {
-                        View child = parent.getChildAt(i);
-                        if (child.getVisibility() == View.VISIBLE) {
-                            visibleViews.add(child);
-                        }
-                    }
-                    assertThat(visibleViews.size(), is(1));
+                    RecyclerView recyclerView = (RecyclerView) view;
+                    assertThat(recyclerView.getAdapter().getItemCount(), is(1));
+                    assertThat(recyclerView.getChildCount(), is(1));
+                    View imageView = recyclerView.getChildAt(0);
+                    Rect rect = new Rect();
+                    boolean isPartiallyVisible = imageView.getGlobalVisibleRect(rect);
                     assertThat(
-                            "image preview view is fully visible",
-                            isDisplayed().matches(visibleViews.get(0)));
+                            "image preview view is not fully visible",
+                            isPartiallyVisible
+                                    && rect.width() == imageView.getWidth()
+                                    && rect.height() == imageView.getHeight());
                 });
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_SCROLLABLE_IMAGE_PREVIEW_NAME },
-            values = { false })
-    public void twoVisibleImagePreview() {
+    public void allThumbnailsFailedToLoad_hidePreview() {
         Uri uri = Uri.parse("android.resource://com.android.frameworks.coretests/"
                 + R.drawable.test320x240);
 
@@ -950,7 +998,8 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                new TestPreviewImageLoader(Collections.emptyMap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -958,54 +1007,11 @@ public class UnbundledChooserActivityTest {
         setupResolverControllers(resolvedComponentInfos);
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
-        onView(withId(com.android.internal.R.id.content_preview_image_1_large))
-                .check(matches(isDisplayed()));
-        onView(withId(com.android.internal.R.id.content_preview_image_2_large))
-                .check(matches(isDisplayed()));
-        onView(withId(com.android.internal.R.id.content_preview_image_2_small))
-                .check(matches(not(isDisplayed())));
-        onView(withId(com.android.internal.R.id.content_preview_image_3_small))
-                .check(matches(not(isDisplayed())));
+        onView(withId(R.id.scrollable_image_preview))
+                .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_SCROLLABLE_IMAGE_PREVIEW_NAME },
-            values = { false })
-    public void threeOrMoreVisibleImagePreview() {
-        Uri uri = Uri.parse("android.resource://com.android.frameworks.coretests/"
-                + R.drawable.test320x240);
-
-        ArrayList<Uri> uris = new ArrayList<>();
-        uris.add(uri);
-        uris.add(uri);
-        uris.add(uri);
-        uris.add(uri);
-        uris.add(uri);
-
-        Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
-        ChooserActivityOverrideData.getInstance().isImageType = true;
-
-        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
-
-        setupResolverControllers(resolvedComponentInfos);
-        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
-        waitForIdle();
-        onView(withId(com.android.internal.R.id.content_preview_image_1_large))
-                .check(matches(isDisplayed()));
-        onView(withId(com.android.internal.R.id.content_preview_image_2_large))
-                .check(matches(not(isDisplayed())));
-        onView(withId(com.android.internal.R.id.content_preview_image_2_small))
-                .check(matches(isDisplayed()));
-        onView(withId(com.android.internal.R.id.content_preview_image_3_small))
-                .check(matches(isDisplayed()));
-    }
-
-    @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_SCROLLABLE_IMAGE_PREVIEW_NAME },
-            values = { true })
     public void testManyVisibleImagePreview_ScrollableImagePreview() {
         Uri uri = Uri.parse("android.resource://com.android.frameworks.coretests/"
                 + R.drawable.test320x240);
@@ -1023,7 +1029,8 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -1031,7 +1038,7 @@ public class UnbundledChooserActivityTest {
         setupResolverControllers(resolvedComponentInfos);
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
-        onView(withId(com.android.internal.R.id.content_preview_image_area))
+        onView(withId(R.id.scrollable_image_preview))
                 .perform(RecyclerViewActions.scrollToLastPosition())
                 .check((view, exception) -> {
                     if (exception != null) {
@@ -1043,9 +1050,6 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_IMAGE_AND_TEXT_PREVIEW_NAME },
-            values = { true })
     public void testImageAndTextPreview() {
         final Uri uri = Uri.parse("android.resource://com.android.frameworks.coretests/"
                 + R.drawable.test320x240);
@@ -1056,7 +1060,8 @@ public class UnbundledChooserActivityTest {
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
         sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -1066,6 +1071,40 @@ public class UnbundledChooserActivityTest {
         waitForIdle();
         onView(withText(sharedText))
                 .check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void testTextPreviewWhenTextIsSharedWithMultipleImages() {
+        final Uri uri = Uri.parse("android.resource://com.android.frameworks.coretests/"
+                + R.drawable.test320x240);
+        final String sharedText = "text-" + System.currentTimeMillis();
+
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(uri);
+        uris.add(uri);
+
+        Intent sendIntent = createSendUriIntentWithPreview(uris);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
+        ChooserActivityOverrideData.getInstance().isImageType = true;
+
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+
+        when(
+                ChooserActivityOverrideData
+                        .getInstance()
+                        .resolverListController
+                        .getResolversForIntentAsUser(
+                                Mockito.anyBoolean(),
+                                Mockito.anyBoolean(),
+                                Mockito.anyBoolean(),
+                                Mockito.isA(List.class),
+                                Mockito.any(UserHandle.class)))
+                .thenReturn(resolvedComponentInfos);
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        waitForIdle();
+        onView(withText(sharedText)).check(matches(isDisplayed()));
     }
 
     @Test
@@ -1135,7 +1174,8 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().previewThumbnail = createBitmap();
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
         ChooserActivityOverrideData.getInstance().isImageType = true;
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -1272,8 +1312,12 @@ public class UnbundledChooserActivityTest {
         waitForIdle();
 
         final DisplayResolveInfo testDri =
-                activity.createTestDisplayResolveInfo(sendIntent,
-                ResolverDataProvider.createResolveInfo(3, 0), "testLabel", "testInfo", sendIntent,
+                activity.createTestDisplayResolveInfo(
+                        sendIntent,
+                        ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE),
+                        "testLabel",
+                        "testInfo",
+                        sendIntent,
                 /* resolveInfoPresentationGetter */ null);
         final ChooserListAdapter adapter = activity.getAdapter();
 
@@ -1671,9 +1715,6 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_CUSTOM_ACTIONS_NAME },
-            values = { true })
     public void testLaunchWithCustomAction() throws InterruptedException {
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         setupResolverControllers(resolvedComponentInfos);
@@ -1717,9 +1758,6 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    @RequireFeatureFlags(
-            flags = { Flags.SHARESHEET_RESELECTION_ACTION_NAME },
-            values = { true })
     public void testLaunchWithShareModification() throws InterruptedException {
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         setupResolverControllers(resolvedComponentInfos);
@@ -1727,13 +1765,17 @@ public class UnbundledChooserActivityTest {
         Context testContext = InstrumentationRegistry.getInstrumentation().getContext();
         final String modifyShareAction = "test-broadcast-receiver-action";
         Intent chooserIntent = Intent.createChooser(createSendTextIntent(), null);
+        String label = "modify share";
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                testContext,
+                123,
+                new Intent(modifyShareAction),
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+        ChooserAction action = new ChooserAction.Builder(Icon.createWithBitmap(
+                createBitmap()), label, pendingIntent).build();
         chooserIntent.putExtra(
                 Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION,
-                PendingIntent.getBroadcast(
-                        testContext,
-                        123,
-                        new Intent(modifyShareAction),
-                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT));
+                action);
         // Start activity
         mActivityRule.launchActivity(chooserIntent);
         waitForIdle();
@@ -1748,7 +1790,7 @@ public class UnbundledChooserActivityTest {
         testContext.registerReceiver(testReceiver, new IntentFilter(modifyShareAction));
 
         try {
-            onView(withText(R.string.select_text)).perform(click());
+            onView(withText(label)).perform(click());
             broadcastInvoked.await();
         } finally {
             testContext.unregisterReceiver(testReceiver);
@@ -1811,7 +1853,7 @@ public class UnbundledChooserActivityTest {
         // Create direct share target
         List<ChooserTarget> serviceTargets = createDirectShareTargets(1,
                 resolvedComponentInfos.get(14).getResolveInfoAt(0).activityInfo.packageName);
-        ResolveInfo ri = ResolverDataProvider.createResolveInfo(16, 0);
+        ResolveInfo ri = ResolverDataProvider.createResolveInfo(16, 0, PERSONAL_USER_HANDLE);
 
         // Start activity
         final IChooserWrapper wrapper = (IChooserWrapper)
@@ -1944,7 +1986,7 @@ public class UnbundledChooserActivityTest {
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -2100,7 +2142,7 @@ public class UnbundledChooserActivityTest {
         onView(withId(com.android.internal.R.id.profile_button)).check(doesNotExist());
 
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -2327,7 +2369,7 @@ public class UnbundledChooserActivityTest {
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
         Intent sendIntent = createSendTextIntent();
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -2346,7 +2388,7 @@ public class UnbundledChooserActivityTest {
         Intent chooserIntent = createChooserIntent(createSendTextIntent(),
                 new Intent[] {new Intent("action.fake")});
         ResolveInfo[] chosen = new ResolveInfo[1];
-        ChooserActivityOverrideData.getInstance().onSafelyStartCallback = targetInfo -> {
+        ChooserActivityOverrideData.getInstance().onSafelyStartInternalCallback = targetInfo -> {
             chosen[0] = targetInfo.getResolveInfo();
             return true;
         };
@@ -2474,7 +2516,7 @@ public class UnbundledChooserActivityTest {
                 new Intent[] {new Intent("action.fake")});
         ChooserActivityOverrideData.getInstance().packageManager = mock(PackageManager.class);
         ResolveInfo ri = ResolverDataProvider.createResolveInfo(0,
-                UserHandle.USER_CURRENT);
+                UserHandle.USER_CURRENT, PERSONAL_USER_HANDLE);
         when(
                 ChooserActivityOverrideData
                         .getInstance()
@@ -2524,6 +2566,46 @@ public class UnbundledChooserActivityTest {
         verify(workProfileShortcutLoader, times(1)).queryShortcuts(any());
     }
 
+    @Test
+    public void testClonedProfilePresent_personalAdapterIsSetWithPersonalProfile() {
+        // enable cloneProfile
+        markCloneProfileUserAvailable();
+        List<ResolvedComponentInfo> resolvedComponentInfos =
+                createResolvedComponentsWithCloneProfileForTest(
+                        3,
+                        PERSONAL_USER_HANDLE,
+                        ChooserActivityOverrideData.getInstance().cloneProfileUserHandle);
+        setupResolverControllers(resolvedComponentInfos);
+        Intent sendIntent = createSendTextIntent();
+
+        final IChooserWrapper activity = (IChooserWrapper) mActivityRule
+                .launchActivity(Intent.createChooser(sendIntent, "personalProfileTest"));
+        waitForIdle();
+
+        assertThat(activity.getPersonalListAdapter().getUserHandle(), is(PERSONAL_USER_HANDLE));
+        assertThat(activity.getAdapter().getCount(), is(3));
+    }
+
+    @Test
+    public void testClonedProfilePresent_personalTabUsesExpectedAdapter() {
+        markWorkProfileUserAvailable();
+        markCloneProfileUserAvailable();
+        List<ResolvedComponentInfo> personalResolvedComponentInfos =
+                createResolvedComponentsForTest(3);
+        List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(
+                4);
+        setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
+        Intent sendIntent = createSendTextIntent();
+        sendIntent.setType(TEST_MIME_TYPE);
+
+
+        final IChooserWrapper activity = (IChooserWrapper)
+                mActivityRule.launchActivity(Intent.createChooser(sendIntent, "multi tab test"));
+        waitForIdle();
+
+        assertThat(activity.getCurrentUserHandle(), is(PERSONAL_USER_HANDLE));
+    }
+
     private Intent createChooserIntent(Intent intent, Intent[] initialIntents) {
         Intent chooserIntent = new Intent();
         chooserIntent.setAction(Intent.ACTION_CHOOSER);
@@ -2558,6 +2640,7 @@ public class UnbundledChooserActivityTest {
         ri.activityInfo.packageName = "fake.package.name";
         ri.activityInfo.applicationInfo = new ApplicationInfo();
         ri.activityInfo.applicationInfo.packageName = "fake.package.name";
+        ri.userHandle = UserHandle.CURRENT;
         return ri;
     }
 
@@ -2619,7 +2702,23 @@ public class UnbundledChooserActivityTest {
     private List<ResolvedComponentInfo> createResolvedComponentsForTest(int numberOfResults) {
         List<ResolvedComponentInfo> infoList = new ArrayList<>(numberOfResults);
         for (int i = 0; i < numberOfResults; i++) {
-            infoList.add(ResolverDataProvider.createResolvedComponentInfo(i));
+            infoList.add(ResolverDataProvider.createResolvedComponentInfo(i, PERSONAL_USER_HANDLE));
+        }
+        return infoList;
+    }
+
+    private List<ResolvedComponentInfo> createResolvedComponentsWithCloneProfileForTest(
+            int numberOfResults,
+            UserHandle resolvedForPersonalUser,
+            UserHandle resolvedForClonedUser) {
+        List<ResolvedComponentInfo> infoList = new ArrayList<>(numberOfResults);
+        for (int i = 0; i < 1; i++) {
+            infoList.add(ResolverDataProvider.createResolvedComponentInfo(i,
+                    resolvedForPersonalUser));
+        }
+        for (int i = 1; i < numberOfResults; i++) {
+            infoList.add(ResolverDataProvider.createResolvedComponentInfo(i,
+                    resolvedForClonedUser));
         }
         return infoList;
     }
@@ -2629,9 +2728,11 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> infoList = new ArrayList<>(numberOfResults);
         for (int i = 0; i < numberOfResults; i++) {
             if (i == 0) {
-                infoList.add(ResolverDataProvider.createResolvedComponentInfoWithOtherId(i));
+                infoList.add(ResolverDataProvider.createResolvedComponentInfoWithOtherId(i,
+                        PERSONAL_USER_HANDLE));
             } else {
-                infoList.add(ResolverDataProvider.createResolvedComponentInfo(i));
+                infoList.add(ResolverDataProvider.createResolvedComponentInfo(i,
+                        PERSONAL_USER_HANDLE));
             }
         }
         return infoList;
@@ -2643,9 +2744,11 @@ public class UnbundledChooserActivityTest {
         for (int i = 0; i < numberOfResults; i++) {
             if (i == 0) {
                 infoList.add(
-                        ResolverDataProvider.createResolvedComponentInfoWithOtherId(i, userId));
+                        ResolverDataProvider.createResolvedComponentInfoWithOtherId(i, userId,
+                                PERSONAL_USER_HANDLE));
             } else {
-                infoList.add(ResolverDataProvider.createResolvedComponentInfo(i));
+                infoList.add(ResolverDataProvider.createResolvedComponentInfo(i,
+                        PERSONAL_USER_HANDLE));
             }
         }
         return infoList;
@@ -2655,7 +2758,8 @@ public class UnbundledChooserActivityTest {
             int numberOfResults, int userId) {
         List<ResolvedComponentInfo> infoList = new ArrayList<>(numberOfResults);
         for (int i = 0; i < numberOfResults; i++) {
-            infoList.add(ResolverDataProvider.createResolvedComponentInfoWithOtherId(i, userId));
+            infoList.add(ResolverDataProvider.createResolvedComponentInfoWithOtherId(i, userId,
+                    PERSONAL_USER_HANDLE));
         }
         return infoList;
     }
@@ -2687,8 +2791,22 @@ public class UnbundledChooserActivityTest {
     }
 
     private Bitmap createBitmap() {
-        int width = 200;
-        int height = 200;
+        return createBitmap(200, 200);
+    }
+
+    private Bitmap createWideBitmap() {
+        WindowManager windowManager = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext()
+                .getSystemService(WindowManager.class);
+        int width = 3000;
+        if (windowManager != null) {
+            Rect bounds = windowManager.getMaximumWindowMetrics().getBounds();
+            width = bounds.width() + 200;
+        }
+        return createBitmap(width, 100);
+    }
+
+    private Bitmap createBitmap(int width, int height) {
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
@@ -2732,6 +2850,10 @@ public class UnbundledChooserActivityTest {
 
     private void markWorkProfileUserAvailable() {
         ChooserActivityOverrideData.getInstance().workProfileUserHandle = UserHandle.of(10);
+    }
+
+    private void markCloneProfileUserAvailable() {
+        ChooserActivityOverrideData.getInstance().cloneProfileUserHandle = UserHandle.of(11);
     }
 
     private void setupResolverControllers(
@@ -2839,5 +2961,9 @@ public class UnbundledChooserActivityTest {
                     return pair.first;
                 };
         return shortcutLoaders;
+    }
+
+    private static ImageLoader createImageLoader(Uri uri, Bitmap bitmap) {
+        return new TestPreviewImageLoader(Collections.singletonMap(uri, bitmap));
     }
 }

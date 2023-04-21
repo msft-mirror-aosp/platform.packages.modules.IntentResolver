@@ -18,20 +18,17 @@ package com.android.intentresolver
 
 import android.graphics.Bitmap
 import android.net.Uri
+import com.android.intentresolver.contentpreview.ImageLoader
 import java.util.function.Consumer
 
 internal class TestPreviewImageLoader(
-    private val imageLoader: ImageLoader,
-    private val imageOverride: () -> Bitmap?
+    private val bitmaps: Map<Uri, Bitmap>
 ) : ImageLoader {
     override fun loadImage(uri: Uri, callback: Consumer<Bitmap?>) {
-        val override = imageOverride()
-        if (override != null) {
-            callback.accept(override)
-        } else {
-            imageLoader.loadImage(uri, callback)
-        }
+        callback.accept(bitmaps[uri])
     }
 
-    override suspend fun invoke(uri: Uri): Bitmap? = imageOverride() ?: imageLoader(uri)
+    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? = bitmaps[uri]
+
+    override fun prePopulate(uris: List<Uri>) = Unit
 }

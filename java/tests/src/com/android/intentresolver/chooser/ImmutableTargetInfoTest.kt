@@ -30,14 +30,18 @@ import com.android.intentresolver.ResolverActivity
 import com.android.intentresolver.ResolverDataProvider
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
+import androidx.test.platform.app.InstrumentationRegistry
 
 class ImmutableTargetInfoTest {
+    private val PERSONAL_USER_HANDLE: UserHandle = InstrumentationRegistry
+            .getInstrumentation().getTargetContext().getUser()
+
     private val resolvedIntent = Intent("resolved")
     private val targetIntent = Intent("target")
     private val referrerFillInIntent = Intent("referrer_fillin")
     private val resolvedComponentName = ComponentName("resolved", "component")
     private val chooserTargetComponentName = ComponentName("chooser", "target")
-    private val resolveInfo = ResolverDataProvider.createResolveInfo(1, 0)
+    private val resolveInfo = ResolverDataProvider.createResolveInfo(1, 0, PERSONAL_USER_HANDLE)
     private val displayLabel: CharSequence = "Display Label"
     private val extendedInfo: CharSequence = "Extended Info"
     private val displayIconHolder: TargetInfo.IconHolder = mock()
@@ -45,14 +49,14 @@ class ImmutableTargetInfoTest {
     private val sourceIntent2 = Intent("source2")
     private val displayTarget1 = DisplayResolveInfo.newDisplayResolveInfo(
         Intent("display1"),
-        ResolverDataProvider.createResolveInfo(2, 0),
+        ResolverDataProvider.createResolveInfo(2, 0, PERSONAL_USER_HANDLE),
         "display1 label",
         "display1 extended info",
         Intent("display1_resolved"),
         /* resolveInfoPresentationGetter= */ null)
     private val displayTarget2 = DisplayResolveInfo.newDisplayResolveInfo(
         Intent("display2"),
-        ResolverDataProvider.createResolveInfo(3, 0),
+        ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE),
         "display2 label",
         "display2 extended info",
         Intent("display2_resolved"),
@@ -66,7 +70,7 @@ class ImmutableTargetInfoTest {
         UserHandle.CURRENT)
     private val displayResolveInfo = DisplayResolveInfo.newDisplayResolveInfo(
         Intent("displayresolve"),
-        ResolverDataProvider.createResolveInfo(5, 0),
+        ResolverDataProvider.createResolveInfo(5, 0, PERSONAL_USER_HANDLE),
         "displayresolve label",
         "displayresolve extended info",
         Intent("display_resolved"),
@@ -88,7 +92,7 @@ class ImmutableTargetInfoTest {
             .setDisplayLabel(displayLabel)
             .setExtendedInfo(extendedInfo)
             .setDisplayIconHolder(displayIconHolder)
-            .setAllSourceIntents(listOf(sourceIntent1, sourceIntent2))
+            .setAlternateSourceIntents(listOf(sourceIntent1, sourceIntent2))
             .setAllDisplayTargets(listOf(displayTarget1, displayTarget2))
             .setIsSuspended(true)
             .setIsPinned(true)
@@ -108,7 +112,8 @@ class ImmutableTargetInfoTest {
         assertThat(info.displayLabel).isEqualTo(displayLabel)
         assertThat(info.extendedInfo).isEqualTo(extendedInfo)
         assertThat(info.displayIconHolder).isEqualTo(displayIconHolder)
-        assertThat(info.allSourceIntents).containsExactly(sourceIntent1, sourceIntent2)
+        assertThat(info.allSourceIntents).containsExactly(
+            resolvedIntent, sourceIntent1, sourceIntent2)
         assertThat(info.allDisplayTargets).containsExactly(displayTarget1, displayTarget2)
         assertThat(info.isSuspended).isTrue()
         assertThat(info.isPinned).isTrue()
@@ -140,7 +145,7 @@ class ImmutableTargetInfoTest {
             .setDisplayLabel(displayLabel)
             .setExtendedInfo(extendedInfo)
             .setDisplayIconHolder(displayIconHolder)
-            .setAllSourceIntents(listOf(sourceIntent1, sourceIntent2))
+            .setAlternateSourceIntents(listOf(sourceIntent1, sourceIntent2))
             .setAllDisplayTargets(listOf(displayTarget1, displayTarget2))
             .setIsSuspended(true)
             .setIsPinned(true)
@@ -162,7 +167,8 @@ class ImmutableTargetInfoTest {
         assertThat(info.displayLabel).isEqualTo(displayLabel)
         assertThat(info.extendedInfo).isEqualTo(extendedInfo)
         assertThat(info.displayIconHolder).isEqualTo(displayIconHolder)
-        assertThat(info.allSourceIntents).containsExactly(sourceIntent1, sourceIntent2)
+        assertThat(info.allSourceIntents).containsExactly(
+            resolvedIntent, sourceIntent1, sourceIntent2)
         assertThat(info.allDisplayTargets).containsExactly(displayTarget1, displayTarget2)
         assertThat(info.isSuspended).isTrue()
         assertThat(info.isPinned).isTrue()
@@ -204,25 +210,25 @@ class ImmutableTargetInfoTest {
     }
 
     @Test
-    fun testBaseIntentToSend_fillsInFromCloneRequestIntent() {
+    fun testBaseIntentToSend_fillsInFromRefinementIntent() {
         val originalIntent = Intent()
-        originalIntent.setPackage("original")
+        originalIntent.putExtra("ORIGINAL", true)
 
-        val cloneFillInIntent = Intent("CLONE_FILL_IN")
-        cloneFillInIntent.setPackage("clone")
+        val refinementIntent = Intent()
+        refinementIntent.putExtra("REFINEMENT", true)
 
         val originalInfo = ImmutableTargetInfo.newBuilder()
             .setResolvedIntent(originalIntent)
             .build()
-        val info = originalInfo.cloneFilledIn(cloneFillInIntent, 0)
+        val info = originalInfo.tryToCloneWithAppliedRefinement(refinementIntent)
 
-        assertThat(info.baseIntentToSend.getPackage()).isEqualTo("original")  // Only fill if empty.
-        assertThat(info.baseIntentToSend.action).isEqualTo("CLONE_FILL_IN")
+        assertThat(info.baseIntentToSend.getBooleanExtra("ORIGINAL", false)).isTrue()
+        assertThat(info.baseIntentToSend.getBooleanExtra("REFINEMENT", false)).isTrue()
     }
 
     @Test
-    fun testBaseIntentToSend_twoFillInSourcesFavorsCloneRequest() {
-        val originalIntent = Intent()
+    fun testBaseIntentToSend_twoFillInSourcesFavorsRefinementRequest() {
+        val originalIntent = Intent("REFINE_ME")
         originalIntent.setPackage("original")
 
         val referrerFillInIntent = Intent("REFERRER_FILL_IN")
@@ -234,43 +240,92 @@ class ImmutableTargetInfoTest {
             .setReferrerFillInIntent(referrerFillInIntent)
             .build()
 
-        val cloneFillInIntent = Intent("CLONE_FILL_IN")
-        cloneFillInIntent.setPackage("clone")
+        val refinementIntent = Intent("REFINE_ME")
+        refinementIntent.setPackage("original")  // Has to match for refinement.
 
-        val info = infoWithReferrerFillIn.cloneFilledIn(cloneFillInIntent, 0)
+        val info = infoWithReferrerFillIn.tryToCloneWithAppliedRefinement(refinementIntent)
 
         assertThat(info.baseIntentToSend.getPackage()).isEqualTo("original")  // Set all along.
-        assertThat(info.baseIntentToSend.action).isEqualTo("CLONE_FILL_IN")  // Clone wins.
+        assertThat(info.baseIntentToSend.action).isEqualTo("REFINE_ME")  // Refinement wins.
         assertThat(info.baseIntentToSend.type).isEqualTo("test/referrer")  // Left for referrer.
     }
 
     @Test
-    fun testBaseIntentToSend_doubleCloningPreservesReferrerFillInButNotOriginalCloneFillIn() {
-        val originalIntent = Intent()
+    fun testBaseIntentToSend_doubleRefinementPreservesReferrerFillInButNotOriginalRefinement() {
+        val originalIntent = Intent("REFINE_ME")
         val referrerFillInIntent = Intent("REFERRER_FILL_IN")
-        val cloneFillInIntent1 = Intent()
-        cloneFillInIntent1.setPackage("clone1")
-        val cloneFillInIntent2 = Intent()
-        cloneFillInIntent2.setType("test/clone2")
+        referrerFillInIntent.putExtra("TEST", "REFERRER")
+        val refinementIntent1 = Intent("REFINE_ME")
+        refinementIntent1.putExtra("TEST1", "1")
+        val refinementIntent2 = Intent("REFINE_ME")
+        refinementIntent2.putExtra("TEST2", "2")
 
         val originalInfo = ImmutableTargetInfo.newBuilder()
             .setResolvedIntent(originalIntent)
             .setReferrerFillInIntent(referrerFillInIntent)
             .build()
 
-        val clone1 = originalInfo.cloneFilledIn(cloneFillInIntent1, 0)
-        val clone2 = clone1.cloneFilledIn(cloneFillInIntent2, 0)  // Clone-of-clone.
+        val refined1 = originalInfo.tryToCloneWithAppliedRefinement(refinementIntent1)
+        val refined2 = refined1.tryToCloneWithAppliedRefinement(refinementIntent2)  // Cloned clone.
 
         // Both clones get the same values filled in from the referrer intent.
-        assertThat(clone1.baseIntentToSend.action).isEqualTo("REFERRER_FILL_IN")
-        assertThat(clone2.baseIntentToSend.action).isEqualTo("REFERRER_FILL_IN")
-        // Each clone has the respective value that was set in the fill-in request.
-        assertThat(clone1.baseIntentToSend.getPackage()).isEqualTo("clone1")
-        assertThat(clone2.baseIntentToSend.type).isEqualTo("test/clone2")
-        // The clones don't have the data from each other's fill-in requests, even though the intent
+        assertThat(refined1.baseIntentToSend.getStringExtra("TEST")).isEqualTo("REFERRER")
+        assertThat(refined2.baseIntentToSend.getStringExtra("TEST")).isEqualTo("REFERRER")
+        // Each clone has the respective value that was set in their own refinement request.
+        assertThat(refined1.baseIntentToSend.getStringExtra("TEST1")).isEqualTo("1")
+        assertThat(refined2.baseIntentToSend.getStringExtra("TEST2")).isEqualTo("2")
+        // The clones don't have the data from each other's refinements, even though the intent
         // field is empty (thus able to be populated by filling-in).
-        assertThat(clone1.baseIntentToSend.type).isNull()
-        assertThat(clone2.baseIntentToSend.getPackage()).isNull()
+        assertThat(refined1.baseIntentToSend.getStringExtra("TEST2")).isNull()
+        assertThat(refined2.baseIntentToSend.getStringExtra("TEST1")).isNull()
+    }
+
+    @Test
+    fun testBaseIntentToSend_refinementToAlternateSourceIntent() {
+        val originalIntent = Intent("DONT_REFINE_ME")
+        originalIntent.putExtra("originalIntent", true)
+        val mismatchedAlternate = Intent("DOESNT_MATCH")
+        mismatchedAlternate.putExtra("mismatchedAlternate", true)
+        val targetAlternate = Intent("REFINE_ME")
+        targetAlternate.putExtra("targetAlternate", true)
+        val extraMatch = Intent("REFINE_ME")
+        extraMatch.putExtra("extraMatch", true)
+
+        val originalInfo = ImmutableTargetInfo.newBuilder()
+            .setResolvedIntent(originalIntent)
+            .setAllSourceIntents(listOf(
+                    originalIntent, mismatchedAlternate, targetAlternate, extraMatch))
+            .build()
+
+        val refinement = Intent("REFINE_ME")  // First match is `targetAlternate`
+        refinement.putExtra("refinement", true)
+
+        val refinedResult = originalInfo.tryToCloneWithAppliedRefinement(refinement)
+        assertThat(refinedResult.baseIntentToSend.getBooleanExtra("refinement", false)).isTrue()
+        assertThat(refinedResult.baseIntentToSend.getBooleanExtra("targetAlternate", false))
+            .isTrue()
+        // None of the other source intents got merged in (not even the later one that matched):
+        assertThat(refinedResult.baseIntentToSend.getBooleanExtra("originalIntent", false))
+            .isFalse()
+        assertThat(refinedResult.baseIntentToSend.getBooleanExtra("mismatchedAlternate", false))
+            .isFalse()
+        assertThat(refinedResult.baseIntentToSend.getBooleanExtra("extraMatch", false)).isFalse()
+    }
+
+    @Test
+    fun testBaseIntentToSend_noSourceIntentMatchingProposedRefinement() {
+        val originalIntent = Intent("DONT_REFINE_ME")
+        originalIntent.putExtra("originalIntent", true)
+        val mismatchedAlternate = Intent("DOESNT_MATCH")
+        mismatchedAlternate.putExtra("mismatchedAlternate", true)
+
+        val originalInfo = ImmutableTargetInfo.newBuilder()
+            .setResolvedIntent(originalIntent)
+            .setAllSourceIntents(listOf(originalIntent, mismatchedAlternate))
+            .build()
+
+        val refinement = Intent("PROPOSED_REFINEMENT")
+        assertThat(originalInfo.tryToCloneWithAppliedRefinement(refinement)).isNull()
     }
 
     @Test

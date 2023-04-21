@@ -27,6 +27,8 @@
     android:paddingBottom="@dimen/chooser_view_spacing"
     android:background="?android:attr/colorBackground">
 
+  <include layout="@layout/chooser_headline_row" />
+
   <LinearLayout
       android:layout_width="@dimen/chooser_preview_width"
       android:layout_height="wrap_content"
@@ -37,15 +39,6 @@
       android:layout_marginBottom="@dimen/chooser_view_spacing"
       android:id="@androidprv:id/content_preview_file_layout">
 
-    <com.android.intentresolver.widget.RoundedRectImageView
-          android:id="@androidprv:id/content_preview_file_thumbnail"
-          android:layout_width="75dp"
-          android:layout_height="75dp"
-          android:layout_marginRight="16dp"
-          android:adjustViewBounds="true"
-          android:layout_gravity="center_vertical"
-          android:gravity="center"
-          android:scaleType="centerCrop"/>
     <ImageView
         android:id="@androidprv:id/content_preview_file_icon"
         android:layout_width="36dp"
@@ -54,8 +47,7 @@
         android:adjustViewBounds="true"
         android:layout_gravity="center_vertical"
         android:gravity="center"
-        android:scaleType="fitCenter"
-        android:visibility="gone"/>
+        android:scaleType="fitCenter" />
     <TextView
         android:id="@androidprv:id/content_preview_filename"
         android:layout_width="0dp"
@@ -69,19 +61,7 @@
         android:textAppearance="@style/TextAppearance.ChooserDefault" />
   </LinearLayout>
 
-  <TextView
-      android:id="@+id/reselection_action"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:visibility="gone"
-      android:text="@string/select_files"
-      android:gravity="center"
-      style="@style/ReselectionAction" />
-
-  <ViewStub
-      android:id="@+id/action_row_stub"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content" />
+  <include layout="@layout/chooser_action_row" />
 
 </LinearLayout>
 

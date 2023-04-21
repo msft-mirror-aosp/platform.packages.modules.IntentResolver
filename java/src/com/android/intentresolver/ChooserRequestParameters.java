@@ -18,7 +18,6 @@ package com.android.intentresolver;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -34,7 +33,6 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.android.intentresolver.flags.FeatureFlagRepository;
-import com.android.intentresolver.flags.Flags;
 
 import com.google.common.collect.ImmutableList;
 
@@ -77,8 +75,8 @@ public class ChooserRequestParameters {
     private final Intent mReferrerFillInIntent;
     private final ImmutableList<ComponentName> mFilteredComponentNames;
     private final ImmutableList<ChooserTarget> mCallerChooserTargets;
-    private final ImmutableList<ChooserAction> mChooserActions;
-    private final PendingIntent mModifyShareAction;
+    private final @NonNull ImmutableList<ChooserAction> mChooserActions;
+    private final ChooserAction mModifyShareAction;
     private final boolean mRetainInOnStop;
 
     @Nullable
@@ -147,12 +145,8 @@ public class ChooserRequestParameters {
 
         mTargetIntentFilter = getTargetIntentFilter(mTarget);
 
-        mChooserActions = featureFlags.isEnabled(Flags.SHARESHEET_CUSTOM_ACTIONS)
-                ? getChooserActions(clientIntent)
-                : ImmutableList.of();
-        mModifyShareAction = featureFlags.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)
-                ? getModifyShareAction(clientIntent)
-                : null;
+        mChooserActions = getChooserActions(clientIntent);
+        mModifyShareAction = getModifyShareAction(clientIntent);
     }
 
     public Intent getTargetIntent() {
@@ -198,12 +192,13 @@ public class ChooserRequestParameters {
         return mCallerChooserTargets;
     }
 
+    @NonNull
     public ImmutableList<ChooserAction> getChooserActions() {
         return mChooserActions;
     }
 
     @Nullable
-    public PendingIntent getModifyShareAction() {
+    public ChooserAction getModifyShareAction() {
         return mModifyShareAction;
     }
 
@@ -309,8 +304,7 @@ public class ChooserRequestParameters {
             requestedTitle = null;
         }
 
-        int defaultTitleRes =
-                (requestedTitle == null) ? com.android.internal.R.string.chooseActivity : 0;
+        int defaultTitleRes = (requestedTitle == null) ? R.string.chooseActivity : 0;
 
         return Pair.create(requestedTitle, defaultTitleRes);
     }
@@ -340,6 +334,7 @@ public class ChooserRequestParameters {
                 .collect(toImmutableList());
     }
 
+    @NonNull
     private static ImmutableList<ChooserAction> getChooserActions(Intent intent) {
         return streamParcelableArrayExtra(
                 intent,
@@ -351,11 +346,11 @@ public class ChooserRequestParameters {
     }
 
     @Nullable
-    private static PendingIntent getModifyShareAction(Intent intent) {
+    private static ChooserAction getModifyShareAction(Intent intent) {
         try {
             return intent.getParcelableExtra(
                     Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION,
-                    PendingIntent.class);
+                    ChooserAction.class);
         } catch (Throwable t) {
             Log.w(
                     TAG,
