@@ -136,21 +136,17 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
                     contentPreviewLayout, mHeadlineGenerator.getVideosHeadline(mFiles.size()));
         } else {
             displayHeadline(
-                    contentPreviewLayout, mHeadlineGenerator.getItemsHeadline(mFiles.size()));
+                    contentPreviewLayout, mHeadlineGenerator.getFilesHeadline(mFiles.size()));
         }
 
         return contentPreviewLayout;
     }
 
     private List<ActionRow.Action> createImagePreviewActions() {
-        ArrayList<ActionRow.Action> actions = new ArrayList<>(2);
+        ArrayList<ActionRow.Action> actions = new ArrayList<>(1);
         //TODO: add copy action;
-        ActionRow.Action action = mActionFactory.createNearbyButton();
-        if (action != null) {
-            actions.add(action);
-        }
         if (mFiles.size() == 1 && mTypeClassifier.isImageType(mFiles.get(0).getMimeType())) {
-            action = mActionFactory.createEditButton();
+            ActionRow.Action action = mActionFactory.createEditButton();
             if (action != null) {
                 actions.add(action);
             }
