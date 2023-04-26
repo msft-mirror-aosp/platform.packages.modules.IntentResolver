@@ -70,7 +70,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
         boolean allVideos = true;
         for (FileInfo fileInfo : mFiles) {
             ScrollableImagePreviewView.PreviewType previewType =
-                    getPreviewType(fileInfo.getMimeType());
+                    getPreviewType(mTypeClassifier, fileInfo.getMimeType());
             allImages = allImages && previewType == ScrollableImagePreviewView.PreviewType.Image;
             allVideos = allVideos && previewType == ScrollableImagePreviewView.PreviewType.Video;
         }
@@ -98,9 +98,14 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
 
         final ActionRow actionRow =
                 contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
-        actionRow.setActions(createActions(
+        List<ActionRow.Action> actions = createActions(
                 createImagePreviewActions(),
-                mActionFactory.createCustomActions()));
+                mActionFactory.createCustomActions());
+        actionRow.setActions(actions);
+
+        if (actions.isEmpty()) {
+            contentPreviewLayout.findViewById(R.id.actions_top_divider).setVisibility(View.GONE);
+        }
 
         if (shouldShowPreview()) {
             mImageLoader.loadImage(mFiles.get(0).getPreviewUri(), bitmap -> {
@@ -179,15 +184,5 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             updateHeadline(contentPreview);
         });
         includeText.setVisibility(View.VISIBLE);
-    }
-
-    private ScrollableImagePreviewView.PreviewType getPreviewType(String mimeType) {
-        if (mTypeClassifier.isImageType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Image;
-        }
-        if (mTypeClassifier.isVideoType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Video;
-        }
-        return ScrollableImagePreviewView.PreviewType.File;
     }
 }

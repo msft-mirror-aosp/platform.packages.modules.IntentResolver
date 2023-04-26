@@ -85,10 +85,14 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
 
         final ActionRow actionRow =
                 contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
-        actionRow.setActions(
-                createActions(
-                        createImagePreviewActions(),
-                        mActionFactory.createCustomActions()));
+        List<ActionRow.Action> actions = createActions(
+                createImagePreviewActions(),
+                mActionFactory.createCustomActions());
+        actionRow.setActions(actions);
+        if (actions.isEmpty()) {
+            contentPreviewLayout.findViewById(R.id.actions_top_divider).setVisibility(View.GONE);
+        }
+
 
         if (mFiles.size() == 0) {
             Log.i(
@@ -105,7 +109,7 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
         boolean allVideos = !mFiles.isEmpty();
         for (FileInfo fileInfo : mFiles) {
             ScrollableImagePreviewView.PreviewType previewType =
-                    getPreviewType(fileInfo.getMimeType());
+                    getPreviewType(mTypeClassifier, fileInfo.getMimeType());
             allImages = allImages && previewType == ScrollableImagePreviewView.PreviewType.Image;
             allVideos = allVideos && previewType == ScrollableImagePreviewView.PreviewType.Video;
 
@@ -152,15 +156,5 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             }
         }
         return actions;
-    }
-
-    private ScrollableImagePreviewView.PreviewType getPreviewType(String mimeType) {
-        if (mTypeClassifier.isImageType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Image;
-        }
-        if (mTypeClassifier.isVideoType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Video;
-        }
-        return ScrollableImagePreviewView.PreviewType.File;
     }
 }
