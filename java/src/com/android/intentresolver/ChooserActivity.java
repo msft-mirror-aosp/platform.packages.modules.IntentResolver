@@ -712,8 +712,7 @@ public class ChooserActivity extends ResolverActivity implements
         return resolver.query(uri, null, null, null, null);
     }
 
-    @VisibleForTesting
-    protected boolean isImageType(@Nullable String mimeType) {
+    private boolean isImageType(@Nullable String mimeType) {
         return mimeType != null && mimeType.startsWith("image/");
     }
 
@@ -801,15 +800,20 @@ public class ChooserActivity extends ResolverActivity implements
         }
     }
 
-    @Override
-    public void addUseDifferentAppLabelIfNecessary(ResolverListAdapter adapter) {
-        if (mChooserRequest.getCallerChooserTargets().size() > 0) {
-            mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults(
-                    /* origTarget */ null,
-                    new ArrayList<>(mChooserRequest.getCallerChooserTargets()),
-                    TARGET_TYPE_DEFAULT,
-                    /* directShareShortcutInfoCache */ Collections.emptyMap(),
-                    /* directShareAppTargetCache */ Collections.emptyMap());
+    private void addCallerChooserTargets() {
+        if (!mChooserRequest.getCallerChooserTargets().isEmpty()) {
+            // Send the caller's chooser targets only to the default profile.
+            UserHandle defaultUser = (findSelectedProfile() == PROFILE_WORK)
+                    ? getAnnotatedUserHandles().workProfileUserHandle
+                    : getAnnotatedUserHandles().personalProfileUserHandle;
+            if (mChooserMultiProfilePagerAdapter.getCurrentUserHandle() == defaultUser) {
+                mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults(
+                        /* origTarget */ null,
+                        new ArrayList<>(mChooserRequest.getCallerChooserTargets()),
+                        TARGET_TYPE_DEFAULT,
+                        /* directShareShortcutInfoCache */ Collections.emptyMap(),
+                        /* directShareAppTargetCache */ Collections.emptyMap());
+            }
         }
     }
 
@@ -1536,6 +1540,7 @@ public class ChooserActivity extends ResolverActivity implements
         }
 
         if (rebuildComplete) {
+            addCallerChooserTargets();
             getChooserActivityLogger().logSharesheetAppLoadComplete();
             maybeQueryAdditionalPostProcessingTargets(chooserListAdapter);
             mLatencyTracker.onActionEnd(ACTION_LOAD_SHARE_SHEET);
