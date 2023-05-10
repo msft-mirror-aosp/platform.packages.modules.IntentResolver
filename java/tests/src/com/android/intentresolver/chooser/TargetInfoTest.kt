@@ -41,6 +41,9 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 
 class TargetInfoTest {
+    private val PERSONAL_USER_HANDLE: UserHandle = InstrumentationRegistry
+            .getInstrumentation().getTargetContext().getUser()
+
     private val context = InstrumentationRegistry.getInstrumentation().getContext()
 
     @Before
@@ -81,7 +84,7 @@ class TargetInfoTest {
         val resolvedIntent = Intent()
         val baseDisplayInfo = DisplayResolveInfo.newDisplayResolveInfo(
             resolvedIntent,
-            ResolverDataProvider.createResolveInfo(1, 0),
+            ResolverDataProvider.createResolveInfo(1, 0, PERSONAL_USER_HANDLE),
             "label",
             "extended info",
             resolvedIntent,
@@ -190,7 +193,7 @@ class TargetInfoTest {
         intent.putExtra(Intent.EXTRA_TEXT, "testing intent sending")
         intent.setType("text/plain")
 
-        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0)
+        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE)
 
         val targetInfo = DisplayResolveInfo.newDisplayResolveInfo(
             intent,
@@ -231,15 +234,15 @@ class TargetInfoTest {
 
         val refinedResult = originalInfo.tryToCloneWithAppliedRefinement(refinement)
         // Note `DisplayResolveInfo` targets merge refinements directly into their `resolvedIntent`.
-        assertThat(refinedResult.resolvedIntent.getBooleanExtra("refinement", false)).isTrue()
-        assertThat(refinedResult.resolvedIntent.getBooleanExtra("targetAlternate", false))
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("refinement", false)).isTrue()
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("targetAlternate", false))
             .isTrue()
         // None of the other source intents got merged in (not even the later one that matched):
-        assertThat(refinedResult.resolvedIntent.getBooleanExtra("originalIntent", false))
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("originalIntent", false))
             .isFalse()
-        assertThat(refinedResult.resolvedIntent.getBooleanExtra("mismatchedAlternate", false))
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("mismatchedAlternate", false))
             .isFalse()
-        assertThat(refinedResult.resolvedIntent.getBooleanExtra("extraMatch", false)).isFalse()
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("extraMatch", false)).isFalse()
     }
 
     @Test
@@ -268,7 +271,7 @@ class TargetInfoTest {
         intent.putExtra(Intent.EXTRA_TEXT, "testing intent sending")
         intent.setType("text/plain")
 
-        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0)
+        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE)
         val firstTargetInfo = DisplayResolveInfo.newDisplayResolveInfo(
             intent,
             resolveInfo,

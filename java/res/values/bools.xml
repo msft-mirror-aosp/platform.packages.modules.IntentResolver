@@ -15,5 +15,7 @@
 -->
 
 <resources>
-  <bool name="resolver_landscape_phone">@*android:bool/resolver_landscape_phone</bool>
+  <!-- Note that these values are for landscape phones, the values for all screens taller than
+       480dp are set in values-h480dp/bools.xml -->
+  <bool name="horizontal_actions">true</bool>
 </resources>

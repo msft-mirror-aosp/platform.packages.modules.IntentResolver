@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-@file:JvmName("HttpUriMatcher")
-package com.android.intentresolver
+package com.android.intentresolver.contentpreview
 
-import com.android.internal.annotations.VisibleForTesting
-import java.net.URI
+import android.content.res.Resources
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.ViewGroup
 
-@VisibleForTesting(visibility = VisibleForTesting.Visibility.PACKAGE)
-fun String.isHttpUri() =
-    kotlin.runCatching {
-        URI(this).scheme.takeIf { scheme ->
-            "http".compareTo(scheme, true) == 0 || "https".compareTo(scheme, true) == 0
-        }
-    }.getOrNull() != null
+internal class NoContextPreviewUi(private val type: Int) : ContentPreviewUi() {
+    override fun getType(): Int = type
+
+    override fun display(
+        resources: Resources?, layoutInflater: LayoutInflater?, parent: ViewGroup?
+    ): ViewGroup? {
+        Log.e(TAG, "Unexpected content preview type: $type")
+        return null
+    }
+}

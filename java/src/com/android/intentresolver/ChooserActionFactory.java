@@ -26,12 +26,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Bundle;
 import android.service.chooser.ChooserAction;
 import android.text.TextUtils;
 import android.util.Log;
@@ -39,8 +36,7 @@ import android.view.View;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
-import com.android.intentresolver.flags.FeatureFlagRepository;
-import com.android.intentresolver.flags.Flags;
+import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.internal.annotations.VisibleForTesting;
 
@@ -93,10 +89,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     private final Runnable mOnCopyButtonClicked;
     private final TargetInfo mEditSharingTarget;
     private final Runnable mOnEditButtonClicked;
-    private final TargetInfo mNearbySharingTarget;
-    private final Runnable mOnNearbyButtonClicked;
     private final ImmutableList<ChooserAction> mCustomActions;
-    private final Runnable mOnModifyShareClicked;
+    private final @Nullable ChooserAction mModifyShareAction;
     private final Consumer<Boolean> mExcludeSharedTextAction;
     private final Consumer</* @Nullable */ Integer> mFinishCallback;
     private final ChooserActivityLogger mLogger;
@@ -104,7 +98,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     /**
      * @param context
      * @param chooserRequest data about the invocation of the current Sharesheet session.
-     * @param featureFlagRepository feature flags that may control the eligibility of some actions.
      * @param integratedDeviceComponents info about other components that are available on this
      * device to implement the supported action types.
      * @param onUpdateSharedTextIsExcluded a delegate to be invoked when the "exclude shared text"
@@ -118,7 +111,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     public ChooserActionFactory(
             Context context,
             ChooserRequestParameters chooserRequest,
-            FeatureFlagRepository featureFlagRepository,
             ChooserIntegratedDeviceComponents integratedDeviceComponents,
             ChooserActivityLogger logger,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
@@ -147,25 +139,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                         firstVisibleImageQuery,
                         activityStarter,
                         logger),
-                getNearbySharingTarget(
-                        context,
-                        chooserRequest.getTargetIntent(),
-                        integratedDeviceComponents),
-                makeOnNearbyShareRunnable(
-                        getNearbySharingTarget(
-                                context,
-                                chooserRequest.getTargetIntent(),
-                                integratedDeviceComponents),
-                        activityStarter,
-                        finishCallback,
-                        logger),
                 chooserRequest.getChooserActions(),
-                (featureFlagRepository.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)
-                        ? createModifyShareRunnable(
-                                chooserRequest.getModifyShareAction(),
-                                finishCallback,
-                                logger)
-                        : null),
+                chooserRequest.getModifyShareAction(),
                 onUpdateSharedTextIsExcluded,
                 logger,
                 finishCallback);
@@ -179,10 +154,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             Runnable onCopyButtonClicked,
             TargetInfo editSharingTarget,
             Runnable onEditButtonClicked,
-            TargetInfo nearbySharingTarget,
-            Runnable onNearbyButtonClicked,
             List<ChooserAction> customActions,
-            @Nullable Runnable onModifyShareClicked,
+            @Nullable ChooserAction modifyShareAction,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
             ChooserActivityLogger logger,
             Consumer</* @Nullable */ Integer> finishCallback) {
@@ -192,10 +165,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         mOnCopyButtonClicked = onCopyButtonClicked;
         mEditSharingTarget = editSharingTarget;
         mOnEditButtonClicked = onEditButtonClicked;
-        mNearbySharingTarget = nearbySharingTarget;
-        mOnNearbyButtonClicked = onNearbyButtonClicked;
         mCustomActions = ImmutableList.copyOf(customActions);
-        mOnModifyShareClicked = onModifyShareClicked;
+        mModifyShareAction = modifyShareAction;
         mExcludeSharedTextAction = onUpdateSharedTextIsExcluded;
         mLogger = logger;
         mFinishCallback = finishCallback;
@@ -226,28 +197,20 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                 mOnEditButtonClicked);
     }
 
-    /** Create a "Share to Nearby" action. */
-    @Override
-    @Nullable
-    public ActionRow.Action createNearbyButton() {
-        if (mNearbySharingTarget == null) {
-            return null;
-        }
-
-        return new ActionRow.Action(
-                com.android.internal.R.id.chooser_nearby_button,
-                mNearbySharingTarget.getDisplayLabel(),
-                mNearbySharingTarget.getDisplayIconHolder().getDisplayIcon(),
-                mOnNearbyButtonClicked);
-    }
-
     /** Create custom actions */
     @Override
     public List<ActionRow.Action> createCustomActions() {
         List<ActionRow.Action> actions = new ArrayList<>();
         for (int i = 0; i < mCustomActions.size(); i++) {
+            final int position = i;
             ActionRow.Action actionRow = createCustomAction(
-                    mContext, mCustomActions.get(i), mFinishCallback, i, mLogger);
+                    mContext,
+                    mCustomActions.get(i),
+                    mFinishCallback,
+                    () -> {
+                        mLogger.logCustomActionSelected(position);
+                    }
+            );
             if (actionRow != null) {
                 actions.add(actionRow);
             }
@@ -260,27 +223,14 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
      */
     @Override
     @Nullable
-    public Runnable getModifyShareAction() {
-        return mOnModifyShareClicked;
-    }
-
-    private static Runnable createModifyShareRunnable(
-            PendingIntent pendingIntent,
-            Consumer<Integer> finishCallback,
-            ChooserActivityLogger logger) {
-        if (pendingIntent == null) {
-            return null;
-        }
-
-        return () -> {
-            try {
-                pendingIntent.send();
-            } catch (PendingIntent.CanceledException e) {
-                Log.d(TAG, "Payload reselection action has been cancelled");
-            }
-            logger.logActionSelected(ChooserActivityLogger.SELECTION_TYPE_MODIFY_SHARE);
-            finishCallback.accept(Activity.RESULT_OK);
-        };
+    public ActionRow.Action getModifyShareAction() {
+        return createCustomAction(
+                mContext,
+                mModifyShareAction,
+                mFinishCallback,
+                () -> {
+                    mLogger.logActionSelected(ChooserActivityLogger.SELECTION_TYPE_MODIFY_SHARE);
+                });
     }
 
     /**
@@ -385,7 +335,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         final DisplayResolveInfo dri = DisplayResolveInfo.newDisplayResolveInfo(
                 originalIntent,
                 ri,
-                context.getString(com.android.internal.R.string.screenshot_edit),
+                context.getString(R.string.screenshot_edit),
                 "",
                 resolveIntent,
                 null);
@@ -417,71 +367,15 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         };
     }
 
-    private static TargetInfo getNearbySharingTarget(
-            Context context,
-            Intent originalIntent,
-            ChooserIntegratedDeviceComponents integratedComponents) {
-        final ComponentName cn = integratedComponents.getNearbySharingComponent();
-        if (cn == null) {
-            return null;
-        }
-
-        final Intent resolveIntent = new Intent(originalIntent);
-        resolveIntent.setComponent(cn);
-        final ResolveInfo ri = context.getPackageManager().resolveActivity(
-                resolveIntent, PackageManager.GET_META_DATA);
-        if (ri == null || ri.activityInfo == null) {
-            Log.e(TAG, "Device-specified nearby sharing component (" + cn
-                    + ") not available");
-            return null;
-        }
-
-        // Allow the nearby sharing component to provide a more appropriate icon and label
-        // for the chip.
-        CharSequence name = null;
-        Drawable icon = null;
-        final Bundle metaData = ri.activityInfo.metaData;
-        if (metaData != null) {
-            try {
-                final Resources pkgRes = context.getPackageManager().getResourcesForActivity(cn);
-                final int nameResId = metaData.getInt(CHIP_LABEL_METADATA_KEY);
-                name = pkgRes.getString(nameResId);
-                final int resId = metaData.getInt(CHIP_ICON_METADATA_KEY);
-                icon = pkgRes.getDrawable(resId);
-            } catch (NameNotFoundException | Resources.NotFoundException ex) { /* ignore */ }
-        }
-        if (TextUtils.isEmpty(name)) {
-            name = ri.loadLabel(context.getPackageManager());
-        }
-        if (icon == null) {
-            icon = ri.loadIcon(context.getPackageManager());
-        }
-
-        final DisplayResolveInfo dri = DisplayResolveInfo.newDisplayResolveInfo(
-                originalIntent, ri, name, "", resolveIntent, null);
-        dri.getDisplayIconHolder().setDisplayIcon(icon);
-        return dri;
-    }
-
-    private static Runnable makeOnNearbyShareRunnable(
-            TargetInfo nearbyShareTarget,
-            ActionActivityStarter activityStarter,
-            Consumer<Integer> finishCallback,
-            ChooserActivityLogger logger) {
-        return () -> {
-            logger.logActionSelected(ChooserActivityLogger.SELECTION_TYPE_NEARBY);
-            // Action bar is user-independent; always start as primary.
-            activityStarter.safelyStartActivityAsPersonalProfileUser(nearbyShareTarget);
-        };
-    }
-
     @Nullable
     private static ActionRow.Action createCustomAction(
             Context context,
             ChooserAction action,
             Consumer<Integer> finishCallback,
-            int position,
-            ChooserActivityLogger logger) {
+            Runnable loggingRunnable) {
+        if (action == null || action.getAction() == null) {
+            return null;
+        }
         Drawable icon = action.getIcon().loadDrawable(context);
         if (icon == null && TextUtils.isEmpty(action.getLabel())) {
             return null;
@@ -506,7 +400,9 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                     } catch (PendingIntent.CanceledException e) {
                         Log.d(TAG, "Custom action, " + action.getLabel() + ", has been cancelled");
                     }
-                    logger.logCustomActionSelected(position);
+                    if (loggingRunnable != null) {
+                        loggingRunnable.run();
+                    }
                     finishCallback.accept(Activity.RESULT_OK);
                 }
         );

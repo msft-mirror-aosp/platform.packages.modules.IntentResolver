@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver
+@file:JvmName("HttpUriMatcher")
+package com.android.intentresolver.contentpreview
 
-import android.graphics.Bitmap
-import android.net.Uri
-import java.util.function.Consumer
+import java.net.URI
 
-interface ImageLoader : suspend (Uri) -> Bitmap? {
-    fun loadImage(uri: Uri, callback: Consumer<Bitmap?>)
-    fun prePopulate(uris: List<Uri>)
-}
+internal fun String.isHttpUri() =
+    kotlin.runCatching {
+        URI(this).scheme.takeIf { scheme ->
+            "http".compareTo(scheme, true) == 0 || "https".compareTo(scheme, true) == 0
+        }
+    }.getOrNull() != null
