@@ -276,7 +276,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             return;
         }
 
-        holder.bindLabel(info.getDisplayLabel(), info.getExtendedInfo(), alwaysShowSubLabel());
+        holder.bindLabel(info.getDisplayLabel(), info.getExtendedInfo());
         mAnimationTracker.animateLabel(holder.text, info);
         if (holder.text2.getVisibility() == View.VISIBLE) {
             mAnimationTracker.animateLabel(holder.text2, info);
@@ -630,12 +630,6 @@ public class ChooserListAdapter extends ResolverListAdapter {
         notifyDataSetChanged();
     }
 
-    protected boolean alwaysShowSubLabel() {
-        // Always show a subLabel for visual consistency across list items. Show an empty
-        // subLabel if the subLabel is the same as the label
-        return true;
-    }
-
     /**
      * Rather than fully sorting the input list, this sorting task will put the top k elements
      * in the head of input list and fill the tail with other elements in undetermined order.
@@ -682,6 +676,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
         @Override
         protected Drawable doInBackground(Void... voids) {
             Drawable drawable;
+            Trace.beginSection("shortcut-icon");
             try {
                 drawable = getChooserTargetIconDrawable(
                         mContext,
@@ -694,6 +689,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                                 + mTargetInfo.getChooserTargetComponentName(),
                         e);
                 drawable = loadIconPlaceholder();
+            } finally {
+                Trace.endSection();
             }
             return drawable;
         }
