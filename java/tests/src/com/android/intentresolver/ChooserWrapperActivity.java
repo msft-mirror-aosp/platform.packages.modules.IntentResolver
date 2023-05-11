@@ -35,6 +35,7 @@ import android.os.UserHandle;
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.CrossProfileIntentsChecker;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.flags.FeatureFlagRepository;
 import com.android.intentresolver.grid.ChooserGridAdapter;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
@@ -194,9 +195,9 @@ public class ChooserWrapperActivity
 
     @Override
     protected ImageLoader createPreviewImageLoader() {
-        return new TestPreviewImageLoader(
-                super.createPreviewImageLoader(),
-                () -> sOverrides.previewThumbnail);
+        return sOverrides.imageLoader == null
+                ? super.createPreviewImageLoader()
+                : sOverrides.imageLoader;
     }
 
     @Override

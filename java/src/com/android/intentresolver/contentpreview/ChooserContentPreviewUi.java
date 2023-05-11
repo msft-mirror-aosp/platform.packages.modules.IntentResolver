@@ -19,6 +19,7 @@ package com.android.intentresolver.contentpreview;
 import static android.provider.DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL;
 
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE;
+import static com.android.intentresolver.util.UriFilters.isOwnedByCurrentUser;
 
 import android.content.ClipData;
 import android.content.ClipDescription;
@@ -37,16 +38,13 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
-import com.android.intentresolver.ImageLoader;
-import com.android.intentresolver.flags.FeatureFlagRepository;
-import com.android.intentresolver.flags.Flags;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -56,6 +54,18 @@ import java.util.function.Consumer;
  * A content preview façade.
  */
 public final class ChooserContentPreviewUi {
+
+    /**
+     * A set of metadata columns we read for a content URI (see [readFileMetadata] method).
+     */
+    @VisibleForTesting
+    static final String[] METADATA_COLUMNS = new String[] {
+            DocumentsContract.Document.COLUMN_FLAGS,
+            MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI,
+            OpenableColumns.DISPLAY_NAME,
+            Downloads.Impl.COLUMN_TITLE
+    };
+
     /**
      * Delegate to build the default system action buttons to display in the preview layout, if/when
      * they're determined to be appropriate for the particular preview we display.
@@ -68,10 +78,6 @@ public final class ChooserContentPreviewUi {
         /** Create an action that opens the share content in a system-default editor. */
         @Nullable
         ActionRow.Action createEditButton();
-
-        /** Create an "Share to Nearby" action. */
-        @Nullable
-        ActionRow.Action createNearbyButton();
 
         /** Create custom actions */
         List<ActionRow.Action> createCustomActions();
@@ -103,7 +109,6 @@ public final class ChooserContentPreviewUi {
             ImageLoader imageLoader,
             ActionFactory actionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
-            FeatureFlagRepository featureFlagRepository,
             HeadlineGenerator headlineGenerator) {
 
         mContentPreviewUi = createContentPreview(
@@ -113,7 +118,6 @@ public final class ChooserContentPreviewUi {
                 imageLoader,
                 actionFactory,
                 transitionElementStatusCallback,
-                featureFlagRepository,
                 headlineGenerator);
         if (mContentPreviewUi.getType() != CONTENT_PREVIEW_IMAGE) {
             transitionElementStatusCallback.onAllTransitionElementsReady();
@@ -127,7 +131,6 @@ public final class ChooserContentPreviewUi {
             ImageLoader imageLoader,
             ActionFactory actionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
-            FeatureFlagRepository featureFlagRepository,
             HeadlineGenerator headlineGenerator) {
 
         /* In {@link android.content.Intent#getType}, the app may specify a very general mime type
@@ -145,7 +148,6 @@ public final class ChooserContentPreviewUi {
                     targetIntent,
                     actionFactory,
                     imageLoader,
-                    featureFlagRepository,
                     headlineGenerator);
         }
         List<Uri> uris = extractContentUris(targetIntent);
@@ -154,60 +156,31 @@ public final class ChooserContentPreviewUi {
                     targetIntent,
                     actionFactory,
                     imageLoader,
-                    featureFlagRepository,
                     headlineGenerator);
         }
         ArrayList<FileInfo> files = new ArrayList<>(uris.size());
         int previewCount = readFileInfo(contentResolver, typeClassifier, uris, files);
-        if (previewCount == 0) {
-            return new FileContentPreviewUi(
-                    files,
-                    actionFactory,
-                    imageLoader,
-                    featureFlagRepository,
-                    headlineGenerator);
-        }
-        if (featureFlagRepository.isEnabled(Flags.SHARESHEET_SCROLLABLE_IMAGE_PREVIEW)) {
-            return new UnifiedContentPreviewUi(
-                    files,
+        CharSequence text = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+        if (!TextUtils.isEmpty(text)) {
+            return new FilesPlusTextContentPreviewUi(files,
                     targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT),
                     actionFactory,
                     imageLoader,
                     typeClassifier,
-                    transitionElementStatusCallback,
-                    featureFlagRepository,
                     headlineGenerator);
         }
-        if (previewCount < uris.size()) {
+        if (previewCount == 0) {
             return new FileContentPreviewUi(
                     files,
                     actionFactory,
-                    imageLoader,
-                    featureFlagRepository,
                     headlineGenerator);
         }
-        // The legacy (3-image) image preview is on it's way out and it's unlikely that we'd end up
-        // here. To preserve the legacy behavior, before using it, check that all uris are images.
-        for (FileInfo fileInfo: files) {
-            if (!typeClassifier.isImageType(fileInfo.getMimeType())) {
-                return new FileContentPreviewUi(
-                        files,
-                        actionFactory,
-                        imageLoader,
-                        featureFlagRepository,
-                        headlineGenerator);
-            }
-        }
-        return new ImageContentPreviewUi(
-                files.stream()
-                        .map(FileInfo::getPreviewUri)
-                        .filter(Objects::nonNull)
-                        .toList(),
-                targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT),
+        return new UnifiedContentPreviewUi(
+                files,
                 actionFactory,
                 imageLoader,
+                typeClassifier,
                 transitionElementStatusCallback,
-                featureFlagRepository,
                 headlineGenerator);
     }
 
@@ -250,9 +223,9 @@ public final class ChooserContentPreviewUi {
         if (typeClassifier.isImageType(mimeType)) {
             return builder.withPreviewUri(uri).build();
         }
-        readFileMetadata(resolver, uri, builder);
+        readOtherFileTypes(resolver, uri, typeClassifier, builder);
         if (builder.getPreviewUri() == null) {
-            readOtherFileTypes(resolver, uri, typeClassifier, builder);
+            readFileMetadata(resolver, uri, builder);
         }
         return builder.build();
     }
@@ -323,7 +296,6 @@ public final class ChooserContentPreviewUi {
             Intent targetIntent,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
-            FeatureFlagRepository featureFlagRepository,
             HeadlineGenerator headlineGenerator) {
         CharSequence sharingText = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         String previewTitle = targetIntent.getStringExtra(Intent.EXTRA_TITLE);
@@ -341,7 +313,6 @@ public final class ChooserContentPreviewUi {
                 previewThumbnail,
                 actionFactory,
                 imageLoader,
-                featureFlagRepository,
                 headlineGenerator);
     }
 
@@ -349,14 +320,14 @@ public final class ChooserContentPreviewUi {
         List<Uri> uris = new ArrayList<>();
         if (Intent.ACTION_SEND.equals(targetIntent.getAction())) {
             Uri uri = targetIntent.getParcelableExtra(Intent.EXTRA_STREAM);
-            if (ContentPreviewUi.validForContentPreview(uri)) {
+            if (isOwnedByCurrentUser(uri)) {
                 uris.add(uri);
             }
         } else {
             List<Uri> receivedUris = targetIntent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
             if (receivedUris != null) {
                 for (Uri uri : receivedUris) {
-                    if (ContentPreviewUi.validForContentPreview(uri)) {
+                    if (isOwnedByCurrentUser(uri)) {
                         uris.add(uri);
                     }
                 }
@@ -372,7 +343,7 @@ public final class ChooserContentPreviewUi {
         } catch (SecurityException e) {
             logProviderPermissionWarning(uri, "mime type");
         } catch (Throwable t) {
-            Log.e(ContentPreviewUi.TAG, "Failed to read content type, uri: " +  uri, t);
+            Log.e(ContentPreviewUi.TAG, "Failed to read content type, uri: " + uri, t);
         }
         return null;
     }
@@ -380,7 +351,7 @@ public final class ChooserContentPreviewUi {
     @Nullable
     private static Cursor query(ContentInterface resolver, Uri uri) {
         try {
-            return resolver.query(uri, null, null, null);
+            return resolver.query(uri, METADATA_COLUMNS, null, null);
         } catch (SecurityException e) {
             logProviderPermissionWarning(uri, "metadata");
         } catch (Throwable t) {

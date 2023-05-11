@@ -19,15 +19,13 @@ package com.android.intentresolver.contentpreview
 import android.content.res.Resources
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import com.android.intentresolver.TestFeatureFlagRepository
-import com.android.intentresolver.flags.FeatureFlagRepository
-import com.android.intentresolver.flags.Flags
 import com.android.intentresolver.widget.ActionRow
+import com.android.intentresolver.widget.ScrollableImagePreviewView.PreviewType
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
 class ContentPreviewUiTest {
-    private class TestablePreview(private val flags: FeatureFlagRepository) : ContentPreviewUi() {
+    private class TestablePreview() : ContentPreviewUi() {
         override fun getType() = 0
 
         override fun display(
@@ -43,38 +41,35 @@ class ContentPreviewUiTest {
             system: List<ActionRow.Action>,
             custom: List<ActionRow.Action>
         ): List<ActionRow.Action> {
-            return createActions(system, custom, flags)
+            return createActions(system, custom)
         }
     }
 
     @Test
+    fun testPreviewTypes() {
+        val typeClassifier = object : MimeTypeClassifier {
+            override fun isImageType(type: String?) = (type == "image")
+            override fun isVideoType(type: String?) = (type == "video")
+        }
+
+        assertThat(ContentPreviewUi.getPreviewType(typeClassifier, "image"))
+            .isEqualTo(PreviewType.Image)
+        assertThat(ContentPreviewUi.getPreviewType(typeClassifier, "video"))
+            .isEqualTo(PreviewType.Video)
+        assertThat(ContentPreviewUi.getPreviewType(typeClassifier, "other"))
+            .isEqualTo(PreviewType.File)
+        assertThat(ContentPreviewUi.getPreviewType(typeClassifier, null))
+            .isEqualTo(PreviewType.File)
+    }
+
+    @Test
     fun testCreateActions() {
-        val featureFlagRepository = TestFeatureFlagRepository(
-            mapOf(
-                Flags.SHARESHEET_CUSTOM_ACTIONS to true
-            )
-        )
-        val preview = TestablePreview(featureFlagRepository)
+        val preview = TestablePreview()
 
         val system = listOf(ActionRow.Action(label="system", icon=null) {})
         val custom = listOf(ActionRow.Action(label="custom", icon=null) {})
 
         assertThat(preview.makeActions(system, custom)).isEqualTo(custom)
         assertThat(preview.makeActions(system, listOf())).isEqualTo(system)
-    }
-
-    @Test
-    fun testCreateActions_flagDisabled() {
-        val featureFlagRepository = TestFeatureFlagRepository(
-            mapOf(
-                Flags.SHARESHEET_CUSTOM_ACTIONS to false
-            )
-        )
-        val preview = TestablePreview(featureFlagRepository)
-
-        val system = listOf(ActionRow.Action(label="system", icon=null) {})
-        val custom = listOf(ActionRow.Action(label="custom", icon=null) {})
-
-        assertThat(preview.makeActions(system, custom)).isEqualTo(system)
     }
 }

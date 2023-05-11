@@ -26,12 +26,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Bundle;
 import android.service.chooser.ChooserAction;
 import android.text.TextUtils;
 import android.util.Log;
@@ -40,8 +37,6 @@ import android.view.View;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
-import com.android.intentresolver.flags.FeatureFlagRepository;
-import com.android.intentresolver.flags.Flags;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.internal.annotations.VisibleForTesting;
 
@@ -94,8 +89,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     private final Runnable mOnCopyButtonClicked;
     private final TargetInfo mEditSharingTarget;
     private final Runnable mOnEditButtonClicked;
-    private final TargetInfo mNearbySharingTarget;
-    private final Runnable mOnNearbyButtonClicked;
     private final ImmutableList<ChooserAction> mCustomActions;
     private final @Nullable ChooserAction mModifyShareAction;
     private final Consumer<Boolean> mExcludeSharedTextAction;
@@ -105,7 +98,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     /**
      * @param context
      * @param chooserRequest data about the invocation of the current Sharesheet session.
-     * @param featureFlagRepository feature flags that may control the eligibility of some actions.
      * @param integratedDeviceComponents info about other components that are available on this
      * device to implement the supported action types.
      * @param onUpdateSharedTextIsExcluded a delegate to be invoked when the "exclude shared text"
@@ -119,7 +111,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     public ChooserActionFactory(
             Context context,
             ChooserRequestParameters chooserRequest,
-            FeatureFlagRepository featureFlagRepository,
             ChooserIntegratedDeviceComponents integratedDeviceComponents,
             ChooserActivityLogger logger,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
@@ -148,22 +139,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                         firstVisibleImageQuery,
                         activityStarter,
                         logger),
-                getNearbySharingTarget(
-                        context,
-                        chooserRequest.getTargetIntent(),
-                        integratedDeviceComponents),
-                makeOnNearbyShareRunnable(
-                        getNearbySharingTarget(
-                                context,
-                                chooserRequest.getTargetIntent(),
-                                integratedDeviceComponents),
-                        activityStarter,
-                        finishCallback,
-                        logger),
                 chooserRequest.getChooserActions(),
-                (featureFlagRepository.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)
-                        ? chooserRequest.getModifyShareAction()
-                        : null),
+                chooserRequest.getModifyShareAction(),
                 onUpdateSharedTextIsExcluded,
                 logger,
                 finishCallback);
@@ -177,8 +154,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             Runnable onCopyButtonClicked,
             TargetInfo editSharingTarget,
             Runnable onEditButtonClicked,
-            TargetInfo nearbySharingTarget,
-            Runnable onNearbyButtonClicked,
             List<ChooserAction> customActions,
             @Nullable ChooserAction modifyShareAction,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
@@ -190,8 +165,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         mOnCopyButtonClicked = onCopyButtonClicked;
         mEditSharingTarget = editSharingTarget;
         mOnEditButtonClicked = onEditButtonClicked;
-        mNearbySharingTarget = nearbySharingTarget;
-        mOnNearbyButtonClicked = onNearbyButtonClicked;
         mCustomActions = ImmutableList.copyOf(customActions);
         mModifyShareAction = modifyShareAction;
         mExcludeSharedTextAction = onUpdateSharedTextIsExcluded;
@@ -222,21 +195,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                 mEditSharingTarget.getDisplayLabel(),
                 mEditSharingTarget.getDisplayIconHolder().getDisplayIcon(),
                 mOnEditButtonClicked);
-    }
-
-    /** Create a "Share to Nearby" action. */
-    @Override
-    @Nullable
-    public ActionRow.Action createNearbyButton() {
-        if (mNearbySharingTarget == null) {
-            return null;
-        }
-
-        return new ActionRow.Action(
-                com.android.internal.R.id.chooser_nearby_button,
-                mNearbySharingTarget.getDisplayLabel(),
-                mNearbySharingTarget.getDisplayIconHolder().getDisplayIcon(),
-                mOnNearbyButtonClicked);
     }
 
     /** Create custom actions */
@@ -406,64 +364,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                 activityStarter.safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(
                         editSharingTarget, firstImageView, IMAGE_EDITOR_SHARED_ELEMENT);
             }
-        };
-    }
-
-    private static TargetInfo getNearbySharingTarget(
-            Context context,
-            Intent originalIntent,
-            ChooserIntegratedDeviceComponents integratedComponents) {
-        final ComponentName cn = integratedComponents.getNearbySharingComponent();
-        if (cn == null) {
-            return null;
-        }
-
-        final Intent resolveIntent = new Intent(originalIntent);
-        resolveIntent.setComponent(cn);
-        final ResolveInfo ri = context.getPackageManager().resolveActivity(
-                resolveIntent, PackageManager.GET_META_DATA);
-        if (ri == null || ri.activityInfo == null) {
-            Log.e(TAG, "Device-specified nearby sharing component (" + cn
-                    + ") not available");
-            return null;
-        }
-
-        // Allow the nearby sharing component to provide a more appropriate icon and label
-        // for the chip.
-        CharSequence name = null;
-        Drawable icon = null;
-        final Bundle metaData = ri.activityInfo.metaData;
-        if (metaData != null) {
-            try {
-                final Resources pkgRes = context.getPackageManager().getResourcesForActivity(cn);
-                final int nameResId = metaData.getInt(CHIP_LABEL_METADATA_KEY);
-                name = pkgRes.getString(nameResId);
-                final int resId = metaData.getInt(CHIP_ICON_METADATA_KEY);
-                icon = pkgRes.getDrawable(resId);
-            } catch (NameNotFoundException | Resources.NotFoundException ex) { /* ignore */ }
-        }
-        if (TextUtils.isEmpty(name)) {
-            name = ri.loadLabel(context.getPackageManager());
-        }
-        if (icon == null) {
-            icon = ri.loadIcon(context.getPackageManager());
-        }
-
-        final DisplayResolveInfo dri = DisplayResolveInfo.newDisplayResolveInfo(
-                originalIntent, ri, name, "", resolveIntent, null);
-        dri.getDisplayIconHolder().setDisplayIcon(icon);
-        return dri;
-    }
-
-    private static Runnable makeOnNearbyShareRunnable(
-            TargetInfo nearbyShareTarget,
-            ActionActivityStarter activityStarter,
-            Consumer<Integer> finishCallback,
-            ChooserActivityLogger logger) {
-        return () -> {
-            logger.logActionSelected(ChooserActivityLogger.SELECTION_TYPE_NEARBY);
-            // Action bar is user-independent; always start as primary.
-            activityStarter.safelyStartActivityAsPersonalProfileUser(nearbyShareTarget);
         };
     }
 

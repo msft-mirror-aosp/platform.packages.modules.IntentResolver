@@ -29,11 +29,9 @@ import android.view.View
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.flags.FeatureFlagRepository
-import com.android.intentresolver.flags.Flags
 import com.google.common.collect.ImmutableList
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -71,7 +69,6 @@ class ChooserActionFactoryTest {
 
     @Before
     fun setup() {
-        whenever(flags.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)).thenReturn(true)
         context.registerReceiver(testReceiver, IntentFilter(testAction))
     }
 
@@ -101,14 +98,6 @@ class ChooserActionFactoryTest {
     @Test
     fun testNoModifyShareAction() {
         val factory = createFactory(includeModifyShare = false)
-
-        assertThat(factory.modifyShareAction).isNull()
-    }
-
-    @Test
-    fun testNoModifyShareAction_flagDisabled() {
-        whenever(flags.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)).thenReturn(false)
-        val factory = createFactory(includeModifyShare = true)
 
         assertThat(factory.modifyShareAction).isNull()
     }
@@ -151,7 +140,6 @@ class ChooserActionFactoryTest {
         return ChooserActionFactory(
             context,
             chooserRequest,
-            flags,
             mock<ChooserIntegratedDeviceComponents>(),
             logger,
             Consumer<Boolean>{},

@@ -19,24 +19,14 @@ package com.android.intentresolver.contentpreview;
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE;
 
 import android.content.res.Resources;
-import android.text.TextUtils;
-import android.text.util.Linkify;
-import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewStub;
-import android.widget.CheckBox;
-import android.widget.TextView;
 
-import androidx.annotation.LayoutRes;
 import androidx.annotation.Nullable;
 
-import com.android.intentresolver.ImageLoader;
 import com.android.intentresolver.R;
-import com.android.intentresolver.flags.FeatureFlagRepository;
-import com.android.intentresolver.flags.Flags;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
@@ -44,35 +34,28 @@ import com.android.intentresolver.widget.ScrollableImagePreviewView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 class UnifiedContentPreviewUi extends ContentPreviewUi {
     private final List<FileInfo> mFiles;
     @Nullable
-    private final CharSequence mText;
     private final ChooserContentPreviewUi.ActionFactory mActionFactory;
     private final ImageLoader mImageLoader;
     private final MimeTypeClassifier mTypeClassifier;
     private final TransitionElementStatusCallback mTransitionElementStatusCallback;
-    private final FeatureFlagRepository mFeatureFlagRepository;
     private final HeadlineGenerator mHeadlineGenerator;
 
     UnifiedContentPreviewUi(
             List<FileInfo> files,
-            @Nullable CharSequence text,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
             MimeTypeClassifier typeClassifier,
             TransitionElementStatusCallback transitionElementStatusCallback,
-            FeatureFlagRepository featureFlagRepository,
             HeadlineGenerator headlineGenerator) {
         mFiles = files;
-        mText = text;
         mActionFactory = actionFactory;
         mImageLoader = imageLoader;
         mTypeClassifier = typeClassifier;
         mTransitionElementStatusCallback = transitionElementStatusCallback;
-        mFeatureFlagRepository = featureFlagRepository;
         mHeadlineGenerator = headlineGenerator;
 
         mImageLoader.prePopulate(mFiles.stream()
@@ -89,24 +72,26 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     @Override
     public ViewGroup display(Resources resources, LayoutInflater layoutInflater, ViewGroup parent) {
         ViewGroup layout = displayInternal(layoutInflater, parent);
-        displayModifyShareAction(layout, mActionFactory, mFeatureFlagRepository);
+        displayModifyShareAction(layout, mActionFactory);
         return layout;
     }
 
     private ViewGroup displayInternal(LayoutInflater layoutInflater, ViewGroup parent) {
-        @LayoutRes int actionRowLayout = getActionRowLayout(mFeatureFlagRepository);
         ViewGroup contentPreviewLayout = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_image, parent, false);
-        ScrollableImagePreviewView imagePreview = inflateImagePreviewView(contentPreviewLayout);
+        ScrollableImagePreviewView imagePreview =
+                contentPreviewLayout.findViewById(R.id.scrollable_image_preview);
 
-        final ActionRow actionRow = inflateActionRow(contentPreviewLayout, actionRowLayout);
-        if (actionRow != null) {
-            actionRow.setActions(
-                    createActions(
-                            createImagePreviewActions(),
-                            mActionFactory.createCustomActions(),
-                            mFeatureFlagRepository));
+        final ActionRow actionRow =
+                contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
+        List<ActionRow.Action> actions = createActions(
+                createImagePreviewActions(),
+                mActionFactory.createCustomActions());
+        actionRow.setActions(actions);
+        if (actions.isEmpty()) {
+            contentPreviewLayout.findViewById(R.id.actions_top_divider).setVisibility(View.GONE);
         }
+
 
         if (mFiles.size() == 0) {
             Log.i(
@@ -118,14 +103,12 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             return contentPreviewLayout;
         }
 
-        imagePreview.setTransitionElementStatusCallback(mTransitionElementStatusCallback);
-
         List<ScrollableImagePreviewView.Preview> previews = new ArrayList<>();
         boolean allImages = !mFiles.isEmpty();
         boolean allVideos = !mFiles.isEmpty();
         for (FileInfo fileInfo : mFiles) {
             ScrollableImagePreviewView.PreviewType previewType =
-                    getPreviewType(fileInfo.getMimeType());
+                    getPreviewType(mTypeClassifier, fileInfo.getMimeType());
             allImages = allImages && previewType == ScrollableImagePreviewView.PreviewType.Image;
             allVideos = allVideos && previewType == ScrollableImagePreviewView.PreviewType.Video;
 
@@ -135,101 +118,37 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
                         fileInfo.getPreviewUri()));
             }
         }
+
+        imagePreview.setOnNoPreviewCallback(() -> imagePreview.setVisibility(View.GONE));
+        imagePreview.setTransitionElementStatusCallback(mTransitionElementStatusCallback);
         imagePreview.setPreviews(
                 previews,
                 mFiles.size() - previews.size(),
                 mImageLoader);
 
-        if (mFeatureFlagRepository.isEnabled(Flags.SHARESHEET_IMAGE_AND_TEXT_PREVIEW)
-                && !TextUtils.isEmpty(mText)
-                && mFiles.size() == 1
-                && allImages) {
-            setTextInImagePreviewVisibility(contentPreviewLayout, mActionFactory);
-            updateTextWithImageHeadline(contentPreviewLayout);
+        if (allImages) {
+            displayHeadline(
+                    contentPreviewLayout, mHeadlineGenerator.getImagesHeadline(mFiles.size()));
+        } else if (allVideos) {
+            displayHeadline(
+                    contentPreviewLayout, mHeadlineGenerator.getVideosHeadline(mFiles.size()));
         } else {
-            if (allImages) {
-                displayHeadline(
-                        contentPreviewLayout, mHeadlineGenerator.getImagesHeadline(mFiles.size()));
-            } else if (allVideos) {
-                displayHeadline(
-                        contentPreviewLayout, mHeadlineGenerator.getVideosHeadline(mFiles.size()));
-            } else {
-                displayHeadline(
-                        contentPreviewLayout, mHeadlineGenerator.getItemsHeadline(mFiles.size()));
-            }
+            displayHeadline(
+                    contentPreviewLayout, mHeadlineGenerator.getFilesHeadline(mFiles.size()));
         }
 
         return contentPreviewLayout;
     }
 
     private List<ActionRow.Action> createImagePreviewActions() {
-        ArrayList<ActionRow.Action> actions = new ArrayList<>(2);
+        ArrayList<ActionRow.Action> actions = new ArrayList<>(1);
         //TODO: add copy action;
-        ActionRow.Action action = mActionFactory.createNearbyButton();
-        if (action != null) {
-            actions.add(action);
-        }
-        action = mActionFactory.createEditButton();
-        if (action != null) {
-            actions.add(action);
+        if (mFiles.size() == 1 && mTypeClassifier.isImageType(mFiles.get(0).getMimeType())) {
+            ActionRow.Action action = mActionFactory.createEditButton();
+            if (action != null) {
+                actions.add(action);
+            }
         }
         return actions;
-    }
-
-    private ScrollableImagePreviewView inflateImagePreviewView(ViewGroup previewLayout) {
-        ViewStub stub = previewLayout.findViewById(R.id.image_preview_stub);
-        if (stub != null) {
-            stub.setLayoutResource(R.layout.scrollable_image_preview_view);
-            stub.inflate();
-        }
-        return previewLayout.findViewById(R.id.scrollable_image_preview);
-    }
-
-    private void updateTextWithImageHeadline(ViewGroup contentPreview) {
-        CheckBox actionView = contentPreview.requireViewById(R.id.include_text_action);
-        if (actionView.getVisibility() == View.VISIBLE && actionView.isChecked()) {
-            displayHeadline(contentPreview, mHeadlineGenerator.getImageWithTextHeadline(mText));
-        } else {
-            displayHeadline(
-                    contentPreview, mHeadlineGenerator.getImagesHeadline(mFiles.size()));
-        }
-    }
-
-    private void setTextInImagePreviewVisibility(
-            ViewGroup contentPreview, ChooserContentPreviewUi.ActionFactory actionFactory) {
-        final TextView textView = contentPreview
-                .requireViewById(com.android.internal.R.id.content_preview_text);
-        CheckBox actionView = contentPreview
-                .requireViewById(R.id.include_text_action);
-        textView.setVisibility(View.VISIBLE);
-        boolean isLink = HttpUriMatcher.isHttpUri(mText.toString());
-        textView.setAutoLinkMask(isLink ? Linkify.WEB_URLS : 0);
-        textView.setText(mText);
-
-        final int[] actionLabels = isLink
-                ? new int[] { R.string.include_link, R.string.exclude_link }
-                : new int[] { R.string.include_text, R.string.exclude_text };
-        final Consumer<Boolean> shareTextAction = actionFactory.getExcludeSharedTextAction();
-        actionView.setChecked(true);
-        actionView.setText(actionLabels[1]);
-        shareTextAction.accept(false);
-        actionView.setOnCheckedChangeListener((view, isChecked) -> {
-            view.setText(actionLabels[isChecked ? 1 : 0]);
-            TransitionManager.beginDelayedTransition((ViewGroup) textView.getParent());
-            textView.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-            shareTextAction.accept(!isChecked);
-            updateTextWithImageHeadline(contentPreview);
-        });
-        actionView.setVisibility(View.VISIBLE);
-    }
-
-    private ScrollableImagePreviewView.PreviewType getPreviewType(String mimeType) {
-        if (mTypeClassifier.isImageType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Image;
-        }
-        if (mTypeClassifier.isVideoType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Video;
-        }
-        return ScrollableImagePreviewView.PreviewType.File;
     }
 }

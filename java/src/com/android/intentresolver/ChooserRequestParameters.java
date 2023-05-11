@@ -33,7 +33,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.android.intentresolver.flags.FeatureFlagRepository;
-import com.android.intentresolver.flags.Flags;
+import com.android.intentresolver.util.UriFilters;
 
 import com.google.common.collect.ImmutableList;
 
@@ -70,7 +70,6 @@ public class ChooserRequestParameters {
             Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 
     private final Intent mTarget;
-    private final ChooserIntegratedDeviceComponents mIntegratedDeviceComponents;
     private final String mReferrerPackageName;
     private final Pair<CharSequence, Integer> mTitleSpec;
     private final Intent mReferrerFillInIntent;
@@ -105,13 +104,10 @@ public class ChooserRequestParameters {
             final Intent clientIntent,
             String referrerPackageName,
             final Uri referrer,
-            ChooserIntegratedDeviceComponents integratedDeviceComponents,
             FeatureFlagRepository featureFlags) {
         final Intent requestedTarget = parseTargetIntentExtra(
                 clientIntent.getParcelableExtra(Intent.EXTRA_INTENT));
         mTarget = intentWithModifiedLaunchFlags(requestedTarget);
-
-        mIntegratedDeviceComponents = integratedDeviceComponents;
 
         mReferrerPackageName = referrerPackageName;
 
@@ -134,8 +130,11 @@ public class ChooserRequestParameters {
         mRefinementIntentSender = clientIntent.getParcelableExtra(
                 Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER);
 
-        mFilteredComponentNames = getFilteredComponentNames(
-                clientIntent, mIntegratedDeviceComponents.getNearbySharingComponent());
+        ComponentName[] filteredComponents = clientIntent.getParcelableArrayExtra(
+                Intent.EXTRA_EXCLUDE_COMPONENTS, ComponentName.class);
+        mFilteredComponentNames = filteredComponents != null
+                ? ImmutableList.copyOf(filteredComponents)
+                : ImmutableList.of();
 
         mCallerChooserTargets = parseCallerTargetsFromClientIntent(clientIntent);
 
@@ -146,12 +145,8 @@ public class ChooserRequestParameters {
 
         mTargetIntentFilter = getTargetIntentFilter(mTarget);
 
-        mChooserActions = featureFlags.isEnabled(Flags.SHARESHEET_CUSTOM_ACTIONS)
-                ? getChooserActions(clientIntent)
-                : ImmutableList.of();
-        mModifyShareAction = featureFlags.isEnabled(Flags.SHARESHEET_RESELECTION_ACTION)
-                ? getModifyShareAction(clientIntent)
-                : null;
+        mChooserActions = getChooserActions(clientIntent);
+        mModifyShareAction = getModifyShareAction(clientIntent);
     }
 
     public Intent getTargetIntent() {
@@ -257,10 +252,6 @@ public class ChooserRequestParameters {
         return mTargetIntentFilter;
     }
 
-    public ChooserIntegratedDeviceComponents getIntegratedDeviceComponents() {
-        return mIntegratedDeviceComponents;
-    }
-
     private static boolean isSendAction(@Nullable String action) {
         return (Intent.ACTION_SEND.equals(action) || Intent.ACTION_SEND_MULTIPLE.equals(action));
     }
@@ -314,23 +305,6 @@ public class ChooserRequestParameters {
         return Pair.create(requestedTitle, defaultTitleRes);
     }
 
-    private static ImmutableList<ComponentName> getFilteredComponentNames(
-            Intent clientIntent, @Nullable ComponentName nearbySharingComponent) {
-        Stream<ComponentName> filteredComponents = streamParcelableArrayExtra(
-                clientIntent, Intent.EXTRA_EXCLUDE_COMPONENTS, ComponentName.class, true, true);
-
-        if (nearbySharingComponent != null) {
-            // Exclude Nearby from main list if chip is present, to avoid duplication.
-            // TODO: we don't have an explicit guarantee that the chip will be displayed just
-            // because we have a non-null component; that's ultimately determined by the preview
-            // layout. Maybe we can make that decision further upstream?
-            filteredComponents = Stream.concat(
-                    filteredComponents, Stream.of(nearbySharingComponent));
-        }
-
-        return filteredComponents.collect(toImmutableList());
-    }
-
     private static ImmutableList<ChooserTarget> parseCallerTargetsFromClientIntent(
             Intent clientIntent) {
         return
@@ -347,7 +321,8 @@ public class ChooserRequestParameters {
                 ChooserAction.class,
                 true,
                 true)
-            .collect(toImmutableList());
+                .filter(UriFilters::hasValidIcon)
+                .collect(toImmutableList());
     }
 
     @Nullable

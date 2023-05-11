@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <!--
   ~ Copyright (C) 2023 The Android Open Source Project
   ~
@@ -15,12 +14,8 @@
   ~ limitations under the License.
   -->
 
-<com.android.intentresolver.widget.ChooserImagePreviewView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal"
-    android:paddingStart="@dimen/chooser_edge_margin_normal"
-    android:paddingEnd="@dimen/chooser_edge_margin_normal"
-    android:paddingBottom="@dimen/chooser_view_spacing"
-    android:background="?android:attr/colorBackground" />
+<resources>
+    <!-- Note that this is the value for landscape phones, the value for all screens taller than
+         480dp is set in values-h480dp/integers.xml -->
+    <integer name="text_preview_lines">1</integer>
+</resources>
