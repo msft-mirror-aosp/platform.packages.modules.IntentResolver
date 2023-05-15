@@ -72,6 +72,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.TextView;
 
 import androidx.annotation.MainThread;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
@@ -85,6 +86,7 @@ import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.contentpreview.HeadlineGeneratorImpl;
 import com.android.intentresolver.contentpreview.ImageLoader;
+import com.android.intentresolver.contentpreview.PreviewDataProvider;
 import com.android.intentresolver.flags.FeatureFlagRepository;
 import com.android.intentresolver.flags.FeatureFlagRepositoryFactory;
 import com.android.intentresolver.grid.ChooserGridAdapter;
@@ -250,24 +252,30 @@ public class ChooserActivity extends ResolverActivity implements
             return;
         }
 
-        mRefinementManager = new ChooserRefinementManager(
-                this,
-                mChooserRequest.getRefinementIntentSender(),
-                (validatedRefinedTarget) -> {
-                    maybeRemoveSharedText(validatedRefinedTarget);
+        mRefinementManager = new ViewModelProvider(this).get(ChooserRefinementManager.class);
+
+        mRefinementManager.getRefinementCompletion().observe(this, completion -> {
+            if (completion.consume()) {
+                TargetInfo targetInfo = completion.getTargetInfo();
+                // targetInfo is non-null if the refinement process was successful.
+                if (targetInfo != null) {
+                    maybeRemoveSharedText(targetInfo);
 
                     // We already block suspended targets from going to refinement, and we probably
                     // can't recover a Chooser session if that's the reason the refined target fails
                     // to launch now. Fire-and-forget the refined launch; ignore the return value
                     // and just make sure the Sharesheet session gets cleaned up regardless.
-                    super.onTargetSelected(validatedRefinedTarget, false);
-                    finish();
-                },
-                this::finish);
+                    ChooserActivity.super.onTargetSelected(targetInfo, false);
+                }
+
+                finish();
+            }
+        });
 
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
+                getLifecycle(),
+                createPreviewDataProvider(),
                 mChooserRequest.getTargetIntent(),
-                getContentResolver(),
                 this::isImageType,
                 createPreviewImageLoader(),
                 createChooserActionFactory(),
@@ -530,6 +538,14 @@ public class ChooserActivity extends ResolverActivity implements
                 mMaxTargetsPerRow);
     }
 
+    private PreviewDataProvider createPreviewDataProvider() {
+        // TODO: move this into a ViewModel so it could survive orientation change
+        return new PreviewDataProvider(
+                mChooserRequest.getTargetIntent(),
+                getContentResolver(),
+                this::isImageType);
+    }
+
     private int findSelectedProfile() {
         int selectedProfile = getSelectedProfileExtra();
         if (selectedProfile == -1) {
@@ -611,14 +627,7 @@ public class ChooserActivity extends ResolverActivity implements
         Log.d(TAG, "onResume: " + getComponentName().flattenToShortString());
         maybeCancelFinishAnimation();
 
-        if (mRefinementManager.isAwaitingRefinementResult()) {
-            // This can happen if the refinement activity terminates without ever sending a response
-            // to our `ResultReceiver`. We're probably not prepared to return the user into a valid
-            // Chooser session, so we'll treat it as a cancellation instead.
-            Log.w(TAG, "Chooser resumed while awaiting refinement result; aborting");
-            mRefinementManager.destroy();
-            finish();
-        }
+        mRefinementManager.onActivityResume();
     }
 
     @Override
@@ -713,8 +722,7 @@ public class ChooserActivity extends ResolverActivity implements
         return resolver.query(uri, null, null, null, null);
     }
 
-    @VisibleForTesting
-    protected boolean isImageType(@Nullable String mimeType) {
+    private boolean isImageType(@Nullable String mimeType) {
         return mimeType != null && mimeType.startsWith("image/");
     }
 
@@ -730,6 +738,8 @@ public class ChooserActivity extends ResolverActivity implements
     @Override
     protected void onStop() {
         super.onStop();
+        mRefinementManager.onActivityStop(isChangingConfigurations());
+
         if (maybeCancelFinishAnimation()) {
             finish();
         }
@@ -741,11 +751,6 @@ public class ChooserActivity extends ResolverActivity implements
 
         if (isFinishing()) {
             mLatencyTracker.onActionCancel(ACTION_LOAD_SHARE_SHEET);
-        }
-
-        if (mRefinementManager != null) {  // TODO: null-checked in case of early-destroy, or skip?
-            mRefinementManager.destroy();
-            mRefinementManager = null;
         }
 
         mBackgroundThreadPoolExecutor.shutdownNow();
@@ -805,15 +810,20 @@ public class ChooserActivity extends ResolverActivity implements
         }
     }
 
-    @Override
-    public void addUseDifferentAppLabelIfNecessary(ResolverListAdapter adapter) {
-        if (mChooserRequest.getCallerChooserTargets().size() > 0) {
-            mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults(
-                    /* origTarget */ null,
-                    new ArrayList<>(mChooserRequest.getCallerChooserTargets()),
-                    TARGET_TYPE_DEFAULT,
-                    /* directShareShortcutInfoCache */ Collections.emptyMap(),
-                    /* directShareAppTargetCache */ Collections.emptyMap());
+    private void addCallerChooserTargets() {
+        if (!mChooserRequest.getCallerChooserTargets().isEmpty()) {
+            // Send the caller's chooser targets only to the default profile.
+            UserHandle defaultUser = (findSelectedProfile() == PROFILE_WORK)
+                    ? getAnnotatedUserHandles().workProfileUserHandle
+                    : getAnnotatedUserHandles().personalProfileUserHandle;
+            if (mChooserMultiProfilePagerAdapter.getCurrentUserHandle() == defaultUser) {
+                mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults(
+                        /* origTarget */ null,
+                        new ArrayList<>(mChooserRequest.getCallerChooserTargets()),
+                        TARGET_TYPE_DEFAULT,
+                        /* directShareShortcutInfoCache */ Collections.emptyMap(),
+                        /* directShareAppTargetCache */ Collections.emptyMap());
+            }
         }
     }
 
@@ -873,7 +883,11 @@ public class ChooserActivity extends ResolverActivity implements
 
     @Override
     protected boolean onTargetSelected(TargetInfo target, boolean alwaysCheck) {
-        if (mRefinementManager.maybeHandleSelection(target)) {
+        if (mRefinementManager.maybeHandleSelection(
+                target,
+                mChooserRequest.getRefinementIntentSender(),
+                getApplication(),
+                getMainThreadHandler())) {
             return false;
         }
         updateModelAndChooserCounts(target);
@@ -1536,6 +1550,11 @@ public class ChooserActivity extends ResolverActivity implements
         }
 
         if (rebuildComplete) {
+            long duration = Tracer.INSTANCE.endAppTargetLoadingSection(listAdapter.getUserHandle());
+            if (duration >= 0) {
+                Log.d(TAG, "app target loading time " + duration + " ms");
+            }
+            addCallerChooserTargets();
             getChooserActivityLogger().logSharesheetAppLoadComplete();
             maybeQueryAdditionalPostProcessingTargets(chooserListAdapter);
             mLatencyTracker.onActionEnd(ACTION_LOAD_SHARE_SHEET);
@@ -1576,7 +1595,10 @@ public class ChooserActivity extends ResolverActivity implements
         }
 
         if (mMultiProfilePagerAdapter.getActiveListAdapter() == adapter) {
-            Tracer.INSTANCE.endLaunchToShortcutTrace();
+            long duration = Tracer.INSTANCE.endLaunchToShortcutTrace();
+            if (duration >= 0) {
+                Log.d(TAG, "stat to first shortcut time: " + duration + " ms");
+            }
         }
         logDirectShareTargetReceived(userHandle);
         sendVoiceChoicesIfNeeded();
