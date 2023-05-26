@@ -78,7 +78,6 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
     private final CharSequence mChooserTargetUnsanitizedTitle;
     private final Icon mChooserTargetIcon;
     private final Bundle mChooserTargetIntentExtras;
-    private final int mFillInFlags;
     private final boolean mIsPinned;
     private final float mModifiedScore;
     private final boolean mIsSuspended;
@@ -89,12 +88,6 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
     private final IconHolder mDisplayIconHolder = new SettableIconHolder();
     private final TargetHashProvider mHashProvider;
     private final TargetActivityStarter mActivityStarter;
-
-    /**
-     * A refinement intent from the caller, if any (see
-     * {@link Intent#EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER})
-     */
-    private final Intent mFillInIntent;
 
     /**
      * An intent containing referrer URI (see {@link Activity#getReferrer()} (possibly {@code null})
@@ -159,6 +152,7 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
                 sourceInfo,
                 backupResolveInfo,
                 resolvedIntent,
+                null,
                 chooserTargetComponentName,
                 chooserTargetUnsanitizedTitle,
                 chooserTargetIcon,
@@ -166,15 +160,14 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
                 modifiedScore,
                 shortcutInfo,
                 appTarget,
-                referrerFillInIntent,
-                /* fillInIntent = */ null,
-                /* fillInFlags = */ 0);
+                referrerFillInIntent);
     }
 
     private SelectableTargetInfo(
             @Nullable DisplayResolveInfo sourceInfo,
             @Nullable ResolveInfo backupResolveInfo,
             Intent resolvedIntent,
+            @Nullable Intent baseIntentToSend,
             ComponentName chooserTargetComponentName,
             CharSequence chooserTargetUnsanitizedTitle,
             Icon chooserTargetIcon,
@@ -182,9 +175,7 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
             float modifiedScore,
             @Nullable ShortcutInfo shortcutInfo,
             @Nullable AppTarget appTarget,
-            Intent referrerFillInIntent,
-            @Nullable Intent fillInIntent,
-            int fillInFlags) {
+            Intent referrerFillInIntent) {
         mSourceInfo = sourceInfo;
         mBackupResolveInfo = backupResolveInfo;
         mResolvedIntent = resolvedIntent;
@@ -192,8 +183,6 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
         mShortcutInfo = shortcutInfo;
         mAppTarget = appTarget;
         mReferrerFillInIntent = referrerFillInIntent;
-        mFillInIntent = fillInIntent;
-        mFillInFlags = fillInFlags;
         mChooserTargetComponentName = chooserTargetComponentName;
         mChooserTargetUnsanitizedTitle = chooserTargetUnsanitizedTitle;
         mChooserTargetIcon = chooserTargetIcon;
@@ -206,13 +195,12 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
 
         mResolvedComponentName = getResolvedComponentName(mSourceInfo, mBackupResolveInfo);
 
-        mAllSourceIntents = getAllSourceIntents(sourceInfo);
-
         mBaseIntentToSend = getBaseIntentToSend(
+                baseIntentToSend,
                 mResolvedIntent,
-                mFillInIntent,
-                mFillInFlags,
                 mReferrerFillInIntent);
+
+        mAllSourceIntents = getAllSourceIntents(sourceInfo, mBaseIntentToSend);
 
         mHashProvider = context -> {
             final String plaintext =
@@ -262,11 +250,12 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
         };
     }
 
-    private SelectableTargetInfo(SelectableTargetInfo other, Intent fillInIntent, int flags) {
+    private SelectableTargetInfo(SelectableTargetInfo other, Intent baseIntentToSend) {
         this(
                 other.mSourceInfo,
                 other.mBackupResolveInfo,
                 other.mResolvedIntent,
+                baseIntentToSend,
                 other.mChooserTargetComponentName,
                 other.mChooserTargetUnsanitizedTitle,
                 other.mChooserTargetIcon,
@@ -274,14 +263,25 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
                 other.mModifiedScore,
                 other.mShortcutInfo,
                 other.mAppTarget,
-                other.mReferrerFillInIntent,
-                fillInIntent,
-                flags);
+                other.mReferrerFillInIntent);
     }
 
     @Override
-    public TargetInfo cloneFilledIn(Intent fillInIntent, int flags) {
-        return new SelectableTargetInfo(this, fillInIntent, flags);
+    @Nullable
+    public TargetInfo tryToCloneWithAppliedRefinement(Intent proposedRefinement) {
+        Intent matchingBase =
+                getAllSourceIntents()
+                        .stream()
+                        .filter(i -> i.filterEquals(proposedRefinement))
+                        .findFirst()
+                        .orElse(null);
+        if (matchingBase == null) {
+            return null;
+        }
+
+        return new SelectableTargetInfo(
+                this,
+                TargetInfo.mergeRefinementIntoMatchingBaseIntent(matchingBase, proposedRefinement));
     }
 
     @Override
@@ -395,11 +395,22 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
         return sb.toString();
     }
 
-    private static List<Intent> getAllSourceIntents(@Nullable DisplayResolveInfo sourceInfo) {
+    private static List<Intent> getAllSourceIntents(
+            @Nullable DisplayResolveInfo sourceInfo, Intent fallbackSourceIntent) {
         final List<Intent> results = new ArrayList<>();
         if (sourceInfo != null) {
-            // We only queried the service for the first one in our sourceinfo.
-            results.add(sourceInfo.getAllSourceIntents().get(0));
+            results.addAll(sourceInfo.getAllSourceIntents());
+        } else {
+            // This target wasn't joined to a `DisplayResolveInfo` result from our intent-resolution
+            // step, so it was provided directly by the caller. We don't support alternate intents
+            // in this case, but we still permit refinement of the intent we'll dispatch; e.g.,
+            // clients may use this hook to defer the computation of "lazy" extras in their share
+            // payload. Note this accommodation isn't strictly "necessary" because clients could
+            // always implement equivalent behavior by pointing custom targets back at their own app
+            // for any amount of further refinement/modification outside of the Sharesheet flow;
+            // nevertheless, it's offered as a convenience for clients who may expect their normal
+            // refinement logic to apply equally in the case of these "special targets."
+            results.add(fallbackSourceIntent);
         }
         return results;
     }
@@ -418,18 +429,14 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
 
     @Nullable
     private static Intent getBaseIntentToSend(
-            @Nullable Intent resolvedIntent,
-            Intent fillInIntent,
-            int fillInFlags,
+            @Nullable Intent providedBase,
+            @Nullable Intent fallbackBase,
             Intent referrerFillInIntent) {
-        Intent result = resolvedIntent;
+        Intent result = (providedBase != null) ? providedBase : fallbackBase;
         if (result == null) {
             Log.e(TAG, "ChooserTargetInfo: no base intent available to send");
         } else {
             result = new Intent(result);
-            if (fillInIntent != null) {
-                result.fillIn(fillInIntent, fillInFlags);
-            }
             result.fillIn(referrerFillInIntent, 0);
         }
         return result;

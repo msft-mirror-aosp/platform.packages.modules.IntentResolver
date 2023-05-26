@@ -26,15 +26,24 @@ import android.graphics.drawable.AnimatedVectorDrawable
 import android.os.UserHandle
 import android.test.UiThreadTest
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.intentresolver.ResolverDataProvider
 import com.android.intentresolver.createChooserTarget
 import com.android.intentresolver.createShortcutInfo
 import com.android.intentresolver.mock
-import com.android.intentresolver.ResolverDataProvider
+import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.any
+import org.mockito.Mockito.never
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 
 class TargetInfoTest {
+    private val PERSONAL_USER_HANDLE: UserHandle = InstrumentationRegistry
+            .getInstrumentation().getTargetContext().getUser()
+
     private val context = InstrumentationRegistry.getInstrumentation().getContext()
 
     @Before
@@ -75,7 +84,7 @@ class TargetInfoTest {
         val resolvedIntent = Intent()
         val baseDisplayInfo = DisplayResolveInfo.newDisplayResolveInfo(
             resolvedIntent,
-            ResolverDataProvider.createResolveInfo(1, 0),
+            ResolverDataProvider.createResolveInfo(1, 0, PERSONAL_USER_HANDLE),
             "label",
             "extended info",
             resolvedIntent,
@@ -143,12 +152,48 @@ class TargetInfoTest {
     }
 
     @Test
+    fun testSelectableTargetInfo_noSourceIntentMatchingProposedRefinement() {
+        val resolvedIntent = Intent("DONT_REFINE_ME")
+        resolvedIntent.putExtra("resolvedIntent", true)
+
+        val baseDisplayInfo = DisplayResolveInfo.newDisplayResolveInfo(
+            resolvedIntent,
+            ResolverDataProvider.createResolveInfo(1, 0),
+            "label",
+            "extended info",
+            resolvedIntent,
+            /* resolveInfoPresentationGetter= */ null)
+        val chooserTarget = createChooserTarget(
+            "title", 0.3f, ResolverDataProvider.createComponentName(2), "test_shortcut_id")
+        val shortcutInfo = createShortcutInfo("id", ResolverDataProvider.createComponentName(3), 3)
+        val appTarget = AppTarget(
+            AppTargetId("id"),
+            chooserTarget.componentName.packageName,
+            chooserTarget.componentName.className,
+            UserHandle.CURRENT)
+
+        val targetInfo = SelectableTargetInfo.newSelectableTargetInfo(
+            baseDisplayInfo,
+            mock(),
+            resolvedIntent,
+            chooserTarget,
+            0.1f,
+            shortcutInfo,
+            appTarget,
+            mock(),
+        )
+
+        val refinement = Intent("PROPOSED_REFINEMENT")
+        assertThat(targetInfo.tryToCloneWithAppliedRefinement(refinement)).isNull()
+    }
+
+    @Test
     fun testNewDisplayResolveInfo() {
         val intent = Intent(Intent.ACTION_SEND)
         intent.putExtra(Intent.EXTRA_TEXT, "testing intent sending")
         intent.setType("text/plain")
 
-        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0)
+        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE)
 
         val targetInfo = DisplayResolveInfo.newDisplayResolveInfo(
             intent,
@@ -163,12 +208,70 @@ class TargetInfoTest {
     }
 
     @Test
+    fun test_DisplayResolveInfo_refinementToAlternateSourceIntent() {
+        val originalIntent = Intent("DONT_REFINE_ME")
+        originalIntent.putExtra("originalIntent", true)
+        val mismatchedAlternate = Intent("DOESNT_MATCH")
+        mismatchedAlternate.putExtra("mismatchedAlternate", true)
+        val targetAlternate = Intent("REFINE_ME")
+        targetAlternate.putExtra("targetAlternate", true)
+        val extraMatch = Intent("REFINE_ME")
+        extraMatch.putExtra("extraMatch", true)
+
+        val originalInfo = DisplayResolveInfo.newDisplayResolveInfo(
+            originalIntent,
+            ResolverDataProvider.createResolveInfo(3, 0),
+            "label",
+            "extended info",
+            originalIntent,
+            /* resolveInfoPresentationGetter= */ null)
+        originalInfo.addAlternateSourceIntent(mismatchedAlternate)
+        originalInfo.addAlternateSourceIntent(targetAlternate)
+        originalInfo.addAlternateSourceIntent(extraMatch)
+
+        val refinement = Intent("REFINE_ME")  // First match is `targetAlternate`
+        refinement.putExtra("refinement", true)
+
+        val refinedResult = originalInfo.tryToCloneWithAppliedRefinement(refinement)
+        // Note `DisplayResolveInfo` targets merge refinements directly into their `resolvedIntent`.
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("refinement", false)).isTrue()
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("targetAlternate", false))
+            .isTrue()
+        // None of the other source intents got merged in (not even the later one that matched):
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("originalIntent", false))
+            .isFalse()
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("mismatchedAlternate", false))
+            .isFalse()
+        assertThat(refinedResult?.resolvedIntent?.getBooleanExtra("extraMatch", false)).isFalse()
+    }
+
+    @Test
+    fun testDisplayResolveInfo_noSourceIntentMatchingProposedRefinement() {
+        val originalIntent = Intent("DONT_REFINE_ME")
+        originalIntent.putExtra("originalIntent", true)
+        val mismatchedAlternate = Intent("DOESNT_MATCH")
+        mismatchedAlternate.putExtra("mismatchedAlternate", true)
+
+        val originalInfo = DisplayResolveInfo.newDisplayResolveInfo(
+            originalIntent,
+            ResolverDataProvider.createResolveInfo(3, 0),
+            "label",
+            "extended info",
+            originalIntent,
+            /* resolveInfoPresentationGetter= */ null)
+        originalInfo.addAlternateSourceIntent(mismatchedAlternate)
+
+        val refinement = Intent("PROPOSED_REFINEMENT")
+        assertThat(originalInfo.tryToCloneWithAppliedRefinement(refinement)).isNull()
+    }
+
+    @Test
     fun testNewMultiDisplayResolveInfo() {
         val intent = Intent(Intent.ACTION_SEND)
         intent.putExtra(Intent.EXTRA_TEXT, "testing intent sending")
         intent.setType("text/plain")
 
-        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0)
+        val resolveInfo = ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE)
         val firstTargetInfo = DisplayResolveInfo.newDisplayResolveInfo(
             intent,
             resolveInfo,
@@ -204,12 +307,93 @@ class TargetInfoTest {
         assertThat(multiTargetInfo.hasSelected()).isTrue()
         assertThat(multiTargetInfo.getSelectedTarget()).isEqualTo(secondTargetInfo)
 
-        val multiTargetInfoClone = multiTargetInfo.cloneFilledIn(Intent(), 0)
-        assertThat(multiTargetInfoClone).isInstanceOf(MultiDisplayResolveInfo::class.java)
-        assertThat((multiTargetInfoClone as MultiDisplayResolveInfo).hasSelected())
+        val refined = multiTargetInfo.tryToCloneWithAppliedRefinement(intent)
+        assertThat(refined).isInstanceOf(MultiDisplayResolveInfo::class.java)
+        assertThat((refined as MultiDisplayResolveInfo).hasSelected())
             .isEqualTo(multiTargetInfo.hasSelected())
 
         // TODO: consider exercising activity-start behavior.
         // TODO: consider exercising DisplayResolveInfo base class behavior.
+    }
+
+    @Test
+    fun testNewMultiDisplayResolveInfo_getAllSourceIntents_fromSelectedTarget() {
+        val sendImage = Intent("SEND").apply { type = "image/png" }
+        val sendUri = Intent("SEND").apply { type = "text/uri" }
+
+        val resolveInfo = ResolverDataProvider.createResolveInfo(1, 0)
+
+        val imageOnlyTarget = DisplayResolveInfo.newDisplayResolveInfo(
+            sendImage,
+            resolveInfo,
+            "Send Image",
+            "Sends only images",
+            sendImage,
+            /* resolveInfoPresentationGetter= */ null)
+
+        val textOnlyTarget = DisplayResolveInfo.newDisplayResolveInfo(
+            sendUri,
+            resolveInfo,
+            "Send Text",
+            "Sends only text",
+            sendUri,
+            /* resolveInfoPresentationGetter= */ null)
+
+        val imageOrTextTarget = DisplayResolveInfo.newDisplayResolveInfo(
+            sendImage,
+            resolveInfo,
+            "Send Image or Text",
+            "Sends images or text",
+            sendImage,
+            /* resolveInfoPresentationGetter= */ null
+        ).apply {
+            addAlternateSourceIntent(sendUri)
+        }
+
+        val multiTargetInfo = MultiDisplayResolveInfo.newMultiDisplayResolveInfo(
+            listOf(imageOnlyTarget, textOnlyTarget, imageOrTextTarget)
+        )
+
+        multiTargetInfo.setSelected(0)
+        assertThat(multiTargetInfo.selectedTarget).isEqualTo(imageOnlyTarget)
+        assertThat(multiTargetInfo.allSourceIntents).isEqualTo(imageOnlyTarget.allSourceIntents)
+
+        multiTargetInfo.setSelected(1)
+        assertThat(multiTargetInfo.selectedTarget).isEqualTo(textOnlyTarget)
+        assertThat(multiTargetInfo.allSourceIntents).isEqualTo(textOnlyTarget.allSourceIntents)
+
+        multiTargetInfo.setSelected(2)
+        assertThat(multiTargetInfo.selectedTarget).isEqualTo(imageOrTextTarget)
+        assertThat(multiTargetInfo.allSourceIntents).isEqualTo(imageOrTextTarget.allSourceIntents)
+    }
+
+    @Test
+    fun testNewMultiDisplayResolveInfo_tryToCloneWithAppliedRefinement_delegatedToSelectedTarget() {
+        val refined = Intent("SEND")
+        val sendImage = Intent("SEND")
+        val targetOne = spy(
+            DisplayResolveInfo.newDisplayResolveInfo(
+                sendImage,
+                ResolverDataProvider.createResolveInfo(1, 0),
+                "Target One",
+                "Target One",
+                sendImage,
+                /* resolveInfoPresentationGetter= */ null
+            )
+        )
+        val targetTwo = mock<DisplayResolveInfo> {
+            whenever(tryToCloneWithAppliedRefinement(any())).thenReturn(this)
+        }
+
+        val multiTargetInfo = MultiDisplayResolveInfo.newMultiDisplayResolveInfo(
+            listOf(targetOne, targetTwo)
+        )
+
+        multiTargetInfo.setSelected(1)
+        assertThat(multiTargetInfo.selectedTarget).isEqualTo(targetTwo)
+
+        multiTargetInfo.tryToCloneWithAppliedRefinement(refined)
+        verify(targetTwo, times(1)).tryToCloneWithAppliedRefinement(refined)
+        verify(targetOne, never()).tryToCloneWithAppliedRefinement(any())
     }
 }

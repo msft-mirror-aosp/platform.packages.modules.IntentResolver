@@ -21,7 +21,7 @@ import com.android.systemui.flags.BooleanFlag
 import com.android.systemui.flags.ReleasedFlag
 import com.android.systemui.flags.UnreleasedFlag
 
-internal class TestFeatureFlagRepository(
+class TestFeatureFlagRepository(
     private val overrides: Map<BooleanFlag, Boolean>
 ) : FeatureFlagRepository {
     override fun isEnabled(flag: UnreleasedFlag): Boolean = getValue(flag)

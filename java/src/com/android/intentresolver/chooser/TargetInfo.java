@@ -182,10 +182,25 @@ public interface TargetInfo {
     default boolean hasDisplayIcon() {
         return getDisplayIconHolder().getDisplayIcon() != null;
     }
+
     /**
-     * Clone this target with the given fill-in information.
+     * Attempt to apply a {@code proposedRefinement} that the {@link ChooserRefinementManager}
+     * received from the caller's refinement flow. This may succeed only if the target has a source
+     * intent that matches the filtering parameters of the proposed refinement (according to
+     * {@link Intent#filterEquals()}). Then the first such match is the "base intent," and the
+     * proposed refinement is merged into that base (via {@link Intent#fillIn()}; this can never
+     * result in a change to the {@link Intent#filterEquals()} status of the base, but may e.g. add
+     * new "extras" that weren't previously given in the base intent).
+     *
+     * @return a copy of this {@link TargetInfo} where the "base intent to send" is the result of
+     * merging the refinement into the best-matching source intent, if possible. If there is no
+     * suitable match for the proposed refinement, or if merging fails for any other reason, this
+     * returns null.
+     *
+     * @see android.content.Intent#fillIn(Intent, int)
      */
-    TargetInfo cloneFilledIn(Intent fillInIntent, int flags);
+    @Nullable
+    TargetInfo tryToCloneWithAppliedRefinement(Intent proposedRefinement);
 
     /**
      * @return the list of supported source intents deduped against this single target
@@ -438,5 +453,50 @@ public interface TargetInfo {
         if (targetUserId != currentUserId) {
             intent.fixUris(currentUserId);
         }
+    }
+
+    /**
+     * Derive a "complete" intent from a proposed `refinement` intent by merging it into a matching
+     * `base` intent, without modifying the filter-equality properties of the `base` intent, while
+     * still allowing the `refinement` to replace Share "payload" fields.
+     * Note! Callers are responsible for ensuring that the `base` is a suitable match for the given
+     * `refinement`, such that the two can be merged without modifying filter-equality properties.
+     */
+    static Intent mergeRefinementIntoMatchingBaseIntent(Intent base, Intent refinement) {
+        Intent mergedIntent = new Intent(base);
+
+        /* Copy over any fields from the `refinement` that weren't already specified by the `base`,
+         * along with the refined ClipData (if present, even if that overwrites data given in the
+         * `base` intent).
+         *
+         * Refinement may have modified the payload content stored in the ClipData; such changes
+         * are permitted in refinement since ClipData isn't a factor in the determination of
+         * `Intent.filterEquals()` (which must be preserved as an invariant of refinement). */
+        mergedIntent.fillIn(refinement, Intent.FILL_IN_CLIP_DATA);
+
+        /* Refinement may also modify payload content held in the 'extras' representation, as again
+         * those attributes aren't a factor in determining filter-equality. There is no `FILL_IN_*`
+         * flag that would allow the refinement to overwrite existing keys in the `base` extras, so
+         * here we have to implement the logic ourselves.
+         *
+         * Note this still doesn't imply that the refined intent is the final authority on extras;
+         * in particular, `SelectableTargetInfo.mActivityStarter` uses `Intent.putExtras(Bundle)` to
+         * merge in the `mChooserTargetIntentExtras` (i.e., the `EXTRA_SHORTCUT_ID`), which will
+         * overwrite any existing value.
+         *
+         * TODO: formalize the precedence and make sure extras are set in the appropriate stages,
+         * instead of relying on maintainers to know that (e.g.) authoritative changes belong in the
+         * `TargetActivityStarter`. Otherwise, any extras-based data that Sharesheet adds internally
+         * might be susceptible to "spoofing" from the refinement activity. */
+        mergedIntent.putExtras(refinement);  // Re-merge extras to favor refinement.
+
+        // TODO(b/279067078): consider how to populate the "merged" ClipData. The `base`
+        // already has non-null ClipData due to the implicit migration in Intent, so if the 
+        // refinement modified any of the payload extras, they *must* also provide a modified
+        // ClipData, or else the updated "extras" payload will be inconsistent with the
+        // pre-refinement ClipData when they're merged together. We may be able to do better,
+        // but there are complicated tradeoffs.
+
+        return mergedIntent;
     }
 }

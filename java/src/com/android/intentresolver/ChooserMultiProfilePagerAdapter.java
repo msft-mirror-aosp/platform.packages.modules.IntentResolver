@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 
 import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.measurements.Tracer;
 import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
@@ -50,6 +51,7 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
             EmptyStateProvider emptyStateProvider,
             Supplier<Boolean> workProfileQuietModeChecker,
             UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle,
             int maxTargetsPerRow) {
         this(
                 context,
@@ -59,6 +61,7 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
                 workProfileQuietModeChecker,
                 /* defaultProfile= */ 0,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                 new BottomPaddingOverrideSupplier(context));
     }
 
@@ -70,6 +73,7 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
             Supplier<Boolean> workProfileQuietModeChecker,
             @Profile int defaultProfile,
             UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle,
             int maxTargetsPerRow) {
         this(
                 context,
@@ -79,6 +83,7 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
                 workProfileQuietModeChecker,
                 defaultProfile,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                 new BottomPaddingOverrideSupplier(context));
     }
 
@@ -90,6 +95,7 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
             Supplier<Boolean> workProfileQuietModeChecker,
             @Profile int defaultProfile,
             UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle,
             BottomPaddingOverrideSupplier bottomPaddingOverrideSupplier) {
         super(
                 context,
@@ -100,6 +106,7 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
                 workProfileQuietModeChecker,
                 defaultProfile,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                         () -> makeProfileView(context),
                 bottomPaddingOverrideSupplier);
         mAdapterBinder = adapterBinder;
@@ -122,6 +129,22 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
         recyclerView.setAccessibilityDelegateCompat(
                 new ChooserRecyclerViewAccessibilityDelegate(recyclerView));
         return rootView;
+    }
+
+    @Override
+    boolean rebuildActiveTab(boolean doPostProcessing) {
+        if (doPostProcessing) {
+            Tracer.INSTANCE.beginAppTargetLoadingSection(getActiveListAdapter().getUserHandle());
+        }
+        return super.rebuildActiveTab(doPostProcessing);
+    }
+
+    @Override
+    boolean rebuildInactiveTab(boolean doPostProcessing) {
+        if (getItemCount() != 1 && doPostProcessing) {
+            Tracer.INSTANCE.beginAppTargetLoadingSection(getInactiveListAdapter().getUserHandle());
+        }
+        return super.rebuildInactiveTab(doPostProcessing);
     }
 
     private static class BottomPaddingOverrideSupplier implements Supplier<Optional<Integer>> {
