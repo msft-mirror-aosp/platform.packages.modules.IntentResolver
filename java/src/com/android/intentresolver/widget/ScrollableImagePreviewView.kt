@@ -30,6 +30,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.VisibleForTesting
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.intentresolver.R
@@ -237,9 +238,14 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
     internal constructor(
         val type: PreviewType,
         val uri: Uri,
+        val editAction: Runnable?,
         internal var aspectRatioString: String
     ) {
-        constructor(type: PreviewType, uri: Uri) : this(type, uri, "1:1")
+        constructor(
+            type: PreviewType,
+            uri: Uri,
+            editAction: Runnable?
+        ) : this(type, uri, editAction, "1:1")
     }
 
     enum class PreviewType {
@@ -370,6 +376,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
         val image = view.requireViewById<ImageView>(R.id.image)
         private val badgeFrame = view.requireViewById<View>(R.id.badge_frame)
         private val badge = view.requireViewById<ImageView>(R.id.badge)
+        private val editActionContainer = view.findViewById<View?>(R.id.edit)
         private var scope: CoroutineScope? = null
 
         fun bind(
@@ -402,6 +409,12 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                     itemView.contentDescription = filePreviewDescription
                     badge.setImageResource(R.drawable.chooser_file_generic)
                     badgeFrame.visibility = View.VISIBLE
+                }
+            }
+            preview.editAction?.also { onClick ->
+                editActionContainer?.apply {
+                    setOnClickListener { onClick.run() }
+                    visibility = View.VISIBLE
                 }
             }
             resetScope().launch {
@@ -458,9 +471,14 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
         override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: State) {
             val itemCount = parent.adapter?.itemCount ?: return
             val pos = parent.getChildAdapterPosition(view)
-            var leftMargin = if (pos == 0) outerSpacing else innerSpacing
-            var rightMargin = if (pos == itemCount - 1) outerSpacing else 0
-            outRect.set(leftMargin, 0, rightMargin, 0)
+            var startMargin = if (pos == 0) outerSpacing else innerSpacing
+            var endMargin = if (pos == itemCount - 1) outerSpacing else 0
+
+            if (ViewCompat.getLayoutDirection(parent) == ViewCompat.LAYOUT_DIRECTION_RTL) {
+                outRect.set(endMargin, 0, startMargin, 0)
+            } else {
+                outRect.set(startMargin, 0, endMargin, 0)
+            }
         }
     }
 
@@ -545,7 +563,8 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                                                     bitmap.width,
                                                     bitmap.height
                                                 )
-                                            } ?: 0
+                                            }
+                                                ?: 0
                                         }
                                         .getOrDefault(0)
 
