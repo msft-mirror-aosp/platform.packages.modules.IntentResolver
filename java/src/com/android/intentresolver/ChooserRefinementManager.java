@@ -17,17 +17,20 @@
 package com.android.intentresolver;
 
 import android.annotation.Nullable;
+import android.annotation.UiThread;
 import android.app.Activity;
-import android.content.Context;
+import android.app.Application;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.IntentSender.SendIntentException;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcel;
-import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.util.Log;
+
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 
 import com.android.intentresolver.chooser.TargetInfo;
 
@@ -40,35 +43,53 @@ import java.util.function.Consumer;
  * additional extras and other refinements (subject to {@link Intent#filterEquals()}), e.g., to
  * convert the format of the payload, or lazy-download some data that was deferred in the original
  * call).
- *
- * TODO(b/262805893): this currently requires the result to be a refinement of <em>the best</em>
- * match for the user's selected target among the initially-provided source intents (according to
- * their originally-provided priority order). In order to support alternate formats/actions, we
- * should instead require it to refine <em>any</em> of the source intents -- presumably, the first
- * in priority order that matches according to {@link Intent#filterEquals()}.
  */
-public final class ChooserRefinementManager {
+@UiThread
+public final class ChooserRefinementManager extends ViewModel {
     private static final String TAG = "ChooserRefinement";
 
-    @Nullable
-    private final IntentSender mRefinementIntentSender;
-
-    private final Context mContext;
-    private final Consumer<TargetInfo> mOnSelectionRefined;
-    private final Runnable mOnRefinementCancelled;
-
-    @Nullable
+    @Nullable    // Non-null only during an active refinement session.
     private RefinementResultReceiver mRefinementResultReceiver;
 
-    public ChooserRefinementManager(
-            Context context,
-            @Nullable IntentSender refinementIntentSender,
-            Consumer<TargetInfo> onSelectionRefined,
-            Runnable onRefinementCancelled) {
-        mContext = context;
-        mRefinementIntentSender = refinementIntentSender;
-        mOnSelectionRefined = onSelectionRefined;
-        mOnRefinementCancelled = onRefinementCancelled;
+    private boolean mConfigurationChangeInProgress = false;
+
+    /**
+     * A token for the completion of a refinement process that can be consumed exactly once.
+     */
+    public static class RefinementCompletion {
+        private TargetInfo mTargetInfo;
+        private boolean mConsumed;
+
+        RefinementCompletion(TargetInfo targetInfo) {
+            mTargetInfo = targetInfo;
+        }
+
+        /**
+         * @return The output of the completed refinement process. Null if the process was aborted
+         *         or failed.
+         */
+        public TargetInfo getTargetInfo() {
+            return mTargetInfo;
+        }
+
+        /**
+         * Mark this event as consumed if it wasn't already.
+         *
+         * @return true if this had not already been consumed.
+         */
+        public boolean consume() {
+            if (!mConsumed) {
+                mConsumed = true;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private MutableLiveData<RefinementCompletion> mRefinementCompletion = new MutableLiveData<>();
+
+    public LiveData<RefinementCompletion> getRefinementCompletion() {
+        return mRefinementCompletion;
     }
 
     /**
@@ -76,11 +97,19 @@ public final class ChooserRefinementManager {
      * @return true if the selection should wait for a now-started refinement flow, or false if it
      * can proceed by the default (non-refinement) logic.
      */
-    public boolean maybeHandleSelection(TargetInfo selectedTarget) {
-        if (mRefinementIntentSender == null) {
+    public boolean maybeHandleSelection(TargetInfo selectedTarget,
+            IntentSender refinementIntentSender, Application application, Handler mainHandler) {
+        if (refinementIntentSender == null) {
             return false;
         }
         if (selectedTarget.getAllSourceIntents().isEmpty()) {
+            return false;
+        }
+        if (selectedTarget.isSuspended()) {
+            // We expect all launches to fail for this target, so don't make the user go through the
+            // refinement flow first. Besides, the default (non-refinement) handling displays a
+            // warning in this case and recovers the session; we won't be equipped to recover if
+            // problems only come up after refinement.
             return false;
         }
 
@@ -88,30 +117,63 @@ public final class ChooserRefinementManager {
         mRefinementResultReceiver = new RefinementResultReceiver(
                 refinedIntent -> {
                     destroy();
-                    TargetInfo refinedTarget = getValidRefinedTarget(selectedTarget, refinedIntent);
+
+                    TargetInfo refinedTarget =
+                            selectedTarget.tryToCloneWithAppliedRefinement(refinedIntent);
                     if (refinedTarget != null) {
-                        mOnSelectionRefined.accept(refinedTarget);
+                        mRefinementCompletion.setValue(new RefinementCompletion(refinedTarget));
                     } else {
-                        mOnRefinementCancelled.run();
+                        Log.e(TAG, "Failed to apply refinement to any matching source intent");
+                        mRefinementCompletion.setValue(new RefinementCompletion(null));
                     }
                 },
-                mOnRefinementCancelled,
-                mContext.getMainThreadHandler());
+                () -> {
+                    destroy();
+                    mRefinementCompletion.setValue(new RefinementCompletion(null));
+                },
+                mainHandler);
 
         Intent refinementRequest = makeRefinementRequest(mRefinementResultReceiver, selectedTarget);
         try {
-            mRefinementIntentSender.sendIntent(mContext, 0, refinementRequest, null, null);
+            refinementIntentSender.sendIntent(application, 0, refinementRequest, null, null);
             return true;
-        } catch (SendIntentException e) {
+        } catch (IntentSender.SendIntentException e) {
             Log.e(TAG, "Refinement IntentSender failed to send", e);
         }
-        return false;
+        return true;
+    }
+
+    /** ChooserActivity has stopped */
+    public void onActivityStop(boolean configurationChanging) {
+        mConfigurationChangeInProgress = configurationChanging;
+    }
+
+    /** ChooserActivity has resumed */
+    public void onActivityResume() {
+        if (mConfigurationChangeInProgress) {
+            mConfigurationChangeInProgress = false;
+        } else {
+            if (mRefinementResultReceiver != null) {
+                // This can happen if the refinement activity terminates without ever sending a
+                // response to our `ResultReceiver`. We're probably not prepared to return the user
+                // into a valid Chooser session, so we'll treat it as a cancellation instead.
+                Log.w(TAG, "Chooser resumed while awaiting refinement result; aborting");
+                destroy();
+                mRefinementCompletion.setValue(new RefinementCompletion(null));
+            }
+        }
+    }
+
+    @Override
+    protected void onCleared() {
+        // App lifecycle over, time to clean up.
+        destroy();
     }
 
     /** Clean up any ongoing refinement session. */
-    public void destroy() {
+    private void destroy() {
         if (mRefinementResultReceiver != null) {
-            mRefinementResultReceiver.destroy();
+            mRefinementResultReceiver.destroyReceiver();
             mRefinementResultReceiver = null;
         }
     }
@@ -121,10 +183,13 @@ public final class ChooserRefinementManager {
         final Intent fillIn = new Intent();
         final List<Intent> sourceIntents = originalTarget.getAllSourceIntents();
         fillIn.putExtra(Intent.EXTRA_INTENT, sourceIntents.get(0));
-        if (sourceIntents.size() > 1) {
+        final int sourceIntentCount = sourceIntents.size();
+        if (sourceIntentCount > 1) {
             fillIn.putExtra(
                     Intent.EXTRA_ALTERNATE_INTENTS,
-                    sourceIntents.subList(1, sourceIntents.size()).toArray());
+                    sourceIntents
+                            .subList(1, sourceIntentCount)
+                            .toArray(new Intent[sourceIntentCount - 1]));
         }
         fillIn.putExtra(Intent.EXTRA_RESULT_RECEIVER, resultReceiver.copyForSending());
         return fillIn;
@@ -145,7 +210,7 @@ public final class ChooserRefinementManager {
             mOnRefinementCancelled = onRefinementCancelled;
         }
 
-        public void destroy() {
+        public void destroyReceiver() {
             mDestroyed = true;
         }
 
@@ -155,27 +220,14 @@ public final class ChooserRefinementManager {
                 Log.e(TAG, "Destroyed RefinementResultReceiver received a result");
                 return;
             }
-            if (resultData == null) {
-                Log.e(TAG, "RefinementResultReceiver received null resultData");
-                // TODO: treat as cancellation?
-                return;
-            }
 
-            switch (resultCode) {
-                case Activity.RESULT_CANCELED:
-                    mOnRefinementCancelled.run();
-                    break;
-                case Activity.RESULT_OK:
-                    Parcelable intentParcelable = resultData.getParcelable(Intent.EXTRA_INTENT);
-                    if (intentParcelable instanceof Intent) {
-                        mOnSelectionRefined.accept((Intent) intentParcelable);
-                    } else {
-                        Log.e(TAG, "No valid Intent.EXTRA_INTENT in 'OK' refinement result data");
-                    }
-                    break;
-                default:
-                    Log.w(TAG, "Received unknown refinement result " + resultCode);
-                    break;
+            destroyReceiver();  // This is the single callback we'll accept from this session.
+
+            Intent refinedResult = tryToExtractRefinedResult(resultCode, resultData);
+            if (refinedResult == null) {
+                mOnRefinementCancelled.run();
+            } else {
+                mOnSelectionRefined.accept(refinedResult);
             }
         }
 
@@ -191,28 +243,24 @@ public final class ChooserRefinementManager {
             parcel.recycle();
             return receiverForSending;
         }
-    }
 
-    private static TargetInfo getValidRefinedTarget(
-            TargetInfo originalTarget, Intent proposedRefinement) {
-        if (originalTarget == null) {
-            // TODO: this legacy log message doesn't seem to describe the real condition we just
-            // checked; probably this method should never be invoked with a null target.
-            Log.e(TAG, "Refinement result intent did not match any known targets; canceling");
+        /**
+         * Get the refinement from the result data, if possible, or log diagnostics and return null.
+         */
+        @Nullable
+        private static Intent tryToExtractRefinedResult(int resultCode, Bundle resultData) {
+            if (Activity.RESULT_CANCELED == resultCode) {
+                Log.i(TAG, "Refinement canceled by caller");
+            } else if (Activity.RESULT_OK != resultCode) {
+                Log.w(TAG, "Canceling refinement on unrecognized result code " + resultCode);
+            } else if (resultData == null) {
+                Log.e(TAG, "RefinementResultReceiver received null resultData; canceling");
+            } else if (!(resultData.getParcelable(Intent.EXTRA_INTENT) instanceof Intent)) {
+                Log.e(TAG, "No valid Intent.EXTRA_INTENT in 'OK' refinement result data");
+            } else {
+                return resultData.getParcelable(Intent.EXTRA_INTENT, Intent.class);
+            }
             return null;
         }
-        if (!checkProposalRefinesSourceIntent(originalTarget, proposedRefinement)) {
-            Log.e(TAG, "Refinement " + proposedRefinement + " has no match in " + originalTarget);
-            return null;
-        }
-        return originalTarget.cloneFilledIn(proposedRefinement, 0);  // TODO: select the right base.
-    }
-
-    // TODO: return the actual match, to use as the base that we fill in? Or, if that's handled by
-    // `TargetInfo.cloneFilledIn()`, just let it be nullable (it already is?) and don't bother doing
-    // this pre-check.
-    private static boolean checkProposalRefinesSourceIntent(
-            TargetInfo originalTarget, Intent proposedMatch) {
-        return originalTarget.getAllSourceIntents().stream().anyMatch(proposedMatch::filterEquals);
     }
 }

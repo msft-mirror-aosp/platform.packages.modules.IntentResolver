@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 
 import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.measurements.Tracer;
 import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
@@ -48,17 +49,19 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
             Context context,
             ChooserGridAdapter adapter,
             EmptyStateProvider emptyStateProvider,
-            QuietModeManager quietModeManager,
+            Supplier<Boolean> workProfileQuietModeChecker,
             UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle,
             int maxTargetsPerRow) {
         this(
                 context,
                 new ChooserProfileAdapterBinder(maxTargetsPerRow),
                 ImmutableList.of(adapter),
                 emptyStateProvider,
-                quietModeManager,
+                workProfileQuietModeChecker,
                 /* defaultProfile= */ 0,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                 new BottomPaddingOverrideSupplier(context));
     }
 
@@ -67,18 +70,20 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
             ChooserGridAdapter personalAdapter,
             ChooserGridAdapter workAdapter,
             EmptyStateProvider emptyStateProvider,
-            QuietModeManager quietModeManager,
+            Supplier<Boolean> workProfileQuietModeChecker,
             @Profile int defaultProfile,
             UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle,
             int maxTargetsPerRow) {
         this(
                 context,
                 new ChooserProfileAdapterBinder(maxTargetsPerRow),
                 ImmutableList.of(personalAdapter, workAdapter),
                 emptyStateProvider,
-                quietModeManager,
+                workProfileQuietModeChecker,
                 defaultProfile,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                 new BottomPaddingOverrideSupplier(context));
     }
 
@@ -87,9 +92,10 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
             ChooserProfileAdapterBinder adapterBinder,
             ImmutableList<ChooserGridAdapter> gridAdapters,
             EmptyStateProvider emptyStateProvider,
-            QuietModeManager quietModeManager,
+            Supplier<Boolean> workProfileQuietModeChecker,
             @Profile int defaultProfile,
             UserHandle workProfileUserHandle,
+            UserHandle cloneProfileUserHandle,
             BottomPaddingOverrideSupplier bottomPaddingOverrideSupplier) {
         super(
                 context,
@@ -97,9 +103,10 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
                 adapterBinder,
                 gridAdapters,
                 emptyStateProvider,
-                quietModeManager,
+                workProfileQuietModeChecker,
                 defaultProfile,
                 workProfileUserHandle,
+                cloneProfileUserHandle,
                         () -> makeProfileView(context),
                 bottomPaddingOverrideSupplier);
         mAdapterBinder = adapterBinder;
@@ -114,6 +121,16 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
         mBottomPaddingOverrideSupplier.setEmptyStateBottomOffset(bottomOffset);
     }
 
+    /**
+     * Notify adapter about the drawer's collapse state. This will affect the app divider's
+     * visibility.
+     */
+    public void setIsCollapsed(boolean isCollapsed) {
+        for (int i = 0, size = getItemCount(); i < size; i++) {
+            getAdapterForIndex(i).setAzLabelVisibility(!isCollapsed);
+        }
+    }
+
     private static ViewGroup makeProfileView(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         ViewGroup rootView = (ViewGroup) inflater.inflate(
@@ -122,6 +139,22 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
         recyclerView.setAccessibilityDelegateCompat(
                 new ChooserRecyclerViewAccessibilityDelegate(recyclerView));
         return rootView;
+    }
+
+    @Override
+    boolean rebuildActiveTab(boolean doPostProcessing) {
+        if (doPostProcessing) {
+            Tracer.INSTANCE.beginAppTargetLoadingSection(getActiveListAdapter().getUserHandle());
+        }
+        return super.rebuildActiveTab(doPostProcessing);
+    }
+
+    @Override
+    boolean rebuildInactiveTab(boolean doPostProcessing) {
+        if (getItemCount() != 1 && doPostProcessing) {
+            Tracer.INSTANCE.beginAppTargetLoadingSection(getInactiveListAdapter().getUserHandle());
+        }
+        return super.rebuildInactiveTab(doPostProcessing);
     }
 
     private static class BottomPaddingOverrideSupplier implements Supplier<Optional<Integer>> {
