@@ -16,36 +16,35 @@
 
 package com.android.intentresolver;
 
-import static org.mockito.Mockito.when;
-
 import android.annotation.Nullable;
+import android.app.prediction.AppPredictor;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.UserHandle;
-import android.util.Size;
 
-import com.android.internal.app.AbstractMultiProfilePagerAdapter;
-import com.android.internal.app.ChooserActivityLogger;
-import com.android.internal.app.ChooserActivityOverrideData;
-import com.android.internal.app.ChooserListAdapter;
-import com.android.internal.app.IChooserWrapper;
-import com.android.internal.app.ResolverListAdapter.ResolveInfoPresentationGetter;
-import com.android.internal.app.ResolverListController;
-import com.android.internal.app.chooser.DisplayResolveInfo;
-import com.android.internal.app.chooser.TargetInfo;
-import com.android.internal.logging.MetricsLogger;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.android.intentresolver.AbstractMultiProfilePagerAdapter.CrossProfileIntentsChecker;
+import com.android.intentresolver.chooser.DisplayResolveInfo;
+import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.flags.FeatureFlagRepository;
+import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.icons.TargetDataLoader;
+import com.android.intentresolver.shortcuts.ShortcutLoader;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Simple wrapper around chooser activity to be able to initiate it under test. For more
@@ -64,25 +63,37 @@ public class ChooserWrapperActivity
     }
 
     @Override
-    protected AbstractMultiProfilePagerAdapter createMultiProfilePagerAdapter(
-            Intent[] initialIntents, List<ResolveInfo> rList, boolean filterLastUsed) {
-        AbstractMultiProfilePagerAdapter multiProfilePagerAdapter =
-                super.createMultiProfilePagerAdapter(initialIntents, rList, filterLastUsed);
-        multiProfilePagerAdapter.setInjector(sOverrides.multiPagerAdapterInjector);
-        return multiProfilePagerAdapter;
-    }
-
-    @Override
-    public ChooserListAdapter createChooserListAdapter(Context context, List<Intent> payloadIntents,
-            Intent[] initialIntents, List<ResolveInfo> rList, boolean filterLastUsed,
-            ResolverListController resolverListController) {
+    public ChooserListAdapter createChooserListAdapter(
+            Context context,
+            List<Intent> payloadIntents,
+            Intent[] initialIntents,
+            List<ResolveInfo> rList,
+            boolean filterLastUsed,
+            ResolverListController resolverListController,
+            UserHandle userHandle,
+            Intent targetIntent,
+            ChooserRequestParameters chooserRequest,
+            int maxTargetsPerRow,
+            TargetDataLoader targetDataLoader) {
         PackageManager packageManager =
                 sOverrides.packageManager == null ? context.getPackageManager()
                         : sOverrides.packageManager;
-        return new ChooserListAdapter(context, payloadIntents, initialIntents, rList,
-                filterLastUsed, resolverListController,
-                this, this, packageManager,
-                getChooserActivityLogger());
+        return new ChooserListAdapter(
+                context,
+                payloadIntents,
+                initialIntents,
+                rList,
+                filterLastUsed,
+                createListController(userHandle),
+                userHandle,
+                targetIntent,
+                this,
+                packageManager,
+                getChooserActivityLogger(),
+                chooserRequest,
+                maxTargetsPerRow,
+                userHandle,
+                targetDataLoader);
     }
 
     @Override
@@ -111,15 +122,13 @@ public class ChooserWrapperActivity
     }
 
     @Override
-    protected ComponentName getNearbySharingComponent() {
-        // an arbitrary pre-installed activity that handles this type of intent
-        return ComponentName.unflattenFromString("com.google.android.apps.messaging/"
-                + "com.google.android.apps.messaging.ui.conversationlist.ShareIntentActivity");
-    }
-
-    @Override
-    protected TargetInfo getNearbySharingTarget(Intent originalIntent) {
-        return new ChooserWrapperActivity.EmptyTargetInfo();
+    protected ChooserIntegratedDeviceComponents getIntegratedDeviceComponents() {
+        return new ChooserIntegratedDeviceComponents(
+                /* editSharingComponent=*/ null,
+                // An arbitrary pre-installed activity that handles this type of intent:
+                /* nearbySharingComponent=*/ new ComponentName(
+                        "com.google.android.apps.messaging",
+                        ".ui.conversationlist.ShareIntentActivity"));
     }
 
     @Override
@@ -139,21 +148,36 @@ public class ChooserWrapperActivity
     }
 
     @Override
-    public void safelyStartActivity(com.android.internal.app.chooser.TargetInfo cti) {
-        if (sOverrides.onSafelyStartCallback != null
-                && sOverrides.onSafelyStartCallback.apply(cti)) {
-            return;
+    protected CrossProfileIntentsChecker createCrossProfileIntentsChecker() {
+        if (sOverrides.mCrossProfileIntentsChecker != null) {
+            return sOverrides.mCrossProfileIntentsChecker;
         }
-        super.safelyStartActivity(cti);
+        return super.createCrossProfileIntentsChecker();
     }
 
     @Override
-    protected ResolverListController createListController(UserHandle userHandle) {
+    protected WorkProfileAvailabilityManager createWorkProfileAvailabilityManager() {
+        if (sOverrides.mWorkProfileAvailability != null) {
+            return sOverrides.mWorkProfileAvailability;
+        }
+        return super.createWorkProfileAvailabilityManager();
+    }
+
+    @Override
+    public void safelyStartActivityInternal(TargetInfo cti, UserHandle user,
+            @Nullable Bundle options) {
+        if (sOverrides.onSafelyStartInternalCallback != null
+                && sOverrides.onSafelyStartInternalCallback.apply(cti)) {
+            return;
+        }
+        super.safelyStartActivityInternal(cti, user, options);
+    }
+
+    @Override
+    protected ChooserListController createListController(UserHandle userHandle) {
         if (userHandle == UserHandle.SYSTEM) {
-            when(sOverrides.resolverListController.getUserHandle()).thenReturn(UserHandle.SYSTEM);
             return sOverrides.resolverListController;
         }
-        when(sOverrides.workResolverListController.getUserHandle()).thenReturn(userHandle);
         return sOverrides.workResolverListController;
     }
 
@@ -174,21 +198,10 @@ public class ChooserWrapperActivity
     }
 
     @Override
-    protected Bitmap loadThumbnail(Uri uri, Size size) {
-        if (sOverrides.previewThumbnail != null) {
-            return sOverrides.previewThumbnail;
-        }
-        return super.loadThumbnail(uri, size);
-    }
-
-    @Override
-    protected boolean isImageType(String mimeType) {
-        return sOverrides.isImageType;
-    }
-
-    @Override
-    protected MetricsLogger getMetricsLogger() {
-        return sOverrides.metricsLogger;
+    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
+        return TestContentPreviewViewModel.Companion.wrap(
+                super.createPreviewViewModelFactory(),
+                sOverrides.imageLoader);
     }
 
     @Override
@@ -220,8 +233,13 @@ public class ChooserWrapperActivity
     @Override
     public DisplayResolveInfo createTestDisplayResolveInfo(Intent originalIntent, ResolveInfo pri,
             CharSequence pLabel, CharSequence pInfo, Intent replacementIntent,
-            @Nullable ResolveInfoPresentationGetter resolveInfoPresentationGetter) {
-        return new DisplayResolveInfo(originalIntent, pri, pLabel, pInfo, replacementIntent,
+            @Nullable TargetPresentationGetter resolveInfoPresentationGetter) {
+        return DisplayResolveInfo.newDisplayResolveInfo(
+                originalIntent,
+                pri,
+                pLabel,
+                pInfo,
+                replacementIntent,
                 resolveInfoPresentationGetter);
     }
 
@@ -236,38 +254,40 @@ public class ChooserWrapperActivity
     }
 
     @Override
+    protected UserHandle getTabOwnerUserHandleForLaunch() {
+        if (sOverrides.tabOwnerUserHandleForLaunch == null) {
+            return super.getTabOwnerUserHandleForLaunch();
+        }
+        return sOverrides.tabOwnerUserHandleForLaunch;
+    }
+
+    @Override
     public Context createContextAsUser(UserHandle user, int flags) {
         // return the current context as a work profile doesn't really exist in these tests
         return getApplicationContext();
     }
 
     @Override
-    protected void queryDirectShareTargets(ChooserListAdapter adapter,
-            boolean skipAppPredictionService) {
-        if (sOverrides.onQueryDirectShareTargets != null) {
-            sOverrides.onQueryDirectShareTargets.apply(adapter);
+    protected ShortcutLoader createShortcutLoader(
+            Context context,
+            AppPredictor appPredictor,
+            UserHandle userHandle,
+            IntentFilter targetIntentFilter,
+            Consumer<ShortcutLoader.Result> callback) {
+        ShortcutLoader shortcutLoader =
+                sOverrides.shortcutLoaderFactory.invoke(userHandle, callback);
+        if (shortcutLoader != null) {
+            return shortcutLoader;
         }
-        super.queryDirectShareTargets(adapter, skipAppPredictionService);
+        return super.createShortcutLoader(
+                context, appPredictor, userHandle, targetIntentFilter, callback);
     }
 
     @Override
-    protected boolean isQuietModeEnabled(UserHandle userHandle) {
-        return sOverrides.isQuietModeEnabled;
-    }
-
-    @Override
-    protected boolean isUserRunning(UserHandle userHandle) {
-        if (userHandle.equals(UserHandle.SYSTEM)) {
-            return super.isUserRunning(userHandle);
+    protected FeatureFlagRepository createFeatureFlagRepository() {
+        if (sOverrides.featureFlagRepository != null) {
+            return sOverrides.featureFlagRepository;
         }
-        return sOverrides.isWorkProfileUserRunning;
-    }
-
-    @Override
-    protected boolean isUserUnlocked(UserHandle userHandle) {
-        if (userHandle.equals(UserHandle.SYSTEM)) {
-            return super.isUserUnlocked(userHandle);
-        }
-        return sOverrides.isWorkProfileUserUnlocked;
+        return super.createFeatureFlagRepository();
     }
 }
