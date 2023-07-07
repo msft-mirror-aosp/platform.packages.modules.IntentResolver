@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 
 import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.measurements.Tracer;
 import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
@@ -120,6 +121,16 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
         mBottomPaddingOverrideSupplier.setEmptyStateBottomOffset(bottomOffset);
     }
 
+    /**
+     * Notify adapter about the drawer's collapse state. This will affect the app divider's
+     * visibility.
+     */
+    public void setIsCollapsed(boolean isCollapsed) {
+        for (int i = 0, size = getItemCount(); i < size; i++) {
+            getAdapterForIndex(i).setAzLabelVisibility(!isCollapsed);
+        }
+    }
+
     private static ViewGroup makeProfileView(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         ViewGroup rootView = (ViewGroup) inflater.inflate(
@@ -128,6 +139,22 @@ public class ChooserMultiProfilePagerAdapter extends GenericMultiProfilePagerAda
         recyclerView.setAccessibilityDelegateCompat(
                 new ChooserRecyclerViewAccessibilityDelegate(recyclerView));
         return rootView;
+    }
+
+    @Override
+    boolean rebuildActiveTab(boolean doPostProcessing) {
+        if (doPostProcessing) {
+            Tracer.INSTANCE.beginAppTargetLoadingSection(getActiveListAdapter().getUserHandle());
+        }
+        return super.rebuildActiveTab(doPostProcessing);
+    }
+
+    @Override
+    boolean rebuildInactiveTab(boolean doPostProcessing) {
+        if (getItemCount() != 1 && doPostProcessing) {
+            Tracer.INSTANCE.beginAppTargetLoadingSection(getInactiveListAdapter().getUserHandle());
+        }
+        return super.rebuildInactiveTab(doPostProcessing);
     }
 
     private static class BottomPaddingOverrideSupplier implements Supplier<Optional<Integer>> {

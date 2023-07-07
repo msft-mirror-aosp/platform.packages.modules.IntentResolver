@@ -19,10 +19,11 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground">
+    android:background="?androidprv:attr/materialColorSurfaceContainer">
 
     <include layout="@layout/chooser_headline_row" />
 
@@ -31,15 +32,15 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_horizontal"
-        android:layout_marginBottom="@dimen/chooser_view_spacing"
-        android:paddingStart="@dimen/chooser_edge_margin_normal_half"
-        android:paddingEnd="@dimen/chooser_edge_margin_normal_half"
+        android:layout_marginBottom="8dp"
+        android:layout_marginHorizontal="@dimen/chooser_edge_margin_normal"
+        android:padding="@dimen/chooser_edge_margin_normal_half"
         android:background="@drawable/chooser_content_preview_rounded">
 
         <com.android.intentresolver.widget.RoundedRectImageView
             android:id="@+id/image_view"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="@dimen/width_text_image_preview_size"
+            android:layout_height="@dimen/width_text_image_preview_size"
             android:scaleType="centerCrop"
             app:radius="@dimen/chooser_corner_radius_small"
         />
@@ -51,7 +52,6 @@
             android:layout_weight="1"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/chooser_edge_margin_normal_half"
-            android:layout_marginEnd="@dimen/chooser_edge_margin_normal_half"
             android:maxLines="@integer/text_preview_lines"
             android:ellipsize="end"
             android:linksClickable="false"

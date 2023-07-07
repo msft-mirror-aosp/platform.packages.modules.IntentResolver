@@ -124,17 +124,18 @@
     <!-- Notification action for editing a screenshot (drawing on it, cropping it, etc) -->
     <string name="screenshot_edit">Edit</string>
 
-    <string name="file_count">{count, plural,
-        =1    {{file_name} + # file}
-        other {{file_name} + # files}
-    }
-    </string>
-
     <!-- Represents a number of other files also being shared; used as an item at the end of a list -->
     <string name="other_files">{count, plural,
         =1    {+ # file}
         other {+ # files}
     }
+    </string>
+
+    <!-- Text label indicating the  number of other files also being shared -->
+    <string name="more_files">{count, plural,
+        =1    {+ # more file}
+        other {+ # more files}
+        }
     </string>
 
     <!-- Title atop a sharing UI indicating that text is being shared [CHAR_LIMIT=50] -->
@@ -153,54 +154,98 @@
         other {Sharing # videos}
         }
     </string>
-    <!-- Title atop a sharing UI indicating that some number of items are being shared
-         (for example: sharing a mixture of photos and videos [CHAR_LIMIT=50] -->
-    <string name="sharing_items">{count, plural,
-        =1    {Sharing # item}
-        other {Sharing # items}
+    <!-- Title atop a sharing UI indicating that some number of files are being shared
+         (for example: sharing a mixture of photos and videos) [CHAR_LIMIT=50] -->
+    <string name="sharing_files">{count, plural,
+        =1    {Sharing # file}
+        other {Sharing # files}
         }
     </string>
+
+    <!-- Title atop a sharing UI indicating that some number of images are being shared
+         along with text [CHAR_LIMIT=50] -->
     <string name="sharing_images_with_text">{count, plural,
         =1    {Sharing image with text}
         other {Sharing # images with text}
         }
     </string>
 
+    <!-- Title atop a sharing UI indicating that some number of images are being shared
+         along with a web link [CHAR_LIMIT=50] -->
     <string name="sharing_images_with_link">{count, plural,
         =1    {Sharing image with link}
         other {Sharing # images with link}
         }
     </string>
 
+    <!-- Title atop a sharing UI indicating that some number of videos are being shared
+         along with text [CHAR_LIMIT=50] -->
     <string name="sharing_videos_with_text">{count, plural,
         =1    {Sharing video with text}
         other {Sharing # videos with text}
         }
     </string>
 
+    <!-- Title atop a sharing UI indicating that some number of videos are being shared
+         along with a web link [CHAR_LIMIT=50] -->
     <string name="sharing_videos_with_link">{count, plural,
         =1    {Sharing video with link}
         other {Sharing # videos with link}
         }
     </string>
 
+    <!-- Title atop a sharing UI indicating that some number of files are being shared
+         along with text [CHAR_LIMIT=50] -->
     <string name="sharing_files_with_text">{count, plural,
         =1    {Sharing file with text}
         other {Sharing # files with text}
         }
     </string>
 
+    <!-- Title atop a sharing UI indicating that some number of files are being shared
+         along with a web link [CHAR_LIMIT=50] -->
     <string name="sharing_files_with_link">{count, plural,
         =1    {Sharing file with link}
         other {Sharing # files with link}
         }
     </string>
 
+    <!-- Message indicating that the attached text has been removed from this share and only the
+         images are being shared.  [CHAR LIMIT=none] -->
+    <string name="sharing_images_only">{count, plural,
+        =1    {Image only}
+        other {Images only}
+        }
+    </string>
+
+    <!-- Message indicating that the attached text has been removed from this share and only the
+         videos are being shared.  [CHAR LIMIT=none] -->
+    <string name="sharing_videos_only">{count, plural,
+        =1    {Video only}
+        other {Videos only}
+        }
+    </string>
+
+    <!-- Message indicating that the attached text has been removed from this share and only the
+         files are being shared.  [CHAR LIMIT=none] -->
+    <string name="sharing_files_only">{count, plural,
+        =1    {File only}
+        other {Files only}
+        }
+    </string>
+
+    <!-- Accessibility announcement when a preview thumbnail for a shared image is selected in the
+         Chooser content preview -->
+    <string name="image_preview_a11y_description">Image preview thumbnail</string>
+    <!-- Accessibility announcement when a preview thumbnail for a shared vide item is selected in
+         the Chooser content preview -->
+    <string name="video_preview_a11y_description">Video preview thumbnail</string>
+    <!-- Accessibility announcement when a preview thumbnail for a shared file is selected in the
+         Chooser content preview -->
+    <string name="file_preview_a11y_description">File preview thumbnail</string>
+
     <!-- ChooserActivity - No direct share targets are available. [CHAR LIMIT=NONE] -->
     <string name="chooser_no_direct_share_targets">No recommended people to share with</string>
-
-    <!-- ChooserActivity - Alphabetically sorted apps list label. [CHAR LIMIT=NONE] -->
-    <string name="chooser_all_apps_button_label">Apps list</string>
 
      <!-- Prompt for the USB device resolver dialog with warning text for USB device dialogs.  [CHAR LIMIT=200] -->
     <string name="usb_device_resolve_prompt_warn">This app has not been granted record permission but could capture audio through this USB device.</string>

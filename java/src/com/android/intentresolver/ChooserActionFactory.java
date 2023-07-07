@@ -26,12 +26,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Bundle;
 import android.service.chooser.ChooserAction;
 import android.text.TextUtils;
 import android.util.Log;
@@ -81,19 +78,21 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
             | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION;
 
+    // Boolean extra used to inform the editor that it may want to customize the editing experience
+    // for the sharesheet editing flow.
+    private static final String EDIT_SOURCE = "edit_source";
+    private static final String EDIT_SOURCE_SHARESHEET = "sharesheet";
+
     private static final String CHIP_LABEL_METADATA_KEY = "android.service.chooser.chip_label";
     private static final String CHIP_ICON_METADATA_KEY = "android.service.chooser.chip_icon";
 
     private static final String IMAGE_EDITOR_SHARED_ELEMENT = "screenshot_preview_image";
 
     private final Context mContext;
-    private final String mCopyButtonLabel;
-    private final Drawable mCopyButtonDrawable;
-    private final Runnable mOnCopyButtonClicked;
-    private final TargetInfo mEditSharingTarget;
-    private final Runnable mOnEditButtonClicked;
-    private final TargetInfo mNearbySharingTarget;
-    private final Runnable mOnNearbyButtonClicked;
+
+    @Nullable
+    private final Runnable mCopyButtonRunnable;
+    private final Runnable mEditButtonRunnable;
     private final ImmutableList<ChooserAction> mCustomActions;
     private final @Nullable ChooserAction mModifyShareAction;
     private final Consumer<Boolean> mExcludeSharedTextAction;
@@ -124,37 +123,19 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             Consumer</* @Nullable */ Integer> finishCallback) {
         this(
                 context,
-                context.getString(com.android.internal.R.string.copy),
-                context.getDrawable(com.android.internal.R.drawable.ic_menu_copy_material),
-                makeOnCopyRunnable(
+                makeCopyButtonRunnable(
                         context,
                         chooserRequest.getTargetIntent(),
                         chooserRequest.getReferrerPackageName(),
                         finishCallback,
                         logger),
-                getEditSharingTarget(
-                        context,
-                        chooserRequest.getTargetIntent(),
-                        integratedDeviceComponents),
-                makeOnEditRunnable(
+                makeEditButtonRunnable(
                         getEditSharingTarget(
                                 context,
                                 chooserRequest.getTargetIntent(),
                                 integratedDeviceComponents),
                         firstVisibleImageQuery,
                         activityStarter,
-                        logger),
-                getNearbySharingTarget(
-                        context,
-                        chooserRequest.getTargetIntent(),
-                        integratedDeviceComponents),
-                makeOnNearbyShareRunnable(
-                        getNearbySharingTarget(
-                                context,
-                                chooserRequest.getTargetIntent(),
-                                integratedDeviceComponents),
-                        activityStarter,
-                        finishCallback,
                         logger),
                 chooserRequest.getChooserActions(),
                 chooserRequest.getModifyShareAction(),
@@ -166,26 +147,16 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     @VisibleForTesting
     ChooserActionFactory(
             Context context,
-            String copyButtonLabel,
-            Drawable copyButtonDrawable,
-            Runnable onCopyButtonClicked,
-            TargetInfo editSharingTarget,
-            Runnable onEditButtonClicked,
-            TargetInfo nearbySharingTarget,
-            Runnable onNearbyButtonClicked,
+            @Nullable Runnable copyButtonRunnable,
+            Runnable editButtonRunnable,
             List<ChooserAction> customActions,
             @Nullable ChooserAction modifyShareAction,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
             ChooserActivityLogger logger,
             Consumer</* @Nullable */ Integer> finishCallback) {
         mContext = context;
-        mCopyButtonLabel = copyButtonLabel;
-        mCopyButtonDrawable = copyButtonDrawable;
-        mOnCopyButtonClicked = onCopyButtonClicked;
-        mEditSharingTarget = editSharingTarget;
-        mOnEditButtonClicked = onEditButtonClicked;
-        mNearbySharingTarget = nearbySharingTarget;
-        mOnNearbyButtonClicked = onNearbyButtonClicked;
+        mCopyButtonRunnable = copyButtonRunnable;
+        mEditButtonRunnable = editButtonRunnable;
         mCustomActions = ImmutableList.copyOf(customActions);
         mModifyShareAction = modifyShareAction;
         mExcludeSharedTextAction = onUpdateSharedTextIsExcluded;
@@ -193,44 +164,16 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         mFinishCallback = finishCallback;
     }
 
-    /** Create an action that copies the share content to the clipboard. */
-    @Override
-    public ActionRow.Action createCopyButton() {
-        return new ActionRow.Action(
-                com.android.internal.R.id.chooser_copy_button,
-                mCopyButtonLabel,
-                mCopyButtonDrawable,
-                mOnCopyButtonClicked);
-    }
-
-    /** Create an action that opens the share content in a system-default editor. */
     @Override
     @Nullable
-    public ActionRow.Action createEditButton() {
-        if (mEditSharingTarget == null) {
-            return null;
-        }
-
-        return new ActionRow.Action(
-                com.android.internal.R.id.chooser_edit_button,
-                mEditSharingTarget.getDisplayLabel(),
-                mEditSharingTarget.getDisplayIconHolder().getDisplayIcon(),
-                mOnEditButtonClicked);
+    public Runnable getEditButtonRunnable() {
+        return mEditButtonRunnable;
     }
 
-    /** Create a "Share to Nearby" action. */
     @Override
     @Nullable
-    public ActionRow.Action createNearbyButton() {
-        if (mNearbySharingTarget == null) {
-            return null;
-        }
-
-        return new ActionRow.Action(
-                com.android.internal.R.id.chooser_nearby_button,
-                mNearbySharingTarget.getDisplayLabel(),
-                mNearbySharingTarget.getDisplayIconHolder().getDisplayIcon(),
-                mOnNearbyButtonClicked);
+    public Runnable getCopyButtonRunnable() {
+        return mCopyButtonRunnable;
     }
 
     /** Create custom actions */
@@ -283,49 +226,24 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return mExcludeSharedTextAction;
     }
 
-    private static Runnable makeOnCopyRunnable(
+    @Nullable
+    private static Runnable makeCopyButtonRunnable(
             Context context,
             Intent targetIntent,
             String referrerPackageName,
             Consumer<Integer> finishCallback,
             ChooserActivityLogger logger) {
+        final ClipData clipData;
+        try {
+            clipData = extractTextToCopy(targetIntent);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to extract data to copy", t);
+            return  null;
+        }
+        if (clipData == null) {
+            return null;
+        }
         return () -> {
-            if (targetIntent == null) {
-                finishCallback.accept(null);
-                return;
-            }
-
-            final String action = targetIntent.getAction();
-
-            ClipData clipData = null;
-            if (Intent.ACTION_SEND.equals(action)) {
-                String extraText = targetIntent.getStringExtra(Intent.EXTRA_TEXT);
-                Uri extraStream = targetIntent.getParcelableExtra(Intent.EXTRA_STREAM);
-
-                if (extraText != null) {
-                    clipData = ClipData.newPlainText(null, extraText);
-                } else if (extraStream != null) {
-                    clipData = ClipData.newUri(context.getContentResolver(), null, extraStream);
-                } else {
-                    Log.w(TAG, "No data available to copy to clipboard");
-                    return;
-                }
-            } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
-                final ArrayList<Uri> streams = targetIntent.getParcelableArrayListExtra(
-                        Intent.EXTRA_STREAM);
-                clipData = ClipData.newUri(context.getContentResolver(), null, streams.get(0));
-                for (int i = 1; i < streams.size(); i++) {
-                    clipData.addItem(
-                            context.getContentResolver(),
-                            new ClipData.Item(streams.get(i)));
-                }
-            } else {
-                // expected to only be visible with ACTION_SEND or ACTION_SEND_MULTIPLE
-                // so warn about unexpected action
-                Log.w(TAG, "Action (" + action + ") not supported for copying to clipboard");
-                return;
-            }
-
             ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(
                     Context.CLIPBOARD_SERVICE);
             clipboardManager.setPrimaryClipAsPackage(clipData, referrerPackageName);
@@ -333,6 +251,30 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             logger.logActionSelected(ChooserActivityLogger.SELECTION_TYPE_COPY);
             finishCallback.accept(Activity.RESULT_OK);
         };
+    }
+
+    @Nullable
+    private static ClipData extractTextToCopy(Intent targetIntent) {
+        if (targetIntent == null) {
+            return null;
+        }
+
+        final String action = targetIntent.getAction();
+
+        ClipData clipData = null;
+        if (Intent.ACTION_SEND.equals(action)) {
+            String extraText = targetIntent.getStringExtra(Intent.EXTRA_TEXT);
+
+            if (extraText != null) {
+                clipData = ClipData.newPlainText(null, extraText);
+            } else {
+                Log.w(TAG, "No data available to copy to clipboard");
+            }
+        } else {
+            // expected to only be visible with ACTION_SEND (when a text is shared)
+            Log.d(TAG, "Action (" + action + ") not supported for copying to clipboard");
+        }
+        return clipData;
     }
 
     private static TargetInfo getEditSharingTarget(
@@ -348,6 +290,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         resolveIntent.setFlags(originalIntent.getFlags() & URI_PERMISSION_INTENT_FLAGS);
         resolveIntent.setComponent(editorComponent);
         resolveIntent.setAction(Intent.ACTION_EDIT);
+        resolveIntent.putExtra(EDIT_SOURCE, EDIT_SOURCE_SHARESHEET);
         String originalAction = originalIntent.getAction();
         if (Intent.ACTION_SEND.equals(originalAction)) {
             if (resolveIntent.getData() == null) {
@@ -380,7 +323,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return dri;
     }
 
-    private static Runnable makeOnEditRunnable(
+    private static Runnable makeEditButtonRunnable(
             TargetInfo editSharingTarget,
             Callable</* @Nullable */ View> firstVisibleImageQuery,
             ActionActivityStarter activityStarter,
@@ -400,64 +343,6 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                 activityStarter.safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(
                         editSharingTarget, firstImageView, IMAGE_EDITOR_SHARED_ELEMENT);
             }
-        };
-    }
-
-    private static TargetInfo getNearbySharingTarget(
-            Context context,
-            Intent originalIntent,
-            ChooserIntegratedDeviceComponents integratedComponents) {
-        final ComponentName cn = integratedComponents.getNearbySharingComponent();
-        if (cn == null) {
-            return null;
-        }
-
-        final Intent resolveIntent = new Intent(originalIntent);
-        resolveIntent.setComponent(cn);
-        final ResolveInfo ri = context.getPackageManager().resolveActivity(
-                resolveIntent, PackageManager.GET_META_DATA);
-        if (ri == null || ri.activityInfo == null) {
-            Log.e(TAG, "Device-specified nearby sharing component (" + cn
-                    + ") not available");
-            return null;
-        }
-
-        // Allow the nearby sharing component to provide a more appropriate icon and label
-        // for the chip.
-        CharSequence name = null;
-        Drawable icon = null;
-        final Bundle metaData = ri.activityInfo.metaData;
-        if (metaData != null) {
-            try {
-                final Resources pkgRes = context.getPackageManager().getResourcesForActivity(cn);
-                final int nameResId = metaData.getInt(CHIP_LABEL_METADATA_KEY);
-                name = pkgRes.getString(nameResId);
-                final int resId = metaData.getInt(CHIP_ICON_METADATA_KEY);
-                icon = pkgRes.getDrawable(resId);
-            } catch (NameNotFoundException | Resources.NotFoundException ex) { /* ignore */ }
-        }
-        if (TextUtils.isEmpty(name)) {
-            name = ri.loadLabel(context.getPackageManager());
-        }
-        if (icon == null) {
-            icon = ri.loadIcon(context.getPackageManager());
-        }
-
-        final DisplayResolveInfo dri = DisplayResolveInfo.newDisplayResolveInfo(
-                originalIntent, ri, name, "", resolveIntent, null);
-        dri.getDisplayIconHolder().setDisplayIcon(icon);
-        return dri;
-    }
-
-    private static Runnable makeOnNearbyShareRunnable(
-            TargetInfo nearbyShareTarget,
-            ActionActivityStarter activityStarter,
-            Consumer<Integer> finishCallback,
-            ChooserActivityLogger logger) {
-        return () -> {
-            logger.logActionSelected(ChooserActivityLogger.SELECTION_TYPE_NEARBY);
-            // Action bar is user-independent; always start as primary.
-            activityStarter.safelyStartActivityAsPersonalProfileUser(nearbyShareTarget);
         };
     }
 

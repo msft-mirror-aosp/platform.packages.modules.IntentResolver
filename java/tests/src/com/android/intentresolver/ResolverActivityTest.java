@@ -33,10 +33,11 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.fail;
 
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -108,7 +109,7 @@ public class ResolverActivityTest {
         setupResolverControllers(resolvedComponentInfos);
 
         final ResolverWrapperActivity activity = mActivityRule.launchActivity(sendIntent);
-        Espresso.registerIdlingResources(activity.getAdapter().getLabelIdlingResource());
+        Espresso.registerIdlingResources(activity.getLabelIdlingResource());
         waitForIdle();
 
         assertThat(activity.getAdapter().getCount(), is(2));
@@ -245,7 +246,7 @@ public class ResolverActivityTest {
         ResolveInfo toChoose = personalResolvedComponentInfos.get(1).getResolveInfoAt(0);
         Intent sendIntent = createSendImageIntent();
         final ResolverWrapperActivity activity = mActivityRule.launchActivity(sendIntent);
-        Espresso.registerIdlingResources(activity.getAdapter().getLabelIdlingResource());
+        Espresso.registerIdlingResources(activity.getLabelIdlingResource());
         waitForIdle();
 
         // The other entry is filtered to the last used slot
@@ -279,7 +280,7 @@ public class ResolverActivityTest {
         setupResolverControllers(resolvedComponentInfos);
 
         final ResolverWrapperActivity activity = mActivityRule.launchActivity(sendIntent);
-        Espresso.registerIdlingResources(activity.getAdapter().getLabelIdlingResource());
+        Espresso.registerIdlingResources(activity.getLabelIdlingResource());
         waitForIdle();
 
         // The other entry is filtered to the other profile slot
@@ -320,7 +321,7 @@ public class ResolverActivityTest {
                 .thenReturn(resolvedComponentInfos.get(1).getResolveInfoAt(0));
 
         final ResolverWrapperActivity activity = mActivityRule.launchActivity(sendIntent);
-        Espresso.registerIdlingResources(activity.getAdapter().getLabelIdlingResource());
+        Espresso.registerIdlingResources(activity.getLabelIdlingResource());
         waitForIdle();
 
         // The other entry is filtered to the other profile slot
@@ -510,7 +511,7 @@ public class ResolverActivityTest {
         waitForIdle();
         TextView headerText = activity.findViewById(com.android.internal.R.id.title);
         String initialText = headerText.getText().toString();
-        assertFalse(initialText.isEmpty(), "Header text is empty.");
+        assertFalse("Header text is empty.", initialText.isEmpty());
         assertThat(headerText.getVisibility(), is(View.VISIBLE));
     }
 
@@ -741,7 +742,7 @@ public class ResolverActivityTest {
     }
 
     @Test
-    public void testWorkTab_onePersonalTarget_emptyStateOnWorkTarget_autolaunch() {
+    public void testWorkTab_onePersonalTarget_emptyStateOnWorkTarget_doesNotAutoLaunch() {
         markWorkProfileUserAvailable();
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
@@ -763,7 +764,7 @@ public class ResolverActivityTest {
         mActivityRule.launchActivity(sendIntent);
         waitForIdle();
 
-        assertThat(chosen[0], is(personalResolvedComponentInfos.get(1).getResolveInfoAt(0)));
+        assertNull(chosen[0]);
     }
 
     @Test
@@ -781,7 +782,7 @@ public class ResolverActivityTest {
                 .thenReturn(resolvedComponentInfos.get(1).getResolveInfoAt(0));
 
         final ResolverWrapperActivity activity = mActivityRule.launchActivity(sendIntent);
-        Espresso.registerIdlingResources(activity.getAdapter().getLabelIdlingResource());
+        Espresso.registerIdlingResources(activity.getLabelIdlingResource());
         waitForIdle();
 
         // The other entry is filtered to the last used slot
@@ -847,7 +848,7 @@ public class ResolverActivityTest {
                 .thenReturn(resolvedComponentInfos.get(0).getResolveInfoAt(0));
 
         final ResolverWrapperActivity activity = mActivityRule.launchActivity(sendIntent);
-        Espresso.registerIdlingResources(activity.getAdapter().getLabelIdlingResource());
+        Espresso.registerIdlingResources(activity.getLabelIdlingResource());
         waitForIdle();
 
         assertThat(activity.getAdapter().hasFilteredItem(), is(false));

@@ -36,32 +36,30 @@ import java.util.List;
 import java.util.Objects;
 
 class UnifiedContentPreviewUi extends ContentPreviewUi {
-    private final List<FileInfo> mFiles;
-    @Nullable
+    private final boolean mShowEditAction;
     private final ChooserContentPreviewUi.ActionFactory mActionFactory;
     private final ImageLoader mImageLoader;
     private final MimeTypeClassifier mTypeClassifier;
     private final TransitionElementStatusCallback mTransitionElementStatusCallback;
     private final HeadlineGenerator mHeadlineGenerator;
+    @Nullable
+    private List<FileInfo> mFiles;
+    @Nullable
+    private ViewGroup mContentPreviewView;
 
     UnifiedContentPreviewUi(
-            List<FileInfo> files,
+            boolean isSingleImage,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
             MimeTypeClassifier typeClassifier,
             TransitionElementStatusCallback transitionElementStatusCallback,
             HeadlineGenerator headlineGenerator) {
-        mFiles = files;
+        mShowEditAction = isSingleImage;
         mActionFactory = actionFactory;
         mImageLoader = imageLoader;
         mTypeClassifier = typeClassifier;
         mTransitionElementStatusCallback = transitionElementStatusCallback;
         mHeadlineGenerator = headlineGenerator;
-
-        mImageLoader.prePopulate(mFiles.stream()
-                .map(FileInfo::getPreviewUri)
-                .filter(Objects::nonNull)
-                .toList());
     }
 
     @Override
@@ -76,89 +74,78 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
         return layout;
     }
 
+    public void setFiles(List<FileInfo> files) {
+        mImageLoader.prePopulate(files.stream()
+                .map(FileInfo::getPreviewUri)
+                .filter(Objects::nonNull)
+                .toList());
+        mFiles = files;
+        if (mContentPreviewView != null) {
+            updatePreviewWithFiles(mContentPreviewView, files);
+        }
+    }
+
     private ViewGroup displayInternal(LayoutInflater layoutInflater, ViewGroup parent) {
-        ViewGroup contentPreviewLayout = (ViewGroup) layoutInflater.inflate(
+        mContentPreviewView = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_image, parent, false);
-        ScrollableImagePreviewView imagePreview =
-                contentPreviewLayout.findViewById(R.id.scrollable_image_preview);
-        imagePreview.setOnNoPreviewCallback(() -> imagePreview.setVisibility(View.GONE));
 
         final ActionRow actionRow =
-                contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
-        actionRow.setActions(
-                createActions(
-                        createImagePreviewActions(),
-                        mActionFactory.createCustomActions()));
+                mContentPreviewView.findViewById(com.android.internal.R.id.chooser_action_row);
+        List<ActionRow.Action> actions = mActionFactory.createCustomActions();
+        actionRow.setActions(actions);
 
-        if (mFiles.size() == 0) {
+        ScrollableImagePreviewView imagePreview =
+                mContentPreviewView.requireViewById(R.id.scrollable_image_preview);
+        imagePreview.setOnNoPreviewCallback(() -> imagePreview.setVisibility(View.GONE));
+        imagePreview.setTransitionElementStatusCallback(mTransitionElementStatusCallback);
+
+        if (mFiles != null) {
+            updatePreviewWithFiles(mContentPreviewView, mFiles);
+        }
+
+        return mContentPreviewView;
+    }
+
+    private void updatePreviewWithFiles(ViewGroup contentPreviewView, List<FileInfo> files) {
+        final int count = files.size();
+        ScrollableImagePreviewView imagePreview =
+                contentPreviewView.requireViewById(R.id.scrollable_image_preview);
+        if (count == 0) {
             Log.i(
                     TAG,
                     "Attempted to display image preview area with zero"
-                        + " available images detected in EXTRA_STREAM list");
+                            + " available images detected in EXTRA_STREAM list");
             imagePreview.setVisibility(View.GONE);
             mTransitionElementStatusCallback.onAllTransitionElementsReady();
-            return contentPreviewLayout;
+            return;
         }
 
-        imagePreview.setTransitionElementStatusCallback(mTransitionElementStatusCallback);
-
         List<ScrollableImagePreviewView.Preview> previews = new ArrayList<>();
-        boolean allImages = !mFiles.isEmpty();
-        boolean allVideos = !mFiles.isEmpty();
-        for (FileInfo fileInfo : mFiles) {
+        boolean allImages = true;
+        boolean allVideos = true;
+        for (FileInfo fileInfo : files) {
             ScrollableImagePreviewView.PreviewType previewType =
-                    getPreviewType(fileInfo.getMimeType());
+                    getPreviewType(mTypeClassifier, fileInfo.getMimeType());
             allImages = allImages && previewType == ScrollableImagePreviewView.PreviewType.Image;
             allVideos = allVideos && previewType == ScrollableImagePreviewView.PreviewType.Video;
 
             if (fileInfo.getPreviewUri() != null) {
-                previews.add(new ScrollableImagePreviewView.Preview(
-                        previewType,
-                        fileInfo.getPreviewUri()));
+                Runnable editAction =
+                        mShowEditAction ? mActionFactory.getEditButtonRunnable() : null;
+                previews.add(
+                        new ScrollableImagePreviewView.Preview(
+                                previewType, fileInfo.getPreviewUri(), editAction));
             }
         }
-        imagePreview.setPreviews(
-                previews,
-                mFiles.size() - previews.size(),
-                mImageLoader);
+
+        imagePreview.setPreviews(previews, count - previews.size(), mImageLoader);
 
         if (allImages) {
-            displayHeadline(
-                    contentPreviewLayout, mHeadlineGenerator.getImagesHeadline(mFiles.size()));
+            displayHeadline(contentPreviewView, mHeadlineGenerator.getImagesHeadline(count));
         } else if (allVideos) {
-            displayHeadline(
-                    contentPreviewLayout, mHeadlineGenerator.getVideosHeadline(mFiles.size()));
+            displayHeadline(contentPreviewView, mHeadlineGenerator.getVideosHeadline(count));
         } else {
-            displayHeadline(
-                    contentPreviewLayout, mHeadlineGenerator.getItemsHeadline(mFiles.size()));
+            displayHeadline(contentPreviewView, mHeadlineGenerator.getFilesHeadline(count));
         }
-
-        return contentPreviewLayout;
-    }
-
-    private List<ActionRow.Action> createImagePreviewActions() {
-        ArrayList<ActionRow.Action> actions = new ArrayList<>(2);
-        //TODO: add copy action;
-        ActionRow.Action action = mActionFactory.createNearbyButton();
-        if (action != null) {
-            actions.add(action);
-        }
-        if (mFiles.size() == 1 && mTypeClassifier.isImageType(mFiles.get(0).getMimeType())) {
-            action = mActionFactory.createEditButton();
-            if (action != null) {
-                actions.add(action);
-            }
-        }
-        return actions;
-    }
-
-    private ScrollableImagePreviewView.PreviewType getPreviewType(String mimeType) {
-        if (mTypeClassifier.isImageType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Image;
-        }
-        if (mTypeClassifier.isVideoType(mimeType)) {
-            return ScrollableImagePreviewView.PreviewType.Video;
-        }
-        return ScrollableImagePreviewView.PreviewType.File;
     }
 }
