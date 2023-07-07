@@ -83,13 +83,15 @@ import com.android.intentresolver.NoCrossProfileEmptyStateProvider.DevicePolicyB
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.contentpreview.BasePreviewViewModel;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.contentpreview.HeadlineGeneratorImpl;
-import com.android.intentresolver.contentpreview.ImageLoader;
-import com.android.intentresolver.contentpreview.PreviewDataProvider;
+import com.android.intentresolver.contentpreview.PreviewViewModel;
 import com.android.intentresolver.flags.FeatureFlagRepository;
 import com.android.intentresolver.flags.FeatureFlagRepositoryFactory;
 import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.icons.DefaultTargetDataLoader;
+import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.measurements.Tracer;
 import com.android.intentresolver.model.AbstractResolverComparator;
 import com.android.intentresolver.model.AppPredictionServiceResolverComparator;
@@ -97,7 +99,6 @@ import com.android.intentresolver.model.ResolverRankerServiceResolverComparator;
 import com.android.intentresolver.shortcuts.AppPredictorFactory;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 import com.android.intentresolver.widget.ImagePreviewView;
-import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.content.PackageMonitor;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
@@ -140,8 +141,6 @@ public class ChooserActivity extends ResolverActivity implements
      * @hide
      */
     public static final String FIRST_IMAGE_PREVIEW_TRANSITION_NAME = "screenshot_preview_image";
-
-    private static final String PREF_NUM_SHEET_EXPANSIONS = "pref_num_sheet_expansions";
 
     private static final boolean DEBUG = true;
 
@@ -272,12 +271,14 @@ public class ChooserActivity extends ResolverActivity implements
             }
         });
 
+        BasePreviewViewModel previewViewModel =
+                new ViewModelProvider(this, createPreviewViewModelFactory())
+                        .get(BasePreviewViewModel.class);
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getLifecycle(),
-                createPreviewDataProvider(),
+                previewViewModel.createOrReuseProvider(mChooserRequest),
                 mChooserRequest.getTargetIntent(),
-                this::isImageType,
-                createPreviewImageLoader(),
+                previewViewModel.createOrReuseImageLoader(),
                 createChooserActionFactory(),
                 mEnterTransitionAnimationDelegate,
                 new HeadlineGeneratorImpl(this));
@@ -307,7 +308,8 @@ public class ChooserActivity extends ResolverActivity implements
                 mChooserRequest.getDefaultTitleResource(),
                 mChooserRequest.getInitialIntents(),
                 /* rList: List<ResolveInfo> = */ null,
-                /* supportsAlwaysUseOption = */ false);
+                /* supportsAlwaysUseOption = */ false,
+                new DefaultTargetDataLoader(this, getLifecycle(), false));
 
         mChooserShownTime = System.currentTimeMillis();
         final long systemCost = mChooserShownTime - intentReceivedTime;
@@ -318,20 +320,9 @@ public class ChooserActivity extends ResolverActivity implements
             mResolverDrawerLayout.addOnLayoutChangeListener(this::handleLayoutChange);
 
             mResolverDrawerLayout.setOnCollapsedChangedListener(
-                    new ResolverDrawerLayout.OnCollapsedChangedListener() {
-
-                        // Only consider one expansion per activity creation
-                        private boolean mWrittenOnce = false;
-
-                        @Override
-                        public void onCollapsedChanged(boolean isCollapsed) {
-                            if (!isCollapsed && !mWrittenOnce) {
-                                incrementNumSheetExpansions();
-                                mWrittenOnce = true;
-                            }
-                            getChooserActivityLogger()
-                                    .logSharesheetExpansionChanged(isCollapsed);
-                        }
+                    isCollapsed -> {
+                        mChooserMultiProfilePagerAdapter.setIsCollapsed(isCollapsed);
+                        getChooserActivityLogger().logSharesheetExpansionChanged(isCollapsed);
                     });
         }
 
@@ -440,13 +431,14 @@ public class ChooserActivity extends ResolverActivity implements
     protected AbstractMultiProfilePagerAdapter createMultiProfilePagerAdapter(
             Intent[] initialIntents,
             List<ResolveInfo> rList,
-            boolean filterLastUsed) {
+            boolean filterLastUsed,
+            TargetDataLoader targetDataLoader) {
         if (shouldShowTabs()) {
             mChooserMultiProfilePagerAdapter = createChooserMultiProfilePagerAdapterForTwoProfiles(
-                    initialIntents, rList, filterLastUsed);
+                    initialIntents, rList, filterLastUsed, targetDataLoader);
         } else {
             mChooserMultiProfilePagerAdapter = createChooserMultiProfilePagerAdapterForOneProfile(
-                    initialIntents, rList, filterLastUsed);
+                    initialIntents, rList, filterLastUsed, targetDataLoader);
         }
         return mChooserMultiProfilePagerAdapter;
     }
@@ -489,14 +481,16 @@ public class ChooserActivity extends ResolverActivity implements
     private ChooserMultiProfilePagerAdapter createChooserMultiProfilePagerAdapterForOneProfile(
             Intent[] initialIntents,
             List<ResolveInfo> rList,
-            boolean filterLastUsed) {
+            boolean filterLastUsed,
+            TargetDataLoader targetDataLoader) {
         ChooserGridAdapter adapter = createChooserGridAdapter(
                 /* context */ this,
                 /* payloadIntents */ mIntents,
                 initialIntents,
                 rList,
                 filterLastUsed,
-                /* userHandle */ getPersonalProfileUserHandle());
+                /* userHandle */ getPersonalProfileUserHandle(),
+                targetDataLoader);
         return new ChooserMultiProfilePagerAdapter(
                 /* context */ this,
                 adapter,
@@ -510,7 +504,8 @@ public class ChooserActivity extends ResolverActivity implements
     private ChooserMultiProfilePagerAdapter createChooserMultiProfilePagerAdapterForTwoProfiles(
             Intent[] initialIntents,
             List<ResolveInfo> rList,
-            boolean filterLastUsed) {
+            boolean filterLastUsed,
+            TargetDataLoader targetDataLoader) {
         int selectedProfile = findSelectedProfile();
         ChooserGridAdapter personalAdapter = createChooserGridAdapter(
                 /* context */ this,
@@ -518,14 +513,16 @@ public class ChooserActivity extends ResolverActivity implements
                 selectedProfile == PROFILE_PERSONAL ? initialIntents : null,
                 rList,
                 filterLastUsed,
-                /* userHandle */ getPersonalProfileUserHandle());
+                /* userHandle */ getPersonalProfileUserHandle(),
+                targetDataLoader);
         ChooserGridAdapter workAdapter = createChooserGridAdapter(
                 /* context */ this,
                 /* payloadIntents */ mIntents,
                 selectedProfile == PROFILE_WORK ? initialIntents : null,
                 rList,
                 filterLastUsed,
-                /* userHandle */ getWorkProfileUserHandle());
+                /* userHandle */ getWorkProfileUserHandle(),
+                targetDataLoader);
         return new ChooserMultiProfilePagerAdapter(
                 /* context */ this,
                 personalAdapter,
@@ -536,14 +533,6 @@ public class ChooserActivity extends ResolverActivity implements
                 getWorkProfileUserHandle(),
                 getCloneProfileUserHandle(),
                 mMaxTargetsPerRow);
-    }
-
-    private PreviewDataProvider createPreviewDataProvider() {
-        // TODO: move this into a ViewModel so it could survive orientation change
-        return new PreviewDataProvider(
-                mChooserRequest.getTargetIntent(),
-                getContentResolver(),
-                this::isImageType);
     }
 
     private int findSelectedProfile() {
@@ -720,19 +709,6 @@ public class ChooserActivity extends ResolverActivity implements
     @VisibleForTesting
     public Cursor queryResolver(ContentResolver resolver, Uri uri) {
         return resolver.query(uri, null, null, null, null);
-    }
-
-    private boolean isImageType(@Nullable String mimeType) {
-        return mimeType != null && mimeType.startsWith("image/");
-    }
-
-    private int getNumSheetExpansions() {
-        return getPreferences(Context.MODE_PRIVATE).getInt(PREF_NUM_SHEET_EXPANSIONS, 0);
-    }
-
-    private void incrementNumSheetExpansions() {
-        getPreferences(Context.MODE_PRIVATE).edit().putInt(PREF_NUM_SHEET_EXPANSIONS,
-                getNumSheetExpansions() + 1).apply();
     }
 
     @Override
@@ -1193,7 +1169,8 @@ public class ChooserActivity extends ResolverActivity implements
             Intent[] initialIntents,
             List<ResolveInfo> rList,
             boolean filterLastUsed,
-            UserHandle userHandle) {
+            UserHandle userHandle,
+            TargetDataLoader targetDataLoader) {
         ChooserListAdapter chooserListAdapter = createChooserListAdapter(
                 context,
                 payloadIntents,
@@ -1204,7 +1181,8 @@ public class ChooserActivity extends ResolverActivity implements
                 userHandle,
                 getTargetIntent(),
                 mChooserRequest,
-                mMaxTargetsPerRow);
+                mMaxTargetsPerRow,
+                targetDataLoader);
 
         return new ChooserGridAdapter(
                 context,
@@ -1247,8 +1225,7 @@ public class ChooserActivity extends ResolverActivity implements
                 },
                 chooserListAdapter,
                 shouldShowContentPreview(),
-                mMaxTargetsPerRow,
-                getNumSheetExpansions());
+                mMaxTargetsPerRow);
     }
 
     @VisibleForTesting
@@ -1262,7 +1239,8 @@ public class ChooserActivity extends ResolverActivity implements
             UserHandle userHandle,
             Intent targetIntent,
             ChooserRequestParameters chooserRequest,
-            int maxTargetsPerRow) {
+            int maxTargetsPerRow,
+            TargetDataLoader targetDataLoader) {
         UserHandle initialIntentsUserSpace = isLaunchedAsCloneProfile()
                 && userHandle.equals(getPersonalProfileUserHandle())
                 ? getCloneProfileUserHandle() : userHandle;
@@ -1280,7 +1258,8 @@ public class ChooserActivity extends ResolverActivity implements
                 getChooserActivityLogger(),
                 chooserRequest,
                 maxTargetsPerRow,
-                initialIntentsUserSpace);
+                initialIntentsUserSpace,
+                targetDataLoader);
     }
 
     @Override
@@ -1325,14 +1304,8 @@ public class ChooserActivity extends ResolverActivity implements
     }
 
     @VisibleForTesting
-    protected ImageLoader createPreviewImageLoader() {
-        final int cacheSize;
-        float chooserWidth = getResources().getDimension(R.dimen.chooser_width);
-        // imageWidth = imagePreviewHeight * minAspectRatio (see ScrollableImagePreviewView)
-        float imageWidth =
-                getResources().getDimension(R.dimen.chooser_preview_image_height_tall) * 2 / 5;
-        cacheSize = (int) (Math.ceil(chooserWidth / imageWidth) + 2);
-        return new ImagePreviewImageLoader(this, getLifecycle(), cacheSize);
+    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
+        return PreviewViewModel.Companion.getFactory();
     }
 
     private ChooserActionFactory createChooserActionFactory() {

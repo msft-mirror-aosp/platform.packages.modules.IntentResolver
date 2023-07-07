@@ -91,13 +91,8 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
 
         final ActionRow actionRow =
                 mContentPreviewView.findViewById(com.android.internal.R.id.chooser_action_row);
-        List<ActionRow.Action> actions = createActions(
-                createImagePreviewActions(),
-                mActionFactory.createCustomActions());
+        List<ActionRow.Action> actions = mActionFactory.createCustomActions();
         actionRow.setActions(actions);
-        if (actions.isEmpty()) {
-            mContentPreviewView.findViewById(R.id.actions_top_divider).setVisibility(View.GONE);
-        }
 
         ScrollableImagePreviewView imagePreview =
                 mContentPreviewView.requireViewById(R.id.scrollable_image_preview);
@@ -135,9 +130,11 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             allVideos = allVideos && previewType == ScrollableImagePreviewView.PreviewType.Video;
 
             if (fileInfo.getPreviewUri() != null) {
+                Runnable editAction =
+                        mShowEditAction ? mActionFactory.getEditButtonRunnable() : null;
                 previews.add(
                         new ScrollableImagePreviewView.Preview(
-                                previewType, fileInfo.getPreviewUri()));
+                                previewType, fileInfo.getPreviewUri(), editAction));
             }
         }
 
@@ -150,17 +147,5 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
         } else {
             displayHeadline(contentPreviewView, mHeadlineGenerator.getFilesHeadline(count));
         }
-    }
-
-    private List<ActionRow.Action> createImagePreviewActions() {
-        ArrayList<ActionRow.Action> actions = new ArrayList<>(1);
-        //TODO: add copy action;
-        if (mShowEditAction) {
-            ActionRow.Action action = mActionFactory.createEditButton();
-            if (action != null) {
-                actions.add(action);
-            }
-        }
-        return actions;
     }
 }

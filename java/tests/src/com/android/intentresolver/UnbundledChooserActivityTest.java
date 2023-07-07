@@ -694,6 +694,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    @Ignore("b/285309527")
     public void testFilePlusTextSharing_ExcludeText() {
         Uri uri = createTestContentProviderUri(null, "image/png");
         Intent sendIntent = createSendImageIntent(uri);
@@ -735,6 +736,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    @Ignore("b/285309527")
     public void testFilePlusTextSharing_RemoveAndAddBackText() {
         Uri uri = createTestContentProviderUri("application/pdf", "image/png");
         Intent sendIntent = createSendImageIntent(uri);
@@ -782,6 +784,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    @Ignore("b/285309527")
     public void testFilePlusTextSharing_TextExclusionDoesNotAffectAlternativeIntent() {
         Uri uri = createTestContentProviderUri("image/png", null);
         Intent sendIntent = createSendImageIntent(uri);
@@ -825,6 +828,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    @Ignore("b/285309527")
     public void testImagePlusTextSharing_failedThumbnailAndExcludedText_textChanges() {
         Uri uri = createTestContentProviderUri("image/png", null);
         Intent sendIntent = createSendImageIntent(uri);
@@ -868,8 +872,8 @@ public class UnbundledChooserActivityTest {
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
-        onView(withId(com.android.internal.R.id.chooser_copy_button)).check(matches(isDisplayed()));
-        onView(withId(com.android.internal.R.id.chooser_copy_button)).perform(click());
+        onView(withId(R.id.copy)).check(matches(isDisplayed()));
+        onView(withId(R.id.copy)).perform(click());
         ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(
                 Context.CLIPBOARD_SERVICE);
         ClipData clipData = clipboard.getPrimaryClip();
@@ -892,8 +896,8 @@ public class UnbundledChooserActivityTest {
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
-        onView(withId(com.android.internal.R.id.chooser_copy_button)).check(matches(isDisplayed()));
-        onView(withId(com.android.internal.R.id.chooser_copy_button)).perform(click());
+        onView(withId(R.id.copy)).check(matches(isDisplayed()));
+        onView(withId(R.id.copy)).perform(click());
 
         ChooserActivityLogger logger = activity.getChooserActivityLogger();
         verify(logger, times(1)).logActionSelected(eq(ChooserActivityLogger.SELECTION_TYPE_COPY));
@@ -2341,7 +2345,7 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    public void testWorkTab_onePersonalTarget_emptyStateOnWorkTarget_autolaunch() {
+    public void testWorkTab_onePersonalTarget_emptyStateOnWorkTarget_doesNotAutoLaunch() {
         markWorkProfileUserAvailable();
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
@@ -2360,7 +2364,7 @@ public class UnbundledChooserActivityTest {
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, "Test"));
         waitForIdle();
 
-        assertThat(chosen[0], is(personalResolvedComponentInfos.get(1).getResolveInfoAt(0)));
+        assertNull(chosen[0]);
     }
 
     @Test

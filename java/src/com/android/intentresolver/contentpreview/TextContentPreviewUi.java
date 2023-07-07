@@ -28,14 +28,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.lifecycle.Lifecycle;
 
 import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 
-import java.util.ArrayList;
-import java.util.List;
-
 class TextContentPreviewUi extends ContentPreviewUi {
+    private final Lifecycle mLifecycle;
     @Nullable
     private final CharSequence mSharingText;
     @Nullable
@@ -47,12 +46,14 @@ class TextContentPreviewUi extends ContentPreviewUi {
     private final HeadlineGenerator mHeadlineGenerator;
 
     TextContentPreviewUi(
+            Lifecycle lifecycle,
             @Nullable CharSequence sharingText,
             @Nullable CharSequence previewTitle,
             @Nullable Uri previewThumbnail,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
             HeadlineGenerator headlineGenerator) {
+        mLifecycle = lifecycle;
         mSharingText = sharingText;
         mPreviewTitle = previewTitle;
         mPreviewThumbnail = previewThumbnail;
@@ -81,10 +82,7 @@ class TextContentPreviewUi extends ContentPreviewUi {
 
         final ActionRow actionRow =
                 contentPreviewLayout.findViewById(com.android.internal.R.id.chooser_action_row);
-        actionRow.setActions(
-                createActions(
-                        createTextPreviewActions(),
-                        mActionFactory.createCustomActions()));
+        actionRow.setActions(mActionFactory.createCustomActions());
 
         if (mSharingText == null) {
             contentPreviewLayout
@@ -117,6 +115,7 @@ class TextContentPreviewUi extends ContentPreviewUi {
             previewThumbnailView.setVisibility(View.GONE);
         } else {
             mImageLoader.loadImage(
+                    mLifecycle,
                     mPreviewThumbnail,
                     (bitmap) -> updateViewWithImage(
                             contentPreviewLayout.findViewById(
@@ -124,14 +123,16 @@ class TextContentPreviewUi extends ContentPreviewUi {
                             bitmap));
         }
 
+        Runnable onCopy = mActionFactory.getCopyButtonRunnable();
+        View copyButton = contentPreviewLayout.findViewById(R.id.copy);
+        if (onCopy != null) {
+            copyButton.setOnClickListener((v) -> onCopy.run());
+        } else {
+            copyButton.setVisibility(View.GONE);
+        }
+
         displayHeadline(contentPreviewLayout, mHeadlineGenerator.getTextHeadline(mSharingText));
 
         return contentPreviewLayout;
-    }
-
-    private List<ActionRow.Action> createTextPreviewActions() {
-        ArrayList<ActionRow.Action> actions = new ArrayList<>(2);
-        actions.add(mActionFactory.createCopyButton());
-        return actions;
     }
 }

@@ -32,12 +32,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
 
+import androidx.lifecycle.ViewModelProvider;
+
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.CrossProfileIntentsChecker;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
-import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.flags.FeatureFlagRepository;
 import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
@@ -71,7 +73,8 @@ public class ChooserWrapperActivity
             UserHandle userHandle,
             Intent targetIntent,
             ChooserRequestParameters chooserRequest,
-            int maxTargetsPerRow) {
+            int maxTargetsPerRow,
+            TargetDataLoader targetDataLoader) {
         PackageManager packageManager =
                 sOverrides.packageManager == null ? context.getPackageManager()
                         : sOverrides.packageManager;
@@ -89,7 +92,8 @@ public class ChooserWrapperActivity
                 getChooserActivityLogger(),
                 chooserRequest,
                 maxTargetsPerRow,
-                userHandle);
+                userHandle,
+                targetDataLoader);
     }
 
     @Override
@@ -194,10 +198,10 @@ public class ChooserWrapperActivity
     }
 
     @Override
-    protected ImageLoader createPreviewImageLoader() {
-        return sOverrides.imageLoader == null
-                ? super.createPreviewImageLoader()
-                : sOverrides.imageLoader;
+    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
+        return TestContentPreviewViewModel.Companion.wrap(
+                super.createPreviewViewModelFactory(),
+                sOverrides.imageLoader);
     }
 
     @Override

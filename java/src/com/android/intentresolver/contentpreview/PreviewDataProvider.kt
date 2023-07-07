@@ -78,11 +78,10 @@ constructor(
     constructor(
         targetIntent: Intent,
         contentResolver: ContentInterface,
-        typeClassifier: MimeTypeClassifier,
     ) : this(
         targetIntent,
         contentResolver,
-        typeClassifier,
+        DefaultMimeTypeClassifier,
         Dispatchers.IO,
     )
 
@@ -105,11 +104,7 @@ constructor(
              * that broadly covers all data being shared, such as '*' when sending an image
              * and text. We therefore should inspect each item for the preferred type, in order:
              * IMAGE, FILE, TEXT. */
-            if (
-                !targetIntent.isSend ||
-                    typeClassifier.isTextType(targetIntent.type) ||
-                    records.isEmpty()
-            ) {
+            if (!targetIntent.isSend || records.isEmpty()) {
                 CONTENT_PREVIEW_TEXT
             } else {
                 runBlocking(dispatcher) {

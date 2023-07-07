@@ -31,12 +31,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.lifecycle.Lifecycle;
 
 import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -48,6 +48,7 @@ import java.util.function.Consumer;
  * file content).
  */
 class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
+    private final Lifecycle mLifecycle;
     private final CharSequence mText;
     private final ChooserContentPreviewUi.ActionFactory mActionFactory;
     private final ImageLoader mImageLoader;
@@ -61,8 +62,11 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
     private Uri mFirstFilePreviewUri;
     private boolean mAllImages;
     private boolean mAllVideos;
+    // TODO(b/285309527): make this a flag
+    private static final boolean SHOW_TOGGLE_CHECKMARK = false;
 
     FilesPlusTextContentPreviewUi(
+            Lifecycle lifecycle,
             boolean isSingleImage,
             int fileCount,
             CharSequence text,
@@ -70,6 +74,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             ImageLoader imageLoader,
             MimeTypeClassifier typeClassifier,
             HeadlineGenerator headlineGenerator) {
+        mLifecycle = lifecycle;
         if (isSingleImage && fileCount != 1) {
             throw new IllegalArgumentException(
                     "fileCount = " + fileCount + " and isSingleImage = true");
@@ -119,14 +124,8 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
 
         final ActionRow actionRow =
                 mContentPreviewView.findViewById(com.android.internal.R.id.chooser_action_row);
-        List<ActionRow.Action> actions = createActions(
-                createImagePreviewActions(),
-                mActionFactory.createCustomActions());
+        List<ActionRow.Action> actions = mActionFactory.createCustomActions();
         actionRow.setActions(actions);
-
-        if (actions.isEmpty()) {
-            mContentPreviewView.findViewById(R.id.actions_top_divider).setVisibility(View.GONE);
-        }
 
         if (mIsMetadataUpdated) {
             updateUiWithMetadata(mContentPreviewView);
@@ -137,31 +136,22 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
         return mContentPreviewView;
     }
 
-    private List<ActionRow.Action> createImagePreviewActions() {
-        ArrayList<ActionRow.Action> actions = new ArrayList<>(2);
-        //TODO: add copy action;
-        if (mIsSingleImage) {
-            ActionRow.Action action = mActionFactory.createEditButton();
-            if (action != null) {
-                actions.add(action);
-            }
-        }
-        return actions;
-    }
-
     private void updateUiWithMetadata(ViewGroup contentPreviewView) {
         prepareTextPreview(contentPreviewView, mActionFactory);
         updateHeadline(contentPreviewView);
 
         ImageView imagePreview = mContentPreviewView.requireViewById(R.id.image_view);
         if (mIsSingleImage && mFirstFilePreviewUri != null) {
-            mImageLoader.loadImage(mFirstFilePreviewUri, bitmap -> {
-                if (bitmap == null) {
-                    imagePreview.setVisibility(View.GONE);
-                } else {
-                    imagePreview.setImageBitmap(bitmap);
-                }
-            });
+            mImageLoader.loadImage(
+                    mLifecycle,
+                    mFirstFilePreviewUri,
+                    bitmap -> {
+                        if (bitmap == null) {
+                            imagePreview.setVisibility(View.GONE);
+                        } else {
+                            imagePreview.setImageBitmap(bitmap);
+                        }
+                    });
         } else {
             imagePreview.setVisibility(View.GONE);
         }
@@ -213,7 +203,9 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             shareTextAction.accept(!isChecked);
             updateHeadline(contentPreview);
         });
-        includeText.setVisibility(View.VISIBLE);
+        if (SHOW_TOGGLE_CHECKMARK) {
+            includeText.setVisibility(View.VISIBLE);
+        }
     }
 
     private String getNoTextString(Resources resources) {
