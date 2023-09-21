@@ -28,6 +28,7 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.RemoteException;
 import android.os.Trace;
 import android.os.UserHandle;
@@ -42,6 +43,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.MainThread;
+import androidx.annotation.WorkerThread;
+
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.icons.TargetDataLoader;
@@ -53,6 +57,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 public class ResolverListAdapter extends BaseAdapter {
     private static final String TAG = "ResolverListAdapter";
@@ -75,6 +80,8 @@ public class ResolverListAdapter extends BaseAdapter {
 
     private final Set<DisplayResolveInfo> mRequestedIcons = new HashSet<>();
     private final Set<DisplayResolveInfo> mRequestedLabels = new HashSet<>();
+    private final Executor mBgExecutor;
+    private final Handler mMainHandler;
 
     private ResolveInfo mLastChosen;
     private DisplayResolveInfo mOtherProfile;
@@ -103,6 +110,37 @@ public class ResolverListAdapter extends BaseAdapter {
             ResolverListCommunicator resolverListCommunicator,
             UserHandle initialIntentsUserSpace,
             TargetDataLoader targetDataLoader) {
+        this(
+                context,
+                payloadIntents,
+                initialIntents,
+                rList,
+                filterLastUsed,
+                resolverListController,
+                userHandle,
+                targetIntent,
+                resolverListCommunicator,
+                initialIntentsUserSpace,
+                targetDataLoader,
+                AsyncTask.SERIAL_EXECUTOR,
+                context.getMainThreadHandler());
+    }
+
+    @VisibleForTesting
+    public ResolverListAdapter(
+            Context context,
+            List<Intent> payloadIntents,
+            Intent[] initialIntents,
+            List<ResolveInfo> rList,
+            boolean filterLastUsed,
+            ResolverListController resolverListController,
+            UserHandle userHandle,
+            Intent targetIntent,
+            ResolverListCommunicator resolverListCommunicator,
+            UserHandle initialIntentsUserSpace,
+            TargetDataLoader targetDataLoader,
+            Executor bgExecutor,
+            Handler mainHandler) {
         mContext = context;
         mIntents = payloadIntents;
         mInitialIntents = initialIntents;
@@ -117,6 +155,8 @@ public class ResolverListAdapter extends BaseAdapter {
         mTargetIntent = targetIntent;
         mResolverListCommunicator = resolverListCommunicator;
         mInitialIntentsUserSpace = initialIntentsUserSpace;
+        mBgExecutor = bgExecutor;
+        mMainHandler = mainHandler;
     }
 
     public final DisplayResolveInfo getFirstDisplayResolveInfo() {
@@ -357,8 +397,8 @@ public class ResolverListAdapter extends BaseAdapter {
                     otherProfileInfo,
                     mPm,
                     mTargetIntent,
-                    mResolverListCommunicator,
-                    mTargetDataLoader);
+                    mResolverListCommunicator
+            );
         } else {
             mOtherProfile = null;
             try {
@@ -402,35 +442,42 @@ public class ResolverListAdapter extends BaseAdapter {
 
         // Send an "incomplete" list-ready while the async task is running.
         postListReadyRunnable(doPostProcessing, /* rebuildCompleted */ false);
-        createSortingTask(doPostProcessing).execute(filteredResolveList);
+        mBgExecutor.execute(() -> {
+            List<ResolvedComponentInfo> sortedComponents = null;
+            //TODO: the try-catch logic here is to formally match the AsyncTask's behavior.
+            // Empirically, we don't need it as in the case on an exception, the app will crash and
+            // `onComponentsSorted` won't be invoked.
+            try {
+                sortComponents(filteredResolveList);
+                sortedComponents = filteredResolveList;
+            } catch (Throwable t) {
+                Log.e(TAG, "Failed to sort components", t);
+                throw t;
+            } finally {
+                final List<ResolvedComponentInfo> result = sortedComponents;
+                mMainHandler.post(() -> onComponentsSorted(result, doPostProcessing));
+            }
+        });
         return false;
     }
 
-    AsyncTask<List<ResolvedComponentInfo>,
-            Void,
-            List<ResolvedComponentInfo>> createSortingTask(boolean doPostProcessing) {
-        return new AsyncTask<List<ResolvedComponentInfo>,
-                Void,
-                List<ResolvedComponentInfo>>() {
-            @Override
-            protected List<ResolvedComponentInfo> doInBackground(
-                    List<ResolvedComponentInfo>... params) {
-                mResolverListController.sort(params[0]);
-                return params[0];
-            }
-            @Override
-            protected void onPostExecute(List<ResolvedComponentInfo> sortedComponents) {
-                processSortedList(sortedComponents, doPostProcessing);
-                notifyDataSetChanged();
-                if (doPostProcessing) {
-                    mResolverListCommunicator.updateProfileViewButton();
-                }
-            }
-        };
+    @WorkerThread
+    protected void sortComponents(List<ResolvedComponentInfo> components) {
+        mResolverListController.sort(components);
     }
 
-    protected void processSortedList(List<ResolvedComponentInfo> sortedComponents,
-            boolean doPostProcessing) {
+    @MainThread
+    protected void onComponentsSorted(
+            @Nullable List<ResolvedComponentInfo> sortedComponents, boolean doPostProcessing) {
+        processSortedList(sortedComponents, doPostProcessing);
+        notifyDataSetChanged();
+        if (doPostProcessing) {
+            mResolverListCommunicator.updateProfileViewButton();
+        }
+    }
+
+    protected void processSortedList(
+            @Nullable List<ResolvedComponentInfo> sortedComponents, boolean doPostProcessing) {
         final int n = sortedComponents != null ? sortedComponents.size() : 0;
         Trace.beginSection("ResolverListAdapter#processSortedList:" + n);
         if (n != 0) {
@@ -471,8 +518,7 @@ public class ResolverListAdapter extends BaseAdapter {
                             ri,
                             ri.loadLabel(mPm),
                             null,
-                            ii,
-                            mTargetDataLoader.createPresentationGetter(ri)));
+                            ii));
                 }
             }
 
@@ -509,7 +555,7 @@ public class ResolverListAdapter extends BaseAdapter {
                     mPostListReadyRunnable = null;
                 }
             };
-            mContext.getMainThreadHandler().post(mPostListReadyRunnable);
+            mMainHandler.post(mPostListReadyRunnable);
         }
     }
 
@@ -524,8 +570,7 @@ public class ResolverListAdapter extends BaseAdapter {
         final DisplayResolveInfo dri = DisplayResolveInfo.newDisplayResolveInfo(
                 intent,
                 add,
-                (replaceIntent != null) ? replaceIntent : defaultIntent,
-                mTargetDataLoader.createPresentationGetter(add));
+                (replaceIntent != null) ? replaceIntent : defaultIntent);
         dri.setPinned(rci.isPinned());
         if (rci.isPinned()) {
             Log.i(TAG, "Pinned item: " + rci.name);
@@ -572,7 +617,7 @@ public class ResolverListAdapter extends BaseAdapter {
     protected boolean shouldAddResolveInfo(DisplayResolveInfo dri) {
         // Checks if this info is already listed in display.
         for (DisplayResolveInfo existingInfo : mDisplayList) {
-            if (mResolverListCommunicator
+            if (ResolveInfoHelpers
                     .resolveInfoMatch(dri.getResolveInfo(), existingInfo.getResolveInfo())) {
                 return false;
             }
@@ -710,7 +755,7 @@ public class ResolverListAdapter extends BaseAdapter {
         }
     }
 
-    private void loadLabel(DisplayResolveInfo info) {
+    protected final void loadLabel(DisplayResolveInfo info) {
         if (mRequestedLabels.add(info)) {
             mTargetDataLoader.loadLabel(info, (result) -> onLabelLoaded(info, result));
         }
@@ -728,7 +773,7 @@ public class ResolverListAdapter extends BaseAdapter {
 
     public void onDestroy() {
         if (mPostListReadyRunnable != null) {
-            mContext.getMainThreadHandler().removeCallbacks(mPostListReadyRunnable);
+            mMainHandler.removeCallbacks(mPostListReadyRunnable);
             mPostListReadyRunnable = null;
         }
         if (mResolverListController != null) {
@@ -828,8 +873,7 @@ public class ResolverListAdapter extends BaseAdapter {
             ResolvedComponentInfo resolvedComponentInfo,
             PackageManager pm,
             Intent targetIntent,
-            ResolverListCommunicator resolverListCommunicator,
-            TargetDataLoader targetDataLoader) {
+            ResolverListCommunicator resolverListCommunicator) {
         ResolveInfo resolveInfo = resolvedComponentInfo.getResolveInfoAt(0);
 
         Intent pOrigIntent = resolverListCommunicator.getReplacementIntent(
@@ -838,16 +882,12 @@ public class ResolverListAdapter extends BaseAdapter {
         Intent replacementIntent = resolverListCommunicator.getReplacementIntent(
                 resolveInfo.activityInfo, targetIntent);
 
-        TargetPresentationGetter presentationGetter =
-                targetDataLoader.createPresentationGetter(resolveInfo);
-
         return DisplayResolveInfo.newDisplayResolveInfo(
                 resolvedComponentInfo.getIntentAt(0),
                 resolveInfo,
                 resolveInfo.loadLabel(pm),
                 resolveInfo.loadLabel(pm),
-                pOrigIntent != null ? pOrigIntent : replacementIntent,
-                presentationGetter);
+                pOrigIntent != null ? pOrigIntent : replacementIntent);
     }
 
     /**
@@ -855,8 +895,6 @@ public class ResolverListAdapter extends BaseAdapter {
      * and {@link ResolverActivity}.
      */
     interface ResolverListCommunicator {
-
-        boolean resolveInfoMatch(ResolveInfo lhs, ResolveInfo rhs);
 
         Intent getReplacementIntent(ActivityInfo activityInfo, Intent defIntent);
 
@@ -892,6 +930,24 @@ public class ResolverListAdapter extends BaseAdapter {
         public TextView text;
         public TextView text2;
         public ImageView icon;
+
+        public final void reset() {
+            text.setText("");
+            text.setMaxLines(2);
+            text.setMaxWidth(Integer.MAX_VALUE);
+            text.setBackground(null);
+            text.setPaddingRelative(0, 0, 0, 0);
+
+            text2.setVisibility(View.GONE);
+            text2.setText("");
+
+            itemView.setContentDescription(null);
+            itemView.setBackground(defaultItemViewBackground);
+
+            icon.setImageDrawable(null);
+            icon.setColorFilter(null);
+            icon.clearAnimation();
+        }
 
         @VisibleForTesting
         public ViewHolder(View view) {
@@ -936,6 +992,23 @@ public class ResolverListAdapter extends BaseAdapter {
             } else {
                 icon.setColorFilter(null);
             }
+        }
+
+        public void bindPlaceholderDrawable(int maxTextWidth, Drawable drawable) {
+            text.setMaxWidth(maxTextWidth);
+            text.setBackground(drawable);
+            // Prevent rippling by removing background containing ripple
+            itemView.setBackground(null);
+        }
+
+        public void bindGroupIndicator(Drawable indicator) {
+            text.setPaddingRelative(0, 0, /*end = */indicator.getIntrinsicWidth(), 0);
+            text.setBackground(indicator);
+        }
+
+        public void bindPinnedIndicator(Drawable indicator) {
+            text.setPaddingRelative(/*start = */indicator.getIntrinsicWidth(), 0, 0, 0);
+            text.setBackground(indicator);
         }
     }
 }

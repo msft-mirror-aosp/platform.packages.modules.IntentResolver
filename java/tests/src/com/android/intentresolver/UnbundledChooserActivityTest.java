@@ -25,6 +25,7 @@ import static androidx.test.espresso.action.ViewActions.swipeUp;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasSibling;
+import static androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -39,6 +40,7 @@ import static com.android.intentresolver.ChooserListAdapter.SHORTCUT_TARGET_SCOR
 import static com.android.intentresolver.MatcherUtils.first;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static junit.framework.Assert.assertNull;
 
@@ -47,10 +49,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -82,20 +83,30 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
 import android.service.chooser.ChooserAction;
 import android.service.chooser.ChooserTarget;
-import android.util.HashedStringCache;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import android.text.style.UnderlineSpan;
 import android.util.Pair;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
-import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -109,10 +120,13 @@ import androidx.test.rule.ActivityTestRule;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.logging.EventLog;
+import com.android.intentresolver.logging.FakeEventLog;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
-import com.android.systemui.flags.BooleanFlag;
+
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -121,8 +135,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
@@ -136,34 +148,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Instrumentation tests for the IntentResolver module's Sharesheet (ChooserActivity).
- * TODO: remove methods that supported running these tests against arbitrary ChooserActivity
- * subclasses. Those were left over from an earlier version where IntentResolver's ChooserActivity
- * inherited from the framework version at com.android.internal.app.ChooserActivity, and this test
- * file inherited from the framework's version as well. Once the migration to the IntentResolver
- * package is complete, that aspect of the test design can revert to match the style of the
- * framework tests prior to ag/16482932.
- * TODO: this can simply be renamed to "ChooserActivityTest" if that's ever unambiguous (i.e., if
- * there's no risk of confusion with the framework tests that currently share the same name).
+ * Instrumentation tests for ChooserActivity.
+ * <p>
+ * Legacy test suite migrated from framework CoreTests.
+ * <p>
  */
 @RunWith(Parameterized.class)
+@HiltAndroidTest
 public class UnbundledChooserActivityTest {
 
-    /* --------
-     * Subclasses should copy the following section verbatim (or alternatively could specify some
-     * additional @Parameterized.Parameters, as long as the correct parameters are used to
-     * initialize the ChooserActivityTest). The subclasses should also be @RunWith the
-     * `Parameterized` runner.
-     * --------
-     */
+    private static FakeEventLog getEventLog(ChooserWrapperActivity activity) {
+        return (FakeEventLog) activity.mEventLog;
+    }
 
     private static final UserHandle PERSONAL_USER_HANDLE = InstrumentationRegistry
             .getInstrumentation().getTargetContext().getUser();
+    private static final UserHandle WORK_PROFILE_USER_HANDLE = UserHandle.of(10);
+    private static final UserHandle CLONE_PROFILE_USER_HANDLE = UserHandle.of(11);
+
     private static final Function<PackageManager, PackageManager> DEFAULT_PM = pm -> pm;
     private static final Function<PackageManager, PackageManager> NO_APP_PREDICTION_SERVICE_PM =
             pm -> {
@@ -172,56 +183,34 @@ public class UnbundledChooserActivityTest {
                 return mock;
             };
 
-    private static final List<BooleanFlag> ALL_FLAGS =
-            Arrays.asList();
-
-    private static final Map<BooleanFlag, Boolean> ALL_FLAGS_OFF =
-            createAllFlagsOverride(false);
-    private static final Map<BooleanFlag, Boolean> ALL_FLAGS_ON =
-            createAllFlagsOverride(true);
-
     @Parameterized.Parameters
     public static Collection packageManagers() {
-        if (ALL_FLAGS.isEmpty()) {
-            // No flags to toggle between, so just two configurations.
-            return Arrays.asList(new Object[][] {
-                    // Default PackageManager and all flags off
-                    { DEFAULT_PM, ALL_FLAGS_OFF},
-                    // No App Prediction Service and all flags off
-                    { NO_APP_PREDICTION_SERVICE_PM, ALL_FLAGS_OFF },
-            });
-        }
         return Arrays.asList(new Object[][] {
-                // Default PackageManager and all flags off
-                { DEFAULT_PM, ALL_FLAGS_OFF},
-                // Default PackageManager and all flags on
-                { DEFAULT_PM, ALL_FLAGS_ON},
-                // No App Prediction Service and all flags off
-                { NO_APP_PREDICTION_SERVICE_PM, ALL_FLAGS_OFF },
-                // No App Prediction Service and all flags on
-                { NO_APP_PREDICTION_SERVICE_PM, ALL_FLAGS_ON }
+                // Default PackageManager
+                { DEFAULT_PM },
+                // No App Prediction Service
+                { NO_APP_PREDICTION_SERVICE_PM}
         });
     }
 
-    private static Map<BooleanFlag, Boolean> createAllFlagsOverride(boolean value) {
-        HashMap<BooleanFlag, Boolean> overrides = new HashMap<>(ALL_FLAGS.size());
-        for (BooleanFlag flag : ALL_FLAGS) {
-            overrides.put(flag, value);
-        }
-        return overrides;
-    }
+    private static final String TEST_MIME_TYPE = "application/TestType";
 
-    /* --------
-     * Subclasses can override the following methods to customize test behavior.
-     * --------
-     */
+    private static final int CONTENT_PREVIEW_IMAGE = 1;
+    private static final int CONTENT_PREVIEW_FILE = 2;
+    private static final int CONTENT_PREVIEW_TEXT = 3;
 
-    /**
-     * Perform any necessary per-test initialization steps (subclasses may add additional steps
-     * before and/or after calling up to the superclass implementation).
-     */
-    @CallSuper
-    protected void setup() {
+    @Rule(order = 0)
+    public CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule(order = 1)
+    public HiltAndroidRule mHiltAndroidRule = new HiltAndroidRule(this);
+
+    @Rule(order = 2)
+    public ActivityTestRule<ChooserWrapperActivity> mActivityRule =
+            new ActivityTestRule<>(ChooserWrapperActivity.class, false, false);
+
+    @Before
+    public void setUp() {
         // TODO: use the other form of `adoptShellPermissionIdentity()` where we explicitly list the
         // permissions we require (which we'll read from the manifest at runtime).
         InstrumentationRegistry
@@ -230,87 +219,14 @@ public class UnbundledChooserActivityTest {
                 .adoptShellPermissionIdentity();
 
         cleanOverrideData();
-        ChooserActivityOverrideData.getInstance().featureFlagRepository =
-                new TestFeatureFlagRepository(mFlags);
+        mHiltAndroidRule.inject();
     }
-
-    /**
-     * Given an intent that was constructed in a test, perform any additional configuration to
-     * specify the appropriate concrete ChooserActivity subclass. The activity launched by this
-     * intent must descend from android.intentresolver.ChooserActivity (for our ActivityTestRule), and
-     * must also implement the android.intentresolver.IChooserWrapper interface (since test code will
-     * assume the ability to make unsafe downcasts).
-     */
-    protected Intent getConcreteIntentForLaunch(Intent clientIntent) {
-        clientIntent.setClass(
-                InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                com.android.intentresolver.ChooserWrapperActivity.class);
-        return clientIntent;
-    }
-
-    /**
-     * Whether {@code #testIsAppPredictionServiceAvailable} should verify the behavior after
-     * changing the availability conditions at runtime. In the unbundled chooser, the availability
-     * is cached at start and will never be re-evaluated.
-     * TODO: remove when we no longer want to test the system's on-the-fly evaluation.
-     */
-    protected boolean shouldTestTogglingAppPredictionServiceAvailabilityAtRuntime() {
-        return false;
-    }
-
-    /* --------
-     * The code in this section is unorthodox and can be simplified/reverted when we no longer need
-     * to support the parallel chooser implementations.
-     * --------
-     */
-
-    @Rule
-    public final TestRule mRule;
-
-    // Shared test code references the activity under test as ChooserActivity, the common ancestor
-    // of any (inheritance-based) chooser implementation. For testing purposes, that activity will
-    // usually be cast to IChooserWrapper to expose instrumentation.
-    private ActivityTestRule<ChooserActivity> mActivityRule =
-            new ActivityTestRule<>(ChooserActivity.class, false, false) {
-                @Override
-                public ChooserActivity launchActivity(Intent clientIntent) {
-                    return super.launchActivity(getConcreteIntentForLaunch(clientIntent));
-                }
-            };
-
-    @Before
-    public final void doPolymorphicSetup() {
-        // The base class needs a @Before-annotated setup for when it runs against the system
-        // chooser, while subclasses need to be able to specify their own setup behavior. Notably
-        // the unbundled chooser, running in user-space, needs to take additional steps before it
-        // can run #cleanOverrideData() (which writes to DeviceConfig).
-        setup();
-    }
-
-    /* --------
-     * Subclasses can ignore the remaining code and inherit the full suite of tests.
-     * --------
-     */
-
-    private static final String TEST_MIME_TYPE = "application/TestType";
-
-    private static final int CONTENT_PREVIEW_IMAGE = 1;
-    private static final int CONTENT_PREVIEW_FILE = 2;
-    private static final int CONTENT_PREVIEW_TEXT = 3;
 
     private final Function<PackageManager, PackageManager> mPackageManagerOverride;
-    private final Map<BooleanFlag, Boolean> mFlags;
-
 
     public UnbundledChooserActivityTest(
-                Function<PackageManager, PackageManager> packageManagerOverride,
-                Map<BooleanFlag, Boolean> flags) {
+                Function<PackageManager, PackageManager> packageManagerOverride) {
         mPackageManagerOverride = packageManagerOverride;
-        mFlags = flags;
-
-        mRule = RuleChain
-                .outerRule(new FeatureFlagRule(flags))
-                .around(mActivityRule);
     }
 
     private void setDeviceConfigProperty(
@@ -380,6 +296,58 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    public void test_shareRichTextWithRichTitle_richTextAndRichTitleDisplayed() {
+        CharSequence title = new SpannableStringBuilder()
+                .append("Rich", new UnderlineSpan(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE)
+                .append(
+                        "Title",
+                        new ForegroundColorSpan(Color.RED),
+                        Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+        CharSequence sharedText = new SpannableStringBuilder()
+                .append(
+                        "Rich",
+                        new BackgroundColorSpan(Color.YELLOW),
+                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+                .append(
+                        "Text",
+                        new StyleSpan(Typeface.ITALIC),
+                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        Intent sendIntent = createSendTextIntent();
+        sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
+        sendIntent.putExtra(Intent.EXTRA_TITLE, title);
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+        setupResolverControllers(resolvedComponentInfos);
+
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        waitForIdle();
+
+        onView(withId(com.android.internal.R.id.content_preview_title))
+                .check((view, e) -> {
+                    assertThat(view).isInstanceOf(TextView.class);
+                    CharSequence text = ((TextView) view).getText();
+                    assertThat(text).isInstanceOf(Spanned.class);
+                    Spanned spanned = (Spanned) text;
+                    assertThat(spanned.getSpans(0, spanned.length(), Object.class))
+                            .hasLength(2);
+                    assertThat(spanned.getSpans(0, 4, UnderlineSpan.class)).hasLength(1);
+                    assertThat(spanned.getSpans(4, spanned.length(), ForegroundColorSpan.class))
+                            .hasLength(1);
+                });
+
+        onView(withId(com.android.internal.R.id.content_preview_text))
+                .check((view, e) -> {
+                    assertThat(view).isInstanceOf(TextView.class);
+                    CharSequence text = ((TextView) view).getText();
+                    assertThat(text).isInstanceOf(Spanned.class);
+                    Spanned spanned = (Spanned) text;
+                    assertThat(spanned.getSpans(0, spanned.length(), Object.class))
+                            .hasLength(2);
+                    assertThat(spanned.getSpans(0, 4, BackgroundColorSpan.class)).hasLength(1);
+                    assertThat(spanned.getSpans(4, spanned.length(), StyleSpan.class)).hasLength(1);
+                });
+    }
+
+    @Test
     public void emptyPreviewTitleAndThumbnail() throws InterruptedException {
         Intent sendIntent = createSendTextIntentWithPreview(null, null);
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
@@ -431,7 +399,7 @@ public class UnbundledChooserActivityTest {
         String previewTitle = "My Content Preview Title";
         Uri uri = Uri.parse(
                 "android.resource://com.android.frameworks.coretests/"
-                        + R.drawable.test320x240);
+                + com.android.intentresolver.tests.R.drawable.test320x240);
         Intent sendIntent = createSendTextIntentWithPreview(previewTitle, uri);
         ChooserActivityOverrideData.getInstance().imageLoader =
                 createImageLoader(uri, createBitmap());
@@ -543,8 +511,8 @@ public class UnbundledChooserActivityTest {
         };
         ResolveInfo toChoose = resolvedComponentInfos.get(0).getResolveInfoAt(0);
         DisplayResolveInfo testDri =
-                activity.createTestDisplayResolveInfo(sendIntent, toChoose, "testLabel", "testInfo",
-                        sendIntent, /* resolveInfoPresentationGetter */ null);
+                activity.createTestDisplayResolveInfo(
+                        sendIntent, toChoose, "testLabel", "testInfo", sendIntent);
         onView(withText(toChoose.activityInfo.name))
                 .perform(click());
         waitForIdle();
@@ -603,7 +571,7 @@ public class UnbundledChooserActivityTest {
                 createResolvedComponentsForTestWithOtherProfile(2, /* userId */ 10);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(4);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
 
         ResolveInfo toChoose = personalResolvedComponentInfos.get(1).getResolveInfoAt(0);
         Intent sendIntent = createSendTextIntent();
@@ -895,15 +863,16 @@ public class UnbundledChooserActivityTest {
 
         setupResolverControllers(resolvedComponentInfos);
 
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
         onView(withId(R.id.copy)).check(matches(isDisplayed()));
         onView(withId(R.id.copy)).perform(click());
-
-        EventLog logger = activity.getEventLog();
-        verify(logger, times(1)).logActionSelected(eq(EventLog.SELECTION_TYPE_COPY));
+        FakeEventLog eventLog = getEventLog(activity);
+        assertThat(eventLog.getActionSelected())
+                .isEqualTo(new FakeEventLog.ActionSelected(
+                        /* targetType = */ EventLog.SELECTION_TYPE_COPY));
     }
 
     @Test
@@ -914,8 +883,7 @@ public class UnbundledChooserActivityTest {
 
         setupResolverControllers(resolvedComponentInfos);
 
-        final IChooserWrapper activity = (IChooserWrapper)
-                mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
         onView(withId(com.android.internal.R.id.chooser_nearby_button))
@@ -938,8 +906,7 @@ public class UnbundledChooserActivityTest {
 
         setupResolverControllers(resolvedComponentInfos);
 
-        final IChooserWrapper activity = (IChooserWrapper)
-                mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
         onView(withId(com.android.internal.R.id.chooser_edit_button)).check(matches(isDisplayed()));
@@ -1006,6 +973,55 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    public void testSlowUriMetadata_fallbackToFilePreview() throws InterruptedException {
+        Uri uri = createTestContentProviderUri(
+                "application/pdf", "image/png", /*streamTypeTimeout=*/4_000);
+        ArrayList<Uri> uris = new ArrayList<>(1);
+        uris.add(uri);
+        Intent sendIntent = createSendUriIntentWithPreview(uris);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
+
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+
+        setupResolverControllers(resolvedComponentInfos);
+        assertThat(launchActivityWithTimeout(Intent.createChooser(sendIntent, null), 2_000))
+                .isTrue();
+        waitForIdle();
+
+        onView(withId(R.id.content_preview_filename)).check(matches(isDisplayed()));
+        onView(withId(R.id.content_preview_filename)).check(matches(withText("image.png")));
+        onView(withId(R.id.content_preview_file_icon)).check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void testSendManyFilesWithSmallMetadataDelayAndOneImage_fallbackToFilePreviewUi()
+            throws InterruptedException {
+        Uri fileUri = createTestContentProviderUri(
+                "application/pdf", "application/pdf", /*streamTypeTimeout=*/150);
+        Uri imageUri = createTestContentProviderUri("application/pdf", "image/png");
+        ArrayList<Uri> uris = new ArrayList<>(50);
+        for (int i = 0; i < 49; i++) {
+            uris.add(fileUri);
+        }
+        uris.add(imageUri);
+        Intent sendIntent = createSendUriIntentWithPreview(uris);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(imageUri, createBitmap());
+
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+        setupResolverControllers(resolvedComponentInfos);
+        assertThat(launchActivityWithTimeout(Intent.createChooser(sendIntent, null), 2_000))
+                .isTrue();
+
+        waitForIdle();
+
+        onView(withId(R.id.content_preview_filename)).check(matches(isDisplayed()));
+        onView(withId(R.id.content_preview_filename)).check(matches(withText("image.png")));
+        onView(withId(R.id.content_preview_file_icon)).check(matches(isDisplayed()));
+    }
+
+    @Test
     public void testManyVisibleImagePreview_ScrollableImagePreview() {
         Uri uri = createTestContentProviderUri("image/png", null);
 
@@ -1042,6 +1058,63 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
+    public void testPartiallyLoadedMetadata_previewIsShownForTheLoadedPart()
+            throws InterruptedException {
+        Uri imgOneUri = createTestContentProviderUri("image/png", null);
+        Uri imgTwoUri = createTestContentProviderUri("image/png", null)
+                .buildUpon()
+                .path("image-2.png")
+                .build();
+        Uri docUri = createTestContentProviderUri("application/pdf", "image/png", 3_000);
+        ArrayList<Uri> uris = new ArrayList<>(2);
+        // two large previews to fill the screen and be presented right away and one
+        // document that would be delayed by the URI metadata reading
+        uris.add(imgOneUri);
+        uris.add(imgTwoUri);
+        uris.add(docUri);
+
+        Intent sendIntent = createSendUriIntentWithPreview(uris);
+        Map<Uri, Bitmap> bitmaps = new HashMap<>();
+        bitmaps.put(imgOneUri, createWideBitmap(Color.RED));
+        bitmaps.put(imgTwoUri, createWideBitmap(Color.GREEN));
+        bitmaps.put(docUri, createWideBitmap(Color.BLUE));
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                new TestPreviewImageLoader(bitmaps);
+
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+        setupResolverControllers(resolvedComponentInfos);
+
+        assertThat(launchActivityWithTimeout(Intent.createChooser(sendIntent, null), 1_000))
+                .isTrue();
+        waitForIdle();
+
+        onView(withId(R.id.scrollable_image_preview))
+                .check((view, exception) -> {
+                    if (exception != null) {
+                        throw exception;
+                    }
+                    RecyclerView recyclerView = (RecyclerView) view;
+                    assertThat(recyclerView.getChildCount()).isAtLeast(1);
+                    // the first view is a preview
+                    View imageView = recyclerView.getChildAt(0).findViewById(R.id.image);
+                    assertThat(imageView).isNotNull();
+                })
+                .perform(RecyclerViewActions.scrollToLastPosition())
+                .check((view, exception) -> {
+                    if (exception != null) {
+                        throw exception;
+                    }
+                    RecyclerView recyclerView = (RecyclerView) view;
+                    assertThat(recyclerView.getChildCount()).isAtLeast(1);
+                    // check that the last view is a loading indicator
+                    View loadingIndicator =
+                            recyclerView.getChildAt(recyclerView.getChildCount() - 1);
+                    assertThat(loadingIndicator).isNotNull();
+                });
+        waitForIdle();
+    }
+
+    @Test
     public void testImageAndTextPreview() {
         final Uri uri = createTestContentProviderUri("image/png", null);
         final String sharedText = "text-" + System.currentTimeMillis();
@@ -1061,6 +1134,50 @@ public class UnbundledChooserActivityTest {
         waitForIdle();
         onView(withText(sharedText))
                 .check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void test_shareImageWithRichText_RichTextIsDisplayed() {
+        final Uri uri = createTestContentProviderUri("image/png", null);
+        final CharSequence sharedText = new SpannableStringBuilder()
+                .append(
+                        "text-",
+                        new StyleSpan(Typeface.BOLD_ITALIC),
+                        Spannable.SPAN_INCLUSIVE_EXCLUSIVE)
+                .append(
+                        Long.toString(System.currentTimeMillis()),
+                        new ForegroundColorSpan(Color.RED),
+                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(uri);
+
+        Intent sendIntent = createSendUriIntentWithPreview(uris);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createBitmap());
+
+        List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
+
+        setupResolverControllers(resolvedComponentInfos);
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
+        waitForIdle();
+        onView(withText(sharedText.toString()))
+                .check(matches(isDisplayed()))
+                .check((view, e) -> {
+                    if (e != null) {
+                        throw e;
+                    }
+                    assertThat(view).isInstanceOf(TextView.class);
+                    CharSequence text = ((TextView) view).getText();
+                    assertThat(text).isInstanceOf(Spanned.class);
+                    Spanned spanned = (Spanned) text;
+                    Object[] spans = spanned.getSpans(0, text.length(), Object.class);
+                    assertThat(spans).hasLength(2);
+                    assertThat(spanned.getSpans(0, 5, StyleSpan.class)).hasLength(1);
+                    assertThat(spanned.getSpans(5, text.length(), ForegroundColorSpan.class))
+                            .hasLength(1);
+                });
     }
 
     @Test
@@ -1100,12 +1217,15 @@ public class UnbundledChooserActivityTest {
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
 
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, "logger test"));
-        EventLog logger = activity.getEventLog();
         waitForIdle();
 
-        verify(logger).logChooserActivityShown(eq(false), eq(TEST_MIME_TYPE), anyLong());
+        FakeEventLog eventLog = getEventLog(activity);
+        FakeEventLog.ChooserActivityShown event = eventLog.getChooserActivityShown();
+        assertThat(event).isNotNull();
+        assertThat(event.isWorkProfile()).isFalse();
+        assertThat(event.getTargetMimeType()).isEqualTo(TEST_MIME_TYPE);
     }
 
     @Test
@@ -1115,25 +1235,31 @@ public class UnbundledChooserActivityTest {
         ChooserActivityOverrideData.getInstance().alternateProfileSetting =
                 MetricsEvent.MANAGED_PROFILE;
 
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, "logger test"));
-        EventLog logger = activity.getEventLog();
         waitForIdle();
 
-        verify(logger).logChooserActivityShown(eq(true), eq(TEST_MIME_TYPE), anyLong());
+        FakeEventLog eventLog = getEventLog(activity);
+        FakeEventLog.ChooserActivityShown event = eventLog.getChooserActivityShown();
+        assertThat(event).isNotNull();
+        assertThat(event.isWorkProfile()).isTrue();
+        assertThat(event.getTargetMimeType()).isEqualTo(TEST_MIME_TYPE);
     }
 
     @Test
     public void testEmptyPreviewLogging() {
         Intent sendIntent = createSendTextIntentWithPreview(null, null);
 
-        final IChooserWrapper activity = (IChooserWrapper)
-                mActivityRule.launchActivity(
-                        Intent.createChooser(sendIntent, "empty preview logger test"));
-        EventLog logger = activity.getEventLog();
+        ChooserWrapperActivity activity =
+                mActivityRule.launchActivity(Intent.createChooser(sendIntent,
+                        "empty preview logger test"));
         waitForIdle();
 
-        verify(logger).logChooserActivityShown(eq(false), eq(null), anyLong());
+        FakeEventLog eventLog = getEventLog(activity);
+        FakeEventLog.ChooserActivityShown event = eventLog.getChooserActivityShown();
+        assertThat(event).isNotNull();
+        assertThat(event.isWorkProfile()).isFalse();
+        assertThat(event.getTargetMimeType()).isNull();
     }
 
     @Test
@@ -1144,13 +1270,14 @@ public class UnbundledChooserActivityTest {
 
         setupResolverControllers(resolvedComponentInfos);
 
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
-        // Second invocation is from onCreate
-        EventLog logger = activity.getEventLog();
-        Mockito.verify(logger, times(1)).logActionShareWithPreview(eq(CONTENT_PREVIEW_TEXT));
+        FakeEventLog eventLog = getEventLog(activity);
+        assertThat(eventLog.getActionShareWithPreview())
+                .isEqualTo(new FakeEventLog.ActionShareWithPreview(
+                        /* previewType = */ CONTENT_PREVIEW_TEXT));
     }
 
     @Test
@@ -1168,11 +1295,14 @@ public class UnbundledChooserActivityTest {
 
         setupResolverControllers(resolvedComponentInfos);
 
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
-        EventLog logger = activity.getEventLog();
-        Mockito.verify(logger, times(1)).logActionShareWithPreview(eq(CONTENT_PREVIEW_IMAGE));
+
+        FakeEventLog eventLog = getEventLog(activity);
+        assertThat(eventLog.getActionShareWithPreview())
+                .isEqualTo(new FakeEventLog.ActionShareWithPreview(
+                        /* previewType = */ CONTENT_PREVIEW_IMAGE));
     }
 
     @Test
@@ -1295,8 +1425,7 @@ public class UnbundledChooserActivityTest {
                         ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE),
                         "testLabel",
                         "testInfo",
-                        sendIntent,
-                /* resolveInfoPresentationGetter */ null);
+                        sendIntent);
         final ChooserListAdapter adapter = activity.getAdapter();
 
         assertThat(adapter.getBaseScore(null, 0), is(CALLER_TARGET_SCORE_BOOST));
@@ -1321,7 +1450,7 @@ public class UnbundledChooserActivityTest {
                 createShortcutLoaderFactory();
 
         // Start activity
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
@@ -1371,22 +1500,15 @@ public class UnbundledChooserActivityTest {
                 .perform(click());
         waitForIdle();
 
-        ArgumentCaptor<HashedStringCache.HashResult> hashCaptor =
-                ArgumentCaptor.forClass(HashedStringCache.HashResult.class);
-        verify(activity.getEventLog(), times(1)).logShareTargetSelected(
-                eq(EventLog.SELECTION_TYPE_SERVICE),
-                /* packageName= */ any(),
-                /* positionPicked= */ anyInt(),
-                /* directTargetAlsoRanked= */ eq(-1),
-                /* numCallerProvided= */ anyInt(),
-                /* directTargetHashed= */ hashCaptor.capture(),
-                /* isPinned= */ anyBoolean(),
-                /* successfullySelected= */ anyBoolean(),
-                /* selectionCost= */ anyLong());
-        String hashedName = hashCaptor.getValue().hashedString;
-        assertThat(
-                "Hash is not predictable but must be obfuscated",
-                hashedName, is(not(name)));
+        FakeEventLog eventLog = getEventLog(activity);
+        assertThat(eventLog.getShareTargetSelected()).hasSize(1);
+        FakeEventLog.ShareTargetSelected call = eventLog.getShareTargetSelected().get(0);
+        assertThat(call.getTargetType()).isEqualTo(EventLog.SELECTION_TYPE_SERVICE);
+        assertThat(call.getDirectTargetAlsoRanked()).isEqualTo(-1);
+        var hashResult = call.getDirectTargetHashed();
+        var hash = hashResult == null ? "" : hashResult.hashedString;
+        assertWithMessage("Hash is not predictable but must be obfuscated")
+                .that(hash).isNotEqualTo(name);
     }
 
     // This test is too long and too slow and should not be taken as an example for future tests.
@@ -1402,7 +1524,7 @@ public class UnbundledChooserActivityTest {
                 createShortcutLoaderFactory();
 
         // Start activity
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
@@ -1454,16 +1576,12 @@ public class UnbundledChooserActivityTest {
                 .perform(click());
         waitForIdle();
 
-        verify(activity.getEventLog(), times(1)).logShareTargetSelected(
-                eq(EventLog.SELECTION_TYPE_SERVICE),
-                /* packageName= */ any(),
-                /* positionPicked= */ anyInt(),
-                /* directTargetAlsoRanked= */ eq(0),
-                /* numCallerProvided= */ anyInt(),
-                /* directTargetHashed= */ any(),
-                /* isPinned= */ anyBoolean(),
-                /* successfullySelected= */ anyBoolean(),
-                /* selectionCost= */ anyLong());
+        FakeEventLog eventLog = getEventLog(activity);
+        assertThat(eventLog.getShareTargetSelected()).hasSize(1);
+        FakeEventLog.ShareTargetSelected call = eventLog.getShareTargetSelected().get(0);
+
+        assertThat(call.getTargetType()).isEqualTo(EventLog.SELECTION_TYPE_SERVICE);
+        assertThat(call.getDirectTargetAlsoRanked()).isEqualTo(0);
     }
 
     @Test
@@ -1623,7 +1741,7 @@ public class UnbundledChooserActivityTest {
         // We need app targets for direct targets to get displayed
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         setupResolverControllers(resolvedComponentInfos, resolvedComponentInfos);
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
 
         // set caller-provided target
         Intent chooserIntent = Intent.createChooser(createSendTextIntent(), null);
@@ -1725,11 +1843,13 @@ public class UnbundledChooserActivityTest {
                 broadcastInvoked.countDown();
             }
         };
-        testContext.registerReceiver(testReceiver, new IntentFilter(testAction));
+        testContext.registerReceiver(testReceiver, new IntentFilter(testAction),
+                Context.RECEIVER_EXPORTED);
 
         try {
             onView(withText(customActionLabel)).perform(click());
-            broadcastInvoked.await();
+            assertTrue("Timeout waiting for broadcast",
+                    broadcastInvoked.await(5000, TimeUnit.MILLISECONDS));
         } finally {
             testContext.unregisterReceiver(testReceiver);
         }
@@ -1765,11 +1885,14 @@ public class UnbundledChooserActivityTest {
                 broadcastInvoked.countDown();
             }
         };
-        testContext.registerReceiver(testReceiver, new IntentFilter(modifyShareAction));
+        testContext.registerReceiver(testReceiver, new IntentFilter(modifyShareAction),
+                Context.RECEIVER_EXPORTED);
 
         try {
             onView(withText(label)).perform(click());
-            broadcastInvoked.await();
+            assertTrue("Timeout waiting for broadcast",
+                    broadcastInvoked.await(5000, TimeUnit.MILLISECONDS));
+
         } finally {
             testContext.unregisterReceiver(testReceiver);
         }
@@ -1830,19 +1953,18 @@ public class UnbundledChooserActivityTest {
         ResolveInfo ri = ResolverDataProvider.createResolveInfo(16, 0, PERSONAL_USER_HANDLE);
 
         // Start activity
-        final IChooserWrapper wrapper = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         // Insert the direct share target
         Map<ChooserTarget, ShortcutInfo> directShareToShortcutInfos = new HashMap<>();
         directShareToShortcutInfos.put(serviceTargets.get(0), null);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                () -> wrapper.getAdapter().addServiceResults(
-                        wrapper.createTestDisplayResolveInfo(sendIntent,
+                () -> activity.getAdapter().addServiceResults(
+                        activity.createTestDisplayResolveInfo(sendIntent,
                                 ri,
                                 "testLabel",
                                 "testInfo",
-                                sendIntent,
-                                /* resolveInfoPresentationGetter */ null),
+                                sendIntent),
                         serviceTargets,
                         TARGET_TYPE_CHOOSER_TARGET,
                         directShareToShortcutInfos,
@@ -1852,11 +1974,11 @@ public class UnbundledChooserActivityTest {
         assertThat(
                 String.format("Chooser should have %d targets (%d apps, 1 direct, 15 A-Z)",
                         appTargetsExpected + 16, appTargetsExpected),
-                wrapper.getAdapter().getCount(), is(appTargetsExpected + 16));
+                activity.getAdapter().getCount(), is(appTargetsExpected + 16));
         assertThat("Chooser should have exactly one selectable direct target",
-                wrapper.getAdapter().getSelectableServiceTargetCount(), is(1));
+                activity.getAdapter().getSelectableServiceTargetCount(), is(1));
         assertThat("The resolver info must match the resolver info used to create the target",
-                wrapper.getAdapter().getItem(0).getResolveInfo(), is(ri));
+                activity.getAdapter().getItem(0).getResolveInfo(), is(ri));
 
         // Click on the direct target
         String name = serviceTargets.get(0).getTitle().toString();
@@ -1864,25 +1986,23 @@ public class UnbundledChooserActivityTest {
                 .perform(click());
         waitForIdle();
 
-        EventLog logger = wrapper.getEventLog();
-        verify(logger, times(1)).logShareTargetSelected(
-                eq(EventLog.SELECTION_TYPE_SERVICE),
-                /* packageName= */ any(),
-                /* positionPicked= */ anyInt(),
-                // The packages sholdn't match for app target and direct target:
-                /* directTargetAlsoRanked= */ eq(-1),
-                /* numCallerProvided= */ anyInt(),
-                /* directTargetHashed= */ any(),
-                /* isPinned= */ anyBoolean(),
-                /* successfullySelected= */ anyBoolean(),
-                /* selectionCost= */ anyLong());
+        FakeEventLog eventLog = getEventLog(activity);
+        var invocations = eventLog.getShareTargetSelected();
+        assertWithMessage("Only one ShareTargetSelected event logged")
+                .that(invocations).hasSize(1);
+        FakeEventLog.ShareTargetSelected call = invocations.get(0);
+        assertWithMessage("targetType should be SELECTION_TYPE_SERVICE")
+                .that(call.getTargetType()).isEqualTo(EventLog.SELECTION_TYPE_SERVICE);
+        assertWithMessage(
+                "The packages shouldn't match for app target and direct target")
+                .that(call.getDirectTargetAlsoRanked()).isEqualTo(-1);
     }
 
     @Test
     public void testWorkTab_displayedWhenWorkProfileUserAvailable() {
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
 
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, "work tab test"));
         waitForIdle();
@@ -1914,7 +2034,7 @@ public class UnbundledChooserActivityTest {
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
 
         final IChooserWrapper activity = (IChooserWrapper)
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, "work tab test"));
@@ -1929,7 +2049,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_workProfileHasExpectedNumberOfTargets() throws InterruptedException {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
@@ -1950,7 +2070,7 @@ public class UnbundledChooserActivityTest {
 
     @Test @Ignore
     public void testWorkTab_selectingWorkTabAppOpensAppInWorkProfile() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
         int workProfileTargets = 4;
@@ -1981,7 +2101,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_crossProfileIntentsDisabled_personalToWork_emptyStateShown() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
@@ -2005,7 +2125,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_workProfileDisabled_emptyStateShown() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
@@ -2029,7 +2149,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_noWorkAppsAvailable_emptyStateShown() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTest(3);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
@@ -2049,10 +2169,46 @@ public class UnbundledChooserActivityTest {
                 .check(matches(isDisplayed()));
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_SCROLLABLE_PREVIEW)
+    public void testWorkTab_previewIsScrollable() {
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
+        List<ResolvedComponentInfo> personalResolvedComponentInfos =
+                createResolvedComponentsForTest(300);
+        List<ResolvedComponentInfo> workResolvedComponentInfos =
+                createResolvedComponentsForTest(3);
+        setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
+
+        Uri uri = createTestContentProviderUri("image/png", null);
+
+        ArrayList<Uri> uris = new ArrayList<>();
+        uris.add(uri);
+
+        Intent sendIntent = createSendUriIntentWithPreview(uris);
+        ChooserActivityOverrideData.getInstance().imageLoader =
+                createImageLoader(uri, createWideBitmap());
+
+        mActivityRule.launchActivity(Intent.createChooser(sendIntent, "Scrollable preview test"));
+        waitForIdle();
+
+        onView(withId(com.android.intentresolver.R.id.scrollable_image_preview))
+                .check(matches(isDisplayed()));
+
+        onView(withId(com.android.internal.R.id.contentPanel)).perform(swipeUp());
+        waitForIdle();
+
+        onView(withId(com.android.intentresolver.R.id.chooser_headline_row_container))
+                .check(matches(isCompletelyDisplayed()));
+        onView(withId(com.android.intentresolver.R.id.headline))
+                .check(matches(isDisplayed()));
+        onView(withId(com.android.intentresolver.R.id.scrollable_image_preview))
+                .check(matches(not(isDisplayed())));
+    }
+
     @Ignore // b/220067877
     @Test
     public void testWorkTab_xProfileOff_noAppsAvailable_workOff_xProfileOffEmptyStateShown() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTest(3);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
@@ -2076,7 +2232,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_noAppsAvailable_workOff_noAppsAvailableEmptyStateShown() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTest(3);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
@@ -2148,7 +2304,7 @@ public class UnbundledChooserActivityTest {
                 };
 
         // Start activity
-        final IChooserWrapper activity = (IChooserWrapper)
+        ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, null));
         waitForIdle();
 
@@ -2196,18 +2352,10 @@ public class UnbundledChooserActivityTest {
                 .perform(click());
         waitForIdle();
 
-        EventLog logger = activity.getEventLog();
-        ArgumentCaptor<Integer> typeCaptor = ArgumentCaptor.forClass(Integer.class);
-        verify(logger, times(1)).logShareTargetSelected(
-                eq(EventLog.SELECTION_TYPE_SERVICE),
-                /* packageName= */ any(),
-                /* positionPicked= */ anyInt(),
-                /* directTargetAlsoRanked= */ anyInt(),
-                /* numCallerProvided= */ anyInt(),
-                /* directTargetHashed= */ any(),
-                /* isPinned= */ anyBoolean(),
-                /* successfullySelected= */ anyBoolean(),
-                /* selectionCost= */ anyLong());
+        FakeEventLog eventLog = getEventLog(activity);
+        assertThat(eventLog.getShareTargetSelected()).hasSize(1);
+        FakeEventLog.ShareTargetSelected call = eventLog.getShareTargetSelected().get(0);
+        assertThat(call.getTargetType()).isEqualTo(EventLog.SELECTION_TYPE_SERVICE);
     }
 
     @Test
@@ -2310,7 +2458,7 @@ public class UnbundledChooserActivityTest {
 
     @Test @Ignore("b/222124533")
     public void testSwitchProfileLogging() throws InterruptedException {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
@@ -2333,7 +2481,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_onePersonalTarget_emptyStateOnWorkTarget_doesNotAutoLaunch() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(2, /* userId */ 10);
@@ -2385,7 +2533,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_withInitialIntents_workTabDoesNotIncludePersonalInitialIntents() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 1;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(2, /* userId */ 10);
@@ -2415,7 +2563,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_xProfileIntentsDisabled_personalToWork_nonSendIntent_emptyStateShown() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
@@ -2449,7 +2597,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testWorkTab_noWorkAppsAvailable_nonSendIntent_emptyStateShown() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTest(3);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
@@ -2510,7 +2658,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void test_query_shortcut_loader_for_the_selected_tab() {
-        markWorkProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
@@ -2543,12 +2691,12 @@ public class UnbundledChooserActivityTest {
     @Test
     public void testClonedProfilePresent_personalAdapterIsSetWithPersonalProfile() {
         // enable cloneProfile
-        markCloneProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ false, /* cloneAvailable= */ true);
         List<ResolvedComponentInfo> resolvedComponentInfos =
                 createResolvedComponentsWithCloneProfileForTest(
                         3,
                         PERSONAL_USER_HANDLE,
-                        ChooserActivityOverrideData.getInstance().cloneProfileUserHandle);
+                        CLONE_PROFILE_USER_HANDLE);
         setupResolverControllers(resolvedComponentInfos);
         Intent sendIntent = createSendTextIntent();
 
@@ -2562,8 +2710,7 @@ public class UnbundledChooserActivityTest {
 
     @Test
     public void testClonedProfilePresent_personalTabUsesExpectedAdapter() {
-        markWorkProfileUserAvailable();
-        markCloneProfileUserAvailable();
+        markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ true);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTest(3);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(
@@ -2641,15 +2788,25 @@ public class UnbundledChooserActivityTest {
 
     private Uri createTestContentProviderUri(
             @Nullable String mimeType, @Nullable String streamType) {
+        return createTestContentProviderUri(mimeType, streamType, 0);
+    }
+
+    private Uri createTestContentProviderUri(
+            @Nullable String mimeType, @Nullable String streamType, long streamTypeTimeout) {
         String packageName =
                 InstrumentationRegistry.getInstrumentation().getContext().getPackageName();
         Uri.Builder builder = Uri.parse("content://" + packageName + "/image.png")
                 .buildUpon();
         if (mimeType != null) {
-            builder.appendQueryParameter("mimeType", mimeType);
+            builder.appendQueryParameter(TestContentProvider.PARAM_MIME_TYPE, mimeType);
         }
         if (streamType != null) {
-            builder.appendQueryParameter("streamType", streamType);
+            builder.appendQueryParameter(TestContentProvider.PARAM_STREAM_TYPE, streamType);
+        }
+        if (streamTypeTimeout > 0) {
+            builder.appendQueryParameter(
+                    TestContentProvider.PARAM_STREAM_TYPE_TIMEOUT,
+                    Long.toString(streamTypeTimeout));
         }
         return builder.build();
     }
@@ -2779,11 +2936,44 @@ public class UnbundledChooserActivityTest {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
 
+    private boolean launchActivityWithTimeout(Intent intent, long timeout)
+            throws InterruptedException {
+        final int initialState = 0;
+        final int completedState = 1;
+        final int timeoutState = 2;
+        final AtomicInteger state = new AtomicInteger(initialState);
+        final CountDownLatch cdl = new CountDownLatch(1);
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+        try {
+            executor.execute(() -> {
+                mActivityRule.launchActivity(intent);
+                state.compareAndSet(initialState, completedState);
+                cdl.countDown();
+            });
+            executor.schedule(
+                    () -> {
+                        state.compareAndSet(initialState, timeoutState);
+                        cdl.countDown();
+                    },
+                    timeout,
+                    TimeUnit.MILLISECONDS);
+            cdl.await();
+            return state.get() == completedState;
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     private Bitmap createBitmap() {
         return createBitmap(200, 200);
     }
 
     private Bitmap createWideBitmap() {
+        return createWideBitmap(Color.RED);
+    }
+
+    private Bitmap createWideBitmap(int bgColor) {
         WindowManager windowManager = InstrumentationRegistry.getInstrumentation()
                 .getTargetContext()
                 .getSystemService(WindowManager.class);
@@ -2792,15 +2982,19 @@ public class UnbundledChooserActivityTest {
             Rect bounds = windowManager.getMaximumWindowMetrics().getBounds();
             width = bounds.width() + 200;
         }
-        return createBitmap(width, 100);
+        return createBitmap(width, 100, bgColor);
     }
 
     private Bitmap createBitmap(int width, int height) {
+        return createBitmap(width, height, Color.RED);
+    }
+
+    private Bitmap createBitmap(int width, int height, int bgColor) {
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
         Paint paint = new Paint();
-        paint.setColor(Color.RED);
+        paint.setColor(bgColor);
         paint.setStyle(Paint.Style.FILL);
         canvas.drawPaint(paint);
 
@@ -2837,12 +3031,19 @@ public class UnbundledChooserActivityTest {
         return shortcuts;
     }
 
-    private void markWorkProfileUserAvailable() {
-        ChooserActivityOverrideData.getInstance().workProfileUserHandle = UserHandle.of(10);
-    }
-
-    private void markCloneProfileUserAvailable() {
-        ChooserActivityOverrideData.getInstance().cloneProfileUserHandle = UserHandle.of(11);
+    private void markOtherProfileAvailability(boolean workAvailable, boolean cloneAvailable) {
+        AnnotatedUserHandles.Builder handles = AnnotatedUserHandles.newBuilder();
+        handles
+                .setUserIdOfCallingApp(1234)  // Must be non-negative.
+                .setUserHandleSharesheetLaunchedAs(PERSONAL_USER_HANDLE)
+                .setPersonalProfileUserHandle(PERSONAL_USER_HANDLE);
+        if (workAvailable) {
+            handles.setWorkProfileUserHandle(WORK_PROFILE_USER_HANDLE);
+        }
+        if (cloneAvailable) {
+            handles.setCloneProfileUserHandle(CLONE_PROFILE_USER_HANDLE);
+        }
+        ChooserWrapperActivity.sOverrides.annotatedUserHandles = handles.build();
     }
 
     private void setupResolverControllers(

@@ -29,8 +29,6 @@ import android.os.UserHandle;
 import com.android.intentresolver.AbstractMultiProfilePagerAdapter.CrossProfileIntentsChecker;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.contentpreview.ImageLoader;
-import com.android.intentresolver.flags.FeatureFlagRepository;
-import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 
 import java.util.function.Consumer;
@@ -65,19 +63,15 @@ public class ChooserActivityOverrideData {
     public Cursor resolverCursor;
     public boolean resolverForceException;
     public ImageLoader imageLoader;
-    public EventLog mEventLog;
     public int alternateProfileSetting;
     public Resources resources;
-    public UserHandle workProfileUserHandle;
-    public UserHandle cloneProfileUserHandle;
-    public UserHandle tabOwnerUserHandleForLaunch;
+    public AnnotatedUserHandles annotatedUserHandles;
     public boolean hasCrossProfileIntents;
     public boolean isQuietModeEnabled;
     public Integer myUserId;
     public WorkProfileAvailabilityManager mWorkProfileAvailability;
     public CrossProfileIntentsChecker mCrossProfileIntentsChecker;
     public PackageManager packageManager;
-    public FeatureFlagRepository featureFlagRepository;
 
     public void reset() {
         onSafelyStartInternalCallback = null;
@@ -88,12 +82,13 @@ public class ChooserActivityOverrideData {
         resolverForceException = false;
         resolverListController = mock(ChooserActivity.ChooserListController.class);
         workResolverListController = mock(ChooserActivity.ChooserListController.class);
-        mEventLog = mock(EventLog.class);
         alternateProfileSetting = 0;
         resources = null;
-        workProfileUserHandle = null;
-        cloneProfileUserHandle = null;
-        tabOwnerUserHandleForLaunch = null;
+        annotatedUserHandles = AnnotatedUserHandles.newBuilder()
+                    .setUserIdOfCallingApp(1234)  // Must be non-negative.
+                    .setUserHandleSharesheetLaunchedAs(UserHandle.SYSTEM)
+                    .setPersonalProfileUserHandle(UserHandle.SYSTEM)
+                    .build();
         hasCrossProfileIntents = true;
         isQuietModeEnabled = false;
         myUserId = null;
@@ -127,7 +122,6 @@ public class ChooserActivityOverrideData {
         mCrossProfileIntentsChecker = mock(CrossProfileIntentsChecker.class);
         when(mCrossProfileIntentsChecker.hasCrossProfileIntents(any(), anyInt(), anyInt()))
                 .thenAnswer(invocation -> hasCrossProfileIntents);
-        featureFlagRepository = null;
     }
 
     private ChooserActivityOverrideData() {}

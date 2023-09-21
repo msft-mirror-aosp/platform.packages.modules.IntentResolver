@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import javax.inject.Inject;
-
 /*
  * Simple wrapper around chooser activity to be able to initiate it under test
  */
@@ -55,16 +53,8 @@ public class ResolverWrapperActivity extends ResolverActivity {
     private final CountingIdlingResource mLabelIdlingResource =
             new CountingIdlingResource("LoadLabelTask");
 
-    @Inject
     public ResolverWrapperActivity() {
         super(/* isIntentPicker= */ true);
-    }
-
-    // ResolverActivity inspects the launched-from UID at onCreate and needs to see some
-    // non-negative value in the test.
-    @Override
-    public int getLaunchedFromUid() {
-        return 1234;
     }
 
     public CountingIdlingResource getLabelIdlingResource() {
@@ -164,13 +154,8 @@ public class ResolverWrapperActivity extends ResolverActivity {
     }
 
     @Override
-    protected UserHandle getWorkProfileUserHandle() {
-        return sOverrides.workProfileUserHandle;
-    }
-
-    @Override
-    protected UserHandle getCloneProfileUserHandle() {
-        return sOverrides.cloneProfileUserHandle;
+    protected AnnotatedUserHandles computeAnnotatedUserHandles() {
+        return sOverrides.annotatedUserHandles;
     }
 
     @Override
@@ -196,9 +181,7 @@ public class ResolverWrapperActivity extends ResolverActivity {
         public ResolverListController resolverListController;
         public ResolverListController workResolverListController;
         public Boolean isVoiceInteraction;
-        public UserHandle workProfileUserHandle;
-        public UserHandle cloneProfileUserHandle;
-        public UserHandle tabOwnerUserHandleForLaunch;
+        public AnnotatedUserHandles annotatedUserHandles;
         public Integer myUserId;
         public boolean hasCrossProfileIntents;
         public boolean isQuietModeEnabled;
@@ -211,9 +194,11 @@ public class ResolverWrapperActivity extends ResolverActivity {
             createPackageManager = null;
             resolverListController = mock(ResolverListController.class);
             workResolverListController = mock(ResolverListController.class);
-            workProfileUserHandle = null;
-            cloneProfileUserHandle = null;
-            tabOwnerUserHandleForLaunch = null;
+            annotatedUserHandles = AnnotatedUserHandles.newBuilder()
+                    .setUserIdOfCallingApp(1234)  // Must be non-negative.
+                    .setUserHandleSharesheetLaunchedAs(UserHandle.SYSTEM)
+                    .setPersonalProfileUserHandle(UserHandle.SYSTEM)
+                    .build();
             myUserId = null;
             hasCrossProfileIntents = true;
             isQuietModeEnabled = false;
@@ -288,10 +273,9 @@ public class ResolverWrapperActivity extends ResolverActivity {
                     });
         }
 
-        @NonNull
         @Override
-        public TargetPresentationGetter createPresentationGetter(@NonNull ResolveInfo info) {
-            return mTargetDataLoader.createPresentationGetter(info);
+        public void getOrLoadLabel(@NonNull DisplayResolveInfo info) {
+            mTargetDataLoader.getOrLoadLabel(info);
         }
     }
 }

@@ -16,6 +16,8 @@
 
 package com.android.intentresolver.contentpreview;
 
+import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
+
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_FILE;
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE;
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT;
@@ -26,6 +28,7 @@ import android.content.res.Resources;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
@@ -150,26 +153,31 @@ public final class ChooserContentPreviewUi {
                             isSingleImageShare,
                             previewData.getUriCount(),
                             targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT),
+                            targetIntent.getType(),
                             actionFactory,
                             imageLoader,
                             typeClassifier,
                             headlineGenerator);
             if (previewData.getUriCount() > 0) {
-                previewData.getFileMetadataForImagePreview(
-                        mLifecycle, previewUi::updatePreviewMetadata);
+                JavaFlowHelper.collectToList(
+                        getCoroutineScope(mLifecycle),
+                        previewData.getImagePreviewFileInfoFlow(),
+                        previewUi::updatePreviewMetadata);
             }
             return previewUi;
         }
 
-        UnifiedContentPreviewUi unifiedContentPreviewUi = new UnifiedContentPreviewUi(
+        return new UnifiedContentPreviewUi(
+                getCoroutineScope(mLifecycle),
                 isSingleImageShare,
+                targetIntent.getType(),
                 actionFactory,
                 imageLoader,
                 typeClassifier,
                 transitionElementStatusCallback,
+                previewData.getImagePreviewFileInfoFlow(),
+                previewData.getUriCount(),
                 headlineGenerator);
-        previewData.getFileMetadataForImagePreview(mLifecycle, unifiedContentPreviewUi::setFiles);
-        return unifiedContentPreviewUi;
     }
 
     public int getPreferredContentPreview() {
@@ -181,9 +189,12 @@ public final class ChooserContentPreviewUi {
      * specified {@code intent}.
      */
     public ViewGroup displayContentPreview(
-            Resources resources, LayoutInflater layoutInflater, ViewGroup parent) {
+            Resources resources,
+            LayoutInflater layoutInflater,
+            ViewGroup parent,
+            @Nullable View headlineViewParent) {
 
-        return mContentPreviewUi.display(resources, layoutInflater, parent);
+        return mContentPreviewUi.display(resources, layoutInflater, parent, headlineViewParent);
     }
 
     private static TextContentPreviewUi createTextPreview(
@@ -193,7 +204,7 @@ public final class ChooserContentPreviewUi {
             ImageLoader imageLoader,
             HeadlineGenerator headlineGenerator) {
         CharSequence sharingText = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-        String previewTitle = targetIntent.getStringExtra(Intent.EXTRA_TITLE);
+        CharSequence previewTitle = targetIntent.getCharSequenceExtra(Intent.EXTRA_TITLE);
         ClipData previewData = targetIntent.getClipData();
         Uri previewThumbnail = null;
         if (previewData != null) {

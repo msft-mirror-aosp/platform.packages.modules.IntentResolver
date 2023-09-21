@@ -16,14 +16,12 @@
 
 package com.android.intentresolver;
 
-import android.annotation.Nullable;
 import android.app.usage.UsageStatsManager;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.os.UserHandle;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
-import com.android.intentresolver.logging.EventLog;
 
 import java.util.concurrent.Executor;
 
@@ -38,10 +36,12 @@ public interface IChooserWrapper {
     ChooserListAdapter getWorkListAdapter();
     boolean getIsSelected();
     UsageStatsManager getUsageStatsManager();
-    DisplayResolveInfo createTestDisplayResolveInfo(Intent originalIntent, ResolveInfo pri,
-            CharSequence pLabel, CharSequence pInfo, Intent replacementIntent,
-            @Nullable TargetPresentationGetter resolveInfoPresentationGetter);
+    DisplayResolveInfo createTestDisplayResolveInfo(
+            Intent originalIntent,
+            ResolveInfo pri,
+            CharSequence pLabel,
+            CharSequence pInfo,
+            Intent replacementIntent);
     UserHandle getCurrentUserHandle();
-    EventLog getEventLog();
     Executor getMainExecutor();
 }
