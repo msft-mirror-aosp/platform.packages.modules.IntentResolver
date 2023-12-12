@@ -593,23 +593,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         // Refresh pinned items
         mPinnedSharedPrefs = getPinnedSharedPrefs(this);
         if (listAdapter == null) {
-            handlePackageChangePerProfile(mChooserMultiProfilePagerAdapter.getActiveListAdapter());
-            if (mChooserMultiProfilePagerAdapter.getCount() > 1) {
-                handlePackageChangePerProfile(
-                        mChooserMultiProfilePagerAdapter.getInactiveListAdapter());
-            }
+            mChooserMultiProfilePagerAdapter.refreshPackagesInAllTabs();
         } else {
-            handlePackageChangePerProfile(listAdapter);
+            listAdapter.handlePackagesChanged();
         }
         updateProfileViewButton();
-    }
-
-    private void handlePackageChangePerProfile(ResolverListAdapter adapter) {
-        ProfileRecord record = getProfileRecord(adapter.getUserHandle());
-        if (record != null && record.shortcutLoader != null) {
-            record.shortcutLoader.reset();
-        }
-        adapter.handlePackagesChanged();
     }
 
     @Override
@@ -1273,7 +1261,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 getEventLog(),
                 maxTargetsPerRow,
                 initialIntentsUserSpace,
-                targetDataLoader);
+                targetDataLoader,
+                () -> {
+                    ProfileRecord record = getProfileRecord(userHandle);
+                    if (record != null && record.shortcutLoader != null) {
+                        record.shortcutLoader.reset();
+                    }
+                });
     }
 
     @Override
@@ -1521,12 +1515,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         // We return personal profile, as it is the default when there is no work profile, personal
         // profile represents rootUser, clonedUser & secondaryUser, covering all use cases.
         return PROFILE_PERSONAL;
-    }
-
-    @Override // ResolverListCommunicator
-    public void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
-        mChooserMultiProfilePagerAdapter.getActiveListAdapter().notifyDataSetChanged();
-        super.onHandlePackagesChanged(listAdapter);
     }
 
     @Override
