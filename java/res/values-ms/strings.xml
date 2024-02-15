@@ -72,12 +72,14 @@
     <string name="image_preview_a11y_description" msgid="297102643932491797">"Lakaran kecil pratonton imej"</string>
     <string name="video_preview_a11y_description" msgid="683440858811095990">"Lakaran kecil pratonton video"</string>
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"Lakaran kecil pratonton fail"</string>
-    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"Tiada orang yang disyorkan untuk berkongsi"</string>
+    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"Tiada orang yang disyorkan untuk membuat perkongsian"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Apl ini belum diberikan kebenaran merakam tetapi dapat merakam audio melalui peranti USB ini."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Peribadi"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Kerja"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Peribadi"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Paparan peribadi"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Paparan kerja"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Paparan peribadi"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Disekat oleh pentadbir IT anda"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Kandungan ini tidak boleh dikongsi dengan apl kerja"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Kandungan ini tidak boleh dibuka dengan apl kerja"</string>
@@ -95,4 +97,5 @@
     <string name="include_text" msgid="642280283268536140">"Sertakan teks"</string>
     <string name="exclude_link" msgid="1332778255031992228">"Kecualikan pautan"</string>
     <string name="include_link" msgid="827855767220339802">"Sertakan pautan"</string>
+    <string name="pinned" msgid="7623664001331394139">"Disemat"</string>
 </resources>

@@ -18,25 +18,30 @@ package com.android.intentresolver.contentpreview;
 
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_FILE;
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE;
+import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION;
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT;
 
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.service.chooser.Flags;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.lifecycle.Lifecycle;
 
+import com.android.intentresolver.ContentTypeHint;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 
 import java.util.List;
 import java.util.function.Consumer;
+
+import kotlinx.coroutines.CoroutineScope;
 
 /**
  * Collection of helpers for building the content preview UI displayed in
@@ -45,7 +50,7 @@ import java.util.function.Consumer;
  */
 public final class ChooserContentPreviewUi {
 
-    private final Lifecycle mLifecycle;
+    private final CoroutineScope mScope;
 
     /**
      * Delegate to build the default system action buttons to display in the preview layout, if/when
@@ -90,14 +95,16 @@ public final class ChooserContentPreviewUi {
     final ContentPreviewUi mContentPreviewUi;
 
     public ChooserContentPreviewUi(
-            Lifecycle lifecycle,
+            CoroutineScope scope,
             PreviewDataProvider previewData,
             Intent targetIntent,
             ImageLoader imageLoader,
             ActionFactory actionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
-            HeadlineGenerator headlineGenerator) {
-        mLifecycle = lifecycle;
+            HeadlineGenerator headlineGenerator,
+            ContentTypeHint contentTypeHint,
+            @Nullable CharSequence metadata) {
+        mScope = scope;
         mContentPreviewUi = createContentPreview(
                 previewData,
                 targetIntent,
@@ -105,7 +112,10 @@ public final class ChooserContentPreviewUi {
                 imageLoader,
                 actionFactory,
                 transitionElementStatusCallback,
-                headlineGenerator);
+                headlineGenerator,
+                contentTypeHint,
+                metadata
+        );
         if (mContentPreviewUi.getType() != CONTENT_PREVIEW_IMAGE) {
             transitionElementStatusCallback.onAllTransitionElementsReady();
         }
@@ -118,58 +128,80 @@ public final class ChooserContentPreviewUi {
             ImageLoader imageLoader,
             ActionFactory actionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
-            HeadlineGenerator headlineGenerator) {
-
+            HeadlineGenerator headlineGenerator,
+            ContentTypeHint contentTypeHint,
+            @Nullable CharSequence metadata
+    ) {
         int previewType = previewData.getPreviewType();
         if (previewType == CONTENT_PREVIEW_TEXT) {
             return createTextPreview(
-                    mLifecycle,
+                    mScope,
                     targetIntent,
                     actionFactory,
                     imageLoader,
-                    headlineGenerator);
+                    headlineGenerator,
+                    contentTypeHint,
+                    metadata
+            );
         }
         if (previewType == CONTENT_PREVIEW_FILE) {
             FileContentPreviewUi fileContentPreviewUi = new FileContentPreviewUi(
                     previewData.getUriCount(),
                     actionFactory,
-                    headlineGenerator);
+                    headlineGenerator,
+                    metadata
+            );
             if (previewData.getUriCount() > 0) {
-                previewData.getFirstFileName(
-                        mLifecycle, fileContentPreviewUi::setFirstFileName);
+                previewData.getFirstFileName(mScope, fileContentPreviewUi::setFirstFileName);
             }
             return fileContentPreviewUi;
         }
+
+        //TODO: use flags injection
+        if (previewType == CONTENT_PREVIEW_PAYLOAD_SELECTION && Flags.chooserPayloadToggling()) {
+            transitionElementStatusCallback.onAllTransitionElementsReady(); // TODO
+            return new ShareouselContentPreviewUi(actionFactory);
+        }
+
         boolean isSingleImageShare = previewData.getUriCount() == 1
-                        && typeClassifier.isImageType(previewData.getFirstFileInfo().getMimeType());
+                && typeClassifier.isImageType(previewData.getFirstFileInfo().getMimeType());
         CharSequence text = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         if (!TextUtils.isEmpty(text)) {
             FilesPlusTextContentPreviewUi previewUi =
                     new FilesPlusTextContentPreviewUi(
-                            mLifecycle,
+                            mScope,
                             isSingleImageShare,
                             previewData.getUriCount(),
                             targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT),
+                            targetIntent.getType(),
                             actionFactory,
                             imageLoader,
                             typeClassifier,
-                            headlineGenerator);
+                            headlineGenerator,
+                            metadata
+                    );
             if (previewData.getUriCount() > 0) {
-                previewData.getFileMetadataForImagePreview(
-                        mLifecycle, previewUi::updatePreviewMetadata);
+                JavaFlowHelper.collectToList(
+                        mScope,
+                        previewData.getImagePreviewFileInfoFlow(),
+                        previewUi::updatePreviewMetadata);
             }
             return previewUi;
         }
 
-        UnifiedContentPreviewUi unifiedContentPreviewUi = new UnifiedContentPreviewUi(
+        return new UnifiedContentPreviewUi(
+                mScope,
                 isSingleImageShare,
+                targetIntent.getType(),
                 actionFactory,
                 imageLoader,
                 typeClassifier,
                 transitionElementStatusCallback,
-                headlineGenerator);
-        previewData.getFileMetadataForImagePreview(mLifecycle, unifiedContentPreviewUi::setFiles);
-        return unifiedContentPreviewUi;
+                previewData.getImagePreviewFileInfoFlow(),
+                previewData.getUriCount(),
+                headlineGenerator,
+                metadata
+        );
     }
 
     public int getPreferredContentPreview() {
@@ -181,19 +213,25 @@ public final class ChooserContentPreviewUi {
      * specified {@code intent}.
      */
     public ViewGroup displayContentPreview(
-            Resources resources, LayoutInflater layoutInflater, ViewGroup parent) {
+            Resources resources,
+            LayoutInflater layoutInflater,
+            ViewGroup parent,
+            @Nullable View headlineViewParent) {
 
-        return mContentPreviewUi.display(resources, layoutInflater, parent);
+        return mContentPreviewUi.display(resources, layoutInflater, parent, headlineViewParent);
     }
 
     private static TextContentPreviewUi createTextPreview(
-            Lifecycle lifecycle,
+            CoroutineScope scope,
             Intent targetIntent,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
-            HeadlineGenerator headlineGenerator) {
+            HeadlineGenerator headlineGenerator,
+            ContentTypeHint contentTypeHint,
+            @Nullable CharSequence metadata
+    ) {
         CharSequence sharingText = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-        String previewTitle = targetIntent.getStringExtra(Intent.EXTRA_TITLE);
+        CharSequence previewTitle = targetIntent.getCharSequenceExtra(Intent.EXTRA_TITLE);
         ClipData previewData = targetIntent.getClipData();
         Uri previewThumbnail = null;
         if (previewData != null) {
@@ -202,13 +240,16 @@ public final class ChooserContentPreviewUi {
                 previewThumbnail = previewDataItem.getUri();
             }
         }
+
         return new TextContentPreviewUi(
-                lifecycle,
+                scope,
                 sharingText,
                 previewTitle,
+                metadata,
                 previewThumbnail,
                 actionFactory,
                 imageLoader,
-                headlineGenerator);
+                headlineGenerator,
+                contentTypeHint);
     }
 }

@@ -16,8 +16,6 @@
 
 package com.android.intentresolver;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -32,7 +30,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
-import com.android.intentresolver.flags.FeatureFlagRepository;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.intentresolver.util.UriFilters;
 
 import com.google.common.collect.ImmutableList;
@@ -101,11 +101,13 @@ public class ChooserRequestParameters {
     @Nullable
     private final IntentFilter mTargetIntentFilter;
 
+    @Nullable
+    private final CharSequence mMetadataText;
+
     public ChooserRequestParameters(
             final Intent clientIntent,
             String referrerPackageName,
-            final Uri referrer,
-            FeatureFlagRepository featureFlags) {
+            final Uri referrer) {
         final Intent requestedTarget = parseTargetIntentExtra(
                 clientIntent.getParcelableExtra(Intent.EXTRA_INTENT));
         mTarget = intentWithModifiedLaunchFlags(requestedTarget);
@@ -148,6 +150,12 @@ public class ChooserRequestParameters {
 
         mChooserActions = getChooserActions(clientIntent);
         mModifyShareAction = getModifyShareAction(clientIntent);
+
+        if (android.service.chooser.Flags.enableSharesheetMetadataExtra()) {
+            mMetadataText = clientIntent.getCharSequenceExtra(Intent.EXTRA_METADATA_TEXT);
+        } else {
+            mMetadataText = null;
+        }
     }
 
     public Intent getTargetIntent() {
@@ -212,7 +220,7 @@ public class ChooserRequestParameters {
 
     /**
      * TODO: this returns a nullable array for convenience, but if the legacy APIs can be
-     * refactored, returning {@link mAdditionalTargets} directly is simpler and safer.
+     * refactored, returning {@link #mAdditionalTargets} directly is simpler and safer.
      */
     @Nullable
     public Intent[] getAdditionalTargets() {
@@ -226,7 +234,7 @@ public class ChooserRequestParameters {
 
     /**
      * TODO: this returns a nullable array for convenience, but if the legacy APIs can be
-     * refactored, returning {@link mInitialIntents} directly is simpler and safer.
+     * refactored, returning {@link #mInitialIntents} directly is simpler and safer.
      */
     @Nullable
     public Intent[] getInitialIntents() {
@@ -251,6 +259,11 @@ public class ChooserRequestParameters {
     @Nullable
     public IntentFilter getTargetIntentFilter() {
         return mTargetIntentFilter;
+    }
+
+    @Nullable
+    public CharSequence getMetadataText() {
+        return mMetadataText;
     }
 
     private static boolean isSendAction(@Nullable String action) {
@@ -288,7 +301,7 @@ public class ChooserRequestParameters {
      * requested target <em>wasn't</em> a send action; otherwise it is null. The second value is
      * the resource ID of a default title string; this is nonzero only if the first value is null.
      *
-     * TODO: change the API for how these are passed up to {@link ResolverActivity#onCreate()}, or
+     * TODO: change the API for how these are passed up to {@link ResolverActivity#onCreate}, or
      * create a real type (not {@link Pair}) to express the semantics described in this comment.
      */
     private static Pair<CharSequence, Integer> makeTitleSpec(
@@ -371,7 +384,7 @@ public class ChooserRequestParameters {
      * the required type. If false, throw an {@link IllegalArgumentException} if the extra is
      * non-null but can't be assigned to variables of type {@code T}.
      * @param streamEmptyIfNull Whether to return an empty stream if the optional extra isn't
-     * present in the intent (or if it had the wrong type, but {@link warnOnTypeError} is true).
+     * present in the intent (or if it had the wrong type, but <em>warnOnTypeError</em> is true).
      * If false, return null in these cases, and only return an empty stream if the intent
      * explicitly provided an empty array for the specified extra.
      */

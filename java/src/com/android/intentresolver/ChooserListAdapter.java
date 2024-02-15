@@ -19,7 +19,6 @@ package com.android.intentresolver;
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_PREDICTION_SERVICE;
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_SHORTCUT_MANAGER;
 
-import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.app.prediction.AppTarget;
 import android.content.ComponentName;
@@ -38,10 +37,15 @@ import android.os.UserManager;
 import android.provider.DeviceConfig;
 import android.service.chooser.ChooserTarget;
 import android.text.Layout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.annotation.MainThread;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
@@ -49,6 +53,8 @@ import com.android.intentresolver.chooser.NotSelectableTargetInfo;
 import com.android.intentresolver.chooser.SelectableTargetInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.icons.TargetDataLoader;
+import com.android.intentresolver.logging.EventLog;
+import com.android.intentresolver.widget.BadgeTextView;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
 
@@ -56,10 +62,23 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 public class ChooserListAdapter extends ResolverListAdapter {
+
+    /**
+     * Delegate interface for injecting a chooser-specific operation to be performed before handling
+     * a package-change event. This allows the "driver" invoking the package-change to be generic,
+     * with no knowledge specific to the chooser implementation.
+     */
+    public interface PackageChangeCallback {
+        /** Perform any steps necessary before processing the package-change event. */
+        void beforeHandlingPackagesChanged();
+    }
+
     private static final String TAG = "ChooserListAdapter";
     private static final boolean DEBUG = false;
 
@@ -77,23 +96,28 @@ public class ChooserListAdapter extends ResolverListAdapter {
     /** {@link #getBaseScore} */
     public static final float SHORTCUT_TARGET_SCORE_BOOST = 90.f;
 
-    private final ChooserRequestParameters mChooserRequest;
+    private final Intent mReferrerFillInIntent;
+
     private final int mMaxRankedTargets;
 
-    private final ChooserActivityLogger mChooserActivityLogger;
+    private final EventLog mEventLog;
 
     private final Set<TargetInfo> mRequestedIcons = new HashSet<>();
+
+    @Nullable
+    private final PackageChangeCallback mPackageChangeCallback;
 
     // Reserve spots for incoming direct share targets by adding placeholders
     private final TargetInfo mPlaceHolderTargetInfo;
     private final TargetDataLoader mTargetDataLoader;
+    private final boolean mUseBadgeTextViewForLabels;
     private final List<TargetInfo> mServiceTargets = new ArrayList<>();
     private final List<DisplayResolveInfo> mCallerTargets = new ArrayList<>();
 
     private final ShortcutSelectionLogic mShortcutSelectionLogic;
 
     // Sorted list of DisplayResolveInfos for the alphabetical app section.
-    private List<DisplayResolveInfo> mSortedList = new ArrayList<>();
+    private final List<DisplayResolveInfo> mSortedList = new ArrayList<>();
 
     private final ItemRevealAnimationTracker mAnimationTracker = new ItemRevealAnimationTracker();
 
@@ -137,13 +161,58 @@ public class ChooserListAdapter extends ResolverListAdapter {
             ResolverListController resolverListController,
             UserHandle userHandle,
             Intent targetIntent,
+            Intent referrerFillInIntent,
             ResolverListCommunicator resolverListCommunicator,
             PackageManager packageManager,
-            ChooserActivityLogger chooserActivityLogger,
-            ChooserRequestParameters chooserRequest,
+            EventLog eventLog,
             int maxRankedTargets,
             UserHandle initialIntentsUserSpace,
-            TargetDataLoader targetDataLoader) {
+            TargetDataLoader targetDataLoader,
+            @Nullable PackageChangeCallback packageChangeCallback,
+            FeatureFlags featureFlags) {
+        this(
+                context,
+                payloadIntents,
+                initialIntents,
+                rList,
+                filterLastUsed,
+                resolverListController,
+                userHandle,
+                targetIntent,
+                referrerFillInIntent,
+                resolverListCommunicator,
+                packageManager,
+                eventLog,
+                maxRankedTargets,
+                initialIntentsUserSpace,
+                targetDataLoader,
+                packageChangeCallback,
+                AsyncTask.SERIAL_EXECUTOR,
+                context.getMainExecutor(),
+                featureFlags);
+    }
+
+    @VisibleForTesting
+    public ChooserListAdapter(
+            Context context,
+            List<Intent> payloadIntents,
+            Intent[] initialIntents,
+            List<ResolveInfo> rList,
+            boolean filterLastUsed,
+            ResolverListController resolverListController,
+            UserHandle userHandle,
+            Intent targetIntent,
+            Intent referrerFillInIntent,
+            ResolverListCommunicator resolverListCommunicator,
+            PackageManager packageManager,
+            EventLog eventLog,
+            int maxRankedTargets,
+            UserHandle initialIntentsUserSpace,
+            TargetDataLoader targetDataLoader,
+            @Nullable PackageChangeCallback packageChangeCallback,
+            Executor bgExecutor,
+            Executor mainExecutor,
+            FeatureFlags featureFlags) {
         // Don't send the initial intents through the shared ResolverActivity path,
         // we want to separate them into a different section.
         super(
@@ -157,15 +226,19 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 targetIntent,
                 resolverListCommunicator,
                 initialIntentsUserSpace,
-                targetDataLoader);
+                targetDataLoader,
+                bgExecutor,
+                mainExecutor);
 
-        mChooserRequest = chooserRequest;
         mMaxRankedTargets = maxRankedTargets;
+        mReferrerFillInIntent = referrerFillInIntent;
 
         mPlaceHolderTargetInfo = NotSelectableTargetInfo.newPlaceHolderTargetInfo(context);
         mTargetDataLoader = targetDataLoader;
+        mPackageChangeCallback = packageChangeCallback;
+        mUseBadgeTextViewForLabels = featureFlags.bespokeLabelView();
         createPlaceHolders();
-        mChooserActivityLogger = chooserActivityLogger;
+        mEventLog = eventLog;
         mShortcutSelectionLogic = new ShortcutSelectionLogic(
                 context.getResources().getInteger(R.integer.config_maxShortcutTargetsPerApp),
                 DeviceConfig.getBoolean(
@@ -226,9 +299,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                     ri.icon = 0;
                 }
                 ri.userHandle = initialIntentsUserSpace;
-                // TODO: remove DisplayResolveInfo dependency on presentation getter
-                DisplayResolveInfo displayResolveInfo = DisplayResolveInfo.newDisplayResolveInfo(
-                        ii, ri, ii, mTargetDataLoader.createPresentationGetter(ri));
+                DisplayResolveInfo displayResolveInfo =
+                        DisplayResolveInfo.newDisplayResolveInfo(ii, ri, ii);
                 mCallerTargets.add(displayResolveInfo);
                 if (mCallerTargets.size() == MAX_SUGGESTED_APP_TARGETS) break;
             }
@@ -237,6 +309,9 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     @Override
     public void handlePackagesChanged() {
+        if (mPackageChangeCallback != null) {
+            mPackageChangeCallback.beforeHandlingPackagesChanged();
+        }
         if (DEBUG) {
             Log.d(TAG, "clearing queryTargets on package change");
         }
@@ -246,7 +321,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
     }
 
     @Override
-    protected boolean rebuildList(boolean doPostProcessing) {
+    public boolean rebuildList(boolean doPostProcessing) {
         mAnimationTracker.reset();
         mSortedList.clear();
         boolean result = super.rebuildList(doPostProcessing);
@@ -263,7 +338,12 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     @Override
     View onCreateView(ViewGroup parent) {
-        return mInflater.inflate(R.layout.resolve_grid_item, parent, false);
+        return mInflater.inflate(
+                mUseBadgeTextViewForLabels
+                        ? R.layout.chooser_grid_item
+                        : R.layout.resolve_grid_item,
+                parent,
+                false);
     }
 
     @VisibleForTesting
@@ -271,76 +351,114 @@ public class ChooserListAdapter extends ResolverListAdapter {
     public void onBindView(View view, TargetInfo info, int position) {
         final ViewHolder holder = (ViewHolder) view.getTag();
 
+        resetViewHolder(holder);
+        // Always remove the spacing listener, attach as needed to direct share targets below.
+        holder.text.removeOnLayoutChangeListener(mPinTextSpacingListener);
+
         if (info == null) {
             holder.icon.setImageDrawable(loadIconPlaceholder());
             return;
         }
 
-        holder.bindLabel(info.getDisplayLabel(), info.getExtendedInfo());
-        mAnimationTracker.animateLabel(holder.text, info);
-        if (holder.text2.getVisibility() == View.VISIBLE) {
+        final CharSequence displayLabel = Objects.requireNonNullElse(info.getDisplayLabel(), "");
+        final CharSequence extendedInfo = Objects.requireNonNullElse(info.getExtendedInfo(), "");
+        holder.bindLabel(displayLabel, extendedInfo);
+        if (!TextUtils.isEmpty(displayLabel)) {
+            mAnimationTracker.animateLabel(holder.text, info);
+        }
+        if (!TextUtils.isEmpty(extendedInfo) && holder.text2.getVisibility() == View.VISIBLE) {
             mAnimationTracker.animateLabel(holder.text2, info);
         }
+
         holder.bindIcon(info);
-        if (info.getDisplayIconHolder().getDisplayIcon() != null) {
+        if (info.hasDisplayIcon()) {
             mAnimationTracker.animateIcon(holder.icon, info);
-        } else {
-            holder.icon.clearAnimation();
         }
 
         if (info.isSelectableTargetInfo()) {
             // direct share targets should append the application name for a better readout
             DisplayResolveInfo rInfo = info.getDisplayResolveInfo();
-            CharSequence appName = rInfo != null ? rInfo.getDisplayLabel() : "";
-            CharSequence extendedInfo = info.getExtendedInfo();
-            String contentDescription = String.join(" ", info.getDisplayLabel(),
-                    extendedInfo != null ? extendedInfo : "", appName);
-            holder.updateContentDescription(contentDescription);
+            CharSequence appName =
+                    Objects.requireNonNullElse(rInfo == null ? null : rInfo.getDisplayLabel(), "");
+            String contentDescription =
+                    String.join(" ", info.getDisplayLabel(), extendedInfo, appName);
+            if (info.isPinned()) {
+                contentDescription = String.join(
+                    ". ",
+                    contentDescription,
+                    mContext.getResources().getString(R.string.pinned));
+            }
+            updateContentDescription(holder, contentDescription);
             if (!info.hasDisplayIcon()) {
                 loadDirectShareIcon((SelectableTargetInfo) info);
             }
         } else if (info.isDisplayResolveInfo()) {
+            if (info.isPinned()) {
+                updateContentDescription(
+                        holder,
+                        String.join(
+                                ". ",
+                                info.getDisplayLabel(),
+                                mContext.getResources().getString(R.string.pinned)));
+            }
             DisplayResolveInfo dri = (DisplayResolveInfo) info;
             if (!dri.hasDisplayIcon()) {
                 loadIcon(dri);
             }
+            if (!dri.hasDisplayLabel()) {
+                loadLabel(dri);
+            }
         }
 
-        // If target is loading, show a special placeholder shape in the label, make unclickable
         if (info.isPlaceHolderTargetInfo()) {
-            final int maxWidth = mContext.getResources().getDimensionPixelSize(
-                    R.dimen.chooser_direct_share_label_placeholder_max_width);
-            holder.text.setMaxWidth(maxWidth);
-            holder.text.setBackground(mContext.getResources().getDrawable(
-                    R.drawable.chooser_direct_share_label_placeholder, mContext.getTheme()));
-            // Prevent rippling by removing background containing ripple
-            holder.itemView.setBackground(null);
-        } else {
-            holder.text.setMaxWidth(Integer.MAX_VALUE);
-            holder.text.setBackground(null);
-            holder.itemView.setBackground(holder.defaultItemViewBackground);
+            bindPlaceholder(holder);
         }
-
-        // Always remove the spacing listener, attach as needed to direct share targets below.
-        holder.text.removeOnLayoutChangeListener(mPinTextSpacingListener);
 
         if (info.isMultiDisplayResolveInfo()) {
             // If the target is grouped show an indicator
-            Drawable bkg = mContext.getDrawable(R.drawable.chooser_group_background);
-            holder.text.setPaddingRelative(0, 0, bkg.getIntrinsicWidth() /* end */, 0);
-            holder.text.setBackground(bkg);
+            bindGroupIndicator(
+                    holder,
+                    mContext.getDrawable(R.drawable.chooser_group_background));
         } else if (info.isPinned() && (getPositionTargetType(position) == TARGET_STANDARD
                 || getPositionTargetType(position) == TARGET_SERVICE)) {
             // If the appShare or directShare target is pinned and in the suggested row show a
             // pinned indicator
-            Drawable bkg = mContext.getDrawable(R.drawable.chooser_pinned_background);
-            holder.text.setPaddingRelative(bkg.getIntrinsicWidth() /* start */, 0, 0, 0);
-            holder.text.setBackground(bkg);
+            bindPinnedIndicator(holder, mContext.getDrawable(R.drawable.chooser_pinned_background));
             holder.text.addOnLayoutChangeListener(mPinTextSpacingListener);
-        } else {
-            holder.text.setBackground(null);
-            holder.text.setPaddingRelative(0, 0, 0, 0);
         }
+    }
+
+    private void resetViewHolder(ViewHolder holder) {
+        holder.reset();
+        holder.itemView.setBackground(holder.defaultItemViewBackground);
+
+        if (mUseBadgeTextViewForLabels) {
+            ((BadgeTextView) holder.text).setBadgeDrawable(null);
+        }
+        holder.text.setBackground(null);
+        holder.text.setPaddingRelative(0, 0, 0, 0);
+    }
+
+    private void updateContentDescription(ViewHolder holder, String description) {
+        holder.itemView.setContentDescription(description);
+    }
+
+    private void bindPlaceholder(ViewHolder holder) {
+        holder.itemView.setBackground(null);
+    }
+
+    private void bindGroupIndicator(ViewHolder holder, Drawable indicator) {
+        if (mUseBadgeTextViewForLabels) {
+            ((BadgeTextView) holder.text).setBadgeDrawable(indicator);
+        } else {
+            holder.text.setPaddingRelative(0, 0, /*end = */indicator.getIntrinsicWidth(), 0);
+            holder.text.setBackground(indicator);
+        }
+    }
+
+    private void bindPinnedIndicator(ViewHolder holder, Drawable indicator) {
+        holder.text.setPaddingRelative(/*start = */indicator.getIntrinsicWidth(), 0, 0, 0);
+        holder.text.setBackground(indicator);
     }
 
     private void loadDirectShareIcon(SelectableTargetInfo info) {
@@ -359,9 +477,13 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
-    void updateAlphabeticalList() {
-        // TODO: this procedure seems like it should be relatively lightweight. Why does it need to
-        // run in an `AsyncTask`?
+    public void updateAlphabeticalList() {
+        final ChooserActivity.AzInfoComparator comparator =
+                new ChooserActivity.AzInfoComparator(mContext);
+        final List<DisplayResolveInfo> allTargets = new ArrayList<>();
+        allTargets.addAll(getTargetsInCurrentDisplayList());
+        allTargets.addAll(mCallerTargets);
+
         new AsyncTask<Void, Void, List<DisplayResolveInfo>>() {
             @Override
             protected List<DisplayResolveInfo> doInBackground(Void... voids) {
@@ -374,32 +496,38 @@ public class ChooserListAdapter extends ResolverListAdapter {
             }
 
             private List<DisplayResolveInfo> updateList() {
-                List<DisplayResolveInfo> allTargets = new ArrayList<>();
-                allTargets.addAll(getTargetsInCurrentDisplayList());
-                allTargets.addAll(mCallerTargets);
+                loadMissingLabels(allTargets);
 
                 // Consolidate multiple targets from same app.
                 return allTargets
                         .stream()
                         .collect(Collectors.groupingBy(target ->
                                 target.getResolvedComponentName().getPackageName()
-                                + "#" + target.getDisplayLabel()
-                                + '#' + ResolverActivity.getResolveInfoUserHandle(
-                                        target.getResolveInfo(), getUserHandle()).getIdentifier()
+                                        + "#" + target.getDisplayLabel()
+                                        + '#' + target.getResolveInfo().userHandle.getIdentifier()
                         ))
                         .values()
                         .stream()
                         .map(appTargets ->
                                 (appTargets.size() == 1)
-                                ? appTargets.get(0)
-                                : MultiDisplayResolveInfo.newMultiDisplayResolveInfo(appTargets))
-                        .sorted(new ChooserActivity.AzInfoComparator(mContext))
+                                        ? appTargets.get(0)
+                                        : MultiDisplayResolveInfo.newMultiDisplayResolveInfo(
+                                            appTargets))
+                        .sorted(comparator)
                         .collect(Collectors.toList());
             }
+
             @Override
             protected void onPostExecute(List<DisplayResolveInfo> newList) {
-                mSortedList = newList;
+                mSortedList.clear();
+                mSortedList.addAll(newList);
                 notifyDataSetChanged();
+            }
+
+            private void loadMissingLabels(List<DisplayResolveInfo> targets) {
+                for (DisplayResolveInfo target: targets) {
+                    mTargetDataLoader.getOrLoadLabel(target);
+                }
             }
         }.execute();
     }
@@ -438,8 +566,14 @@ public class ChooserListAdapter extends ResolverListAdapter {
         return count;
     }
 
+    private static boolean hasSendAction(Intent intent) {
+        String action = intent.getAction();
+        return Intent.ACTION_SEND.equals(action)
+                || Intent.ACTION_SEND_MULTIPLE.equals(action);
+    }
+
     public int getServiceTargetCount() {
-        if (mChooserRequest.isSendActionTarget() && !ActivityManager.isLowRamDeviceStatic()) {
+        if (hasSendAction(getTargetIntent()) && !ActivityManager.isLowRamDeviceStatic()) {
             return Math.min(mServiceTargets.size(), mMaxRankedTargets);
         }
 
@@ -553,7 +687,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
     protected boolean shouldAddResolveInfo(DisplayResolveInfo dri) {
         // Checks if this info is already listed in callerTargets.
         for (TargetInfo existingInfo : mCallerTargets) {
-            if (mResolverListCommunicator.resolveInfoMatch(
+            if (ResolveInfoHelpers.resolveInfoMatch(
                     dri.getResolveInfo(), existingInfo.getResolveInfo())) {
                 return false;
             }
@@ -594,8 +728,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 directShareToShortcutInfos,
                 directShareToAppTargets,
                 mContext.createContextAsUser(getUserHandle(), 0),
-                mChooserRequest.getTargetIntent(),
-                mChooserRequest.getReferrerFillInIntent(),
+                getTargetIntent(),
+                mReferrerFillInIntent,
                 mMaxRankedTargets,
                 mServiceTargets);
         if (isUpdated) {
@@ -634,7 +768,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
         mServiceTargets.removeIf(o -> o.isPlaceHolderTargetInfo());
         if (mServiceTargets.isEmpty()) {
             mServiceTargets.add(NotSelectableTargetInfo.newEmptyTargetInfo());
-            mChooserActivityLogger.logSharesheetEmptyDirectShareRow();
+            mEventLog.logSharesheetEmptyDirectShareRow();
         }
         notifyDataSetChanged();
     }
@@ -644,29 +778,20 @@ public class ChooserListAdapter extends ResolverListAdapter {
      * in the head of input list and fill the tail with other elements in undetermined order.
      */
     @Override
-    AsyncTask<List<ResolvedComponentInfo>,
-                Void,
-                List<ResolvedComponentInfo>> createSortingTask(boolean doPostProcessing) {
-        return new AsyncTask<List<ResolvedComponentInfo>,
-                Void,
-                List<ResolvedComponentInfo>>() {
-            @Override
-            protected List<ResolvedComponentInfo> doInBackground(
-                    List<ResolvedComponentInfo>... params) {
-                Trace.beginSection("ChooserListAdapter#SortingTask");
-                mResolverListController.topK(params[0], mMaxRankedTargets);
-                Trace.endSection();
-                return params[0];
-            }
-            @Override
-            protected void onPostExecute(List<ResolvedComponentInfo> sortedComponents) {
-                processSortedList(sortedComponents, doPostProcessing);
-                if (doPostProcessing) {
-                    mResolverListCommunicator.updateProfileViewButton();
-                    notifyDataSetChanged();
-                }
-            }
-        };
+    @WorkerThread
+    protected void sortComponents(List<ResolvedComponentInfo> components) {
+        Trace.beginSection("ChooserListAdapter#SortingTask");
+        mResolverListController.topK(components, mMaxRankedTargets);
+        Trace.endSection();
     }
 
+    @Override
+    @MainThread
+    protected void onComponentsSorted(
+            @Nullable List<ResolvedComponentInfo> sortedComponents, boolean doPostProcessing) {
+        processSortedList(sortedComponents, doPostProcessing);
+        if (doPostProcessing) {
+            notifyDataSetChanged();
+        }
+    }
 }
