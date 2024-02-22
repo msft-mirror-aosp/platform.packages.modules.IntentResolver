@@ -22,7 +22,9 @@ import com.android.intentresolver.contentpreview.ImageLoader
 import java.util.function.Consumer
 import kotlinx.coroutines.CoroutineScope
 
-class TestPreviewImageLoader(private val bitmaps: Map<Uri, Bitmap>) : ImageLoader {
+class FakeImageLoader(initialBitmaps: Map<Uri, Bitmap> = emptyMap()) : ImageLoader {
+    private val bitmaps = HashMap<Uri, Bitmap>().apply { putAll(initialBitmaps) }
+
     override fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>) {
         callback.accept(bitmaps[uri])
     }
@@ -30,4 +32,8 @@ class TestPreviewImageLoader(private val bitmaps: Map<Uri, Bitmap>) : ImageLoade
     override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? = bitmaps[uri]
 
     override fun prePopulate(uris: List<Uri>) = Unit
+
+    fun setBitmap(uri: Uri, bitmap: Bitmap) {
+        bitmaps[uri] = bitmap
+    }
 }
