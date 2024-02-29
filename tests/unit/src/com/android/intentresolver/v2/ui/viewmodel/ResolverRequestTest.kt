@@ -23,24 +23,26 @@ import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import com.android.intentresolver.v2.ResolverActivity.PROFILE_WORK
 import com.android.intentresolver.v2.shared.model.Profile.Type.WORK
-import com.android.intentresolver.v2.ui.model.ActivityLaunch
+import com.android.intentresolver.v2.ui.model.ActivityModel
+import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.ui.model.ResolverRequest
+import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.UncaughtException
-import com.android.intentresolver.v2.validation.ValidationResultSubject.Companion.assertThat
+import com.android.intentresolver.v2.validation.Valid
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
 
 private val targetUri = Uri.parse("content://example.com/123")
 
-private fun createLaunch(
+private fun createActivityModel(
     targetIntent: Intent,
     referrer: Uri? = null,
 ) =
-    ActivityLaunch(
+    ActivityModel(
         intent = targetIntent,
-        fromUid = 10000,
-        fromPackage = "com.android.example",
+        launchedFromUid = 10000,
+        launchedFromPackage = "com.android.example",
         referrer = referrer ?: "android-app://com.android.example".toUri()
     )
 
@@ -48,16 +50,18 @@ class ResolverRequestTest {
     @Test
     fun testDefaults() {
         val intent = Intent(ACTION_VIEW).apply { data = targetUri }
-        val launch = createLaunch(intent)
+        val activity = createActivityModel(intent)
 
-        val result = readResolverRequest(launch)
-        assertThat(result).isSuccess()
-        assertThat(result).findings().isEmpty()
-        val value: ResolverRequest = result.getOrThrow()
+        val result = readResolverRequest(activity)
 
-        assertThat(value.intent.filterEquals(launch.intent)).isTrue()
-        assertThat(value.callingUser).isNull()
-        assertThat(value.selectedProfile).isNull()
+        assertThat(result).isInstanceOf(Valid::class.java)
+        result as Valid<ResolverRequest>
+
+        assertThat(result.warnings).isEmpty()
+
+        assertThat(result.value.intent.filterEquals(activity.intent)).isTrue()
+        assertThat(result.value.callingUser).isNull()
+        assertThat(result.value.selectedProfile).isNull()
     }
 
     @Test
@@ -68,13 +72,15 @@ class ResolverRequestTest {
                 putExtra(EXTRA_SELECTED_PROFILE, -1000)
             }
 
-        val launch = createLaunch(intent)
+        val activity = createActivityModel(intent)
 
-        val result = readResolverRequest(launch)
+        val result = readResolverRequest(activity)
 
-        assertThat(result).isFailure()
+        assertThat(result).isInstanceOf(Invalid::class.java)
+        result as Invalid<ResolverRequest>
+
         assertWithMessage("the first finding")
-            .that(result.findings.firstOrNull())
+            .that(result.errors.firstOrNull())
             .isInstanceOf(UncaughtException::class.java)
     }
 
@@ -85,21 +91,24 @@ class ResolverRequestTest {
             Intent(Intent.ACTION_SEND).apply {
                 putParcelableArrayListExtra(Intent.EXTRA_ALTERNATE_INTENTS, arrayListOf(intent2))
             }
-        val launch = createLaunch(targetIntent = intent1)
+        val activity = createActivityModel(targetIntent = intent1)
 
-        val result = readResolverRequest(launch)
+        val result = readResolverRequest(activity)
+
+        assertThat(result).isInstanceOf(Valid::class.java)
+        result as Valid<ResolverRequest>
 
         // Assert that payloadIntents does NOT include EXTRA_ALTERNATE_INTENTS
         // that is only supported for Chooser and should be not be added here.
-        assertThat(result.value?.payloadIntents).containsExactly(intent1)
+        assertThat(result.value.payloadIntents).containsExactly(intent1)
     }
 
     @Test
     fun testAllValues() {
         val intent = Intent(ACTION_VIEW).apply { data = Uri.parse("content://example.com/123") }
-        val launch = createLaunch(targetIntent = intent)
+        val activity = createActivityModel(targetIntent = intent)
 
-        launch.intent.putExtras(
+        activity.intent.putExtras(
             bundleOf(
                 EXTRA_CALLING_USER to UserHandle.of(123),
                 EXTRA_SELECTED_PROFILE to PROFILE_WORK,
@@ -107,14 +116,14 @@ class ResolverRequestTest {
             )
         )
 
-        val result = readResolverRequest(launch)
+        val result = readResolverRequest(activity)
 
-        assertThat(result).value().isNotNull()
-        val value: ResolverRequest = result.getOrThrow()
+        assertThat(result).isInstanceOf(Valid::class.java)
+        result as Valid<ResolverRequest>
 
-        assertThat(value.intent.filterEquals(launch.intent)).isTrue()
-        assertThat(value.isAudioCaptureDevice).isTrue()
-        assertThat(value.callingUser).isEqualTo(UserHandle.of(123))
-        assertThat(value.selectedProfile).isEqualTo(WORK)
+        assertThat(result.value.intent.filterEquals(activity.intent)).isTrue()
+        assertThat(result.value.isAudioCaptureDevice).isTrue()
+        assertThat(result.value.callingUser).isEqualTo(UserHandle.of(123))
+        assertThat(result.value.selectedProfile).isEqualTo(WORK)
     }
 }

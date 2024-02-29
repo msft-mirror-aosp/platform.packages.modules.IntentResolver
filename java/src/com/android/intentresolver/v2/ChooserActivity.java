@@ -156,7 +156,7 @@ import com.android.intentresolver.v2.profiles.TabConfig;
 import com.android.intentresolver.v2.ui.ActionTitle;
 import com.android.intentresolver.v2.ui.ShareResultSender;
 import com.android.intentresolver.v2.ui.ShareResultSenderFactory;
-import com.android.intentresolver.v2.ui.model.ActivityLaunch;
+import com.android.intentresolver.v2.ui.model.ActivityModel;
 import com.android.intentresolver.v2.ui.model.ChooserRequest;
 import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel;
 import com.android.intentresolver.widget.ImagePreviewView;
@@ -273,7 +273,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final int SCROLL_STATUS_SCROLLING_VERTICAL = 1;
     private static final int SCROLL_STATUS_SCROLLING_HORIZONTAL = 2;
 
-    @Inject public ActivityLaunch mActivityLaunch;
+    @Inject public ChooserHelper mChooserHelper;
+    @Inject public ActivityModel mActivityModel;
     @Inject public FeatureFlags mFeatureFlags;
     @Inject public android.service.chooser.FeatureFlags mChooserServiceFeatureFlags;
     @Inject public EventLog mEventLog;
@@ -347,15 +348,19 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     public CreationExtras getDefaultViewModelCreationExtras() {
         return addDefaultArgs(
                 super.getDefaultViewModelCreationExtras(),
-                new Pair<>(ActivityLaunch.ACTIVITY_LAUNCH_KEY, mActivityLaunch));
+                new Pair<>(ActivityModel.ACTIVITY_MODEL_KEY, mActivityModel));
     }
 
     @Override
     protected final void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        Log.i(TAG, "activityLaunch=" + mActivityLaunch.toString());
-        int callerUid = mActivityLaunch.getFromUid();
+        Log.i(TAG, "mActivityModel=" + mActivityModel.toString());
+
+        // The postInit hook is invoked when this function returns, via Lifecycle.
+        mChooserHelper.setPostCreateCallback(this::init);
+
+        int callerUid = mActivityModel.getLaunchedFromUid();
         if (callerUid < 0 || UserHandle.isIsolated(callerUid)) {
             Log.e(TAG, "Can't start a resolver from uid " + callerUid);
             finish();
@@ -371,10 +376,123 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mViewModel.getChooserRequest().getChosenComponentSender();
         if (chosenComponentSender != null) {
             mShareResultSender = mShareResultSenderFactory
-                    .create(mActivityLaunch.getFromUid(), chosenComponentSender);
+                    .create(mActivityModel.getLaunchedFromUid(), chosenComponentSender);
         }
         mLogic = createActivityLogic();
-        init();
+    }
+
+    @Override
+    protected final void onStart() {
+        super.onStart();
+
+        this.getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
+        if (hasWorkProfile()) {
+            mLogic.getWorkProfileAvailabilityManager().registerWorkProfileStateReceiver(this);
+        }
+    }
+
+    @Override
+    protected final void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: " + getComponentName().flattenToShortString());
+        mFinishWhenStopped = false;
+        mRefinementManager.onActivityResume();
+    }
+
+    @Override
+    protected final void onStop() {
+        super.onStop();
+
+        final Window window = this.getWindow();
+        final WindowManager.LayoutParams attrs = window.getAttributes();
+        attrs.privateFlags &= ~SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
+        window.setAttributes(attrs);
+
+        if (mRegistered) {
+            mPersonalPackageMonitor.unregister();
+            if (mWorkPackageMonitor != null) {
+                mWorkPackageMonitor.unregister();
+            }
+            mRegistered = false;
+        }
+        final Intent intent = getIntent();
+        if ((intent.getFlags() & FLAG_ACTIVITY_NEW_TASK) != 0 && !isVoiceInteraction()
+                && !mRetainInOnStop) {
+            // This resolver is in the unusual situation where it has been
+            // launched at the top of a new task.  We don't let it be added
+            // to the recent tasks shown to the user, and we need to make sure
+            // that each time we are launched we get the correct launching
+            // uid (not re-using the same resolver from an old launching uid),
+            // so we will now finish ourself since being no longer visible,
+            // the user probably can't get back to us.
+            if (!isChangingConfigurations()) {
+                finish();
+            }
+        }
+        mLogic.getWorkProfileAvailabilityManager().unregisterWorkProfileStateReceiver(this);
+
+        if (mRefinementManager != null) {
+            mRefinementManager.onActivityStop(isChangingConfigurations());
+        }
+
+        if (mFinishWhenStopped) {
+            mFinishWhenStopped = false;
+            finish();
+        }
+    }
+
+    @Override
+    protected final void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
+        if (viewPager != null) {
+            outState.putInt(LAST_SHOWN_TAB_KEY, viewPager.getCurrentItem());
+        }
+    }
+
+    @Override
+    protected final void onRestart() {
+        super.onRestart();
+        if (!mRegistered) {
+            mPersonalPackageMonitor.register(
+                    this,
+                    getMainLooper(),
+                    requireAnnotatedUserHandles().personalProfileUserHandle,
+                    false);
+            if (hasWorkProfile()) {
+                if (mWorkPackageMonitor == null) {
+                    mWorkPackageMonitor = createPackageMonitor(
+                            mChooserMultiProfilePagerAdapter.getWorkListAdapter());
+                }
+                mWorkPackageMonitor.register(
+                        this,
+                        getMainLooper(),
+                        requireAnnotatedUserHandles().workProfileUserHandle,
+                        false);
+            }
+            mRegistered = true;
+        }
+        WorkProfileAvailabilityManager workProfileAvailabilityManager =
+                mLogic.getWorkProfileAvailabilityManager();
+        if (hasWorkProfile() && workProfileAvailabilityManager.isWaitingToEnableWorkProfile()) {
+            if (workProfileAvailabilityManager.isQuietModeEnabled()) {
+                workProfileAvailabilityManager.markWorkProfileEnabledBroadcastReceived();
+            }
+        }
+        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
+    }
+
+    @Override
+    protected final void onDestroy() {
+        super.onDestroy();
+
+        if (isFinishing()) {
+            mLatencyTracker.onActionCancel(ACTION_LOAD_SHARE_SHEET);
+        }
+
+        mBackgroundThreadPoolExecutor.shutdownNow();
+
+        destroyProfileRecords();
     }
 
     private void init() {
@@ -491,7 +609,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                         .get(BasePreviewViewModel.class);
         previewViewModel.init(
                 chooserRequest.getTargetIntent(),
-                mActivityLaunch.getIntent(),
+                mActivityModel.getIntent(),
                 chooserRequest.getAdditionalContentUri(),
                 chooserRequest.getFocusedItemPosition(),
                 mChooserServiceFeatureFlags.chooserPayloadToggling());
@@ -772,47 +890,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mHeaderCreatorUser = listAdapter.getUserHandle();
     }
 
-    @Override
-    protected final void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-        if (viewPager != null) {
-            outState.putInt(LAST_SHOWN_TAB_KEY, viewPager.getCurrentItem());
-        }
-    }
-
-    @Override
-    protected final void onRestart() {
-        super.onRestart();
-        if (!mRegistered) {
-            mPersonalPackageMonitor.register(
-                    this,
-                    getMainLooper(),
-                    requireAnnotatedUserHandles().personalProfileUserHandle,
-                    false);
-            if (hasWorkProfile()) {
-                if (mWorkPackageMonitor == null) {
-                    mWorkPackageMonitor = createPackageMonitor(
-                            mChooserMultiProfilePagerAdapter.getWorkListAdapter());
-                }
-                mWorkPackageMonitor.register(
-                        this,
-                        getMainLooper(),
-                        requireAnnotatedUserHandles().workProfileUserHandle,
-                        false);
-            }
-            mRegistered = true;
-        }
-        WorkProfileAvailabilityManager workProfileAvailabilityManager =
-                mLogic.getWorkProfileAvailabilityManager();
-        if (hasWorkProfile() && workProfileAvailabilityManager.isWaitingToEnableWorkProfile()) {
-            if (workProfileAvailabilityManager.isQuietModeEnabled()) {
-                workProfileAvailabilityManager.markWorkProfileEnabledBroadcastReceived();
-            }
-        }
-        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
-    }
-
     /** Start the activity specified by the {@link TargetInfo}.*/
     public final void safelyStartActivity(TargetInfo cti) {
         // In case cloned apps are present, we would want to start those apps in cloned user
@@ -862,9 +939,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
         } catch (RuntimeException e) {
             Slog.wtf(TAG,
-                    "Unable to launch as uid " + mActivityLaunch.getFromUid()
-                            + " package " + mActivityLaunch.getFromPackage() + ", while running in "
-                            + ActivityThread.currentProcessName(), e);
+                    "Unable to launch as uid " + mActivityModel.getLaunchedFromUid()
+                            + " package " + mActivityModel.getLaunchedFromPackage() +
+                            ", while running in " + ActivityThread.currentProcessName(), e);
         }
     }
 
@@ -941,16 +1018,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             return appInfo.targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP;
         } catch (PackageManager.NameNotFoundException e) {
             return false;
-        }
-    }
-
-    @Override
-    protected final void onStart() {
-        super.onStart();
-
-        this.getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
-        if (hasWorkProfile()) {
-            mLogic.getWorkProfileAvailabilityManager().registerWorkProfileStateReceiver(this);
         }
     }
 
@@ -1436,14 +1503,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume: " + getComponentName().flattenToShortString());
-        mFinishWhenStopped = false;
-        mRefinementManager.onActivityResume();
-    }
-
-    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super_onConfigurationChanged(newConfig);
         ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
@@ -1538,61 +1597,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return resolver.query(uri, null, null, null, null);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        final Window window = this.getWindow();
-        final WindowManager.LayoutParams attrs = window.getAttributes();
-        attrs.privateFlags &= ~SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
-        window.setAttributes(attrs);
-
-        if (mRegistered) {
-            mPersonalPackageMonitor.unregister();
-            if (mWorkPackageMonitor != null) {
-                mWorkPackageMonitor.unregister();
-            }
-            mRegistered = false;
-        }
-        final Intent intent = getIntent();
-        if ((intent.getFlags() & FLAG_ACTIVITY_NEW_TASK) != 0 && !isVoiceInteraction()
-                && !mRetainInOnStop) {
-            // This resolver is in the unusual situation where it has been
-            // launched at the top of a new task.  We don't let it be added
-            // to the recent tasks shown to the user, and we need to make sure
-            // that each time we are launched we get the correct launching
-            // uid (not re-using the same resolver from an old launching uid),
-            // so we will now finish ourself since being no longer visible,
-            // the user probably can't get back to us.
-            if (!isChangingConfigurations()) {
-                finish();
-            }
-        }
-        mLogic.getWorkProfileAvailabilityManager().unregisterWorkProfileStateReceiver(this);
-
-        if (mRefinementManager != null) {
-            mRefinementManager.onActivityStop(isChangingConfigurations());
-        }
-
-        if (mFinishWhenStopped) {
-            mFinishWhenStopped = false;
-            finish();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        if (isFinishing()) {
-            mLatencyTracker.onActionCancel(ACTION_LOAD_SHARE_SHEET);
-        }
-
-        mBackgroundThreadPoolExecutor.shutdownNow();
-
-        destroyProfileRecords();
-    }
-
     private void destroyProfileRecords() {
         mProfileRecords.values().forEach(ProfileRecord::destroy);
         mProfileRecords.clear();
@@ -1658,7 +1662,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             return false;
         }
 
-        return mActivityLaunch.getIntent().getBooleanExtra(Intent.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE,
+        return mActivityModel.getIntent().getBooleanExtra(Intent.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE,
                 true);
     }
 

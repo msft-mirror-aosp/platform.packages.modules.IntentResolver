@@ -19,10 +19,13 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.android.intentresolver.inject.ChooserServiceFlags
-import com.android.intentresolver.v2.ui.model.ActivityLaunch
-import com.android.intentresolver.v2.ui.model.ActivityLaunch.Companion.ACTIVITY_LAUNCH_KEY
+import com.android.intentresolver.v2.ui.model.ActivityModel
+import com.android.intentresolver.v2.ui.model.ActivityModel.Companion.ACTIVITY_MODEL_KEY
 import com.android.intentresolver.v2.ui.model.ChooserRequest
+import com.android.intentresolver.v2.validation.Invalid
+import com.android.intentresolver.v2.validation.Valid
 import com.android.intentresolver.v2.validation.ValidationResult
+import com.android.intentresolver.v2.validation.log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -36,21 +39,26 @@ constructor(
     flags: ChooserServiceFlags,
 ) : ViewModel() {
 
-    private val mActivityLaunch: ActivityLaunch =
-        requireNotNull(args[ACTIVITY_LAUNCH_KEY]) {
-            "ActivityLaunch missing in SavedStateHandle! ($ACTIVITY_LAUNCH_KEY)"
+    private val mActivityModel: ActivityModel =
+        requireNotNull(args[ACTIVITY_MODEL_KEY]) {
+            "ActivityModel missing in SavedStateHandle! ($ACTIVITY_MODEL_KEY)"
         }
 
     /** The result of reading and validating the inputs provided in savedState. */
     private val status: ValidationResult<ChooserRequest> =
-        readChooserRequest(mActivityLaunch, flags)
+        readChooserRequest(mActivityModel, flags)
 
-    val chooserRequest: ChooserRequest by lazy { status.getOrThrow() }
+    val chooserRequest: ChooserRequest by lazy {
+        when(status) {
+            is Valid -> status.value
+            is Invalid -> error(status.errors)
+        }
+    }
 
     fun init(): Boolean {
         Log.i(TAG, "viewModel init")
-        if (!status.isSuccess()) {
-            status.reportToLogcat(TAG)
+        if (status is Invalid) {
+            status.errors.forEach { finding -> finding.log(TAG) }
             return false
         }
         Log.i(TAG, "request = $chooserRequest")
