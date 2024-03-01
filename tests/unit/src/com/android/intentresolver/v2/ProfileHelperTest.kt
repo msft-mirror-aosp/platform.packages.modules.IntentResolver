@@ -93,7 +93,6 @@ class ProfileHelperTest {
     fun launchedByPersonal() = runTest {
         val repository = FakeUserRepository(listOf(personalUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
@@ -115,7 +114,6 @@ class ProfileHelperTest {
     fun launchedByPersonal_withClone() = runTest {
         val repository = FakeUserRepository(listOf(personalUser, cloneUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
@@ -136,7 +134,6 @@ class ProfileHelperTest {
     fun launchedByClone() = runTest {
         val repository = FakeUserRepository(listOf(personalUser, cloneUser))
         val interactor = UserInteractor(repository, launchedAs = cloneUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
@@ -159,7 +156,6 @@ class ProfileHelperTest {
     fun launchedByPersonal_withWork() = runTest {
         val repository = FakeUserRepository(listOf(personalUser, workUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
@@ -186,7 +182,6 @@ class ProfileHelperTest {
     fun launchedByWork() = runTest {
         val repository = FakeUserRepository(listOf(personalUser, workUser))
         val interactor = UserInteractor(repository, launchedAs = workUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
@@ -213,7 +208,6 @@ class ProfileHelperTest {
     fun launchedByPersonal_withPrivate() = runTest {
         val repository = FakeUserRepository(listOf(personalUser, privateUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
@@ -239,7 +233,6 @@ class ProfileHelperTest {
     fun launchedByPrivate() = runTest {
         val repository = FakeUserRepository(listOf(personalUser, privateUser))
         val interactor = UserInteractor(repository, launchedAs = privateUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
@@ -268,7 +261,6 @@ class ProfileHelperTest {
 
         val repository = FakeUserRepository(listOf(personalUser, privateUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
-        val availability = interactor.availability.first()
         val launchedBy = interactor.launchedAsProfile.first()
 
         val helper = ProfileHelper(
