@@ -24,10 +24,11 @@ import com.android.intentresolver.v2.ui.model.ActivityModel.Companion.ACTIVITY_M
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.Valid
-import com.android.intentresolver.v2.validation.ValidationResult
-import com.android.intentresolver.v2.validation.log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "ChooserViewModel"
 
@@ -45,23 +46,30 @@ constructor(
             "ActivityModel missing in SavedStateHandle! ($ACTIVITY_MODEL_KEY)"
         }
 
-    /** The result of reading and validating the inputs provided in savedState. */
-    private val status: ValidationResult<ChooserRequest> = readChooserRequest(activityModel, flags)
+    /**
+     * Provided only for the express purpose of early exit in the event of an invalid request.
+     *
+     * Note: [request] can only be safely accessed after checking if this value is [Valid].
+     */
+    internal val initialRequest = readChooserRequest(activityModel, flags)
 
-    val chooserRequest: ChooserRequest by lazy {
-        when (status) {
-            is Valid -> status.value
-            is Invalid -> error(status.errors)
-        }
-    }
+    private lateinit var _request: MutableStateFlow<ChooserRequest>
 
-    fun init(): Boolean {
-        Log.i(TAG, "viewModel init")
-        if (status is Invalid) {
-            status.errors.forEach { finding -> finding.log(TAG) }
-            return false
+    /**
+     * A [StateFlow] of [ChooserRequest].
+     *
+     * Note: Only safe to access after checking if [initialRequest] is [Valid].
+     */
+    lateinit var request: StateFlow<ChooserRequest>
+        private set
+
+    init {
+        when (initialRequest) {
+            is Valid -> {
+                _request = MutableStateFlow(initialRequest.value)
+                request = _request.asStateFlow()
+            }
+            is Invalid -> Log.w(TAG, "initialRequest is Invalid, initialization failed")
         }
-        Log.i(TAG, "request = $chooserRequest")
-        return true
     }
 }

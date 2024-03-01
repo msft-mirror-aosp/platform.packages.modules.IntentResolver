@@ -40,7 +40,6 @@ import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
-import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -52,16 +51,6 @@ import java.util.function.Consumer;
 public class ChooserWrapperActivity extends ChooserActivity implements IChooserWrapper {
     static final ChooserActivityOverrideData sOverrides = ChooserActivityOverrideData.getInstance();
     private UsageStatsManager mUsm;
-
-    @Override
-    protected final ChooserActivityLogic createActivityLogic() {
-        return new TestChooserActivityLogic(
-                "ChooserWrapper",
-                /* activity = */ this,
-                this::onWorkProfileStatusUpdated,
-                sOverrides.annotatedUserHandles,
-                sOverrides.mWorkProfileAvailability);
-    }
 
     @Override
     public ChooserListAdapter createChooserListAdapter(
@@ -184,14 +173,6 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
         }
 
         return super.queryResolver(resolver, uri);
-    }
-
-    @Override
-    protected boolean isWorkProfile() {
-        if (sOverrides.alternateProfileSetting != 0) {
-            return sOverrides.alternateProfileSetting == MetricsEvent.MANAGED_PROFILE;
-        }
-        return super.isWorkProfile();
     }
 
     @Override
