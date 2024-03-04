@@ -485,6 +485,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected final void onDestroy() {
         super.onDestroy();
+        if (!isChangingConfigurations() && mPickOptionRequest != null) {
+            mPickOptionRequest.cancel();
+        }
+        if (mChooserMultiProfilePagerAdapter != null) {
+            mChooserMultiProfilePagerAdapter.destroy();
+        }
 
         if (isFinishing()) {
             mLatencyTracker.onActionCancel(ACTION_LOAD_SHARE_SHEET);
