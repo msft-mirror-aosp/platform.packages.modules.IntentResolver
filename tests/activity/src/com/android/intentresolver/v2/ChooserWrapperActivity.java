@@ -53,7 +53,7 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
     private UsageStatsManager mUsm;
 
     @Override
-    public ChooserListAdapter createChooserListAdapter(
+    public final ChooserListAdapter createChooserListAdapter(
             Context context,
             List<Intent> payloadIntents,
             Intent[] initialIntents,
@@ -140,7 +140,7 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
     }
 
     @Override
-    protected ChooserListController createListController(UserHandle userHandle) {
+    public final ChooserListController createListController(UserHandle userHandle) {
         if (userHandle == UserHandle.SYSTEM) {
             return sOverrides.resolverListController;
         }

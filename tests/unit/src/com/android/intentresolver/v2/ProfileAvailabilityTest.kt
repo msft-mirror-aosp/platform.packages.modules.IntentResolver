@@ -16,7 +16,6 @@
 
 package com.android.intentresolver.v2
 
-import android.util.Log
 import com.android.intentresolver.v2.data.repository.FakeUserRepository
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
@@ -26,8 +25,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-
-private const val TAG = "ProfileAvailabilityTest"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileAvailabilityTest {
@@ -42,7 +39,7 @@ class ProfileAvailabilityTest {
 
     @Test
     fun testProfileAvailable() = runTest {
-        val availability = ProfileAvailability(backgroundScope, interactor)
+        val availability = ProfileAvailability(backgroundScope, interactor, mapOf())
         runCurrent()
 
         assertThat(availability.isAvailable(personalProfile)).isTrue()
@@ -61,7 +58,7 @@ class ProfileAvailabilityTest {
 
     @Test
     fun waitingToEnableProfile() = runTest {
-        val availability = ProfileAvailability(backgroundScope, interactor)
+        val availability = ProfileAvailability(backgroundScope, interactor, mapOf())
         runCurrent()
 
         availability.requestQuietModeState(workProfile, true)

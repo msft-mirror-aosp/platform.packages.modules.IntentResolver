@@ -24,7 +24,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
+import com.android.intentresolver.inject.Background
 import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
@@ -35,8 +35,9 @@ import com.android.intentresolver.v2.validation.Valid
 import com.android.intentresolver.v2.validation.log
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 private const val TAG: String = "ChooserHelper"
 
@@ -48,12 +49,21 @@ private const val TAG: String = "ChooserHelper"
  */
 @JavaInterop
 fun interface ChooserInitializer {
-    /**
-     * @param launchedAs the profile which launched this instance
-     * @param initialProfiles a snapshot of the launching user's profile group
-     */
-    fun initialize(launchedAs: Profile, initialProfiles: List<Profile>)
+    /** @param initialState the initial state to provide to initialization */
+    fun initializeWith(initialState: InitialState)
 }
+
+/**
+ * A parameter object for Initialize which contains all the values which are required "early", on
+ * the main thread and outside of any coroutines. This supports code which expects to be called by
+ * the system on the main thread only. (This includes everything originally called from onCreate).
+ */
+@JavaInterop
+data class InitialState(
+    val profiles: List<Profile>,
+    val availability: Map<Profile, Boolean>,
+    val launchedAs: Profile
+)
 
 /**
  * __Purpose__
@@ -90,11 +100,11 @@ class ChooserHelper
 constructor(
     hostActivity: Activity,
     private val userInteractor: UserInteractor,
+    @Background private val background: CoroutineDispatcher,
 ) : DefaultLifecycleObserver {
     // This is guaranteed by Hilt, since only a ComponentActivity is injectable.
     private val activity: ComponentActivity = hostActivity as ComponentActivity
     private val viewModel by activity.viewModels<ChooserViewModel>()
-    private val lifecycleScope = activity.lifecycleScope
 
     private lateinit var activityInitializer: ChooserInitializer
 
@@ -159,11 +169,13 @@ constructor(
     private fun initializeActivity(request: Valid<ChooserRequest>) {
         request.warnings.forEach { it.log(TAG) }
 
-        // Note: Activity lifecycleScope uses Dispatchers.Main.immediate
-        lifecycleScope.launch {
-            val initialProfiles = userInteractor.profiles.first()
-            val launchedAsProfile = userInteractor.launchedAsProfile.first()
-            activityInitializer.initialize(launchedAsProfile, initialProfiles)
-        }
+        val initialState =
+            runBlocking(background) {
+                val initialProfiles = userInteractor.profiles.first()
+                val initialAvailability = userInteractor.availability.first()
+                val launchedAsProfile = userInteractor.launchedAsProfile.first()
+                InitialState(initialProfiles, initialAvailability, launchedAsProfile)
+            }
+        activityInitializer.initializeWith(initialState)
     }
 }

@@ -29,10 +29,11 @@ import kotlinx.coroutines.launch
 /** Provides availability status for profiles */
 class ProfileAvailability(
     private val scope: CoroutineScope,
-    private val userInteractor: UserInteractor
+    private val userInteractor: UserInteractor,
+    initialState: Map<Profile, Boolean>
 ) {
     private val availability =
-        userInteractor.availability.stateIn(scope, SharingStarted.Eagerly, mapOf())
+        userInteractor.availability.stateIn(scope, SharingStarted.Eagerly, initialState)
 
     /** Used by WorkProfilePausedEmptyStateProvider */
     var waitingToEnableProfile = false
@@ -62,7 +63,7 @@ class ProfileAvailability(
             val job =
                 scope.launch {
                     // Wait for the profile to become available
-                    userInteractor.availability.filter { it[profile] == true }.first()
+                    availability.filter { it[profile] == true }.first()
                 }
             job.invokeOnCompletion {
                 waitingToEnableProfile = false
