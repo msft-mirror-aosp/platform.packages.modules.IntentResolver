@@ -24,16 +24,30 @@ import android.util.Size
 import androidx.annotation.GuardedBy
 import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
+import com.android.intentresolver.inject.Background
 import java.util.function.Consumer
+import javax.inject.Inject
+import javax.inject.Qualifier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 
 private const val TAG = "ImagePreviewImageLoader"
+
+@Qualifier @MustBeDocumented @Retention(AnnotationRetention.BINARY) annotation class ThumbnailSize
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.BINARY)
+annotation class PreviewCacheSize
 
 /**
  * Implements preview image loading for the content preview UI. Provides requests deduplication,
@@ -51,6 +65,26 @@ constructor(
     //  [CoroutineDispatcher#limitedParallelism] instead
     private val contentResolverSemaphore: Semaphore,
 ) : ImageLoader {
+
+    @Inject
+    constructor(
+        @Background dispatcher: CoroutineDispatcher,
+        @ThumbnailSize thumbnailSize: Int,
+        contentResolver: ContentResolver,
+        @PreviewCacheSize cacheSize: Int,
+    ) : this(
+        CoroutineScope(
+            SupervisorJob() +
+                dispatcher +
+                CoroutineExceptionHandler { _, exception ->
+                    Log.w(TAG, "Uncaught exception in ImageLoader", exception)
+                } +
+                CoroutineName("ImageLoader")
+        ),
+        thumbnailSize,
+        contentResolver,
+        cacheSize,
+    )
 
     constructor(
         scope: CoroutineScope,
