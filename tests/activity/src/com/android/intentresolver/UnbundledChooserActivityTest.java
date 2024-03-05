@@ -119,6 +119,7 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.contentpreview.ImageLoader;
+import com.android.intentresolver.ext.RecyclerViewExt;
 import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.logging.FakeEventLog;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
@@ -935,6 +936,7 @@ public class UnbundledChooserActivityTest {
                         throw exception;
                     }
                     RecyclerView recyclerView = (RecyclerView) view;
+                    RecyclerViewExt.endAnimations(recyclerView);
                     assertThat(recyclerView.getAdapter().getItemCount(), is(1));
                     assertThat(recyclerView.getChildCount(), is(1));
                     View imageView = recyclerView.getChildAt(0);
@@ -1094,6 +1096,7 @@ public class UnbundledChooserActivityTest {
                         throw exception;
                     }
                     RecyclerView recyclerView = (RecyclerView) view;
+                    RecyclerViewExt.endAnimations(recyclerView);
                     assertThat(recyclerView.getChildCount()).isAtLeast(1);
                     // the first view is a preview
                     View imageView = recyclerView.getChildAt(0).findViewById(R.id.image);
