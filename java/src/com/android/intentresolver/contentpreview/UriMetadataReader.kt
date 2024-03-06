@@ -20,12 +20,24 @@ import android.content.ContentInterface
 import android.media.MediaMetadata
 import android.net.Uri
 import android.provider.DocumentsContract
+import dagger.Binds
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
 
-class UriMetadataReader(
+fun interface UriMetadataReader {
+    fun getMetadata(uri: Uri): FileInfo
+}
+
+class UriMetadataReaderImpl
+@Inject
+constructor(
     private val contentResolver: ContentInterface,
     private val typeClassifier: MimeTypeClassifier,
-) : (Uri) -> FileInfo {
-    fun getMetadata(uri: Uri): FileInfo {
+) : UriMetadataReader {
+    override fun getMetadata(uri: Uri): FileInfo {
         val builder = FileInfo.Builder(uri)
         val mimeType = contentResolver.getTypeSafe(uri)
         builder.withMimeType(mimeType)
@@ -44,8 +56,6 @@ class UriMetadataReader(
         return builder.build()
     }
 
-    override fun invoke(uri: Uri): FileInfo = getMetadata(uri)
-
     private fun ContentInterface.supportsImageType(uri: Uri): Boolean =
         getStreamTypesSafe(uri).firstOrNull { typeClassifier.isImageType(it) } != null
 
@@ -63,4 +73,15 @@ class UriMetadataReader(
                 null
             }
         }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+interface UriMetadataReaderModule {
+
+    @Binds fun bind(impl: UriMetadataReaderImpl): UriMetadataReader
+
+    companion object {
+        @Provides fun classifier(): MimeTypeClassifier = DefaultMimeTypeClassifier
+    }
 }
