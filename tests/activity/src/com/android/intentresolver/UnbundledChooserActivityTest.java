@@ -800,7 +800,7 @@ public class UnbundledChooserActivityTest {
         Uri uri = createTestContentProviderUri("image/png", null);
         Intent sendIntent = createSendImageIntent(uri);
         ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(Collections.emptyMap());
+                new FakeImageLoader(Collections.emptyMap());
         sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
 
         List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
@@ -958,7 +958,7 @@ public class UnbundledChooserActivityTest {
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
         ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(Collections.emptyMap());
+                new FakeImageLoader(Collections.emptyMap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1076,7 +1076,7 @@ public class UnbundledChooserActivityTest {
         bitmaps.put(imgTwoUri, createWideBitmap(Color.GREEN));
         bitmaps.put(docUri, createWideBitmap(Color.BLUE));
         ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(bitmaps);
+                new FakeImageLoader(bitmaps);
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         setupResolverControllers(resolvedComponentInfos);
@@ -3122,6 +3122,6 @@ public class UnbundledChooserActivityTest {
     }
 
     private static ImageLoader createImageLoader(Uri uri, Bitmap bitmap) {
-        return new TestPreviewImageLoader(Collections.singletonMap(uri, bitmap));
+        return new FakeImageLoader(Collections.singletonMap(uri, bitmap));
     }
 }
