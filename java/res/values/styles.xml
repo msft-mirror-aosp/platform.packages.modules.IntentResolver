@@ -45,7 +45,7 @@
     <style name="Theme.DeviceDefault.Chooser" parent="Theme.DeviceDefault.Resolver">
         <item name="*android:iconfactoryIconSize">@dimen/chooser_icon_size</item>
         <item name="*android:iconfactoryBadgeSize">@dimen/chooser_badge_size</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>
 
     <style name="TextAppearance.ChooserDefault"
