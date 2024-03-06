@@ -17,12 +17,11 @@
 package com.android.intentresolver.contentpreview
 
 import android.content.Intent
-import android.content.IntentSender
 import android.net.Uri
 import android.service.chooser.ChooserAction
-import android.service.chooser.ChooserTarget
 import android.util.Log
 import android.util.SparseArray
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallback.ShareouselUpdate
 import java.io.Closeable
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -53,7 +52,7 @@ class PayloadToggleInteractor(
     private val cursorReaderProvider: suspend () -> CursorReader,
     private val uriMetadataReader: (Uri) -> FileInfo,
     private val targetIntentModifier: (List<Item>) -> Intent,
-    private val selectionCallback: (Intent) -> ShareouselUpdate?,
+    private val selectionCallback: suspend (Intent) -> ShareouselUpdate?,
 ) {
     private var cursorDataRef = CompletableDeferred<CursorData?>()
     private val records = LinkedList<Record>()
@@ -279,7 +278,7 @@ class PayloadToggleInteractor(
 
     private suspend fun waitForCursorData() = cursorDataRef.await()
 
-    private fun notifySelectionChanged(targetIntent: Intent) {
+    private suspend fun notifySelectionChanged(targetIntent: Intent) {
         selectionCallback(targetIntent)?.customActions?.let { customActions.tryEmit(it) }
     }
 
@@ -337,15 +336,6 @@ class PayloadToggleInteractor(
     ) : Item {
         val isSelected = MutableStateFlow(false)
     }
-
-    data class ShareouselUpdate(
-        // for all properties, null value means no change
-        val customActions: List<ChooserAction>? = null,
-        val modifyShareAction: ChooserAction? = null,
-        val alternateIntents: List<Intent>? = null,
-        val callerTargets: List<ChooserTarget>? = null,
-        val refinementIntentSender: IntentSender? = null,
-    )
 
     private data class CursorData(
         val reader: CursorReader,

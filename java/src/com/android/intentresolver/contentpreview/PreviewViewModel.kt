@@ -27,6 +27,8 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.android.intentresolver.R
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifierImpl
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallbackImpl
 import com.android.intentresolver.inject.Background
 import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineDispatcher
@@ -115,8 +117,13 @@ class PreviewViewModel(
                 )
             },
             UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)::getMetadata,
-            TargetIntentModifier(targetIntent, getUri = { uri }, getMimeType = { mimeType }),
-            SelectionChangeCallback(contentProviderUri, chooserIntent, contentResolver)
+            TargetIntentModifierImpl<PayloadToggleInteractor.Item>(
+                targetIntent,
+                getUri = { uri },
+                getMimeType = { mimeType },
+            )::onSelectionChanged,
+            SelectionChangeCallbackImpl(contentProviderUri, chooserIntent, contentResolver)::
+                onSelectionChanged,
         )
     }
 

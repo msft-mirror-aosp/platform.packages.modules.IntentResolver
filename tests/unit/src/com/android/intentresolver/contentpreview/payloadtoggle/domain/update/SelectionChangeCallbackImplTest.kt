@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.contentpreview
+package com.android.intentresolver.contentpreview.payloadtoggle.domain.update
 
 import android.app.PendingIntent
 import android.content.ComponentName
@@ -47,21 +47,22 @@ import com.google.common.truth.Correspondence
 import com.google.common.truth.Correspondence.BinaryPredicate
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 
 @RunWith(AndroidJUnit4::class)
-class SelectionChangeCallbackTest {
+class SelectionChangeCallbackImplTest {
     private val uri = Uri.parse("content://org.pkg/content-provider")
     private val chooserIntent = Intent(ACTION_CHOOSER)
     private val contentResolver = mock<ContentInterface>()
     private val context = InstrumentationRegistry.getInstrumentation().context
 
     @Test
-    fun testPayloadChangeCallbackContact() {
-        val testSubject = SelectionChangeCallback(uri, chooserIntent, contentResolver)
+    fun testPayloadChangeCallbackContact() = runTest {
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val u1 = createUri(1)
         val u2 = createUri(2)
@@ -127,7 +128,7 @@ class SelectionChangeCallbackTest {
     }
 
     @Test
-    fun testPayloadChangeCallbackUpdatesCustomActions() {
+    fun testPayloadChangeCallbackUpdatesCustomActions() = runTest {
         val a1 =
             ChooserAction.Builder(
                     Icon.createWithContentUri(createUri(10)),
@@ -157,7 +158,7 @@ class SelectionChangeCallbackTest {
                 Bundle().apply { putParcelableArray(EXTRA_CHOOSER_CUSTOM_ACTIONS, arrayOf(a1, a2)) }
             )
 
-        val testSubject = SelectionChangeCallback(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND_MULTIPLE)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -175,7 +176,7 @@ class SelectionChangeCallbackTest {
     }
 
     @Test
-    fun testPayloadChangeCallbackUpdatesReselectionAction() {
+    fun testPayloadChangeCallbackUpdatesReselectionAction() = runTest {
         val modifyShare =
             ChooserAction.Builder(
                     Icon.createWithContentUri(createUri(10)),
@@ -193,7 +194,7 @@ class SelectionChangeCallbackTest {
                 Bundle().apply { putParcelable(EXTRA_CHOOSER_MODIFY_SHARE_ACTION, modifyShare) }
             )
 
-        val testSubject = SelectionChangeCallback(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -213,7 +214,7 @@ class SelectionChangeCallbackTest {
     }
 
     @Test
-    fun testPayloadChangeCallbackUpdatesAlternateIntents() {
+    fun testPayloadChangeCallbackUpdatesAlternateIntents() = runTest {
         val alternateIntents =
             arrayOf(
                 Intent(ACTION_SEND_MULTIPLE).apply {
@@ -226,7 +227,7 @@ class SelectionChangeCallbackTest {
                 Bundle().apply { putParcelableArray(EXTRA_ALTERNATE_INTENTS, alternateIntents) }
             )
 
-        val testSubject = SelectionChangeCallback(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -252,7 +253,7 @@ class SelectionChangeCallbackTest {
     }
 
     @Test
-    fun testPayloadChangeCallbackUpdatesCallerTargets() {
+    fun testPayloadChangeCallbackUpdatesCallerTargets() = runTest {
         val t1 =
             ChooserTarget(
                 "Target 1",
@@ -274,7 +275,7 @@ class SelectionChangeCallbackTest {
                 Bundle().apply { putParcelableArray(EXTRA_CHOOSER_TARGETS, arrayOf(t1, t2)) }
             )
 
-        val testSubject = SelectionChangeCallback(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -303,7 +304,7 @@ class SelectionChangeCallbackTest {
     }
 
     @Test
-    fun testPayloadChangeCallbackUpdatesRefinementIntentSender() {
+    fun testPayloadChangeCallbackUpdatesRefinementIntentSender() = runTest {
         val broadcast =
             PendingIntent.getBroadcast(context, 1, Intent("test"), PendingIntent.FLAG_IMMUTABLE)
 
@@ -314,7 +315,7 @@ class SelectionChangeCallbackTest {
                 }
             )
 
-        val testSubject = SelectionChangeCallback(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -328,7 +329,7 @@ class SelectionChangeCallbackTest {
     }
 
     @Test
-    fun testPayloadChangeCallbackProvidesInvalidData_invalidDataIgnored() {
+    fun testPayloadChangeCallbackProvidesInvalidData_invalidDataIgnored() = runTest {
         whenever(contentResolver.call(any<String>(), any(), any(), any()))
             .thenReturn(
                 Bundle().apply {
@@ -340,7 +341,7 @@ class SelectionChangeCallbackTest {
                 }
             )
 
-        val testSubject = SelectionChangeCallback(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
