@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.intentresolver.contentpreview.shareousel.ui.composable
+package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
 import android.content.Context
 import android.content.ContextWrapper
@@ -21,6 +21,7 @@ import android.content.res.Resources
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -30,10 +31,11 @@ import com.android.intentresolver.icon.ComposeIcon
 import com.android.intentresolver.icon.ResourceIcon
 
 @Composable
-fun Image(icon: ComposeIcon) {
+fun Image(icon: ComposeIcon, modifier: Modifier = Modifier) {
     when (icon) {
-        is AdaptiveIcon -> Image(icon.wrapped)
-        is BitmapIcon -> Image(icon.bitmap.asImageBitmap(), contentDescription = null)
+        is AdaptiveIcon -> Image(icon.wrapped, modifier)
+        is BitmapIcon ->
+            Image(icon.bitmap.asImageBitmap(), contentDescription = null, modifier = modifier)
         is ResourceIcon -> {
             val localContext = LocalContext.current
             val wrappedContext: Context =
@@ -41,7 +43,7 @@ fun Image(icon: ComposeIcon) {
                     override fun getResources(): Resources = icon.res
                 }
             CompositionLocalProvider(LocalContext provides wrappedContext) {
-                Image(painterResource(icon.resId), contentDescription = null)
+                Image(painterResource(icon.resId), contentDescription = null, modifier = modifier)
             }
         }
     }

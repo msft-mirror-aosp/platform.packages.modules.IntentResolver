@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.intentresolver.contentpreview.shareousel.ui.composable
+package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,10 +33,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.android.intentresolver.R
+import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ContentType
 
 @Composable
 fun ShareouselCard(
     image: @Composable () -> Unit,
+    contentType: ContentType,
     selected: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -45,7 +47,9 @@ fun ShareouselCard(
         val topButtonPadding = 12.dp
         Box(modifier = Modifier.padding(topButtonPadding).matchParentSize()) {
             SelectionIcon(selected, modifier = Modifier.align(Alignment.TopStart))
-            AnimationIcon(modifier = Modifier.align(Alignment.TopEnd))
+            if (contentType == ContentType.Video) {
+                AnimationIcon(modifier = Modifier.align(Alignment.TopEnd))
+            }
         }
     }
 }

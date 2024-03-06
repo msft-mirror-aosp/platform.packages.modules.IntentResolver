@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.contentpreview
+package com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel
 
-import android.service.chooser.ChooserAction
-import com.android.intentresolver.widget.ActionRow
-import kotlinx.coroutines.flow.Flow
+import com.android.intentresolver.icon.ComposeIcon
 
-interface MutableActionFactory {
-    /** A flow of custom actions */
-    val customActionsFlow: Flow<List<ActionRow.Action>>
-
-    /** Update custom actions */
-    fun updateCustomActions(actions: List<ChooserAction>)
-}
+/** An action chip presented to the user underneath Shareousel. */
+data class ActionChipViewModel(
+    /** Text label. */
+    val label: String,
+    /** Optional icon, displayed next to the text label. */
+    val icon: ComposeIcon?,
+    /** Handles user clicks on this action in the UI. */
+    val onClicked: () -> Unit,
+)
