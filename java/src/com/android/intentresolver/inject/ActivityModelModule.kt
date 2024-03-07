@@ -17,8 +17,10 @@
 package com.android.intentresolver.inject
 
 import android.content.Intent
+import android.net.Uri
 import android.service.chooser.ChooserAction
 import androidx.lifecycle.SavedStateHandle
+import com.android.intentresolver.util.ownedByCurrentUser
 import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.ui.viewmodel.readChooserRequest
@@ -41,6 +43,10 @@ object ActivityModelModule {
         }
 
     @Provides
+    @ChooserIntent
+    fun chooserIntent(activityModel: ActivityModel): Intent = activityModel.intent
+
+    @Provides
     @ViewModelScoped
     fun provideChooserRequest(
         activityModel: ActivityModel,
@@ -57,6 +63,57 @@ object ActivityModelModule {
         requireNotNull((chooserReq as? Valid)?.value?.chooserActions) {
             "no chooser actions available"
         }
+
+    @Provides
+    @ViewModelScoped
+    @ContentUris
+    fun selectedUris(chooserRequest: ValidationResult<ChooserRequest>): List<Uri> =
+        requireNotNull((chooserRequest as? Valid)?.value?.targetIntent?.contentUris?.toList()) {
+            "no selected uris available"
+        }
+
+    @Provides
+    @FocusedItemIndex
+    fun focusedItemIndex(chooserReq: ValidationResult<ChooserRequest>): Int =
+        requireNotNull((chooserReq as? Valid)?.value?.focusedItemPosition) {
+            "no focused item position available"
+        }
+
+    @Provides
+    @AdditionalContent
+    fun additionalContentUri(chooserReq: ValidationResult<ChooserRequest>): Uri =
+        requireNotNull((chooserReq as? Valid)?.value?.additionalContentUri) {
+            "no additional content uri available"
+        }
 }
 
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+annotation class FocusedItemIndex
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+annotation class AdditionalContent
+
+@Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class ChooserIntent
+
+@Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class ContentUris
+
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class TargetIntent
+
+private val Intent.contentUris: Sequence<Uri>
+    get() = sequence {
+        if (Intent.ACTION_SEND == action) {
+            getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                ?.takeIf { it.ownedByCurrentUser }
+                ?.let { yield(it) }
+        } else {
+            getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)?.forEach { uri ->
+                if (uri.ownedByCurrentUser) {
+                    yield(uri)
+                }
+            }
+        }
+    }

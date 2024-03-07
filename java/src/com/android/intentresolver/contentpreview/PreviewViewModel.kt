@@ -114,7 +114,7 @@ class PreviewViewModel(
                     chooserIntent
                 )
             },
-            UriMetadataReader(contentResolver, DefaultMimeTypeClassifier),
+            UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)::getMetadata,
             TargetIntentModifier(targetIntent, getUri = { uri }, getMimeType = { mimeType }),
             SelectionChangeCallback(contentProviderUri, chooserIntent, contentResolver)
         )
