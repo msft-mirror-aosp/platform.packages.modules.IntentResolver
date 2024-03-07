@@ -16,6 +16,7 @@
 package com.android.intentresolver.contentpreview.shareousel.ui.composable
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,7 +51,7 @@ fun Shareousel(viewModel: ShareouselViewModel) {
     val centerIdx = viewModel.centerIndex.value
     val carouselState = rememberLazyListState(initialFirstVisibleItemIndex = centerIdx)
     val previewKeys by viewModel.previewKeys.collectAsStateWithLifecycle()
-    Column {
+    Column(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer)) {
         // TODO: item needs to be centered, check out ScalingLazyColumn impl or see if
         //  HorizontalPager works for our use-case
         LazyRow(

@@ -102,8 +102,8 @@ import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.model.ResolverRankerServiceResolverComparator;
 import com.android.intentresolver.v2.data.repository.DevicePolicyResources;
 import com.android.intentresolver.v2.emptystate.NoAppsAvailableEmptyStateProvider;
-import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider.DevicePolicyBlockerEmptyState;
+import com.android.intentresolver.v2.emptystate.ResolverNoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.ResolverWorkProfilePausedEmptyStateProvider;
 import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter;
 import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter.ProfileType;
@@ -407,7 +407,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                         /* devicePolicyEventCategory= */
                                 ResolverActivity.METRICS_CATEGORY_RESOLVER);
 
-        return new NoCrossProfileEmptyStateProvider(
+        return new ResolverNoCrossProfileEmptyStateProvider(
                 requireAnnotatedUserHandles().personalProfileUserHandle,
                 noWorkToPersonalEmptyState,
                 noPersonalToWorkEmptyState,
