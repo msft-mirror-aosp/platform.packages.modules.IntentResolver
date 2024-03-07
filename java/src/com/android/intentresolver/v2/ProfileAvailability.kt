@@ -18,30 +18,29 @@ package com.android.intentresolver.v2
 
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 
 /** Provides availability status for profiles */
 class ProfileAvailability(
     private val scope: CoroutineScope,
-    private val userInteractor: UserInteractor
+    private val userInteractor: UserInteractor,
+    initialState: Map<Profile, Boolean>
 ) {
     private val availability =
-        userInteractor.availability.stateIn(scope, SharingStarted.Eagerly, mapOf())
+        userInteractor.availability.stateIn(scope, SharingStarted.Eagerly, initialState)
 
     /** Used by WorkProfilePausedEmptyStateProvider */
     var waitingToEnableProfile = false
         private set
+
+    /** Set by ChooserActivity to call onWorkProfileStatusUpdated */
+    var onProfileStatusChange: Runnable? = null
 
     private var waitJob: Job? = null
     /** Query current profile availability. An unavailable profile is one which is not active. */
@@ -61,14 +60,14 @@ class ProfileAvailability(
             waitingToEnableProfile = true
             waitJob?.cancel()
 
-            val job = scope.launch {
-                // Wait for the profile to become available
-                // Wait for the profile to be enabled, then clear this flag
-                userInteractor.availability.filter { it[profile] == true }.first()
-                waitingToEnableProfile = false
-            }
+            val job =
+                scope.launch {
+                    // Wait for the profile to become available
+                    availability.filter { it[profile] == true }.first()
+                }
             job.invokeOnCompletion {
                 waitingToEnableProfile = false
+                onProfileStatusChange?.run()
             }
             waitJob = job
         }

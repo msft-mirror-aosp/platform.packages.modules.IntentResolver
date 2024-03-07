@@ -17,6 +17,7 @@
 package com.android.intentresolver.v2;
 
 import static android.testing.PollingCheck.waitFor;
+
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.swipeUp;
@@ -25,6 +26,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isSelected;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+
 import static com.android.intentresolver.v2.ChooserWrapperActivity.sOverrides;
 import static com.android.intentresolver.v2.UnbundledChooserActivityWorkProfileTest.TestCase.ExpectedBlocker.NO_BLOCKER;
 import static com.android.intentresolver.v2.UnbundledChooserActivityWorkProfileTest.TestCase.ExpectedBlocker.PERSONAL_PROFILE_ACCESS_BLOCKER;
@@ -33,6 +35,7 @@ import static com.android.intentresolver.v2.UnbundledChooserActivityWorkProfileT
 import static com.android.intentresolver.v2.UnbundledChooserActivityWorkProfileTest.TestCase.ExpectedBlocker.WORK_PROFILE_SHARE_BLOCKER;
 import static com.android.intentresolver.v2.UnbundledChooserActivityWorkProfileTest.TestCase.Tab.PERSONAL;
 import static com.android.intentresolver.v2.UnbundledChooserActivityWorkProfileTest.TestCase.Tab.WORK;
+
 import static org.hamcrest.CoreMatchers.not;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -45,11 +48,21 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.intentresolver.AnnotatedUserHandles;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolvedComponentInfo;
 import com.android.intentresolver.ResolverDataProvider;
+import com.android.intentresolver.inject.ApplicationUser;
+import com.android.intentresolver.inject.ProfileParent;
 import com.android.intentresolver.v2.UnbundledChooserActivityWorkProfileTest.TestCase.Tab;
+import com.android.intentresolver.v2.data.repository.FakeUserRepository;
+import com.android.intentresolver.v2.data.repository.UserRepository;
+import com.android.intentresolver.v2.data.repository.UserRepositoryModule;
+import com.android.intentresolver.v2.shared.model.User;
+
+import dagger.hilt.android.testing.BindValue;
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
+import dagger.hilt.android.testing.UninstallModules;
 
 import junit.framework.AssertionFailedError;
 
@@ -65,12 +78,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import dagger.hilt.android.testing.HiltAndroidRule;
-import dagger.hilt.android.testing.HiltAndroidTest;
-
 @DeviceFilter.MediumType
 @RunWith(Parameterized.class)
 @HiltAndroidTest
+@UninstallModules(UserRepositoryModule.class)
 public class UnbundledChooserActivityWorkProfileTest {
 
     private static final UserHandle PERSONAL_USER_HANDLE = InstrumentationRegistry
@@ -84,10 +95,31 @@ public class UnbundledChooserActivityWorkProfileTest {
     public ActivityTestRule<ChooserWrapperActivity> mActivityRule =
             new ActivityTestRule<>(ChooserWrapperActivity.class, false,
                     false);
+
+    @BindValue
+    @ApplicationUser
+    public final UserHandle mApplicationUser;
+
+    @BindValue
+    @ProfileParent
+    public final UserHandle mProfileParent;
+
+    /** For setup of test state, a mutable reference of mUserRepository  */
+    private final FakeUserRepository mFakeUserRepo = new FakeUserRepository(
+            List.of(new User(PERSONAL_USER_HANDLE.getIdentifier(), User.Role.PERSONAL)));
+
+    @BindValue
+    public final UserRepository mUserRepository;
+
     private final TestCase mTestCase;
 
     public UnbundledChooserActivityWorkProfileTest(TestCase testCase) {
         mTestCase = testCase;
+        mApplicationUser = mTestCase.getMyUserHandle();
+        mProfileParent = PERSONAL_USER_HANDLE;
+        mUserRepository = new FakeUserRepository(List.of(
+                new User(PERSONAL_USER_HANDLE.getIdentifier(), User.Role.PERSONAL),
+                new User(WORK_USER_HANDLE.getIdentifier(), User.Role.WORK)));
     }
 
     @Before
@@ -268,12 +300,6 @@ public class UnbundledChooserActivityWorkProfileTest {
     }
 
     private void setUpPersonalAndWorkComponentInfos() {
-        ChooserWrapperActivity.sOverrides.annotatedUserHandles = AnnotatedUserHandles.newBuilder()
-                .setUserIdOfCallingApp(1234)  // Must be non-negative.
-                .setUserHandleSharesheetLaunchedAs(mTestCase.getMyUserHandle())
-                .setPersonalProfileUserHandle(PERSONAL_USER_HANDLE)
-                .setWorkProfileUserHandle(WORK_USER_HANDLE)
-                .build();
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
                 createResolvedComponentsForTestWithOtherProfile(3,

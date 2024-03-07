@@ -65,10 +65,10 @@ internal fun Intent.maybeAddSendActionFlags() =
     }
 
 fun readChooserRequest(
-    launch: ActivityModel,
+    model: ActivityModel,
     flags: ChooserServiceFlags
 ): ValidationResult<ChooserRequest> {
-    val extras = launch.intent.extras ?: Bundle()
+    val extras = model.intent.extras ?: Bundle()
     @Suppress("DEPRECATION")
     return validateFrom(extras::get) {
         val targetIntent = required(IntentOrUri(EXTRA_INTENT)).maybeAddSendActionFlags()
@@ -154,12 +154,12 @@ fun readChooserRequest(
             isSendActionTarget = isSendAction,
             targetType = targetIntent.type,
             launchedFromPackage =
-                requireNotNull(launch.launchedFromPackage) {
+                requireNotNull(model.launchedFromPackage) {
                     "launch.fromPackage was null, See Activity.getLaunchedFromPackage()"
                 },
             title = customTitle,
             defaultTitleResource = defaultTitleResource,
-            referrer = launch.referrer,
+            referrer = model.referrer,
             filteredComponentNames = filteredComponents,
             callerChooserTargets = callerChooserTargets,
             chooserActions = chooserActions,

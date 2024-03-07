@@ -25,8 +25,6 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.UserHandle;
 
-import com.android.intentresolver.AnnotatedUserHandles;
-import com.android.intentresolver.WorkProfileAvailabilityManager;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
@@ -61,13 +59,10 @@ public class ChooserActivityOverrideData {
     public Cursor resolverCursor;
     public boolean resolverForceException;
     public ImageLoader imageLoader;
-    public int alternateProfileSetting;
     public Resources resources;
-    public AnnotatedUserHandles annotatedUserHandles;
     public boolean hasCrossProfileIntents;
     public boolean isQuietModeEnabled;
     public Integer myUserId;
-    public WorkProfileAvailabilityManager mWorkProfileAvailability;
     public CrossProfileIntentsChecker mCrossProfileIntentsChecker;
 
     public void reset() {
@@ -78,42 +73,11 @@ public class ChooserActivityOverrideData {
         resolverForceException = false;
         resolverListController = mock(ChooserListController.class);
         workResolverListController = mock(ChooserListController.class);
-        alternateProfileSetting = 0;
         resources = null;
-        annotatedUserHandles = AnnotatedUserHandles.newBuilder()
-                    .setUserIdOfCallingApp(1234)  // Must be non-negative.
-                    .setUserHandleSharesheetLaunchedAs(UserHandle.SYSTEM)
-                    .setPersonalProfileUserHandle(UserHandle.SYSTEM)
-                    .build();
         hasCrossProfileIntents = true;
         isQuietModeEnabled = false;
         myUserId = null;
-        mWorkProfileAvailability = new WorkProfileAvailabilityManager(null, null, null) {
-            @Override
-            public boolean isQuietModeEnabled() {
-                return isQuietModeEnabled;
-            }
-
-            @Override
-            public boolean isWorkProfileUserUnlocked() {
-                return true;
-            }
-
-            @Override
-            public void requestQuietModeEnabled(boolean enabled) {
-                isQuietModeEnabled = enabled;
-            }
-
-            @Override
-            public void markWorkProfileEnabledBroadcastReceived() {}
-
-            @Override
-            public boolean isWaitingToEnableWorkProfile() {
-                return false;
-            }
-        };
         shortcutLoaderFactory = ((userHandle, resultConsumer) -> null);
-
         mCrossProfileIntentsChecker = mock(CrossProfileIntentsChecker.class);
         when(mCrossProfileIntentsChecker.hasCrossProfileIntents(any(), anyInt(), anyInt()))
                 .thenAnswer(invocation -> hasCrossProfileIntents);
