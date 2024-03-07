@@ -47,5 +47,5 @@ flag {
   name: "enable_private_profile"
   namespace: "intentresolver"
   description: "Enable private profile support"
-  bug: "311348033"
+  bug: "328029692"
 }

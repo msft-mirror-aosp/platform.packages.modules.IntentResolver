@@ -151,6 +151,16 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
         }
     }
 
+    /** Cleanup system resources */
+    public void destroy() {
+        for (int i = 0, count = getItemCount(); i < count; i++) {
+            ChooserGridAdapter adapter = getPageAdapterForIndex(i);
+            if (adapter != null) {
+                adapter.getListAdapter().onDestroy();
+            }
+        }
+    }
+
     private static class BottomPaddingOverrideSupplier implements Supplier<Optional<Integer>> {
         private final Context mContext;
         private int mBottomOffset;
