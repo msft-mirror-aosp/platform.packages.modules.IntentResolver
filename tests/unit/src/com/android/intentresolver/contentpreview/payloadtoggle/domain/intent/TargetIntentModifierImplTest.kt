@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.contentpreview
+package com.android.intentresolver.contentpreview.payloadtoggle.domain.intent
 
 import android.content.Intent
 import android.content.Intent.ACTION_SEND
@@ -24,10 +24,11 @@ import android.net.Uri
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
-class TargetIntentModifierTest {
+class TargetIntentModifierImplTest {
     @Test
     fun testIntentActionChange() {
-        val testSubject = TargetIntentModifier<Uri>(Intent(ACTION_SEND), { this }, { "image/png" })
+        val testSubject =
+            TargetIntentModifierImpl<Uri>(Intent(ACTION_SEND), { this }, { "image/png" })
 
         val u1 = createUri(1)
         val u2 = createUri(2)
@@ -47,7 +48,7 @@ class TargetIntentModifierTest {
     @Test
     fun testMimeTypeChange() {
         val testSubject =
-            TargetIntentModifier<Pair<Uri, String?>>(Intent(ACTION_SEND), { first }, { second })
+            TargetIntentModifierImpl<Pair<Uri, String?>>(Intent(ACTION_SEND), { first }, { second })
 
         val u1 = createUri(1)
         val u2 = createUri(2)

@@ -24,6 +24,8 @@ import androidx.activity.viewModels
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
 import com.android.intentresolver.inject.Background
 import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
@@ -36,7 +38,9 @@ import com.android.intentresolver.v2.validation.log
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 private const val TAG: String = "ChooserHelper"
@@ -100,6 +104,7 @@ class ChooserHelper
 constructor(
     hostActivity: Activity,
     private val userInteractor: UserInteractor,
+    private val activityResultRepo: ActivityResultRepository,
     @Background private val background: CoroutineDispatcher,
 ) : DefaultLifecycleObserver {
     // This is guaranteed by Hilt, since only a ComponentActivity is injectable.
@@ -140,7 +145,13 @@ constructor(
             is Valid -> initializeActivity(request)
             is Invalid -> reportErrorsAndFinish(request)
         }
+
+        activity.lifecycleScope.launch {
+            activity.setResult(activityResultRepo.activityResult.filterNotNull().first())
+            activity.finish()
+        }
     }
+
     override fun onStart(owner: LifecycleOwner) {
         Log.i(TAG, "START")
     }
