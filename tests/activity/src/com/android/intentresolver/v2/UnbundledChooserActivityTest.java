@@ -117,7 +117,6 @@ import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.intentresolver.AnnotatedUserHandles;
 import com.android.intentresolver.ChooserListAdapter;
 import com.android.intentresolver.FakeImageLoader;
 import com.android.intentresolver.Flags;
@@ -130,16 +129,21 @@ import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.contentpreview.ImageLoaderModule;
 import com.android.intentresolver.ext.RecyclerViewExt;
+import com.android.intentresolver.inject.ApplicationUser;
 import com.android.intentresolver.inject.PackageManagerModule;
+import com.android.intentresolver.inject.ProfileParent;
 import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.logging.FakeEventLog;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
+import com.android.intentresolver.v2.data.repository.FakeUserRepository;
+import com.android.intentresolver.v2.data.repository.UserRepository;
+import com.android.intentresolver.v2.data.repository.UserRepositoryModule;
 import com.android.intentresolver.v2.platform.AppPredictionAvailable;
 import com.android.intentresolver.v2.platform.AppPredictionModule;
 import com.android.intentresolver.v2.platform.ImageEditor;
 import com.android.intentresolver.v2.platform.ImageEditorModule;
+import com.android.intentresolver.v2.shared.model.User;
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
-import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import dagger.hilt.android.testing.BindValue;
@@ -186,6 +190,7 @@ import javax.inject.Inject;
         ImageEditorModule.class,
         PackageManagerModule.class,
         ImageLoaderModule.class,
+        UserRepositoryModule.class,
 })
 public class UnbundledChooserActivityTest {
 
@@ -195,8 +200,19 @@ public class UnbundledChooserActivityTest {
 
     private static final UserHandle PERSONAL_USER_HANDLE = InstrumentationRegistry
             .getInstrumentation().getTargetContext().getUser();
+
+    private static final User PERSONAL_USER =
+            new User(PERSONAL_USER_HANDLE.getIdentifier(), User.Role.PERSONAL);
+
     private static final UserHandle WORK_PROFILE_USER_HANDLE = UserHandle.of(10);
+
+    private static final User WORK_USER =
+            new User(WORK_PROFILE_USER_HANDLE.getIdentifier(), User.Role.WORK);
+
     private static final UserHandle CLONE_PROFILE_USER_HANDLE = UserHandle.of(11);
+
+    private static final User CLONE_USER =
+            new User(CLONE_PROFILE_USER_HANDLE.getIdentifier(), User.Role.CLONE);
 
     @Parameters(name = "appPrediction={0}")
     public static Iterable<?> parameters() {
@@ -240,6 +256,20 @@ public class UnbundledChooserActivityTest {
 
     @BindValue
     PackageManager mPackageManager;
+
+    /** "launchedAs" */
+    @BindValue
+    @ApplicationUser
+    UserHandle mApplicationUser = PERSONAL_USER_HANDLE;
+
+    @BindValue
+    @ProfileParent
+    UserHandle mProfileParent = PERSONAL_USER_HANDLE;
+
+    private final FakeUserRepository mFakeUserRepo = new FakeUserRepository(List.of(PERSONAL_USER));
+
+    @BindValue
+    final UserRepository mUserRepository = mFakeUserRepo;
 
     private final FakeImageLoader mFakeImageLoader = new FakeImageLoader();
 
@@ -1268,8 +1298,10 @@ public class UnbundledChooserActivityTest {
     public void testOnCreateLoggingFromWorkProfile() {
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
-        ChooserActivityOverrideData.getInstance().alternateProfileSetting =
-                MetricsEvent.MANAGED_PROFILE;
+
+        // Launch as work user.
+        mFakeUserRepo.addUser(WORK_USER, true);
+        mApplicationUser = WORK_PROFILE_USER_HANDLE;
 
         ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, "logger test"));
@@ -2166,7 +2198,7 @@ public class UnbundledChooserActivityTest {
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(workProfileTargets);
-        ChooserActivityOverrideData.getInstance().isQuietModeEnabled = true;
+        mFakeUserRepo.updateState(WORK_USER, false);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
@@ -2248,7 +2280,7 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(0);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
-        ChooserActivityOverrideData.getInstance().isQuietModeEnabled = true;
+        mFakeUserRepo.updateState(WORK_USER, false);
         ChooserActivityOverrideData.getInstance().hasCrossProfileIntents = false;
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
@@ -2272,7 +2304,7 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(0);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
-        ChooserActivityOverrideData.getInstance().isQuietModeEnabled = true;
+        mFakeUserRepo.updateState(WORK_USER, false);
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
 
@@ -3008,18 +3040,12 @@ public class UnbundledChooserActivityTest {
     }
 
     private void markOtherProfileAvailability(boolean workAvailable, boolean cloneAvailable) {
-        AnnotatedUserHandles.Builder handles = AnnotatedUserHandles.newBuilder();
-        handles
-                .setUserIdOfCallingApp(1234)  // Must be non-negative.
-                .setUserHandleSharesheetLaunchedAs(PERSONAL_USER_HANDLE)
-                .setPersonalProfileUserHandle(PERSONAL_USER_HANDLE);
         if (workAvailable) {
-            handles.setWorkProfileUserHandle(WORK_PROFILE_USER_HANDLE);
+            mFakeUserRepo.addUser(WORK_USER, /* available= */ true);
         }
         if (cloneAvailable) {
-            handles.setCloneProfileUserHandle(CLONE_PROFILE_USER_HANDLE);
+            mFakeUserRepo.addUser(CLONE_USER, /* available= */ true);
         }
-        ChooserWrapperActivity.sOverrides.annotatedUserHandles = handles.build();
     }
 
     private void setupResolverControllers(
@@ -3039,8 +3065,8 @@ public class UnbundledChooserActivityTest {
                                 Mockito.anyBoolean(),
                                 Mockito.anyBoolean(),
                                 Mockito.isA(List.class),
-                                eq(UserHandle.SYSTEM)))
-                .thenReturn(new ArrayList<>(personalResolvedComponentInfos));
+                                eq(PERSONAL_USER_HANDLE)))
+                                .thenReturn(new ArrayList<>(personalResolvedComponentInfos));
         when(
                 ChooserActivityOverrideData
                         .getInstance()
@@ -3050,19 +3076,8 @@ public class UnbundledChooserActivityTest {
                                 Mockito.anyBoolean(),
                                 Mockito.anyBoolean(),
                                 Mockito.isA(List.class),
-                                eq(UserHandle.SYSTEM)))
-                .thenReturn(new ArrayList<>(personalResolvedComponentInfos));
-        when(
-                ChooserActivityOverrideData
-                        .getInstance()
-                        .workResolverListController
-                        .getResolversForIntentAsUser(
-                                Mockito.anyBoolean(),
-                                Mockito.anyBoolean(),
-                                Mockito.anyBoolean(),
-                                Mockito.isA(List.class),
-                                eq(UserHandle.of(10))))
-                .thenReturn(new ArrayList<>(workResolvedComponentInfos));
+                                eq(WORK_PROFILE_USER_HANDLE)))
+                                .thenReturn(new ArrayList<>(workResolvedComponentInfos));
     }
 
     private static GridRecyclerSpanCountMatcher withGridColumnCount(int columnCount) {

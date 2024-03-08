@@ -15,7 +15,6 @@
  */
 package com.android.intentresolver.v2.profiles;
 
-import android.annotation.IntDef;
 import android.annotation.Nullable;
 import android.os.Trace;
 import android.os.UserHandle;
@@ -32,6 +31,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.android.intentresolver.ResolverListAdapter;
 import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
+import com.android.intentresolver.v2.shared.model.Profile;
 import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
@@ -61,10 +61,11 @@ public class MultiProfilePagerAdapter<
         SinglePageAdapterT,
         ListAdapterT extends ResolverListAdapter> extends PagerAdapter {
 
-    public static final int PROFILE_PERSONAL = 0;
-    public static final int PROFILE_WORK = 1;
+    public static final int PROFILE_PERSONAL = Profile.Type.PERSONAL.ordinal();
+    public static final int PROFILE_WORK = Profile.Type.WORK.ordinal();
 
-    @IntDef({PROFILE_PERSONAL, PROFILE_WORK})
+    // Removed, must be constants. This is only used for linting anyway.
+    // @IntDef({PROFILE_PERSONAL, PROFILE_WORK})
     public @interface ProfileType {}
 
     private final Function<SinglePageAdapterT, ListAdapterT> mListAdapterExtractor;
