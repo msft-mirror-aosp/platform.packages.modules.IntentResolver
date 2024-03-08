@@ -305,9 +305,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                         .get(BasePreviewViewModel.class);
         previewViewModel.init(
                 mChooserRequest.getTargetIntent(),
-                getIntent(),
                 /*additionalContentUri = */ null,
-                /*focusedItemIdx = */ 0,
                 /*isPayloadTogglingEnabled = */ false);
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
