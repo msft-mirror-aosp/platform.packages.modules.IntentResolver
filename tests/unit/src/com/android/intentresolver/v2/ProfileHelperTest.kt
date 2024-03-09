@@ -20,6 +20,7 @@ import com.android.intentresolver.Flags.FLAG_ENABLE_PRIVATE_PROFILE
 import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.android.intentresolver.inject.FakeIntentResolverFlags
 import com.android.intentresolver.inject.IntentResolverFlags
+import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.data.repository.FakeUserRepository
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
@@ -32,6 +33,7 @@ import org.junit.Assert.*
 
 import org.junit.Test
 
+@OptIn(JavaInterop::class)
 class ProfileHelperTest {
 
     private val personalUser = User(0, User.Role.PERSONAL)
