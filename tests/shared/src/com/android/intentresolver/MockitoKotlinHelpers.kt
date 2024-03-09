@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.android.intentresolver
 
 /**
  * Kotlin versions of popular mockito methods that can return null in situations when Kotlin expects
  * a non-null value. Kotlin will throw an IllegalStateException when this takes place ("x must not
  * be null"). To fix this, we can use methods that modify the return type to be nullable. This
- * causes Kotlin to skip the null checks.
- * Cloned from frameworks/base/packages/SystemUI/tests/utils/src/com/android/systemui/util/mockito/KotlinMockitoHelpers.kt
+ * causes Kotlin to skip the null checks. Cloned from
+ * frameworks/base/packages/SystemUI/tests/utils/src/com/android/systemui/util/mockito/KotlinMockitoHelpers.kt
  */
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatcher
@@ -33,42 +35,49 @@ import org.mockito.stubbing.OngoingStubbing
 import org.mockito.stubbing.Stubber
 
 /**
- * Returns Mockito.eq() as nullable type to avoid java.lang.IllegalStateException when
- * null is returned.
+ * Returns Mockito.eq() as nullable type to avoid java.lang.IllegalStateException when null is
+ * returned.
  *
  * Generic T is nullable because implicitly bounded by Any?.
  */
-fun <T> eq(obj: T): T = Mockito.eq<T>(obj)
+inline fun <T> eq(obj: T): T = Mockito.eq<T>(obj) ?: obj
 
 /**
- * Returns Mockito.any() as nullable type to avoid java.lang.IllegalStateException when
- * null is returned.
+ * Returns Mockito.same() as nullable type to avoid java.lang.IllegalStateException when null is
+ * returned.
  *
  * Generic T is nullable because implicitly bounded by Any?.
  */
-fun <T> any(type: Class<T>): T = Mockito.any<T>(type)
+inline fun <T> same(obj: T): T = Mockito.same<T>(obj) ?: obj
+
+/**
+ * Returns Mockito.any() as nullable type to avoid java.lang.IllegalStateException when null is
+ * returned.
+ *
+ * Generic T is nullable because implicitly bounded by Any?.
+ */
+inline fun <T> any(type: Class<T>): T = Mockito.any<T>(type)
+
 inline fun <reified T> any(): T = any(T::class.java)
 
 /**
- * Returns Mockito.argThat() as nullable type to avoid java.lang.IllegalStateException when
+ * Returns Mockito.argThat() as nullable type to avoid java.lang.IllegalStateException when null is
+ * returned.
+ *
+ * Generic T is nullable because implicitly bounded by Any?.
+ */
+inline fun <T> argThat(matcher: ArgumentMatcher<T>): T = Mockito.argThat(matcher)
+
+/** Kotlin type-inferred version of Mockito.nullable() */
+inline fun <reified T> nullable(): T? = Mockito.nullable(T::class.java)
+
+/**
+ * Returns ArgumentCaptor.capture() as nullable type to avoid java.lang.IllegalStateException when
  * null is returned.
  *
  * Generic T is nullable because implicitly bounded by Any?.
  */
-fun <T> argThat(matcher: ArgumentMatcher<T>): T = Mockito.argThat(matcher)
-
-/**
- * Kotlin type-inferred version of Mockito.nullable()
- */
-inline fun <reified T> nullable(): T? = Mockito.nullable(T::class.java)
-
-/**
- * Returns ArgumentCaptor.capture() as nullable type to avoid java.lang.IllegalStateException
- * when null is returned.
- *
- * Generic T is nullable because implicitly bounded by Any?.
- */
-fun <T> capture(argumentCaptor: ArgumentCaptor<T>): T = argumentCaptor.capture()
+inline fun <T> capture(argumentCaptor: ArgumentCaptor<T>): T = argumentCaptor.capture()
 
 /**
  * Helper function for creating an argumentCaptor in kotlin.
@@ -90,17 +99,18 @@ inline fun <reified T : Any> mock(
     apply: T.() -> Unit = {}
 ): T = Mockito.mock(T::class.java, mockSettings).apply(apply)
 
+/** Matches any array of type T. */
+inline fun <reified T : Any?> anyArray(): Array<T> = Mockito.any(Array<T>::class.java) ?: arrayOf()
+
 /**
  * Helper function for stubbing methods without the need to use backticks.
  *
  * @see Mockito.when
  */
-fun <T> whenever(methodCall: T): OngoingStubbing<T> = Mockito.`when`(methodCall)
+inline fun <T> whenever(methodCall: T): OngoingStubbing<T> = Mockito.`when`(methodCall)
 
-/**
- * Helper function for stubbing methods without the need to use backticks.
- */
-fun <T> Stubber.whenever(mock: T): T = `when`(mock)
+/** Helper function for stubbing methods without the need to use backticks. */
+inline fun <T> Stubber.whenever(mock: T): T = `when`(mock)
 
 /**
  * A kotlin implemented wrapper of [ArgumentCaptor] which prevents the following exception when
@@ -128,13 +138,12 @@ inline fun <reified T : Any> kotlinArgumentCaptor(): KotlinArgumentCaptor<T> =
 /**
  * Helper function for creating and using a single-use ArgumentCaptor in kotlin.
  *
- *    val captor = argumentCaptor<Foo>()
- *    verify(...).someMethod(captor.capture())
- *    val captured = captor.value
+ * val captor = argumentCaptor<Foo>() verify(...).someMethod(captor.capture()) val captured =
+ * captor.value
  *
  * becomes:
  *
- *    val captured = withArgCaptor<Foo> { verify(...).someMethod(capture()) }
+ * val captured = withArgCaptor<Foo> { verify(...).someMethod(capture()) }
  *
  * NOTE: this uses the KotlinArgumentCaptor to avoid the NullPointerException.
  */
@@ -144,13 +153,12 @@ inline fun <reified T : Any> withArgCaptor(block: KotlinArgumentCaptor<T>.() -> 
 /**
  * Variant of [withArgCaptor] for capturing multiple arguments.
  *
- *    val captor = argumentCaptor<Foo>()
- *    verify(...).someMethod(captor.capture())
- *    val captured: List<Foo> = captor.allValues
+ * val captor = argumentCaptor<Foo>() verify(...).someMethod(captor.capture()) val captured:
+ * List<Foo> = captor.allValues
  *
  * becomes:
  *
- *    val capturedList = captureMany<Foo> { verify(...).someMethod(capture()) }
+ * val capturedList = captureMany<Foo> { verify(...).someMethod(capture()) }
  */
 inline fun <reified T : Any> captureMany(block: KotlinArgumentCaptor<T>.() -> Unit): List<T> =
     kotlinArgumentCaptor<T>().apply { block() }.allValues

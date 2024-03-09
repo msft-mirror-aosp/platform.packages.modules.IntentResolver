@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
+
+import android.net.Uri
+import com.android.intentresolver.contentpreview.UriMetadataReader
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.CursorResolver
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.PayloadToggle
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
+import com.android.intentresolver.inject.ContentUris
+import com.android.intentresolver.inject.FocusedItemIndex
+import com.android.intentresolver.util.mapParallel
+import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
+/** Populates the data displayed in Shareousel. */
+class FetchPreviewsInteractor
+@Inject
+constructor(
+    private val setCursorPreviews: SetCursorPreviewsInteractor,
+    private val selectionRepository: PreviewSelectionsRepository,
+    private val cursorInteractor: CursorPreviewsInteractor,
+    @FocusedItemIndex private val focusedItemIdx: Int,
+    @ContentUris private val selectedItems: List<@JvmSuppressWildcards Uri>,
+    private val uriMetadataReader: UriMetadataReader,
+    @PayloadToggle private val cursorResolver: CursorResolver<@JvmSuppressWildcards Uri?>,
+) {
+    suspend fun launch() = coroutineScope {
+        val cursor = async { cursorResolver.getCursor() }
+        val initialPreviewMap: Set<PreviewModel> = getInitialPreviews()
+        selectionRepository.selections.value = initialPreviewMap
+        setCursorPreviews.setPreviews(
+            previewsByKey = initialPreviewMap,
+            startIndex = focusedItemIdx,
+            hasMoreLeft = false,
+            hasMoreRight = false,
+        )
+        cursorInteractor.launch(cursor.await() ?: return@coroutineScope, initialPreviewMap)
+    }
+
+    private suspend fun getInitialPreviews(): Set<PreviewModel> =
+        selectedItems
+            // Restrict parallelism so as to not overload the metadata reader; anecdotally, too
+            // many parallel queries causes failures.
+            .mapParallel(parallelism = 4) { uri ->
+                PreviewModel(uri = uri, mimeType = uriMetadataReader.getMetadata(uri).mimeType)
+            }
+            .toSet()
+}
