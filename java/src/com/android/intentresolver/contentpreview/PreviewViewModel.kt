@@ -28,10 +28,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.android.intentresolver.R
 import com.android.intentresolver.inject.Background
-import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.plus
 
 /** A view model for the preview logic */
@@ -42,9 +40,7 @@ class PreviewViewModel(
     @Background private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BasePreviewViewModel() {
     private var targetIntent: Intent? = null
-    private var chooserIntent: Intent? = null
     private var additionalContentUri: Uri? = null
-    private var focusedItemIdx: Int = 0
     private var isPayloadTogglingEnabled = false
 
     override val previewDataProvider by lazy {
@@ -67,57 +63,17 @@ class PreviewViewModel(
         )
     }
 
-    override val payloadToggleInteractor: PayloadToggleInteractor? by lazy {
-        val targetIntent = requireNotNull(targetIntent) { "Not initialized" }
-        // TODO: replace with flags injection
-        if (!isPayloadTogglingEnabled) return@lazy null
-        createPayloadToggleInteractor(
-                additionalContentUri ?: return@lazy null,
-                targetIntent,
-                chooserIntent ?: return@lazy null,
-            )
-            .apply { start() }
-    }
-
     // TODO: make the view model injectable and inject these dependencies instead
     @MainThread
     override fun init(
         targetIntent: Intent,
-        chooserIntent: Intent,
         additionalContentUri: Uri?,
-        focusedItemIdx: Int,
         isPayloadTogglingEnabled: Boolean,
     ) {
         if (this.targetIntent != null) return
         this.targetIntent = targetIntent
-        this.chooserIntent = chooserIntent
         this.additionalContentUri = additionalContentUri
-        this.focusedItemIdx = focusedItemIdx
         this.isPayloadTogglingEnabled = isPayloadTogglingEnabled
-    }
-
-    private fun createPayloadToggleInteractor(
-        contentProviderUri: Uri,
-        targetIntent: Intent,
-        chooserIntent: Intent,
-    ): PayloadToggleInteractor {
-        return PayloadToggleInteractor(
-            // TODO: update PayloadToggleInteractor to support multiple threads
-            viewModelScope + Executors.newSingleThreadScheduledExecutor().asCoroutineDispatcher(),
-            previewDataProvider.uris,
-            maxOf(0, minOf(focusedItemIdx, previewDataProvider.uriCount - 1)),
-            DefaultMimeTypeClassifier,
-            {
-                CursorUriReader.createCursorReader(
-                    contentResolver,
-                    contentProviderUri,
-                    chooserIntent
-                )
-            },
-            UriMetadataReader(contentResolver, DefaultMimeTypeClassifier),
-            TargetIntentModifier(targetIntent, getUri = { uri }, getMimeType = { mimeType }),
-            SelectionChangeCallback(contentProviderUri, chooserIntent, contentResolver)
-        )
     }
 
     companion object {

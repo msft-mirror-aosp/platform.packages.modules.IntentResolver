@@ -25,14 +25,11 @@ import androidx.lifecycle.ViewModel
 abstract class BasePreviewViewModel : ViewModel() {
     @get:MainThread abstract val previewDataProvider: PreviewDataProvider
     @get:MainThread abstract val imageLoader: ImageLoader
-    abstract val payloadToggleInteractor: PayloadToggleInteractor?
 
     @MainThread
     abstract fun init(
         targetIntent: Intent,
-        chooserIntent: Intent,
         additionalContentUri: Uri?,
-        focusedItemIdx: Int,
         isPayloadTogglingEnabled: Boolean,
     )
 }

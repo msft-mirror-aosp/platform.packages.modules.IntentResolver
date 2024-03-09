@@ -37,7 +37,7 @@ class UriMetadataReaderTest {
     fun testImageUri() {
         val mimeType = "image/png"
         whenever(contentResolver.getType(uri)).thenReturn(mimeType)
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)
@@ -52,7 +52,7 @@ class UriMetadataReaderTest {
         val imageType = "image/png"
         whenever(contentResolver.getType(uri)).thenReturn(mimeType)
         whenever(contentResolver.getStreamTypes(eq(uri), any())).thenReturn(arrayOf(imageType))
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)
@@ -72,7 +72,7 @@ class UriMetadataReaderTest {
                     addRow(arrayOf(DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL))
                 }
             )
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)
@@ -89,7 +89,7 @@ class UriMetadataReaderTest {
         val columns = arrayOf(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
         whenever(contentResolver.query(eq(uri), eq(columns), anyOrNull(), anyOrNull()))
             .thenReturn(MatrixCursor(columns).apply { addRow(arrayOf(previewUri.toString())) })
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)

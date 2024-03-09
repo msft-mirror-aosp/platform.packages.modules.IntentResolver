@@ -23,6 +23,11 @@ import javax.inject.Qualifier
 @Qualifier
 @MustBeDocumented
 @Retention(AnnotationRetention.RUNTIME)
+annotation class ViewModelOwned
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
 annotation class ApplicationOwned
 
 @Qualifier
