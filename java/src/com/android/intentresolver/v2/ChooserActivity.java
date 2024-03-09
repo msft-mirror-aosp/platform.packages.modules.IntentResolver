@@ -344,7 +344,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     @Override
-    protected final void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
 
@@ -444,7 +444,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     @Override
-    protected final void onDestroy() {
+    protected void onDestroy() {
         super.onDestroy();
         if (!isChangingConfigurations() && mPickOptionRequest != null) {
             mPickOptionRequest.cancel();
@@ -1181,16 +1181,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         };
     }
 
-    public void super_onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
-
-        if (mSystemWindowInsets != null) {
-            mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
-                    mSystemWindowInsets.right, 0);
-        }
-    }
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1407,7 +1397,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        super_onConfigurationChanged(newConfig);
+        super.onConfigurationChanged(newConfig);
+        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
+
+        if (mSystemWindowInsets != null) {
+            mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
+                    mSystemWindowInsets.right, 0);
+        }
         ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
         if (viewPager.isLayoutRtl()) {
             mChooserMultiProfilePagerAdapter.setupViewPager(viewPager);
