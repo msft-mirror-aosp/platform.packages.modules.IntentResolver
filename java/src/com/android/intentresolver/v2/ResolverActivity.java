@@ -238,7 +238,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     }
 
     @Override
-    protected final void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTheme(R.style.Theme_DeviceDefault_Resolver);
         mActivityModel = createActivityModel();
