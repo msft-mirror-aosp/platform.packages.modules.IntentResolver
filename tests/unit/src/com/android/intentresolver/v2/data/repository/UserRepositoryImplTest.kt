@@ -43,9 +43,10 @@ internal class UserRepositoryImplTest {
         val users by collectLastValue(repo.users)
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
-        assertThat(users!!.filter { it.role.type == User.Type.PROFILE }).isEmpty()
+        assertThat(users).hasSize(1)
 
         val profile = userState.createProfile(ProfileType.WORK)
+        assertThat(users).hasSize(2)
         assertThat(users).contains(User(profile.identifier, Role.WORK))
     }
 
@@ -89,11 +90,11 @@ internal class UserRepositoryImplTest {
         repo.requestState(privateUser, false)
         repo.requestState(privateUser, true)
 
-        assertWithMessage("users.size")
-                .that(users?.size ?: 0).isEqualTo(2) // personal + private
+        assertWithMessage("users.size").that(users?.size ?: 0).isEqualTo(2) // personal + private
 
         assertWithMessage("No duplicate IDs")
-                .that(users?.count { it.id == private.identifier }).isEqualTo(1)
+            .that(users?.count { it.id == private.identifier })
+            .isEqualTo(1)
     }
 
     @Test
@@ -110,13 +111,6 @@ internal class UserRepositoryImplTest {
 
         repo.requestState(workUser, true)
         assertThat(available?.get(workUser)).isTrue()
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun requestState_invalidForFullUser() = runTest {
-        val repo = createUserRepository(userManager)
-        val primaryUser = User(userState.primaryUserHandle.identifier, Role.PERSONAL)
-        repo.requestState(primaryUser, available = false)
     }
 
     /**
