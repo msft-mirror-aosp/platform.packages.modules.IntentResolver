@@ -352,6 +352,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         // Initializer is invoked when this function returns, via Lifecycle.
         mChooserHelper.setInitializer(this::initializeWith);
+        if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
+            mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
+        }
     }
 
     @Override
@@ -513,7 +516,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mChooserMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
                 /* context = */ this,
                 mProfilePagerResources,
-                mViewModel.getRequest().getValue(),
+                mRequest,
                 mProfiles,
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
@@ -655,6 +658,71 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         );
         mEnterTransitionAnimationDelegate.postponeTransition();
         Tracer.INSTANCE.markLaunched();
+    }
+
+    private void onChooserRequestChanged(ChooserRequest chooserRequest) {
+        if (mRequest == chooserRequest) {
+            return;
+        }
+        mRequest = chooserRequest;
+        recreatePagerAdapter();
+    }
+
+    private void recreatePagerAdapter() {
+        if (!mChooserServiceFeatureFlags.chooserPayloadToggling()) {
+            return;
+        }
+        destroyProfileRecords();
+        createProfileRecords(
+                new AppPredictorFactory(
+                        this,
+                        Objects.toString(mRequest.getSharedText(), null),
+                        mRequest.getShareTargetFilter(),
+                        mAppPredictionAvailable
+                ),
+                mRequest.getShareTargetFilter()
+        );
+
+        if (mChooserMultiProfilePagerAdapter != null) {
+            mChooserMultiProfilePagerAdapter.destroy();
+        }
+        mChooserMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
+                /* context = */ this,
+                mProfilePagerResources,
+                mRequest,
+                mProfiles,
+                mProfileAvailability,
+                mRequest.getInitialIntents(),
+                mMaxTargetsPerRow,
+                mFeatureFlags);
+        mChooserMultiProfilePagerAdapter.setupViewPager(
+                requireViewById(com.android.internal.R.id.profile_pager));
+        if (mPersonalPackageMonitor != null) {
+            mPersonalPackageMonitor.unregister();
+        }
+        mPersonalPackageMonitor = createPackageMonitor(
+                mChooserMultiProfilePagerAdapter.getPersonalListAdapter());
+        mPersonalPackageMonitor.register(
+                this,
+                getMainLooper(),
+                mProfiles.getPersonalHandle(),
+                false);
+        if (mProfiles.getWorkProfilePresent()) {
+            if (mWorkPackageMonitor != null) {
+                mWorkPackageMonitor.unregister();
+            }
+            mWorkPackageMonitor = createPackageMonitor(
+                    mChooserMultiProfilePagerAdapter.getWorkListAdapter());
+            mWorkPackageMonitor.register(
+                    this,
+                    getMainLooper(),
+                    mProfiles.getWorkHandle(),
+                    false);
+        }
+        postRebuildList(
+                mChooserMultiProfilePagerAdapter.rebuildTabs(
+                    mProfiles.getWorkProfilePresent()
+                            || mProfiles.getPrivateProfilePresent()));
     }
 
     @Override

@@ -25,6 +25,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
 import com.android.intentresolver.inject.Background
 import com.android.intentresolver.v2.annotation.JavaInterop
@@ -36,6 +37,7 @@ import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.Valid
 import com.android.intentresolver.v2.validation.log
 import dagger.hilt.android.scopes.ActivityScoped
+import java.util.function.Consumer
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.filterNotNull
@@ -113,6 +115,8 @@ constructor(
 
     private lateinit var activityInitializer: ChooserInitializer
 
+    var onChooserRequestChanged: Consumer<ChooserRequest> = Consumer {}
+
     init {
         activity.lifecycle.addObserver(this)
     }
@@ -149,6 +153,12 @@ constructor(
         activity.lifecycleScope.launch {
             activity.setResult(activityResultRepo.activityResult.filterNotNull().first())
             activity.finish()
+        }
+
+        activity.lifecycleScope.launch {
+            activity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.request.collect { onChooserRequestChanged.accept(it) }
+            }
         }
     }
 

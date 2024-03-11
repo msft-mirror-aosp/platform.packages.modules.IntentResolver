@@ -245,6 +245,7 @@ public class MultiProfilePagerAdapter<
             Runnable onTabChangeListener,
             OnProfileSelectedListener clientOnProfileSelectedListener) {
         tabHost.setup();
+        tabHost.getTabWidget().removeAllViews();
         viewPager.setSaveEnabled(false);
 
         for (int pageNumber = 0; pageNumber < getItemCount(); ++pageNumber) {

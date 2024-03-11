@@ -44,7 +44,7 @@ constructor(
     suspend fun launch() = coroutineScope {
         val cursor = async { cursorResolver.getCursor() }
         val initialPreviewMap: Set<PreviewModel> = getInitialPreviews()
-        selectionRepository.selections.value = initialPreviewMap
+        selectionRepository.setSelection(initialPreviewMap)
         setCursorPreviews.setPreviews(
             previewsByKey = initialPreviewMap,
             startIndex = focusedItemIdx,
