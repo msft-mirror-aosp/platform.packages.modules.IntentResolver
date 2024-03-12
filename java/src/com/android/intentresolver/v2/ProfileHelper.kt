@@ -18,11 +18,13 @@ package com.android.intentresolver.v2
 
 import android.os.UserHandle
 import com.android.intentresolver.inject.IntentResolverFlags
+import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
 import com.android.intentresolver.v2.shared.model.User
 import javax.inject.Inject
 
+@JavaInterop
 class ProfileHelper
 @Inject
 constructor(

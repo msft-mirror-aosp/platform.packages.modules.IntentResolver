@@ -1,8 +1,27 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.android.intentresolver.v2.data.repository
 
 import android.content.Context
+import android.os.UserHandle
+import android.util.LruCache
 import androidx.core.content.getSystemService
-import com.android.intentresolver.v2.shared.model.User
+import javax.inject.Inject
+import kotlin.reflect.KClass
 
 /**
  * Provides cached instances of a [system service][Context.getSystemService] created with
@@ -27,20 +46,51 @@ import com.android.intentresolver.v2.shared.model.User
  * ```
  */
 interface UserScopedService<T> {
-    fun forUser(user: User): T
+    fun forUser(user: UserHandle): T
 }
 
-inline fun <reified T> userScopedService(context: Context): UserScopedService<T> {
-    return object : UserScopedService<T> {
-        private val map = mutableMapOf<User, T>()
+/**
+ * Provides cached Context instances each distinct per-User.
+ *
+ * @see [UserScopedService]
+ */
+class UserScopedContext @Inject constructor(private val applicationContext: Context) {
+    private val contextCacheSizeLimit = 8
 
-        override fun forUser(user: User): T {
-            return synchronized(this) {
-                map.getOrPut(user) {
-                    val userContext = context.createContextAsUser(user.handle, 0)
-                    requireNotNull(userContext.getSystemService())
-                }
+    private val instances =
+        object : LruCache<UserHandle, Context>(contextCacheSizeLimit) {
+            override fun create(key: UserHandle): Context {
+                return applicationContext.createContextAsUser(key, 0)
             }
+        }
+
+    fun forUser(user: UserHandle): Context {
+        synchronized(this) {
+            return if (applicationContext.user == user) {
+                applicationContext
+            } else {
+                return instances[user]
+            }
+        }
+    }
+}
+
+/** Returns a cache of service instances, distinct by user */
+class UserScopedServiceImpl<T : Any>(
+    contexts: UserScopedContext,
+    serviceType: KClass<T>
+): UserScopedService<T> {
+    private val instances =
+        object : LruCache<UserHandle, T>(8) {
+            override fun create(key: UserHandle): T {
+                val context = contexts.forUser(key)
+                return requireNotNull(context.getSystemService(serviceType.java))
+            }
+        }
+
+    override fun forUser(user: UserHandle): T {
+        synchronized(this) {
+            return instances[user]
         }
     }
 }
