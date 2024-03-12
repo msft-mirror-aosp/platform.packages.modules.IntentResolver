@@ -26,6 +26,9 @@ import android.content.pm.ShortcutManager
 import android.os.UserManager
 import android.view.WindowManager
 import androidx.core.content.getSystemService
+import com.android.intentresolver.v2.data.repository.UserScopedContext
+import com.android.intentresolver.v2.data.repository.UserScopedService
+import com.android.intentresolver.v2.data.repository.UserScopedServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -99,6 +102,10 @@ class ShortcutManagerModule {
 class UserManagerModule {
     @Provides
     fun userManager(@ApplicationContext ctx: Context): UserManager = ctx.requireSystemService()
+
+    @Provides fun scopedUserManager(ctx: UserScopedContext): UserScopedService<UserManager> {
+        return UserScopedServiceImpl(ctx, UserManager::class)
+    }
 }
 
 @Module

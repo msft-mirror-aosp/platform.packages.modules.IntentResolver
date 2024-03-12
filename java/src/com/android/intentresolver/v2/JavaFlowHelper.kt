@@ -18,11 +18,13 @@
 
 package com.android.intentresolver.v2
 
+import com.android.intentresolver.v2.annotation.JavaInterop
 import java.util.function.Consumer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
+@JavaInterop
 fun <T> collect(scope: CoroutineScope, flow: Flow<T>, collector: Consumer<T>): Job =
     scope.launch { flow.collect { collector.accept(it) } }
