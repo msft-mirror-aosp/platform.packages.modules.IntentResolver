@@ -21,7 +21,6 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.P
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 
 /** An individual preview in Shareousel. */
 class SelectablePreviewInteractor(
@@ -37,9 +36,9 @@ class SelectablePreviewInteractor(
     /** Sets whether this preview is selected by the user. */
     fun setSelected(isSelected: Boolean) {
         if (isSelected) {
-            selectionRepo.selections.update { it + key }
+            selectionRepo.select(key)
         } else {
-            selectionRepo.selections.update { it - key }
+            selectionRepo.unselect(key)
         }
     }
 }

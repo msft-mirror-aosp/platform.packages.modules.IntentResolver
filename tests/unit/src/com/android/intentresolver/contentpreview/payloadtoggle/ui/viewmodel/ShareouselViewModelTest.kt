@@ -60,8 +60,7 @@ class ShareouselViewModelTest {
         val previewsRepository = CursorPreviewsRepository()
         val selectionRepository =
             PreviewSelectionsRepository().apply {
-                selections.value =
-                    setOf(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null))
+                setSelection(setOf(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null)))
             }
         val activityResultRepository = ActivityResultRepository()
         val contentResolver = mock<ContentResolver> {}
@@ -146,7 +145,7 @@ class ShareouselViewModelTest {
     fun headline() = runTestWithDeps { deps ->
         with(deps) {
             assertThat(underTest.headline.first()).isEqualTo("IMAGES: 1")
-            selectionRepository.selections.value =
+            selectionRepository.setSelection(
                 setOf(
                     PreviewModel(
                         Uri.fromParts("scheme", "ssp", "fragment"),
@@ -157,6 +156,7 @@ class ShareouselViewModelTest {
                         null,
                     )
                 )
+            )
             runCurrent()
             assertThat(underTest.headline.first()).isEqualTo("IMAGES: 2")
         }
@@ -201,7 +201,7 @@ class ShareouselViewModelTest {
 
             previewVm.setSelected(true)
 
-            assertThat(selectionRepository.selections.value)
+            assertThat(selectionRepository.selections.first())
                 .comparingElementsUsingTransform("has uri of") { model: PreviewModel -> model.uri }
                 .contains(Uri.fromParts("scheme1", "ssp1", "fragment1"))
         }

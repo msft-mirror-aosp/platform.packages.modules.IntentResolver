@@ -57,10 +57,11 @@ class SelectablePreviewsInteractorTest {
             }
         val selectionRepo =
             PreviewSelectionsRepository().apply {
-                selections.value =
+                setSelection(
                     setOf(
                         PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
                     )
+                )
             }
         val underTest =
             SelectablePreviewsInteractor(
@@ -94,8 +95,7 @@ class SelectablePreviewsInteractorTest {
         val previewsRepo = CursorPreviewsRepository()
         val selectionRepo =
             PreviewSelectionsRepository().apply {
-                selections.value =
-                    setOf(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null))
+                setSelection(setOf(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null)))
             }
         val underTest = SelectablePreviewsInteractor(previewsRepo, selectionRepo)
         val previews = underTest.previews.stateIn(backgroundScope)
@@ -124,7 +124,7 @@ class SelectablePreviewsInteractorTest {
                 loadMoreLeft = null,
                 loadMoreRight = { loadRequested = true },
             )
-        selectionRepo.selections.value = emptySet()
+        selectionRepo.setSelection(emptySet())
         runCurrent()
 
         assertThat(previews.value).isNotNull()
