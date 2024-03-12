@@ -18,12 +18,15 @@ package com.android.intentresolver.inject
 import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
 import android.content.ClipboardManager
+import android.content.ContentInterface
+import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutManager
 import android.os.UserManager
 import android.view.WindowManager
 import androidx.core.content.getSystemService
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -52,9 +55,13 @@ class ClipboardManagerModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-class ContentResolverModule {
-    @Provides
-    fun contentResolver(@ApplicationContext ctx: Context) = requireNotNull(ctx.contentResolver)
+interface ContentResolverModule {
+    @Binds fun bindContentInterface(cr: ContentResolver): ContentInterface
+
+    companion object {
+        @Provides
+        fun contentResolver(@ApplicationContext ctx: Context) = requireNotNull(ctx.contentResolver)
+    }
 }
 
 @Module

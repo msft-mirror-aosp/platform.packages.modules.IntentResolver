@@ -22,27 +22,18 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi.ActionFactory
-import com.android.intentresolver.contentpreview.shareousel.ui.composable.Shareousel
-import com.android.intentresolver.contentpreview.shareousel.ui.viewmodel.ShareouselViewModel
-import com.android.intentresolver.contentpreview.shareousel.ui.viewmodel.toShareouselViewModel
+import com.android.intentresolver.contentpreview.payloadtoggle.app.viewmodel.ShareouselContentPreviewViewModel
+import com.android.intentresolver.contentpreview.payloadtoggle.ui.composable.Shareousel
+import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ShareouselContentPreviewUi(
@@ -56,76 +47,48 @@ class ShareouselContentPreviewUi(
         layoutInflater: LayoutInflater,
         parent: ViewGroup,
         headlineViewParent: View?,
-    ): ViewGroup {
-        return displayInternal(parent, headlineViewParent).also { layout ->
+    ): ViewGroup =
+        displayInternal(parent, headlineViewParent).also { layout ->
             displayModifyShareAction(headlineViewParent ?: layout, actionFactory)
         }
-    }
 
-    private fun displayInternal(
-        parent: ViewGroup,
-        headlineViewParent: View?,
-    ): ViewGroup {
+    private fun displayInternal(parent: ViewGroup, headlineViewParent: View?): ViewGroup {
         if (headlineViewParent != null) {
             inflateHeadline(headlineViewParent)
         }
-        val composeView =
-            ComposeView(parent.context).apply {
-                setContent {
-                    val vm: BasePreviewViewModel = viewModel()
-                    val interactor =
-                        requireNotNull(vm.payloadToggleInteractor) { "Should not be null" }
+        return ComposeView(parent.context).apply {
+            setContent {
+                val vm: ShareouselContentPreviewViewModel = viewModel()
+                val viewModel: ShareouselViewModel = vm.viewModel
 
-                    var viewModel by remember { mutableStateOf<ShareouselViewModel?>(null) }
-                    LaunchedEffect(Unit) {
-                        viewModel =
-                            interactor.toShareouselViewModel(
-                                vm.imageLoader,
-                                actionFactory,
-                                vm.viewModelScope
-                            )
-                    }
+                headlineViewParent?.let {
+                    LaunchedEffect(viewModel) { bindHeadline(viewModel, headlineViewParent) }
+                }
 
-                    headlineViewParent?.let {
-                        viewModel?.let { viewModel ->
-                            LaunchedEffect(viewModel) {
-                                viewModel.headline.collect { headline ->
-                                    headlineViewParent
-                                        .findViewById<TextView>(R.id.headline)
-                                        ?.apply {
-                                            if (headline.isNotBlank()) {
-                                                text = headline
-                                                visibility = View.VISIBLE
-                                            } else {
-                                                visibility = View.GONE
-                                            }
-                                        }
-                                }
-                            }
-                        }
-                    }
-
-                    viewModel?.let { viewModel ->
-                        MaterialTheme(
-                            colorScheme =
-                                if (isSystemInDarkTheme()) {
-                                    dynamicDarkColorScheme(LocalContext.current)
-                                } else {
-                                    dynamicLightColorScheme(LocalContext.current)
-                                },
-                        ) {
-                            Shareousel(viewModel = viewModel)
-                        }
-                    }
-                        ?: run {
-                            Spacer(
-                                Modifier.height(
-                                    dimensionResource(R.dimen.chooser_preview_image_height_tall)
-                                )
-                            )
-                        }
+                MaterialTheme(
+                    colorScheme =
+                        if (isSystemInDarkTheme()) {
+                            dynamicDarkColorScheme(LocalContext.current)
+                        } else {
+                            dynamicLightColorScheme(LocalContext.current)
+                        },
+                ) {
+                    Shareousel(viewModel)
                 }
             }
-        return composeView
+        }
+    }
+
+    private suspend fun bindHeadline(viewModel: ShareouselViewModel, headlineViewParent: View) {
+        viewModel.headline.collect { headline ->
+            headlineViewParent.findViewById<TextView>(R.id.headline)?.apply {
+                if (headline.isNotBlank()) {
+                    text = headline
+                    visibility = View.VISIBLE
+                } else {
+                    visibility = View.GONE
+                }
+            }
+        }
     }
 }

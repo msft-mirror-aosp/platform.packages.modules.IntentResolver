@@ -117,27 +117,33 @@ import androidx.test.espresso.matcher.ViewMatchers;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.intentresolver.AnnotatedUserHandles;
 import com.android.intentresolver.ChooserListAdapter;
+import com.android.intentresolver.FakeImageLoader;
 import com.android.intentresolver.Flags;
 import com.android.intentresolver.IChooserWrapper;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolvedComponentInfo;
 import com.android.intentresolver.ResolverDataProvider;
 import com.android.intentresolver.TestContentProvider;
-import com.android.intentresolver.TestPreviewImageLoader;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.contentpreview.ImageLoader;
+import com.android.intentresolver.contentpreview.ImageLoaderModule;
+import com.android.intentresolver.ext.RecyclerViewExt;
+import com.android.intentresolver.inject.ApplicationUser;
 import com.android.intentresolver.inject.PackageManagerModule;
+import com.android.intentresolver.inject.ProfileParent;
 import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.logging.FakeEventLog;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
+import com.android.intentresolver.v2.data.repository.FakeUserRepository;
+import com.android.intentresolver.v2.data.repository.UserRepository;
+import com.android.intentresolver.v2.data.repository.UserRepositoryModule;
 import com.android.intentresolver.v2.platform.AppPredictionAvailable;
 import com.android.intentresolver.v2.platform.AppPredictionModule;
 import com.android.intentresolver.v2.platform.ImageEditor;
 import com.android.intentresolver.v2.platform.ImageEditorModule;
+import com.android.intentresolver.v2.shared.model.User;
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
-import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import dagger.hilt.android.testing.BindValue;
@@ -160,7 +166,6 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,7 +188,9 @@ import javax.inject.Inject;
 @UninstallModules({
         AppPredictionModule.class,
         ImageEditorModule.class,
-        PackageManagerModule.class
+        PackageManagerModule.class,
+        ImageLoaderModule.class,
+        UserRepositoryModule.class,
 })
 public class UnbundledChooserActivityTest {
 
@@ -193,8 +200,19 @@ public class UnbundledChooserActivityTest {
 
     private static final UserHandle PERSONAL_USER_HANDLE = InstrumentationRegistry
             .getInstrumentation().getTargetContext().getUser();
+
+    private static final User PERSONAL_USER =
+            new User(PERSONAL_USER_HANDLE.getIdentifier(), User.Role.PERSONAL);
+
     private static final UserHandle WORK_PROFILE_USER_HANDLE = UserHandle.of(10);
+
+    private static final User WORK_USER =
+            new User(WORK_PROFILE_USER_HANDLE.getIdentifier(), User.Role.WORK);
+
     private static final UserHandle CLONE_PROFILE_USER_HANDLE = UserHandle.of(11);
+
+    private static final User CLONE_USER =
+            new User(CLONE_PROFILE_USER_HANDLE.getIdentifier(), User.Role.CLONE);
 
     @Parameters(name = "appPrediction={0}")
     public static Iterable<?> parameters() {
@@ -239,6 +257,25 @@ public class UnbundledChooserActivityTest {
     @BindValue
     PackageManager mPackageManager;
 
+    /** "launchedAs" */
+    @BindValue
+    @ApplicationUser
+    UserHandle mApplicationUser = PERSONAL_USER_HANDLE;
+
+    @BindValue
+    @ProfileParent
+    UserHandle mProfileParent = PERSONAL_USER_HANDLE;
+
+    private final FakeUserRepository mFakeUserRepo = new FakeUserRepository(List.of(PERSONAL_USER));
+
+    @BindValue
+    final UserRepository mUserRepository = mFakeUserRepo;
+
+    private final FakeImageLoader mFakeImageLoader = new FakeImageLoader();
+
+    @BindValue
+    final ImageLoader mImageLoader = mFakeImageLoader;
+
     @Before
     public void setUp() {
         // TODO: use the other form of `adoptShellPermissionIdentity()` where we explicitly list the
@@ -257,6 +294,9 @@ public class UnbundledChooserActivityTest {
         // values to the dependency graph at activity launch time. This allows replacing
         // arbitrary bindings per-test case if needed.
         mPackageManager = mContext.getPackageManager();
+
+        // TODO: inject image loader in the prod code and remove this override
+        ChooserActivityOverrideData.getInstance().imageLoader = mFakeImageLoader;
     }
 
     public UnbundledChooserActivityTest(boolean appPredictionAvailable) {
@@ -434,14 +474,13 @@ public class UnbundledChooserActivityTest {
     }
 
     @Test
-    public void visiblePreviewTitleAndThumbnail() throws InterruptedException {
+    public void visiblePreviewTitleAndThumbnail() {
         String previewTitle = "My Content Preview Title";
         Uri uri = Uri.parse(
                 "android.resource://com.android.frameworks.coretests/"
                 + com.android.intentresolver.tests.R.drawable.test320x240);
         Intent sendIntent = createSendTextIntentWithPreview(previewTitle, uri);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
         setupResolverControllers(resolvedComponentInfos);
@@ -707,8 +746,7 @@ public class UnbundledChooserActivityTest {
     public void testFilePlusTextSharing_ExcludeText() {
         Uri uri = createTestContentProviderUri(null, "image/png");
         Intent sendIntent = createSendImageIntent(uri);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
         sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
 
         List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
@@ -749,8 +787,7 @@ public class UnbundledChooserActivityTest {
     public void testFilePlusTextSharing_RemoveAndAddBackText() {
         Uri uri = createTestContentProviderUri("application/pdf", "image/png");
         Intent sendIntent = createSendImageIntent(uri);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
         final String text = "https://google.com/search?q=google";
         sendIntent.putExtra(Intent.EXTRA_TEXT, text);
 
@@ -797,8 +834,7 @@ public class UnbundledChooserActivityTest {
     public void testFilePlusTextSharing_TextExclusionDoesNotAffectAlternativeIntent() {
         Uri uri = createTestContentProviderUri("image/png", null);
         Intent sendIntent = createSendImageIntent(uri);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
         sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
 
         Intent alternativeIntent = createSendTextIntent();
@@ -841,8 +877,6 @@ public class UnbundledChooserActivityTest {
     public void testImagePlusTextSharing_failedThumbnailAndExcludedText_textChanges() {
         Uri uri = createTestContentProviderUri("image/png", null);
         Intent sendIntent = createSendImageIntent(uri);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(Collections.emptyMap());
         sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
 
         List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
@@ -937,8 +971,7 @@ public class UnbundledChooserActivityTest {
 
         Uri uri = createTestContentProviderUri("image/png", null);
         Intent sendIntent = createSendImageIntent(uri);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -962,8 +995,7 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createWideBitmap());
+        mFakeImageLoader.setBitmap(uri, createWideBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -976,6 +1008,7 @@ public class UnbundledChooserActivityTest {
                         throw exception;
                     }
                     RecyclerView recyclerView = (RecyclerView) view;
+                    RecyclerViewExt.endAnimations(recyclerView);
                     assertThat("recyclerView adapter item count",
                             recyclerView.getAdapter().getItemCount(), is(1));
                     assertThat("recyclerView child view count",
@@ -1000,8 +1033,6 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(Collections.emptyMap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1019,8 +1050,7 @@ public class UnbundledChooserActivityTest {
         ArrayList<Uri> uris = new ArrayList<>(1);
         uris.add(uri);
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1046,8 +1076,7 @@ public class UnbundledChooserActivityTest {
         }
         uris.add(imageUri);
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(imageUri, createBitmap());
+        mFakeImageLoader.setBitmap(imageUri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         setupResolverControllers(resolvedComponentInfos);
@@ -1079,8 +1108,7 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1114,12 +1142,9 @@ public class UnbundledChooserActivityTest {
         uris.add(docUri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        Map<Uri, Bitmap> bitmaps = new HashMap<>();
-        bitmaps.put(imgOneUri, createWideBitmap(Color.RED));
-        bitmaps.put(imgTwoUri, createWideBitmap(Color.GREEN));
-        bitmaps.put(docUri, createWideBitmap(Color.BLUE));
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(bitmaps);
+        mFakeImageLoader.setBitmap(imgOneUri, createWideBitmap(Color.RED));
+        mFakeImageLoader.setBitmap(imgTwoUri, createWideBitmap(Color.GREEN));
+        mFakeImageLoader.setBitmap(docUri, createWideBitmap(Color.BLUE));
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         setupResolverControllers(resolvedComponentInfos);
@@ -1137,6 +1162,7 @@ public class UnbundledChooserActivityTest {
                         throw exception;
                     }
                     RecyclerView recyclerView = (RecyclerView) view;
+                    RecyclerViewExt.endAnimations(recyclerView);
                     assertThat(recyclerView.getChildCount()).isAtLeast(1);
                     // the first view is a preview
                     View imageView = recyclerView.getChildAt(0).findViewById(R.id.image);
@@ -1167,8 +1193,7 @@ public class UnbundledChooserActivityTest {
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
         sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1197,8 +1222,7 @@ public class UnbundledChooserActivityTest {
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
         sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1234,8 +1258,7 @@ public class UnbundledChooserActivityTest {
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
         sendIntent.putExtra(Intent.EXTRA_TEXT, sharedText);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1275,8 +1298,10 @@ public class UnbundledChooserActivityTest {
     public void testOnCreateLoggingFromWorkProfile() {
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
-        ChooserActivityOverrideData.getInstance().alternateProfileSetting =
-                MetricsEvent.MANAGED_PROFILE;
+
+        // Launch as work user.
+        mFakeUserRepo.addUser(WORK_USER, true);
+        mApplicationUser = WORK_PROFILE_USER_HANDLE;
 
         ChooserWrapperActivity activity =
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, "logger test"));
@@ -1331,8 +1356,7 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createBitmap());
+        mFakeImageLoader.setBitmap(uri, createBitmap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -2174,7 +2198,7 @@ public class UnbundledChooserActivityTest {
                 createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(workProfileTargets);
-        ChooserActivityOverrideData.getInstance().isQuietModeEnabled = true;
+        mFakeUserRepo.updateState(WORK_USER, false);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
@@ -2228,8 +2252,7 @@ public class UnbundledChooserActivityTest {
         uris.add(uri);
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
-        ChooserActivityOverrideData.getInstance().imageLoader =
-                createImageLoader(uri, createWideBitmap());
+        mFakeImageLoader.setBitmap(uri, createWideBitmap());
 
         mActivityRule.launchActivity(Intent.createChooser(sendIntent, "Scrollable preview test"));
         waitForIdle();
@@ -2257,7 +2280,7 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(0);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
-        ChooserActivityOverrideData.getInstance().isQuietModeEnabled = true;
+        mFakeUserRepo.updateState(WORK_USER, false);
         ChooserActivityOverrideData.getInstance().hasCrossProfileIntents = false;
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
@@ -2281,7 +2304,7 @@ public class UnbundledChooserActivityTest {
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(0);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
-        ChooserActivityOverrideData.getInstance().isQuietModeEnabled = true;
+        mFakeUserRepo.updateState(WORK_USER, false);
         Intent sendIntent = createSendTextIntent();
         sendIntent.setType(TEST_MIME_TYPE);
 
@@ -3017,18 +3040,12 @@ public class UnbundledChooserActivityTest {
     }
 
     private void markOtherProfileAvailability(boolean workAvailable, boolean cloneAvailable) {
-        AnnotatedUserHandles.Builder handles = AnnotatedUserHandles.newBuilder();
-        handles
-                .setUserIdOfCallingApp(1234)  // Must be non-negative.
-                .setUserHandleSharesheetLaunchedAs(PERSONAL_USER_HANDLE)
-                .setPersonalProfileUserHandle(PERSONAL_USER_HANDLE);
         if (workAvailable) {
-            handles.setWorkProfileUserHandle(WORK_PROFILE_USER_HANDLE);
+            mFakeUserRepo.addUser(WORK_USER, /* available= */ true);
         }
         if (cloneAvailable) {
-            handles.setCloneProfileUserHandle(CLONE_PROFILE_USER_HANDLE);
+            mFakeUserRepo.addUser(CLONE_USER, /* available= */ true);
         }
-        ChooserWrapperActivity.sOverrides.annotatedUserHandles = handles.build();
     }
 
     private void setupResolverControllers(
@@ -3048,8 +3065,8 @@ public class UnbundledChooserActivityTest {
                                 Mockito.anyBoolean(),
                                 Mockito.anyBoolean(),
                                 Mockito.isA(List.class),
-                                eq(UserHandle.SYSTEM)))
-                .thenReturn(new ArrayList<>(personalResolvedComponentInfos));
+                                eq(PERSONAL_USER_HANDLE)))
+                                .thenReturn(new ArrayList<>(personalResolvedComponentInfos));
         when(
                 ChooserActivityOverrideData
                         .getInstance()
@@ -3059,19 +3076,8 @@ public class UnbundledChooserActivityTest {
                                 Mockito.anyBoolean(),
                                 Mockito.anyBoolean(),
                                 Mockito.isA(List.class),
-                                eq(UserHandle.SYSTEM)))
-                .thenReturn(new ArrayList<>(personalResolvedComponentInfos));
-        when(
-                ChooserActivityOverrideData
-                        .getInstance()
-                        .workResolverListController
-                        .getResolversForIntentAsUser(
-                                Mockito.anyBoolean(),
-                                Mockito.anyBoolean(),
-                                Mockito.anyBoolean(),
-                                Mockito.isA(List.class),
-                                eq(UserHandle.of(10))))
-                .thenReturn(new ArrayList<>(workResolvedComponentInfos));
+                                eq(WORK_PROFILE_USER_HANDLE)))
+                                .thenReturn(new ArrayList<>(workResolvedComponentInfos));
     }
 
     private static GridRecyclerSpanCountMatcher withGridColumnCount(int columnCount) {
@@ -3133,9 +3139,5 @@ public class UnbundledChooserActivityTest {
                     return pair.first;
                 };
         return shortcutLoaders;
-    }
-
-    private static ImageLoader createImageLoader(Uri uri, Bitmap bitmap) {
-        return new TestPreviewImageLoader(Collections.singletonMap(uri, bitmap));
     }
 }

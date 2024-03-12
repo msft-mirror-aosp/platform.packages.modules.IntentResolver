@@ -40,7 +40,6 @@ import com.android.intentresolver.ChooserListAdapter;
 import com.android.intentresolver.FeatureFlags;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverListAdapter.ViewHolder;
-import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.android.collect.Lists;
 
@@ -50,7 +49,6 @@ import com.google.android.collect.Lists;
  * row level by this adapter but not on the item level. Individual targets within the row are
  * handled by {@link ChooserListAdapter}
  */
-@VisibleForTesting
 public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     /**

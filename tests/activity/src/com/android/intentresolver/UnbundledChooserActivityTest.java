@@ -119,6 +119,7 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.contentpreview.ImageLoader;
+import com.android.intentresolver.ext.RecyclerViewExt;
 import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.logging.FakeEventLog;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
@@ -800,7 +801,7 @@ public class UnbundledChooserActivityTest {
         Uri uri = createTestContentProviderUri("image/png", null);
         Intent sendIntent = createSendImageIntent(uri);
         ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(Collections.emptyMap());
+                new FakeImageLoader(Collections.emptyMap());
         sendIntent.putExtra(Intent.EXTRA_TEXT, "https://google.com/search?q=google");
 
         List<ResolvedComponentInfo> resolvedComponentInfos = Arrays.asList(
@@ -935,6 +936,7 @@ public class UnbundledChooserActivityTest {
                         throw exception;
                     }
                     RecyclerView recyclerView = (RecyclerView) view;
+                    RecyclerViewExt.endAnimations(recyclerView);
                     assertThat(recyclerView.getAdapter().getItemCount(), is(1));
                     assertThat(recyclerView.getChildCount(), is(1));
                     View imageView = recyclerView.getChildAt(0);
@@ -958,7 +960,7 @@ public class UnbundledChooserActivityTest {
 
         Intent sendIntent = createSendUriIntentWithPreview(uris);
         ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(Collections.emptyMap());
+                new FakeImageLoader(Collections.emptyMap());
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
 
@@ -1076,7 +1078,7 @@ public class UnbundledChooserActivityTest {
         bitmaps.put(imgTwoUri, createWideBitmap(Color.GREEN));
         bitmaps.put(docUri, createWideBitmap(Color.BLUE));
         ChooserActivityOverrideData.getInstance().imageLoader =
-                new TestPreviewImageLoader(bitmaps);
+                new FakeImageLoader(bitmaps);
 
         List<ResolvedComponentInfo> resolvedComponentInfos = createResolvedComponentsForTest(2);
         setupResolverControllers(resolvedComponentInfos);
@@ -1094,6 +1096,7 @@ public class UnbundledChooserActivityTest {
                         throw exception;
                     }
                     RecyclerView recyclerView = (RecyclerView) view;
+                    RecyclerViewExt.endAnimations(recyclerView);
                     assertThat(recyclerView.getChildCount()).isAtLeast(1);
                     // the first view is a preview
                     View imageView = recyclerView.getChildAt(0).findViewById(R.id.image);
@@ -3122,6 +3125,6 @@ public class UnbundledChooserActivityTest {
     }
 
     private static ImageLoader createImageLoader(Uri uri, Bitmap bitmap) {
-        return new TestPreviewImageLoader(Collections.singletonMap(uri, bitmap));
+        return new FakeImageLoader(Collections.singletonMap(uri, bitmap));
     }
 }

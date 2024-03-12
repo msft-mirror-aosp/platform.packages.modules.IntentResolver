@@ -101,17 +101,17 @@ import com.android.intentresolver.icons.DefaultTargetDataLoader;
 import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.model.ResolverRankerServiceResolverComparator;
 import com.android.intentresolver.v2.data.repository.DevicePolicyResources;
-import com.android.intentresolver.v2.shared.model.Profile;
 import com.android.intentresolver.v2.emptystate.NoAppsAvailableEmptyStateProvider;
-import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider.DevicePolicyBlockerEmptyState;
-import com.android.intentresolver.v2.emptystate.WorkProfilePausedEmptyStateProvider;
+import com.android.intentresolver.v2.emptystate.ResolverNoCrossProfileEmptyStateProvider;
+import com.android.intentresolver.v2.emptystate.ResolverWorkProfilePausedEmptyStateProvider;
 import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter;
-import com.android.intentresolver.v2.profiles.OnSwitchOnWorkSelectedListener;
 import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter.ProfileType;
 import com.android.intentresolver.v2.profiles.OnProfileSelectedListener;
-import com.android.intentresolver.v2.profiles.TabConfig;
+import com.android.intentresolver.v2.profiles.OnSwitchOnWorkSelectedListener;
 import com.android.intentresolver.v2.profiles.ResolverMultiProfilePagerAdapter;
+import com.android.intentresolver.v2.profiles.TabConfig;
+import com.android.intentresolver.v2.shared.model.Profile;
 import com.android.intentresolver.v2.ui.ActionTitle;
 import com.android.intentresolver.v2.ui.model.ActivityModel;
 import com.android.intentresolver.v2.ui.model.ResolverRequest;
@@ -154,11 +154,10 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         ResolverListAdapter.ResolverListCommunicator {
 
     @Inject public PackageManager mPackageManager;
-    @Inject public ActivityModel mActivityModel;
     @Inject public DevicePolicyResources mDevicePolicyResources;
     @Inject public IntentForwarding mIntentForwarding;
     private ResolverRequest mResolverRequest;
-
+    private ActivityModel mActivityModel;
     protected ActivityLogic mLogic;
     protected TargetDataLoader mTargetDataLoader;
     private boolean mResolvingHome;
@@ -218,6 +217,9 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             }
         };
     }
+    protected ActivityModel createActivityModel() {
+        return ActivityModel.createFrom(this);
+    }
 
     @VisibleForTesting
     protected ActivityLogic createActivityLogic() {
@@ -232,15 +234,17 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     public CreationExtras getDefaultViewModelCreationExtras() {
         return addDefaultArgs(
                 super.getDefaultViewModelCreationExtras(),
-                new Pair<>(ActivityModel.ACTIVITY_MODEL_KEY, mActivityModel));
+                new Pair<>(ActivityModel.ACTIVITY_MODEL_KEY, ActivityModel.createFrom(this)));
     }
 
     @Override
-    protected final void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTheme(R.style.Theme_DeviceDefault_Resolver);
+        mActivityModel = createActivityModel();
+
         Log.i(TAG, "onCreate");
-        Log.i(TAG, "activityLaunch=" + mActivityModel.toString());
+        Log.i(TAG, "activityModel=" + mActivityModel.toString());
         int callerUid = mActivityModel.getLaunchedFromUid();
         if (callerUid < 0 || UserHandle.isIsolated(callerUid)) {
             Log.e(TAG, "Can't start a resolver from uid " + callerUid);
@@ -403,7 +407,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                         /* devicePolicyEventCategory= */
                                 ResolverActivity.METRICS_CATEGORY_RESOLVER);
 
-        return new NoCrossProfileEmptyStateProvider(
+        return new ResolverNoCrossProfileEmptyStateProvider(
                 requireAnnotatedUserHandles().personalProfileUserHandle,
                 noWorkToPersonalEmptyState,
                 noPersonalToWorkEmptyState,
@@ -924,7 +928,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         final EmptyStateProvider blockerEmptyStateProvider = createBlockerEmptyStateProvider();
 
         final EmptyStateProvider workProfileOffEmptyStateProvider =
-                new WorkProfilePausedEmptyStateProvider(this, workProfileUserHandle,
+                new ResolverWorkProfilePausedEmptyStateProvider(this, workProfileUserHandle,
                         mLogic.getWorkProfileAvailabilityManager(),
                         /* onSwitchOnWorkSelectedListener= */
                         () -> {
