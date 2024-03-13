@@ -18,17 +18,26 @@ package com.android.intentresolver.v2.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.FetchPreviewsInteractor
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.UpdateTargetIntentInteractor
+import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
+import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.ChooserServiceFlags
+import com.android.intentresolver.v2.domain.interactor.ChooserRequestUpdateInteractorFactory
 import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ActivityModel.Companion.ACTIVITY_MODEL_KEY
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.Valid
+import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 private const val TAG = "ChooserViewModel"
 
@@ -37,7 +46,12 @@ class ChooserViewModel
 @Inject
 constructor(
     args: SavedStateHandle,
-    flags: ChooserServiceFlags,
+    private val shareouselViewModelProvider: Lazy<ShareouselViewModel>,
+    private val updateTargetIntentInteractor: Lazy<UpdateTargetIntentInteractor>,
+    private val fetchPreviewsInteractor: Lazy<FetchPreviewsInteractor>,
+    @Background private val bgDispatcher: CoroutineDispatcher,
+    private val chooserRequestUpdateInteractorFactory: ChooserRequestUpdateInteractorFactory,
+    private val flags: ChooserServiceFlags,
 ) : ViewModel() {
 
     /** Parcelable-only references provided from the creating Activity */
@@ -45,6 +59,19 @@ constructor(
         requireNotNull(args[ACTIVITY_MODEL_KEY]) {
             "ActivityModel missing in SavedStateHandle! ($ACTIVITY_MODEL_KEY)"
         }
+
+    val shareouselViewModel by lazy {
+        // TODO: consolidate this logic, this would require a consolidated preview view model but
+        //  for now just postpone starting the payload selection preview machinery until it's needed
+        assert(flags.chooserPayloadToggling()) {
+            "An attempt to use payload selection preview with the disabled flag"
+        }
+
+        viewModelScope.launch(bgDispatcher) { updateTargetIntentInteractor.get().launch() }
+        viewModelScope.launch(bgDispatcher) { fetchPreviewsInteractor.get().launch() }
+        viewModelScope.launch { chooserRequestUpdateInteractorFactory.create(_request).launch() }
+        shareouselViewModelProvider.get()
+    }
 
     /**
      * Provided only for the express purpose of early exit in the event of an invalid request.

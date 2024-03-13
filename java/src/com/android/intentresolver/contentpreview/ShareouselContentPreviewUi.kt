@@ -31,9 +31,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi.ActionFactory
-import com.android.intentresolver.contentpreview.payloadtoggle.app.viewmodel.ShareouselContentPreviewViewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.composable.Shareousel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
+import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ShareouselContentPreviewUi(
@@ -58,8 +58,8 @@ class ShareouselContentPreviewUi(
         }
         return ComposeView(parent.context).apply {
             setContent {
-                val vm: ShareouselContentPreviewViewModel = viewModel()
-                val viewModel: ShareouselViewModel = vm.viewModel
+                val vm: ChooserViewModel = viewModel()
+                val viewModel: ShareouselViewModel = vm.shareouselViewModel
 
                 headlineViewParent?.let {
                     LaunchedEffect(viewModel) { bindHeadline(viewModel, headlineViewParent) }
