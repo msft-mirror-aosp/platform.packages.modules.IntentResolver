@@ -18,8 +18,6 @@ package com.android.intentresolver.v2.shared.model
 
 import android.annotation.UserIdInt
 import android.os.UserHandle
-import com.android.intentresolver.v2.shared.model.User.Type.FULL
-import com.android.intentresolver.v2.shared.model.User.Type.PROFILE
 
 /**
  * A User represents the owner of a distinct set of content.
@@ -45,21 +43,10 @@ data class User(
 ) {
     val handle: UserHandle = UserHandle.of(id)
 
-    val type: Type
-        get() = role.type
-
-    enum class Type {
-        FULL,
-        PROFILE
-    }
-
-    enum class Role(
-        /** The type of the role user. */
-        val type: Type
-    ) {
-        PERSONAL(FULL),
-        PRIVATE(PROFILE),
-        WORK(PROFILE),
-        CLONE(PROFILE)
+    enum class Role {
+        PERSONAL,
+        PRIVATE,
+        WORK,
+        CLONE
     }
 }

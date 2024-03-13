@@ -151,7 +151,6 @@ constructor(
             .distinctUntilChanged()
 
     override suspend fun requestState(user: User, available: Boolean) {
-        require(user.type == User.Type.PROFILE) { "Only profile users are supported" }
         return withContext(backgroundDispatcher) {
             Log.i(TAG, "requestQuietModeEnabled: ${!available} for user $user")
             userManager.requestQuietModeEnabled(/* enableQuietMode = */ !available, user.handle)
