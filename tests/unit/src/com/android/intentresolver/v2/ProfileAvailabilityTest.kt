@@ -16,6 +16,7 @@
 
 package com.android.intentresolver.v2
 
+import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.data.repository.FakeUserRepository
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
@@ -26,7 +27,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, JavaInterop::class)
 class ProfileAvailabilityTest {
     private val personalUser = User(0, User.Role.PERSONAL)
     private val workUser = User(10, User.Role.WORK)

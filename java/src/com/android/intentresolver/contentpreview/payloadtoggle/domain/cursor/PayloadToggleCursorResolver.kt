@@ -20,9 +20,9 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.service.chooser.AdditionalContentContract.Columns.URI
+import androidx.core.os.bundleOf
 import com.android.intentresolver.inject.AdditionalContent
 import com.android.intentresolver.inject.ChooserIntent
-import com.android.intentresolver.util.Bundle
 import com.android.intentresolver.util.cursor.CursorView
 import com.android.intentresolver.util.cursor.viewBy
 import com.android.intentresolver.util.withCancellationSignal
@@ -46,7 +46,7 @@ constructor(
                 contentResolver.query(
                     cursorUri,
                     arrayOf(URI),
-                    Bundle { putParcelable(Intent.EXTRA_INTENT, chooserIntent) },
+                    bundleOf(Intent.EXTRA_INTENT to chooserIntent),
                     signal,
                 )
             }

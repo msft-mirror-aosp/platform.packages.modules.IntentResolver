@@ -20,10 +20,10 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.database.MatrixCursor
 import android.net.Uri
+import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.CursorPreviewsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
-import com.android.intentresolver.util.Bundle
 import com.android.intentresolver.util.cursor.viewBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,7 +67,7 @@ class CursorPreviewsInteractorTest {
         val cursor =
             MatrixCursor(arrayOf("uri"))
                 .apply {
-                    extras = Bundle { putInt("position", cursorStartPosition) }
+                    extras = bundleOf("position" to cursorStartPosition)
                     for (i in cursorRange) {
                         newRow().add("uri", uri(i).toString())
                     }

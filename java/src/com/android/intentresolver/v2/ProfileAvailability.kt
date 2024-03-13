@@ -16,6 +16,7 @@
 
 package com.android.intentresolver.v2
 
+import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** Provides availability status for profiles */
+@JavaInterop
 class ProfileAvailability(
     private val scope: CoroutineScope,
     private val userInteractor: UserInteractor,
