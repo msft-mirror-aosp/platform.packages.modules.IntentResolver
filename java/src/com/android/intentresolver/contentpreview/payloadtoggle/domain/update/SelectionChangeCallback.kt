@@ -20,17 +20,20 @@ import android.content.ContentInterface
 import android.content.Intent
 import android.content.Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION
 import android.content.Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER
+import android.content.Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_TARGETS
 import android.content.Intent.EXTRA_INTENT
+import android.content.Intent.EXTRA_METADATA_TEXT
 import android.content.IntentSender
 import android.net.Uri
 import android.os.Bundle
 import android.service.chooser.AdditionalContentContract.MethodNames.ON_SELECTION_CHANGED
 import android.service.chooser.ChooserAction
 import android.service.chooser.ChooserTarget
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallback.ShareouselUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.inject.AdditionalContent
 import com.android.intentresolver.inject.ChooserIntent
+import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.v2.ui.viewmodel.readAlternateIntents
 import com.android.intentresolver.v2.ui.viewmodel.readChooserActions
 import com.android.intentresolver.v2.validation.Invalid
@@ -56,15 +59,6 @@ private const val TAG = "SelectionChangeCallback"
  */
 fun interface SelectionChangeCallback {
     suspend fun onSelectionChanged(targetIntent: Intent): ShareouselUpdate?
-
-    data class ShareouselUpdate(
-        // for all properties, null value means no change
-        val customActions: List<ChooserAction>? = null,
-        val modifyShareAction: ChooserAction? = null,
-        val alternateIntents: List<Intent>? = null,
-        val callerTargets: List<ChooserTarget>? = null,
-        val refinementIntentSender: IntentSender? = null,
-    )
 }
 
 class SelectionChangeCallbackImpl
@@ -73,6 +67,7 @@ constructor(
     @AdditionalContent private val uri: Uri,
     @ChooserIntent private val chooserIntent: Intent,
     private val contentResolver: ContentInterface,
+    private val flags: ChooserServiceFlags,
 ) : SelectionChangeCallback {
     private val mutex = Mutex()
 
@@ -92,7 +87,7 @@ constructor(
                 )
             }
             ?.let { bundle ->
-                return when (val result = readCallbackResponse(bundle)) {
+                return when (val result = readCallbackResponse(bundle, flags)) {
                     is Valid -> result.value
                     is Invalid -> {
                         result.errors.forEach { it.log(TAG) }
@@ -102,7 +97,10 @@ constructor(
             }
 }
 
-private fun readCallbackResponse(bundle: Bundle): ValidationResult<ShareouselUpdate> {
+private fun readCallbackResponse(
+    bundle: Bundle,
+    flags: ChooserServiceFlags
+): ValidationResult<ShareouselUpdate> {
     return validateFrom(bundle::get) {
         val customActions = readChooserActions()
         val modifyShareAction = optional(value<ChooserAction>(EXTRA_CHOOSER_MODIFY_SHARE_ACTION))
@@ -110,6 +108,13 @@ private fun readCallbackResponse(bundle: Bundle): ValidationResult<ShareouselUpd
         val callerTargets = optional(array<ChooserTarget>(EXTRA_CHOOSER_TARGETS))
         val refinementIntentSender =
             optional(value<IntentSender>(EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER))
+        val resultIntentSender = optional(value<IntentSender>(EXTRA_CHOOSER_RESULT_INTENT_SENDER))
+        val metadataText =
+            if (flags.enableSharesheetMetadataExtra()) {
+                optional(value<CharSequence>(EXTRA_METADATA_TEXT))
+            } else {
+                null
+            }
 
         ShareouselUpdate(
             customActions,
@@ -117,6 +122,8 @@ private fun readCallbackResponse(bundle: Bundle): ValidationResult<ShareouselUpd
             alternateIntents,
             callerTargets,
             refinementIntentSender,
+            resultIntentSender,
+            metadataText,
         )
     }
 }

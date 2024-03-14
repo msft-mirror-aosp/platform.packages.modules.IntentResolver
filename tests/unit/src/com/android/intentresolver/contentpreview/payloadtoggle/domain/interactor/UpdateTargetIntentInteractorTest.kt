@@ -20,11 +20,15 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.content.Intent
 import android.net.Uri
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -36,10 +40,13 @@ class UpdateTargetIntentInteractorTest {
         val initialIntent = Intent()
         val intentRepository = TargetIntentRepository(initialIntent, emptyList())
         val selectionRepository = PreviewSelectionsRepository()
+        val chooserParamsUpdateRepository = ChooserParamsUpdateRepository()
+        val selectionCallbackResult = ShareouselUpdate()
         val underTest =
             UpdateTargetIntentInteractor(
                 intentRepository = intentRepository,
-                selectionCallback = { intent -> null },
+                chooserParamsUpdateRepository = chooserParamsUpdateRepository,
+                selectionCallback = { selectionCallbackResult },
                 selectionRepo = selectionRepository,
                 targetIntentModifier = { selection ->
                     Intent()
@@ -83,5 +90,7 @@ class UpdateTargetIntentInteractorTest {
                 Uri.fromParts("scheme1", "ssp1", "fragment1"),
                 Uri.fromParts("scheme2", "ssp2", "fragment2"),
             )
+        assertThat(chooserParamsUpdateRepository.updates.filterNotNull().first())
+            .isEqualTo(selectionCallbackResult)
     }
 }

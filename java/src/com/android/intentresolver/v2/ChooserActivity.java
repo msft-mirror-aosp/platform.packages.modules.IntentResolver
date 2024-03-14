@@ -490,11 +490,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mLatencyTracker.onActionStart(ACTION_LOAD_SHARE_SHEET);
 
         mPinnedSharedPrefs = getPinnedSharedPrefs(this);
-        IntentSender chosenComponentSender = mRequest.getChosenComponentSender();
-        if (chosenComponentSender != null) {
-            mShareResultSender = mShareResultSenderFactory.create(
-                    mViewModel.getActivityModel().getLaunchedFromUid(), chosenComponentSender);
-        }
+        updateShareResultSender();
 
         mMaxTargetsPerRow =
                 getResources().getInteger(R.integer.config_chooser_max_targets_per_row);
@@ -661,11 +657,37 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void onChooserRequestChanged(ChooserRequest chooserRequest) {
+        // intentional reference comarison
         if (mRequest == chooserRequest) {
             return;
         }
+        boolean recreateAdapters = shouldUpdateAdapters(mRequest, chooserRequest);
         mRequest = chooserRequest;
-        recreatePagerAdapter();
+        updateShareResultSender();
+        if (recreateAdapters) {
+            recreatePagerAdapter();
+        }
+    }
+
+    private void updateShareResultSender() {
+        IntentSender chosenComponentSender = mRequest.getChosenComponentSender();
+        if (chosenComponentSender != null) {
+            mShareResultSender = mShareResultSenderFactory.create(
+                    mViewModel.getActivityModel().getLaunchedFromUid(), chosenComponentSender);
+        } else {
+            mShareResultSender = null;
+        }
+    }
+
+    private boolean shouldUpdateAdapters(
+            ChooserRequest oldChooserRequest, ChooserRequest newChooserRequest) {
+        Intent oldTargetIntent = oldChooserRequest.getTargetIntent();
+        Intent newTargetIntent = newChooserRequest.getTargetIntent();
+
+        // TODO: a workaround for the unnecessary target reloading caused by multiple flow updates -
+        //  an artifact of the current implementation; revisit.
+        // reference comparison is intentional
+        return oldTargetIntent != newTargetIntent;
     }
 
     private void recreatePagerAdapter() {

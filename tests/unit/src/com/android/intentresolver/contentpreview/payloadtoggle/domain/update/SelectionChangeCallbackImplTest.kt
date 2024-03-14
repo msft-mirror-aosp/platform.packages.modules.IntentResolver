@@ -27,8 +27,10 @@ import android.content.Intent.EXTRA_ALTERNATE_INTENTS
 import android.content.Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
 import android.content.Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION
 import android.content.Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER
+import android.content.Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_TARGETS
 import android.content.Intent.EXTRA_INTENT
+import android.content.Intent.EXTRA_METADATA_TEXT
 import android.content.Intent.EXTRA_STREAM
 import android.graphics.drawable.Icon
 import android.net.Uri
@@ -36,11 +38,13 @@ import android.os.Bundle
 import android.service.chooser.AdditionalContentContract.MethodNames.ON_SELECTION_CHANGED
 import android.service.chooser.ChooserAction
 import android.service.chooser.ChooserTarget
+import android.service.chooser.Flags
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.any
 import com.android.intentresolver.argumentCaptor
 import com.android.intentresolver.capture
+import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.android.intentresolver.mock
 import com.android.intentresolver.whenever
 import com.google.common.truth.Correspondence
@@ -59,10 +63,16 @@ class SelectionChangeCallbackImplTest {
     private val chooserIntent = Intent(ACTION_CHOOSER)
     private val contentResolver = mock<ContentInterface>()
     private val context = InstrumentationRegistry.getInstrumentation().context
+    private val flags =
+        FakeChooserServiceFlags().apply {
+            setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false)
+            setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, false)
+            setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
+        }
 
     @Test
     fun testPayloadChangeCallbackContact() = runTest {
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
 
         val u1 = createUri(1)
         val u2 = createUri(2)
@@ -158,7 +168,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelableArray(EXTRA_CHOOSER_CUSTOM_ACTIONS, arrayOf(a1, a2)) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
 
         val targetIntent = Intent(ACTION_SEND_MULTIPLE)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -173,6 +183,8 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.alternateIntents).isNull()
         assertThat(result.callerTargets).isNull()
         assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isNull()
     }
 
     @Test
@@ -194,7 +206,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelable(EXTRA_CHOOSER_MODIFY_SHARE_ACTION, modifyShare) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -211,6 +223,8 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.alternateIntents).isNull()
         assertThat(result.callerTargets).isNull()
         assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isNull()
     }
 
     @Test
@@ -227,7 +241,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelableArray(EXTRA_ALTERNATE_INTENTS, alternateIntents) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -250,6 +264,8 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.modifyShareAction).isNull()
         assertThat(result.callerTargets).isNull()
         assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isNull()
     }
 
     @Test
@@ -275,7 +291,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelableArray(EXTRA_CHOOSER_TARGETS, arrayOf(t1, t2)) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -301,6 +317,8 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.modifyShareAction).isNull()
         assertThat(result.alternateIntents).isNull()
         assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isNull()
     }
 
     @Test
@@ -315,7 +333,7 @@ class SelectionChangeCallbackImplTest {
                 }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -326,22 +344,23 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.alternateIntents).isNull()
         assertThat(result.callerTargets).isNull()
         assertThat(result.refinementIntentSender).isNotNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isNull()
     }
 
     @Test
-    fun testPayloadChangeCallbackProvidesInvalidData_invalidDataIgnored() = runTest {
+    fun testPayloadChangeCallbackUpdatesResultIntentSender() = runTest {
+        val broadcast =
+            PendingIntent.getBroadcast(context, 1, Intent("test"), PendingIntent.FLAG_IMMUTABLE)
+
         whenever(contentResolver.call(any<String>(), any(), any(), any()))
             .thenReturn(
                 Bundle().apply {
-                    putParcelableArrayList(EXTRA_CHOOSER_CUSTOM_ACTIONS, ArrayList<ChooserAction>())
-                    putParcelable(EXTRA_CHOOSER_MODIFY_SHARE_ACTION, createUri(1))
-                    putParcelableArrayList(EXTRA_ALTERNATE_INTENTS, ArrayList<Intent>())
-                    putParcelableArrayList(EXTRA_CHOOSER_TARGETS, ArrayList<ChooserTarget>())
-                    putParcelable(EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER, createUri(2))
+                    putParcelable(EXTRA_CHOOSER_RESULT_INTENT_SENDER, broadcast.intentSender)
                 }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -352,6 +371,82 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.alternateIntents).isNull()
         assertThat(result.callerTargets).isNull()
         assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNotNull()
+        assertThat(result.metadataText).isNull()
+    }
+
+    @Test
+    fun testPayloadChangeCallbackUpdatesMetadataTextWithDisabledFlag_noUpdates() = runTest {
+        val metadataText = "[Metadata]"
+        whenever(contentResolver.call(any<String>(), any(), any(), any()))
+            .thenReturn(Bundle().apply { putCharSequence(EXTRA_METADATA_TEXT, metadataText) })
+
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+
+        val targetIntent = Intent(ACTION_SEND)
+        val result = testSubject.onSelectionChanged(targetIntent)
+        assertWithMessage("Callback result should not be null").that(result).isNotNull()
+        requireNotNull(result)
+        assertThat(result.customActions).isNull()
+        assertThat(result.modifyShareAction).isNull()
+        assertThat(result.alternateIntents).isNull()
+        assertThat(result.callerTargets).isNull()
+        assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isNull()
+    }
+
+    @Test
+    fun testPayloadChangeCallbackUpdatesMetadataTextWithEnabledFlag_valueUpdated() = runTest {
+        val metadataText = "[Metadata]"
+        flags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
+        whenever(contentResolver.call(any<String>(), any(), any(), any()))
+            .thenReturn(Bundle().apply { putCharSequence(EXTRA_METADATA_TEXT, metadataText) })
+
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+
+        val targetIntent = Intent(ACTION_SEND)
+        val result = testSubject.onSelectionChanged(targetIntent)
+        assertWithMessage("Callback result should not be null").that(result).isNotNull()
+        requireNotNull(result)
+        assertThat(result.customActions).isNull()
+        assertThat(result.modifyShareAction).isNull()
+        assertThat(result.alternateIntents).isNull()
+        assertThat(result.callerTargets).isNull()
+        assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isEqualTo(metadataText)
+    }
+
+    @Test
+    fun testPayloadChangeCallbackProvidesInvalidData_invalidDataIgnored() = runTest {
+        flags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
+        whenever(contentResolver.call(any<String>(), any(), any(), any()))
+            .thenReturn(
+                Bundle().apply {
+                    putParcelableArrayList(EXTRA_CHOOSER_CUSTOM_ACTIONS, ArrayList<ChooserAction>())
+                    putParcelable(EXTRA_CHOOSER_MODIFY_SHARE_ACTION, createUri(1))
+                    putParcelableArrayList(EXTRA_ALTERNATE_INTENTS, ArrayList<Intent>())
+                    putParcelableArrayList(EXTRA_CHOOSER_TARGETS, ArrayList<ChooserTarget>())
+                    putParcelable(EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER, createUri(2))
+                    putParcelable(EXTRA_CHOOSER_RESULT_INTENT_SENDER, createUri(1))
+                    putInt(EXTRA_METADATA_TEXT, 123)
+                }
+            )
+
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+
+        val targetIntent = Intent(ACTION_SEND)
+        val result = testSubject.onSelectionChanged(targetIntent)
+        assertWithMessage("Callback result should not be null").that(result).isNotNull()
+        requireNotNull(result)
+        assertThat(result.customActions).isNull()
+        assertThat(result.modifyShareAction).isNull()
+        assertThat(result.alternateIntents).isNull()
+        assertThat(result.callerTargets).isNull()
+        assertThat(result.refinementIntentSender).isNull()
+        assertThat(result.resultIntentSender).isNull()
+        assertThat(result.metadataText).isNull()
     }
 }
 

@@ -20,10 +20,14 @@ import android.content.Intent
 import android.content.Intent.ACTION_SEND
 import android.content.Intent.ACTION_SEND_MULTIPLE
 import android.content.Intent.EXTRA_STREAM
+import android.content.IntentSender
 import android.net.Uri
 import android.service.chooser.Flags
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.inject.FakeChooserServiceFlags
+import com.android.intentresolver.mock
 import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.google.common.truth.Truth.assertWithMessage
@@ -59,6 +63,7 @@ class ChooserRequestUpdateInteractorTest {
             targetIntent,
             emptyList(),
         )
+    private val chooserParamsUpdateRepository = ChooserParamsUpdateRepository()
     private val fakeFlags =
         FakeChooserServiceFlags().apply {
             setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
@@ -76,6 +81,7 @@ class ChooserRequestUpdateInteractorTest {
                     activityModel,
                     targetIntent,
                     targetIntentRepository,
+                    chooserParamsUpdateRepository,
                     requestFlow,
                     fakeFlags,
                 )
@@ -96,6 +102,7 @@ class ChooserRequestUpdateInteractorTest {
                     activityModel,
                     targetIntent,
                     targetIntentRepository,
+                    chooserParamsUpdateRepository,
                     requestFlow,
                     fakeFlags,
                 )
@@ -107,9 +114,40 @@ class ChooserRequestUpdateInteractorTest {
                 }
             testScheduler.runCurrent()
 
-            assertWithMessage("No updates expected")
+            assertWithMessage("Another chooser request is expected")
                 .that(requestFlow.value)
                 .isNotEqualTo(initialRequest)
+        }
+
+    @Test
+    fun testChooserParamsUpdate_newRequestPublished() =
+        testScope.runTest {
+            val requestFlow = MutableStateFlow(initialRequest)
+            val testSubject =
+                ChooserRequestUpdateInteractor(
+                    activityModel,
+                    targetIntent,
+                    targetIntentRepository,
+                    chooserParamsUpdateRepository,
+                    requestFlow,
+                    fakeFlags,
+                )
+            backgroundScope.launch { testSubject.launch() }
+            val newResultSender = mock<IntentSender>()
+            chooserParamsUpdateRepository.setUpdates(
+                ShareouselUpdate(
+                    resultIntentSender = newResultSender,
+                )
+            )
+            testScheduler.runCurrent()
+
+            assertWithMessage("Another chooser request is expected")
+                .that(requestFlow.value)
+                .isNotEqualTo(initialRequest)
+
+            assertWithMessage("Another chooser request is expected")
+                .that(requestFlow.value.chosenComponentSender)
+                .isSameInstanceAs(newResultSender)
         }
 }
 

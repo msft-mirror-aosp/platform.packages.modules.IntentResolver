@@ -18,6 +18,7 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.CustomAction
@@ -30,6 +31,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 
@@ -38,6 +40,7 @@ class UpdateTargetIntentInteractor
 @Inject
 constructor(
     private val intentRepository: TargetIntentRepository,
+    private val chooserParamsUpdateRepository: ChooserParamsUpdateRepository,
     @CustomAction private val pendingIntentSender: PendingIntentSender,
     private val selectionCallback: SelectionChangeCallback,
     private val selectionRepo: PreviewSelectionsRepository,
@@ -47,12 +50,13 @@ constructor(
     suspend fun launch(): Unit = coroutineScope {
         launch {
             intentRepository.targetIntent
-                .mapLatest { targetIntent ->
-                    selectionCallback.onSelectionChanged(targetIntent)?.customActions ?: emptyList()
-                }
-                .collect { actions ->
+                .mapLatest { targetIntent -> selectionCallback.onSelectionChanged(targetIntent) }
+                .filterNotNull()
+                .collect { updates ->
+                    val actions = updates.customActions ?: emptyList()
                     intentRepository.customActions.value =
                         actions.map { it.toCustomActionModel(pendingIntentSender) }
+                    chooserParamsUpdateRepository.setUpdates(updates)
                 }
         }
         launch {
