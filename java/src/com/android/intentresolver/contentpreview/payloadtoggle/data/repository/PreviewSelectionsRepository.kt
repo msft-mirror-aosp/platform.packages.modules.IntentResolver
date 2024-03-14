@@ -16,14 +16,46 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.data.repository
 
+import android.util.Log
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import dagger.hilt.android.scopes.ViewModelScoped
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.update
+
+private const val TAG = "PreviewSelectionsRep"
 
 /** Stores set of selected previews. */
 @ViewModelScoped
 class PreviewSelectionsRepository @Inject constructor() {
     /** Set of selected previews. */
-    val selections = MutableStateFlow<Set<PreviewModel>>(emptySet())
+    private val _selections = MutableStateFlow<Set<PreviewModel>?>(null)
+
+    val selections: Flow<Set<PreviewModel>> = _selections.filterNotNull()
+
+    fun setSelection(selection: Set<PreviewModel>) {
+        _selections.value = selection
+    }
+
+    fun select(item: PreviewModel) {
+        _selections.update { selection ->
+            selection?.let { it + item }
+                ?: run {
+                    Log.w(TAG, "Changing selection before it is initialized")
+                    null
+                }
+        }
+    }
+
+    fun unselect(item: PreviewModel) {
+        _selections.update { selection ->
+            selection?.let { it - item }
+                ?: run {
+                    Log.w(TAG, "Changing selection before it is initialized")
+                    null
+                }
+        }
+    }
 }

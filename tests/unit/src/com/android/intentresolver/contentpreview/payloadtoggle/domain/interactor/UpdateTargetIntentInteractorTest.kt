@@ -54,20 +54,22 @@ class UpdateTargetIntentInteractorTest {
         backgroundScope.launch { underTest.launch() }
         runCurrent()
 
+        // as we do not publish the initial empty selection, we should not modify the intent
         assertThat(
                 intentRepository.targetIntent.value.getParcelableArrayListExtra(
                     "selection",
                     Uri::class.java,
                 )
             )
-            .isEmpty()
+            .isNull()
 
-        selectionRepository.selections.value =
+        selectionRepository.setSelection(
             setOf(
                 PreviewModel(Uri.fromParts("scheme0", "ssp0", "fragment0"), null),
                 PreviewModel(Uri.fromParts("scheme1", "ssp1", "fragment1"), null),
                 PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), null),
             )
+        )
         runCurrent()
 
         assertThat(

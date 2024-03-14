@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.net.Uri
@@ -22,7 +24,9 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.P
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -50,11 +54,14 @@ class SelectablePreviewInteractorTest {
                         loadMoreRight = null,
                     )
             }
+        val selectionRepo = PreviewSelectionsRepository()
         val underTest =
             SelectablePreviewInteractor(
                 key = PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
-                selectionRepo = PreviewSelectionsRepository(),
+                selectionRepo = selectionRepo,
             )
+        selectionRepo.setSelection(emptySet())
+        testScheduler.runCurrent()
 
         assertThat(underTest.isSelected.first()).isFalse()
     }
@@ -68,6 +75,7 @@ class SelectablePreviewInteractorTest {
                 key = PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), "image/bitmap"),
                 selectionRepo = selectionRepository,
             )
+        selectionRepository.setSelection(emptySet())
 
         assertThat(underTest.isSelected.first()).isFalse()
 
@@ -89,8 +97,10 @@ class SelectablePreviewInteractorTest {
                 loadMoreRight = null,
             )
 
-        selectionRepository.selections.value =
+        selectionRepository.setSelection(
             setOf(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), "image/bitmap"))
+        )
+        runCurrent()
 
         assertThat(underTest.isSelected.first()).isTrue()
     }
