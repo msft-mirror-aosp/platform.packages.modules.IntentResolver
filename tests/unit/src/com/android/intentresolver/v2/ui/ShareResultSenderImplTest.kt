@@ -23,7 +23,7 @@ import android.content.Intent
 import android.os.Process
 import android.service.chooser.ChooserResult
 import android.service.chooser.Flags
-import androidx.test.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.android.intentresolver.v2.ui.model.ShareAction
 import com.google.common.truth.Truth.assertThat
