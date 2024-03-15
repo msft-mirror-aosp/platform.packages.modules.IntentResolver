@@ -17,11 +17,11 @@
 package com.android.intentresolver.v2.ui
 
 import android.content.res.Resources
+import com.android.intentresolver.R
 import com.android.intentresolver.inject.ApplicationOwned
 import com.android.intentresolver.v2.data.repository.DevicePolicyResources
 import com.android.intentresolver.v2.shared.model.Profile
 import javax.inject.Inject
-import com.android.intentresolver.R
 
 class ProfilePagerResources
 @Inject

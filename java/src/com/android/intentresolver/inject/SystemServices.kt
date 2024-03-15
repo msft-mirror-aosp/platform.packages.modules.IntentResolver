@@ -103,7 +103,8 @@ class UserManagerModule {
     @Provides
     fun userManager(@ApplicationContext ctx: Context): UserManager = ctx.requireSystemService()
 
-    @Provides fun scopedUserManager(ctx: UserScopedContext): UserScopedService<UserManager> {
+    @Provides
+    fun scopedUserManager(ctx: UserScopedContext): UserScopedService<UserManager> {
         return UserScopedServiceImpl(ctx, UserManager::class)
     }
 }

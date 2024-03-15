@@ -21,6 +21,8 @@ package com.android.intentresolver.v2.annotation
  *
  * The goal is to prevent usage from Kotlin when a more idiomatic alternative is available.
  */
-@RequiresOptIn("This is a a property, function or class specifically supporting Java " +
-        "interoperability. Usage from Kotlin should be limited to interactions with Java.")
+@RequiresOptIn(
+    "This is a a property, function or class specifically supporting Java " +
+        "interoperability. Usage from Kotlin should be limited to interactions with Java."
+)
 annotation class JavaInterop
