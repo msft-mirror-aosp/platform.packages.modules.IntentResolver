@@ -44,7 +44,7 @@ import android.companion.DeviceFilter;
 import android.content.Intent;
 import android.os.UserHandle;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.rule.ActivityTestRule;
 
