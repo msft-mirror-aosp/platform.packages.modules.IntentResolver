@@ -37,21 +37,24 @@ class SimpleValue<T : Any>(
             expected.isInstance(value) -> return Valid(expected.cast(value))
 
             // No value is present.
-            value == null -> when (importance) {
-                Importance.WARNING -> Invalid() // No warnings if optional, but missing
-                Importance.CRITICAL -> Invalid(NoValue(key, importance, expected))
-            }
+            value == null ->
+                when (importance) {
+                    Importance.WARNING -> Invalid() // No warnings if optional, but missing
+                    Importance.CRITICAL -> Invalid(NoValue(key, importance, expected))
+                }
 
             // The value is some other type.
             else ->
-                Invalid(listOf(
-                    ValueIsWrongType(
-                        key,
-                        importance,
-                        actualType = value::class,
-                        allowedTypes = listOf(expected)
+                Invalid(
+                    listOf(
+                        ValueIsWrongType(
+                            key,
+                            importance,
+                            actualType = value::class,
+                            allowedTypes = listOf(expected)
+                        )
                     )
-                ))
+                )
         }
     }
 }

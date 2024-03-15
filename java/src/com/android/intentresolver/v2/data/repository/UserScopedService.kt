@@ -76,10 +76,8 @@ class UserScopedContext @Inject constructor(private val applicationContext: Cont
 }
 
 /** Returns a cache of service instances, distinct by user */
-class UserScopedServiceImpl<T : Any>(
-    contexts: UserScopedContext,
-    serviceType: KClass<T>
-): UserScopedService<T> {
+class UserScopedServiceImpl<T : Any>(contexts: UserScopedContext, serviceType: KClass<T>) :
+    UserScopedService<T> {
     private val instances =
         object : LruCache<UserHandle, T>(8) {
             override fun create(key: UserHandle): T {

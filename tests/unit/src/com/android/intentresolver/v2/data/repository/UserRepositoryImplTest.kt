@@ -1,6 +1,5 @@
 package com.android.intentresolver.v2.data.repository
 
-import android.content.Intent
 import android.content.pm.UserInfo
 import android.os.UserHandle
 import android.os.UserHandle.SYSTEM
@@ -122,13 +121,7 @@ internal class UserRepositoryImplTest {
     fun recovers_from_invalid_profile_added_event() = runTest {
         val userManager =
             mockUserManager(validUser = USER_SYSTEM, invalidUser = UserHandle.USER_NULL)
-        val events =
-            flowOf(
-                UserRepositoryImpl.UserEvent(
-                    Intent.ACTION_PROFILE_ADDED,
-                    UserHandle.of(UserHandle.USER_NULL)
-                )
-            )
+        val events = flowOf(ProfileAdded(UserHandle.of(UserHandle.USER_NULL)))
         val repo =
             UserRepositoryImpl(
                 profileParent = SYSTEM,
@@ -147,13 +140,7 @@ internal class UserRepositoryImplTest {
     fun recovers_from_invalid_profile_removed_event() = runTest {
         val userManager =
             mockUserManager(validUser = USER_SYSTEM, invalidUser = UserHandle.USER_NULL)
-        val events =
-            flowOf(
-                UserRepositoryImpl.UserEvent(
-                    Intent.ACTION_PROFILE_REMOVED,
-                    UserHandle.of(UserHandle.USER_NULL)
-                )
-            )
+        val events = flowOf(ProfileRemoved(UserHandle.of(UserHandle.USER_NULL)))
         val repo =
             UserRepositoryImpl(
                 profileParent = SYSTEM,
@@ -172,13 +159,7 @@ internal class UserRepositoryImplTest {
     fun recovers_from_invalid_profile_available_event() = runTest {
         val userManager =
             mockUserManager(validUser = USER_SYSTEM, invalidUser = UserHandle.USER_NULL)
-        val events =
-            flowOf(
-                UserRepositoryImpl.UserEvent(
-                    Intent.ACTION_PROFILE_AVAILABLE,
-                    UserHandle.of(UserHandle.USER_NULL)
-                )
-            )
+        val events = flowOf(AvailabilityChange(UserHandle.of(UserHandle.USER_NULL)))
         val repo =
             UserRepositoryImpl(SYSTEM, userManager, events, backgroundScope, Dispatchers.Unconfined)
         val users by collectLastValue(repo.users)
@@ -191,10 +172,7 @@ internal class UserRepositoryImplTest {
     fun recovers_from_unknown_event() = runTest {
         val userManager =
             mockUserManager(validUser = USER_SYSTEM, invalidUser = UserHandle.USER_NULL)
-        val events =
-            flowOf(
-                UserRepositoryImpl.UserEvent("UNKNOWN_EVENT", UserHandle.of(UserHandle.USER_NULL))
-            )
+        val events = flowOf(UnknownEvent("UNKNOWN_EVENT"))
         val repo =
             UserRepositoryImpl(
                 profileParent = SYSTEM,

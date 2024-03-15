@@ -29,11 +29,19 @@ import javax.inject.Qualifier
 import javax.inject.Singleton
 
 @Qualifier
-@MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class AppShortcutLimit
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+annotation class AppShortcutLimit
+
 @Qualifier
-@MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class EnforceShortcutLimit
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+annotation class EnforceShortcutLimit
+
 @Qualifier
-@MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class ShortcutRowLimit
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ShortcutRowLimit
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -41,8 +49,8 @@ object ShortcutPolicyModule {
     /**
      * Defines the limit for the number of shortcut targets provided for any single app.
      *
-     * This value applies to both results from Shortcut-service and app-provided targets on
-     * a per-package basis.
+     * This value applies to both results from Shortcut-service and app-provided targets on a
+     * per-package basis.
      */
     @Provides
     @Singleton
@@ -64,8 +72,11 @@ object ShortcutPolicyModule {
     @Singleton
     @EnforceShortcutLimit
     fun applyShortcutLimit(): Boolean {
-        return DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_SYSTEMUI,
-            SystemUiDeviceConfigFlags.APPLY_SHARING_APP_LIMITS_IN_SYSUI, true)
+        return DeviceConfig.getBoolean(
+            DeviceConfig.NAMESPACE_SYSTEMUI,
+            SystemUiDeviceConfigFlags.APPLY_SHARING_APP_LIMITS_IN_SYSUI,
+            true
+        )
     }
 
     /**
