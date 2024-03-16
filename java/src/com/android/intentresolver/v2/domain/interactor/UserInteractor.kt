@@ -71,9 +71,7 @@ constructor(
      */
     val availability: Flow<Map<Profile, Boolean>> =
         combine(profiles, userRepository.availability) { profiles, availability ->
-            profiles.associateWith {
-                availability.getOrDefault(it.primary, false)
-            }
+            profiles.associateWith { availability.getOrDefault(it.primary, false) }
         }
 
     /**

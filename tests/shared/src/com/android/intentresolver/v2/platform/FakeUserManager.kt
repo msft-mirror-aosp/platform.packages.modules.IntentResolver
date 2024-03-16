@@ -1,12 +1,6 @@
 package com.android.intentresolver.v2.platform
 
 import android.content.Context
-import android.content.Intent.ACTION_MANAGED_PROFILE_AVAILABLE
-import android.content.Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE
-import android.content.Intent.ACTION_PROFILE_ADDED
-import android.content.Intent.ACTION_PROFILE_AVAILABLE
-import android.content.Intent.ACTION_PROFILE_REMOVED
-import android.content.Intent.ACTION_PROFILE_UNAVAILABLE
 import android.content.pm.UserInfo
 import android.content.pm.UserInfo.FLAG_FULL
 import android.content.pm.UserInfo.FLAG_INITIALIZED
@@ -18,7 +12,10 @@ import android.os.UserManager
 import androidx.annotation.NonNull
 import com.android.intentresolver.THROWS_EXCEPTION
 import com.android.intentresolver.mock
-import com.android.intentresolver.v2.data.repository.UserRepositoryImpl.UserEvent
+import com.android.intentresolver.v2.data.repository.AvailabilityChange
+import com.android.intentresolver.v2.data.repository.ProfileAdded
+import com.android.intentresolver.v2.data.repository.ProfileRemoved
+import com.android.intentresolver.v2.data.repository.UserEvent
 import com.android.intentresolver.v2.platform.FakeUserManager.State
 import com.android.intentresolver.whenever
 import kotlin.random.Random
@@ -155,21 +152,7 @@ class FakeUserManager(val state: State = State()) :
                     } else {
                         it.flags and UserInfo.FLAG_QUIET_MODE.inv()
                     }
-                val actions = mutableListOf<String>()
-                if (quietMode) {
-                    actions += ACTION_PROFILE_UNAVAILABLE
-                    if (it.isManagedProfile) {
-                        actions += ACTION_MANAGED_PROFILE_UNAVAILABLE
-                    }
-                } else {
-                    actions += ACTION_PROFILE_AVAILABLE
-                    if (it.isManagedProfile) {
-                        actions += ACTION_MANAGED_PROFILE_AVAILABLE
-                    }
-                }
-                actions.forEach { action ->
-                    eventChannel.trySend(UserEvent(action, user, quietMode))
-                }
+                eventChannel.trySend(AvailabilityChange(user, quietMode))
             }
         }
 
@@ -187,7 +170,7 @@ class FakeUserManager(val state: State = State()) :
                     profileGroupId = parentUser.profileGroupId
                 }
             userInfoMap[userInfo.userHandle] = userInfo
-            eventChannel.trySend(UserEvent(ACTION_PROFILE_ADDED, userInfo.userHandle))
+            eventChannel.trySend(ProfileAdded(userInfo.userHandle))
             return userInfo.userHandle
         }
 
@@ -195,7 +178,7 @@ class FakeUserManager(val state: State = State()) :
             return userInfoMap[handle]?.let { user ->
                 require(user.isProfile) { "Only profiles can be removed" }
                 userInfoMap.remove(user.userHandle)
-                eventChannel.trySend(UserEvent(ACTION_PROFILE_REMOVED, user.userHandle))
+                eventChannel.trySend(ProfileRemoved(user.userHandle))
                 return true
             }
                 ?: false
