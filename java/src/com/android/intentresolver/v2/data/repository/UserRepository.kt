@@ -28,6 +28,7 @@ import android.content.Intent.EXTRA_QUIET_MODE
 import android.content.Intent.EXTRA_USER
 import android.content.IntentFilter
 import android.content.pm.UserInfo
+import android.os.Build
 import android.os.UserHandle
 import android.os.UserManager
 import android.util.Log
@@ -36,7 +37,6 @@ import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.Main
 import com.android.intentresolver.inject.ProfileParent
 import com.android.intentresolver.v2.data.broadcastFlow
-import com.android.intentresolver.v2.data.repository.UserRepositoryImpl.UserEvent
 import com.android.intentresolver.v2.shared.model.User
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -73,7 +73,7 @@ interface UserRepository {
      * stopping a profile user (along with their many associated processes).
      *
      * If successful, the change will be applied after the call returns and can be observed using
-     * [UserRepository.isAvailable] for the given user.
+     * [UserRepository.availability] for the given user.
      *
      * No actions are taken if the user is already in requested state.
      *
@@ -84,9 +84,9 @@ interface UserRepository {
 
 private const val TAG = "UserRepository"
 
-private data class UserWithState(val user: User, val available: Boolean)
+internal data class UserWithState(val user: User, val available: Boolean)
 
-private typealias UserStates = List<UserWithState>
+internal typealias UserStates = List<UserWithState>
 
 /** Tracks and publishes state for the parent user and associated profiles. */
 class UserRepositoryImpl
@@ -114,13 +114,21 @@ constructor(
         background
     )
 
-    data class UserEvent(val action: String, val user: UserHandle, val quietMode: Boolean = false)
+    private fun debugLog(msg: () -> String) {
+        if (Build.IS_USERDEBUG || Build.IS_ENG) {
+            Log.d(TAG, msg())
+        }
+    }
+
+    private fun errorLog(msg: String, caught: Throwable? = null) {
+        Log.e(TAG, msg, caught)
+    }
 
     /**
      * An exception which indicates that an inconsistency exists between the user state map and the
      * rest of the system.
      */
-    internal class UserStateException(
+    private class UserStateException(
         override val message: String,
         val event: UserEvent,
         override val cause: Throwable? = null
@@ -129,34 +137,33 @@ constructor(
     private val sharingScope = CoroutineScope(scope.coroutineContext + backgroundDispatcher)
     private val usersWithState: Flow<UserStates> =
         userEvents
-            .onStart { emit(UserEvent(INITIALIZE, profileParent)) }
-            .onEach { Log.i(TAG, "userEvent: $it") }
-            .runningFold<UserEvent, UserStates>(emptyList()) { users, event ->
-                try {
-                    // Handle an action by performing some operation, then returning a new map
-                    when (event.action) {
-                        INITIALIZE -> createNewUserStates(profileParent)
-                        ACTION_PROFILE_ADDED -> handleProfileAdded(event, users)
-                        ACTION_PROFILE_REMOVED -> handleProfileRemoved(event, users)
-                        ACTION_MANAGED_PROFILE_UNAVAILABLE,
-                        ACTION_MANAGED_PROFILE_AVAILABLE,
-                        ACTION_PROFILE_AVAILABLE,
-                        ACTION_PROFILE_UNAVAILABLE -> handleAvailability(event, users)
-                        else -> {
-                            Log.w(TAG, "Unhandled event: $event)")
-                            users
-                        }
-                    }
-                } catch (e: UserStateException) {
-                    Log.e(TAG, "An error occurred handling an event: ${e.event}", e)
-                    Log.e(TAG, "Attempting to recover...")
-                    createNewUserStates(profileParent)
-                }
-            }
+            .onStart { emit(Initialize) }
+            .onEach { debugLog { "userEvent: $it" } }
+            .runningFold(emptyList(), ::handleEvent)
             .distinctUntilChanged()
-            .onEach { Log.i(TAG, "userStateList: $it") }
+            .onEach { debugLog { "userStateList: $it" } }
             .stateIn(sharingScope, SharingStarted.Eagerly, emptyList())
             .filterNot { it.isEmpty() }
+
+    private suspend fun handleEvent(users: UserStates, event: UserEvent): UserStates {
+        return try {
+            // Handle an action by performing some operation, then returning a new map
+            when (event) {
+                is Initialize -> createNewUserStates(profileParent)
+                is ProfileAdded -> handleProfileAdded(event, users)
+                is ProfileRemoved -> handleProfileRemoved(event, users)
+                is AvailabilityChange -> handleAvailability(event, users)
+                is UnknownEvent -> {
+                    debugLog { "Unhandled event: $event)" }
+                    users
+                }
+            }
+        } catch (e: UserStateException) {
+            errorLog("An error occurred handling an event: ${e.event}")
+            errorLog("Attempting to recover...", e)
+            createNewUserStates(profileParent)
+        }
+    }
 
     override val users: Flow<List<User>> =
         usersWithState.map { userStateMap -> userStateMap.map { it.user } }.distinctUntilChanged()
@@ -168,7 +175,7 @@ constructor(
 
     override suspend fun requestState(user: User, available: Boolean) {
         return withContext(backgroundDispatcher) {
-            Log.i(TAG, "requestQuietModeEnabled: ${!available} for user $user")
+            debugLog { "requestQuietModeEnabled: ${!available} for user $user" }
             userManager.requestQuietModeEnabled(/* enableQuietMode = */ !available, user.handle)
         }
     }
@@ -176,28 +183,28 @@ constructor(
     private fun List<UserWithState>.update(handle: UserHandle, user: UserWithState) =
         filter { it.user.id != handle.identifier } + user
 
-    private fun handleAvailability(event: UserEvent, current: UserStates): UserStates {
+    private fun handleAvailability(event: AvailabilityChange, current: UserStates): UserStates {
         val userEntry =
             current.firstOrNull { it.user.id == event.user.identifier }
                 ?: throw UserStateException("User was not present in the map", event)
         return current.update(event.user, userEntry.copy(available = !event.quietMode))
     }
 
-    private fun handleProfileRemoved(event: UserEvent, current: UserStates): UserStates {
+    private fun handleProfileRemoved(event: ProfileRemoved, current: UserStates): UserStates {
         if (!current.any { it.user.id == event.user.identifier }) {
             throw UserStateException("User was not present in the map", event)
         }
         return current.filter { it.user.id != event.user.identifier }
     }
 
-    private suspend fun handleProfileAdded(event: UserEvent, current: UserStates): UserStates {
+    private suspend fun handleProfileAdded(event: ProfileAdded, current: UserStates): UserStates {
         val user =
             try {
                 requireNotNull(readUser(event.user))
             } catch (e: Exception) {
                 throw UserStateException("Failed to read user from UserManager", event, e)
             }
-        return current + UserWithState(user, !event.quietMode)
+        return current + UserWithState(user, true)
     }
 
     private suspend fun createNewUserStates(user: UserHandle): UserStates {
@@ -224,29 +231,64 @@ constructor(
     }
 }
 
+/** A Model representing changes to profiles and availability */
+sealed interface UserEvent
+
+/** Used as a an initial value to trigger a fetch of all profile data. */
+data object Initialize : UserEvent
+
+/** A profile was added to the profile group. */
+data class ProfileAdded(
+    /** The handle for the added profile. */
+    val user: UserHandle,
+) : UserEvent
+
+/** A profile was removed from the profile group. */
+data class ProfileRemoved(
+    /** The handle for the removed profile. */
+    val user: UserHandle,
+) : UserEvent
+
+/** A profile has changed availability. */
+data class AvailabilityChange(
+    /** THe handle for the profile with availability change. */
+    val user: UserHandle,
+    /** The new quietMode state. */
+    val quietMode: Boolean = false,
+) : UserEvent
+
+/** An unhandled event, logged and ignored. */
+data class UnknownEvent(
+    /** The broadcast intent action received */
+    val action: String?,
+) : UserEvent
+
 /** Used with [broadcastFlow] to transform a UserManager broadcast action into a [UserEvent]. */
-private fun Intent.toUserEvent(): UserEvent? {
+private fun Intent.toUserEvent(): UserEvent {
     val action = action
     val user = extras?.getParcelable(EXTRA_USER, UserHandle::class.java)
-    val quietMode = extras?.getBoolean(EXTRA_QUIET_MODE, false) ?: false
-    return if (user == null || action == null) {
-        null
-    } else {
-        UserEvent(action, user, quietMode)
+    val quietMode = extras?.getBoolean(EXTRA_QUIET_MODE, false)
+    return when (action) {
+        ACTION_PROFILE_ADDED -> ProfileAdded(requireNotNull(user))
+        ACTION_PROFILE_REMOVED -> ProfileRemoved(requireNotNull(user))
+        ACTION_MANAGED_PROFILE_UNAVAILABLE,
+        ACTION_MANAGED_PROFILE_AVAILABLE,
+        ACTION_PROFILE_AVAILABLE,
+        ACTION_PROFILE_UNAVAILABLE ->
+            AvailabilityChange(requireNotNull(user), requireNotNull(quietMode))
+        else -> UnknownEvent(action)
     }
 }
-
-const val INITIALIZE = "INITIALIZE"
 
 private fun createFilter(actions: Iterable<String>): IntentFilter {
     return IntentFilter().apply { actions.forEach(::addAction) }
 }
 
-private fun UserInfo?.isAvailable(): Boolean {
+internal fun UserInfo?.isAvailable(): Boolean {
     return this?.isQuietModeEnabled != true
 }
 
-private fun userBroadcastFlow(context: Context, profileParent: UserHandle): Flow<UserEvent> {
+internal fun userBroadcastFlow(context: Context, profileParent: UserHandle): Flow<UserEvent> {
     val userActions =
         setOf(
             ACTION_PROFILE_ADDED,

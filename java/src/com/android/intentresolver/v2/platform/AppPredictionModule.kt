@@ -18,7 +18,6 @@ package com.android.intentresolver.v2.platform
 import android.content.pm.PackageManager
 import dagger.Module
 import dagger.Provides
-import dagger.Reusable
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Qualifier
@@ -33,9 +32,7 @@ annotation class AppPredictionAvailable
 @InstallIn(SingletonComponent::class)
 object AppPredictionModule {
 
-    /**
-     * Eventually replaced with: Optional<AppPredictionRepository>, etc.
-     */
+    /** Eventually replaced with: Optional<AppPredictionRepository>, etc. */
     @Provides
     @Singleton
     @AppPredictionAvailable

@@ -15,7 +15,6 @@
  */
 package com.android.intentresolver.v2.validation.types
 
-import android.content.Intent
 import com.android.intentresolver.v2.validation.Importance
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.NoValue
@@ -36,13 +35,13 @@ class ParceledArray<T : Any>(
         source: (String) -> Any?,
         importance: Importance
     ): ValidationResult<List<T>> {
-
         return when (val value: Any? = source(key)) {
             // No value present.
-            null -> when (importance) {
-                Importance.WARNING -> Invalid() // No warnings if optional, but missing
-                Importance.CRITICAL -> Invalid(NoValue(key, importance, elementType))
-            }
+            null ->
+                when (importance) {
+                    Importance.WARNING -> Invalid() // No warnings if optional, but missing
+                    Importance.CRITICAL -> Invalid(NoValue(key, importance, elementType))
+                }
             // A parcel does not transfer the element type information for parcelable
             // arrays. This leads to a restored type of Array<Parcelable>, which is
             // incompatible with Array<T : Parcelable>.

@@ -31,7 +31,6 @@ class IntentOrUri(override val key: String) : Validator<Intent> {
         source: (String) -> Any?,
         importance: Importance
     ): ValidationResult<Intent> {
-
         return when (val value = source(key)) {
             // An intent, return it.
             is Intent -> Valid(value)
@@ -41,10 +40,11 @@ class IntentOrUri(override val key: String) : Validator<Intent> {
             is Uri -> Valid(Intent.parseUri(value.toString(), Intent.URI_INTENT_SCHEME))
 
             // No value present.
-            null -> when (importance) {
-                Importance.WARNING -> Invalid() // No warnings if optional, but missing
-                Importance.CRITICAL -> Invalid(NoValue(key, importance, Intent::class))
-            }
+            null ->
+                when (importance) {
+                    Importance.WARNING -> Invalid() // No warnings if optional, but missing
+                    Importance.CRITICAL -> Invalid(NoValue(key, importance, Intent::class))
+                }
 
             // Some other type.
             else -> {
