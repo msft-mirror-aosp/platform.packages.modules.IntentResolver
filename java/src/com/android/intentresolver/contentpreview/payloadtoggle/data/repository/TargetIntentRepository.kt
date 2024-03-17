@@ -18,6 +18,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.data.repository
 
 import android.content.Intent
 import com.android.intentresolver.contentpreview.payloadtoggle.data.model.CustomActionModel
+import com.android.intentresolver.contentpreview.payloadtoggle.data.model.TargetIntentRecord
 import com.android.intentresolver.inject.TargetIntent
 import dagger.hilt.android.scopes.ViewModelScoped
 import javax.inject.Inject
@@ -31,10 +32,14 @@ constructor(
     @TargetIntent initialIntent: Intent,
     initialActions: List<CustomActionModel>,
 ) {
-    val targetIntent = MutableStateFlow(initialIntent)
+    val targetIntent = MutableStateFlow(TargetIntentRecord(isInitial = true, initialIntent))
 
     // TODO: this can probably be derived from [targetIntent]; right now, the [initialActions] are
     //  coming from a different place (ChooserRequest) than later ones (SelectionChangeCallback)
     //  and so this serves as the source of truth between the two.
     val customActions = MutableStateFlow(initialActions)
+
+    fun updateTargetIntent(intent: Intent) {
+        targetIntent.value = TargetIntentRecord(isInitial = false, intent)
+    }
 }
