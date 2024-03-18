@@ -683,11 +683,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             ChooserRequest oldChooserRequest, ChooserRequest newChooserRequest) {
         Intent oldTargetIntent = oldChooserRequest.getTargetIntent();
         Intent newTargetIntent = newChooserRequest.getTargetIntent();
+        List<Intent> oldAltIntents = oldChooserRequest.getAdditionalTargets();
+        List<Intent> newAltIntents = newChooserRequest.getAdditionalTargets();
 
         // TODO: a workaround for the unnecessary target reloading caused by multiple flow updates -
         //  an artifact of the current implementation; revisit.
-        // reference comparison is intentional
-        return oldTargetIntent != newTargetIntent;
+        return !oldTargetIntent.equals(newTargetIntent) || !oldAltIntents.equals(newAltIntents);
     }
 
     private void recreatePagerAdapter() {
