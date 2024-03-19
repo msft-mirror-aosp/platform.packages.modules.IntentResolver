@@ -70,6 +70,7 @@ class ChooserContentPreviewUiTest {
             targetIntent,
             imageLoader,
             actionFactory,
+            { null },
             transitionCallback,
             headlineGenerator,
             ContentTypeHint.NONE,
