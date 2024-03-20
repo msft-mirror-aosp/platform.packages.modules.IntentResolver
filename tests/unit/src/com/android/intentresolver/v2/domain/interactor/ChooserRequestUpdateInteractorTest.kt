@@ -79,7 +79,6 @@ class ChooserRequestUpdateInteractorTest {
             val testSubject =
                 ChooserRequestUpdateInteractor(
                     activityModel,
-                    targetIntent,
                     targetIntentRepository,
                     chooserParamsUpdateRepository,
                     requestFlow,
@@ -100,18 +99,18 @@ class ChooserRequestUpdateInteractorTest {
             val testSubject =
                 ChooserRequestUpdateInteractor(
                     activityModel,
-                    targetIntent,
                     targetIntentRepository,
                     chooserParamsUpdateRepository,
                     requestFlow,
                     fakeFlags,
                 )
             backgroundScope.launch { testSubject.launch() }
-            targetIntentRepository.targetIntent.value =
+            targetIntentRepository.updateTargetIntent(
                 Intent(targetIntent).apply {
                     action = ACTION_SEND
                     putExtra(EXTRA_STREAM, createUri(2))
                 }
+            )
             testScheduler.runCurrent()
 
             assertWithMessage("Another chooser request is expected")
@@ -126,7 +125,6 @@ class ChooserRequestUpdateInteractorTest {
             val testSubject =
                 ChooserRequestUpdateInteractor(
                     activityModel,
-                    targetIntent,
                     targetIntentRepository,
                     chooserParamsUpdateRepository,
                     requestFlow,
