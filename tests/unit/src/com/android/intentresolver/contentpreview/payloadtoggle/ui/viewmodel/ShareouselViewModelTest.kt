@@ -201,7 +201,7 @@ class ShareouselViewModelTest {
 
             previewVm.setSelected(true)
 
-            assertThat(selectionRepository.selections.first())
+            assertThat(selectionRepository.selections.first().selection)
                 .comparingElementsUsingTransform("has uri of") { model: PreviewModel -> model.uri }
                 .contains(Uri.fromParts("scheme1", "ssp1", "fragment1"))
         }

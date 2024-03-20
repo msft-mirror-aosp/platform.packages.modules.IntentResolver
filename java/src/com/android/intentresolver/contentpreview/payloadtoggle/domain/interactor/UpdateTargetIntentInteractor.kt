@@ -18,6 +18,7 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import com.android.intentresolver.contentpreview.payloadtoggle.data.model.SelectionRecordType
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
@@ -31,6 +32,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
@@ -50,7 +52,8 @@ constructor(
     suspend fun launch(): Unit = coroutineScope {
         launch {
             intentRepository.targetIntent
-                .mapLatest { targetIntent -> selectionCallback.onSelectionChanged(targetIntent) }
+                .filter { !it.isInitial }
+                .mapLatest { record -> selectionCallback.onSelectionChanged(record.intent) }
                 .filterNotNull()
                 .collect { updates ->
                     val actions = updates.customActions ?: emptyList()
@@ -60,9 +63,13 @@ constructor(
                 }
         }
         launch {
-            selectionRepo.selections.collectLatest {
-                intentRepository.targetIntent.value = targetIntentModifier.onSelectionChanged(it)
-            }
+            selectionRepo.selections
+                .filter { it.type == SelectionRecordType.Updated }
+                .collectLatest {
+                    intentRepository.updateTargetIntent(
+                        targetIntentModifier.onSelectionChanged(it.selection)
+                    )
+                }
         }
     }
 }
