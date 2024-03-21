@@ -59,28 +59,30 @@ class UpdateTargetIntentInteractorTest {
             )
 
         backgroundScope.launch { underTest.launch() }
+        selectionRepository.setSelection(
+            setOf(
+                PreviewModel(Uri.fromParts("scheme0", "ssp0", "fragment0"), null),
+                PreviewModel(Uri.fromParts("scheme1", "ssp1", "fragment1"), null),
+            )
+        )
         runCurrent()
 
-        // as we do not publish the initial empty selection, we should not modify the intent
+        // only changes in selection should trigger intent updates
         assertThat(
-                intentRepository.targetIntent.value.getParcelableArrayListExtra(
+                intentRepository.targetIntent.value.intent.getParcelableArrayListExtra(
                     "selection",
                     Uri::class.java,
                 )
             )
             .isNull()
 
-        selectionRepository.setSelection(
-            setOf(
-                PreviewModel(Uri.fromParts("scheme0", "ssp0", "fragment0"), null),
-                PreviewModel(Uri.fromParts("scheme1", "ssp1", "fragment1"), null),
-                PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), null),
-            )
+        selectionRepository.select(
+            PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), null),
         )
         runCurrent()
 
         assertThat(
-                intentRepository.targetIntent.value.getParcelableArrayListExtra(
+                intentRepository.targetIntent.value.intent.getParcelableArrayListExtra(
                     "selection",
                     Uri::class.java,
                 )

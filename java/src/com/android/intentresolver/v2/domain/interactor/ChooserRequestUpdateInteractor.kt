@@ -22,7 +22,6 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.C
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.inject.ChooserServiceFlags
-import com.android.intentresolver.inject.TargetIntent
 import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.ui.viewmodel.readChooserRequest
@@ -36,6 +35,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -47,7 +47,6 @@ class ChooserRequestUpdateInteractor
 @AssistedInject
 constructor(
     private val activityModel: ActivityModel,
-    @TargetIntent private val initialIntent: Intent,
     private val targetIntentRepository: TargetIntentRepository,
     private val paramsUpdateRepository: ChooserParamsUpdateRepository,
     // TODO: replace with a proper repository, when available
@@ -59,10 +58,8 @@ constructor(
         coroutineScope {
             launch {
                 targetIntentRepository.targetIntent
-                    // TODO: maybe find a better way to exclude the initial intent (as here it's
-                    // compared by
-                    //  reference)
-                    .filter { it !== initialIntent }
+                    .filter { !it.isInitial }
+                    .map { it.intent }
                     .collect(::updateTargetIntent)
             }
 
