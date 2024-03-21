@@ -17,6 +17,7 @@ package com.android.intentresolver.inject
 
 import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
+import android.app.prediction.AppPredictionManager
 import android.content.ClipboardManager
 import android.content.ContentInterface
 import android.content.ContentResolver
@@ -26,7 +27,6 @@ import android.content.pm.ShortcutManager
 import android.os.UserManager
 import android.view.WindowManager
 import androidx.core.content.getSystemService
-import com.android.intentresolver.v2.data.repository.UserScopedContext
 import com.android.intentresolver.v2.data.repository.UserScopedService
 import com.android.intentresolver.v2.data.repository.UserScopedServiceImpl
 import dagger.Binds
@@ -91,10 +91,29 @@ class PackageManagerModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
+class PredictionManagerModule {
+    @Provides
+    fun scopedPredictionManager(
+        @ApplicationContext ctx: Context,
+    ): UserScopedService<AppPredictionManager> {
+        return UserScopedServiceImpl(ctx, AppPredictionManager::class)
+    }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
 class ShortcutManagerModule {
     @Provides
-    fun shortcutManager(@ApplicationContext ctx: Context): ShortcutManager =
-        ctx.requireSystemService()
+    fun shortcutManager(@ApplicationContext ctx: Context): ShortcutManager {
+        return ctx.requireSystemService()
+    }
+
+    @Provides
+    fun scopedShortcutManager(
+        @ApplicationContext ctx: Context,
+    ): UserScopedService<ShortcutManager> {
+        return UserScopedServiceImpl(ctx, ShortcutManager::class)
+    }
 }
 
 @Module
@@ -103,7 +122,8 @@ class UserManagerModule {
     @Provides
     fun userManager(@ApplicationContext ctx: Context): UserManager = ctx.requireSystemService()
 
-    @Provides fun scopedUserManager(ctx: UserScopedContext): UserScopedService<UserManager> {
+    @Provides
+    fun scopedUserManager(@ApplicationContext ctx: Context): UserScopedService<UserManager> {
         return UserScopedServiceImpl(ctx, UserManager::class)
     }
 }

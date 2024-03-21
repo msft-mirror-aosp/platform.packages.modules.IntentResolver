@@ -22,7 +22,9 @@ import android.graphics.drawable.Drawable
 interface ActionRow {
     fun setActions(actions: List<Action>)
 
-    class Action @JvmOverloads constructor(
+    class Action
+    @JvmOverloads
+    constructor(
         // TODO: apparently, IDs set to this field are used in unit tests only; evaluate whether we
         //  get rid of them
         val id: Int = ID_NULL,

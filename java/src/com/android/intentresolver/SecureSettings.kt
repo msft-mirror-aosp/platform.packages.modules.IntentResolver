@@ -19,9 +19,7 @@ package com.android.intentresolver
 import android.content.ContentResolver
 import android.provider.Settings
 
-/**
- * A proxy class for secure settings, for easier testing.
- */
+/** A proxy class for secure settings, for easier testing. */
 open class SecureSettings {
     open fun getString(resolver: ContentResolver, name: String): String? {
         return Settings.Secure.getString(resolver, name)

@@ -18,9 +18,10 @@ package com.android.intentresolver.v2.domain.interactor
 
 import android.content.Intent
 import android.util.Log
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.inject.ChooserServiceFlags
-import com.android.intentresolver.inject.TargetIntent
 import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.ui.viewmodel.readChooserRequest
@@ -30,8 +31,13 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.scopes.ViewModelScoped
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 private const val TAG = "ChooserRequestUpdate"
 
@@ -41,19 +47,26 @@ class ChooserRequestUpdateInteractor
 @AssistedInject
 constructor(
     private val activityModel: ActivityModel,
-    @TargetIntent private val initialIntent: Intent,
     private val targetIntentRepository: TargetIntentRepository,
+    private val paramsUpdateRepository: ChooserParamsUpdateRepository,
     // TODO: replace with a proper repository, when available
     @Assisted private val chooserRequestRepository: MutableStateFlow<ChooserRequest>,
     private val flags: ChooserServiceFlags,
 ) {
 
     suspend fun launch() {
-        targetIntentRepository.targetIntent
-            // TODO: maybe find a better way to exclude the initial intent (as here it's compared by
-            //  reference)
-            .filter { it !== initialIntent }
-            .collect(::updateTargetIntent)
+        coroutineScope {
+            launch {
+                targetIntentRepository.targetIntent
+                    .filter { !it.isInitial }
+                    .map { it.intent }
+                    .collect(::updateTargetIntent)
+            }
+
+            launch {
+                paramsUpdateRepository.updates.filterNotNull().collect(::updateChooserParameters)
+            }
+        }
     }
 
     private fun updateTargetIntent(targetIntent: Intent) {
@@ -61,6 +74,38 @@ constructor(
         when (val updatedChooserRequest = readChooserRequest(updatedActivityModel, flags)) {
             is Valid -> chooserRequestRepository.value = updatedChooserRequest.value
             is Invalid -> Log.w(TAG, "Failed to apply payload selection changes")
+        }
+    }
+
+    private fun updateChooserParameters(update: ShareouselUpdate) {
+        chooserRequestRepository.update { current ->
+            ChooserRequest(
+                current.targetIntent,
+                current.targetAction,
+                current.isSendActionTarget,
+                current.targetType,
+                current.launchedFromPackage,
+                current.title,
+                current.defaultTitleResource,
+                current.referrer,
+                current.filteredComponentNames,
+                update.callerTargets ?: current.callerChooserTargets,
+                // chooser actions are handled separately
+                current.chooserActions,
+                update.modifyShareAction ?: current.modifyShareAction,
+                current.shouldRetainInOnStop,
+                update.alternateIntents ?: current.additionalTargets,
+                current.replacementExtras,
+                current.initialIntents,
+                update.resultIntentSender ?: current.chosenComponentSender,
+                update.refinementIntentSender ?: current.refinementIntentSender,
+                current.sharedText,
+                current.shareTargetFilter,
+                current.additionalContentUri,
+                current.focusedItemPosition,
+                current.contentTypeHint,
+                update.metadataText ?: current.metadataText,
+            )
         }
     }
 
