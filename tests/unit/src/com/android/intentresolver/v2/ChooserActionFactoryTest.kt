@@ -46,7 +46,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.eq
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -57,7 +56,6 @@ class ChooserActionFactoryTest {
 
     private val logger = mock<EventLog>()
     private val actionLabel = "Action label"
-    private val modifyShareLabel = "Modify share"
     private val testAction = "com.android.intentresolver.testaction"
     private val countdown = CountDownLatch(1)
     private val testReceiver: BroadcastReceiver =
@@ -105,26 +103,6 @@ class ChooserActionFactoryTest {
     }
 
     @Test
-    fun testNoModifyShareAction() {
-        val factory = createFactory(includeModifyShare = false)
-
-        assertThat(factory.modifyShareAction).isNull()
-    }
-
-    @Test
-    fun testModifyShareAction() {
-        val factory = createFactory(includeModifyShare = true)
-
-        val action = factory.modifyShareAction ?: error("Modify share action should not be null")
-        action.onClicked.run()
-
-        verify(logger).logActionSelected(eq(EventLog.SELECTION_TYPE_MODIFY_SHARE))
-        assertEquals(Activity.RESULT_OK, resultConsumer.latestReturn)
-        // Verify the pending intent has been called
-        assertTrue("Timed out waiting for broadcast", countdown.await(2500, TimeUnit.MILLISECONDS))
-    }
-
-    @Test
     fun nonSendAction_noCopyRunnable() {
         val targetIntent =
             Intent(Intent.ACTION_SEND_MULTIPLE).apply {
@@ -142,7 +120,6 @@ class ChooserActionFactoryTest {
                 /* targetIntent = */ chooserRequest.targetIntent,
                 /* referrerPackageName = */ chooserRequest.referrerPackageName,
                 /* chooserActions = */ chooserRequest.chooserActions,
-                /* modifyShareAction = */ chooserRequest.modifyShareAction,
                 /* imageEditor = */ Optional.empty(),
                 /* log = */ logger,
                 /* onUpdateSharedTextIsExcluded = */ {},
@@ -170,7 +147,6 @@ class ChooserActionFactoryTest {
                 /* targetIntent = */ chooserRequest.targetIntent,
                 /* referrerPackageName = */ chooserRequest.referrerPackageName,
                 /* chooserActions = */ chooserRequest.chooserActions,
-                /* modifyShareAction = */ chooserRequest.modifyShareAction,
                 /* imageEditor = */ Optional.empty(),
                 /* log = */ logger,
                 /* onUpdateSharedTextIsExcluded = */ {},
@@ -200,7 +176,6 @@ class ChooserActionFactoryTest {
                 /* targetIntent = */ chooserRequest.targetIntent,
                 /* referrerPackageName = */ chooserRequest.referrerPackageName,
                 /* chooserActions = */ chooserRequest.chooserActions,
-                /* modifyShareAction = */ chooserRequest.modifyShareAction,
                 /* imageEditor = */ Optional.empty(),
                 /* log = */ logger,
                 /* onUpdateSharedTextIsExcluded = */ {},
@@ -217,7 +192,7 @@ class ChooserActionFactoryTest {
         verify(resultSender, times(1)).onActionSelected(ShareAction.SYSTEM_COPY)
     }
 
-    private fun createFactory(includeModifyShare: Boolean = false): ChooserActionFactory {
+    private fun createFactory(): ChooserActionFactory {
         val testPendingIntent =
             PendingIntent.getBroadcast(context, 0, Intent(testAction), PendingIntent.FLAG_IMMUTABLE)
         val targetIntent = Intent()
@@ -232,23 +207,11 @@ class ChooserActionFactoryTest {
         whenever(chooserRequest.targetIntent).thenReturn(targetIntent)
         whenever(chooserRequest.chooserActions).thenReturn(ImmutableList.of(action))
 
-        if (includeModifyShare) {
-            val modifyShare =
-                ChooserAction.Builder(
-                        Icon.createWithResource("", Resources.ID_NULL),
-                        modifyShareLabel,
-                        testPendingIntent
-                    )
-                    .build()
-            whenever(chooserRequest.modifyShareAction).thenReturn(modifyShare)
-        }
-
         return ChooserActionFactory(
             /* context = */ context,
             /* targetIntent = */ chooserRequest.targetIntent,
             /* referrerPackageName = */ chooserRequest.referrerPackageName,
             /* chooserActions = */ chooserRequest.chooserActions,
-            /* modifyShareAction = */ chooserRequest.modifyShareAction,
             /* imageEditor = */ Optional.empty(),
             /* log = */ logger,
             /* onUpdateSharedTextIsExcluded = */ {},

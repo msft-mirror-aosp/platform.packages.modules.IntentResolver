@@ -77,10 +77,7 @@ class FileContentPreviewUi extends ContentPreviewUi {
             LayoutInflater layoutInflater,
             ViewGroup parent,
             @Nullable View headlineViewParent) {
-        ViewGroup layout = displayInternal(resources, layoutInflater, parent, headlineViewParent);
-        displayModifyShareAction(
-                headlineViewParent == null ? layout : headlineViewParent, mActionFactory);
-        return layout;
+        return displayInternal(resources, layoutInflater, parent, headlineViewParent);
     }
 
     private ViewGroup displayInternal(
