@@ -30,15 +30,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.intentresolver.R
-import com.android.intentresolver.contentpreview.ChooserContentPreviewUi.ActionFactory
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.composable.Shareousel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class ShareouselContentPreviewUi(
-    private val actionFactory: ActionFactory,
-) : ContentPreviewUi() {
+class ShareouselContentPreviewUi : ContentPreviewUi() {
 
     override fun getType(): Int = ContentPreviewType.CONTENT_PREVIEW_IMAGE
 
@@ -47,10 +44,7 @@ class ShareouselContentPreviewUi(
         layoutInflater: LayoutInflater,
         parent: ViewGroup,
         headlineViewParent: View?,
-    ): ViewGroup =
-        displayInternal(parent, headlineViewParent).also { layout ->
-            displayModifyShareAction(headlineViewParent ?: layout, actionFactory)
-        }
+    ): ViewGroup = displayInternal(parent, headlineViewParent)
 
     private fun displayInternal(parent: ViewGroup, headlineViewParent: View?): ViewGroup {
         if (headlineViewParent != null) {
