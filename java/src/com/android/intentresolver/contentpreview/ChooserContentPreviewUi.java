@@ -39,6 +39,7 @@ import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatu
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import kotlinx.coroutines.CoroutineScope;
 
@@ -77,7 +78,9 @@ public final class ChooserContentPreviewUi {
          * Provides a share modification action, if any.
          */
         @Nullable
-        ActionRow.Action getModifyShareAction();
+        default ActionRow.Action getModifyShareAction() {
+            return null;
+        }
 
         /**
          * <p>
@@ -93,6 +96,9 @@ public final class ChooserContentPreviewUi {
 
     @VisibleForTesting
     final ContentPreviewUi mContentPreviewUi;
+    private final Supplier</*@Nullable*/ActionRow.Action> mModifyShareActionFactory;
+    @Nullable
+    private View mHeadlineParent;
 
     public ChooserContentPreviewUi(
             CoroutineScope scope,
@@ -100,6 +106,7 @@ public final class ChooserContentPreviewUi {
             Intent targetIntent,
             ImageLoader imageLoader,
             ActionFactory actionFactory,
+            Supplier</*@Nullable*/ActionRow.Action> modifyShareActionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
             HeadlineGenerator headlineGenerator,
             ContentTypeHint contentTypeHint,
@@ -108,6 +115,7 @@ public final class ChooserContentPreviewUi {
             boolean isPayloadTogglingEnabled) {
         mScope = scope;
         mIsPayloadTogglingEnabled = isPayloadTogglingEnabled;
+        mModifyShareActionFactory = modifyShareActionFactory;
         mContentPreviewUi = createContentPreview(
                 previewData,
                 targetIntent,
@@ -162,7 +170,7 @@ public final class ChooserContentPreviewUi {
 
         if (previewType == CONTENT_PREVIEW_PAYLOAD_SELECTION && mIsPayloadTogglingEnabled) {
             transitionElementStatusCallback.onAllTransitionElementsReady(); // TODO
-            return new ShareouselContentPreviewUi(actionFactory);
+            return new ShareouselContentPreviewUi();
         }
 
         boolean isSingleImageShare = previewData.getUriCount() == 1
@@ -220,7 +228,24 @@ public final class ChooserContentPreviewUi {
             ViewGroup parent,
             @Nullable View headlineViewParent) {
 
-        return mContentPreviewUi.display(resources, layoutInflater, parent, headlineViewParent);
+        ViewGroup layout =
+                mContentPreviewUi.display(resources, layoutInflater, parent, headlineViewParent);
+        mHeadlineParent = headlineViewParent == null ? layout : headlineViewParent;
+        if (mHeadlineParent != null) {
+            ContentPreviewUi.displayModifyShareAction(
+                    mHeadlineParent, mModifyShareActionFactory.get());
+        }
+        return layout;
+    }
+
+    /**
+     * Update Modify Share Action, if it is inflated.
+     */
+    public void updateModifyShareAction() {
+        if (mHeadlineParent != null) {
+            ContentPreviewUi.displayModifyShareAction(
+                    mHeadlineParent, mModifyShareActionFactory.get());
+        }
     }
 
     private static TextContentPreviewUi createTextPreview(

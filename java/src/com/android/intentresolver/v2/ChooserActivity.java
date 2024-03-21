@@ -153,6 +153,7 @@ import com.android.intentresolver.v2.ui.ShareResultSenderFactory;
 import com.android.intentresolver.v2.ui.model.ActivityModel;
 import com.android.intentresolver.v2.ui.model.ChooserRequest;
 import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel;
+import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView;
 import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
@@ -613,6 +614,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getTargetIntent(),
                 previewViewModel.getImageLoader(),
                 createChooserActionFactory(),
+                createModifyShareActionFactory(),
                 mEnterTransitionAnimationDelegate,
                 new HeadlineGeneratorImpl(this),
                 mRequest.getContentTypeHint(),
@@ -664,6 +666,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         boolean recreateAdapters = shouldUpdateAdapters(mRequest, chooserRequest);
         mRequest = chooserRequest;
         updateShareResultSender();
+        mChooserContentPreviewUi.updateModifyShareAction();
         if (recreateAdapters) {
             recreatePagerAdapter();
         }
@@ -683,11 +686,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             ChooserRequest oldChooserRequest, ChooserRequest newChooserRequest) {
         Intent oldTargetIntent = oldChooserRequest.getTargetIntent();
         Intent newTargetIntent = newChooserRequest.getTargetIntent();
+        List<Intent> oldAltIntents = oldChooserRequest.getAdditionalTargets();
+        List<Intent> newAltIntents = newChooserRequest.getAdditionalTargets();
 
         // TODO: a workaround for the unnecessary target reloading caused by multiple flow updates -
         //  an artifact of the current implementation; revisit.
-        // reference comparison is intentional
-        return oldTargetIntent != newTargetIntent;
+        return !oldTargetIntent.equals(newTargetIntent) || !oldAltIntents.equals(newAltIntents);
     }
 
     private void recreatePagerAdapter() {
@@ -2103,7 +2107,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getTargetIntent(),
                 mRequest.getLaunchedFromPackage(),
                 mRequest.getChooserActions(),
-                mRequest.getModifyShareAction(),
                 mImageEditor,
                 getEventLog(),
                 (isExcluded) -> mExcludeSharedText = isExcluded,
@@ -2133,13 +2136,24 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                     }
                 },
                 mShareResultSender,
-                (status) -> {
-                    if (status != null) {
-                        setResult(status);
-                    }
-                    finish();
-                },
+                this::finishWithStatus,
                 mClipboardManager);
+    }
+
+    private Supplier<ActionRow.Action> createModifyShareActionFactory() {
+        return () -> ChooserActionFactory.createCustomAction(
+                ChooserActivity.this,
+                mRequest.getModifyShareAction(),
+                () -> getEventLog().logActionSelected(EventLog.SELECTION_TYPE_MODIFY_SHARE),
+                mShareResultSender,
+                this::finishWithStatus);
+    }
+
+    private void finishWithStatus(@Nullable Integer status) {
+        if (status != null) {
+            setResult(status);
+        }
+        finish();
     }
 
     /*
