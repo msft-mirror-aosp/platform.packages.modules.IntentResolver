@@ -26,6 +26,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.Cus
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.PendingIntentSender
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.toCustomActionModel
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.onValue
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallback
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import javax.inject.Inject
@@ -56,9 +57,10 @@ constructor(
                 .mapLatest { record -> selectionCallback.onSelectionChanged(record.intent) }
                 .filterNotNull()
                 .collect { updates ->
-                    val actions = updates.customActions ?: emptyList()
-                    intentRepository.customActions.value =
-                        actions.map { it.toCustomActionModel(pendingIntentSender) }
+                    updates.customActions.onValue { actions ->
+                        intentRepository.customActions.value =
+                            actions.map { it.toCustomActionModel(pendingIntentSender) }
+                    }
                     chooserParamsUpdateRepository.setUpdates(updates)
                 }
         }

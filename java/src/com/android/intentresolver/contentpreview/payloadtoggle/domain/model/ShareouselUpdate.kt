@@ -24,11 +24,11 @@ import android.service.chooser.ChooserTarget
 /** Sharing session updates provided by the sharing app from the payload change callback */
 data class ShareouselUpdate(
     // for all properties, null value means no change
-    val customActions: List<ChooserAction>? = null,
-    val modifyShareAction: ChooserAction? = null,
-    val alternateIntents: List<Intent>? = null,
-    val callerTargets: List<ChooserTarget>? = null,
-    val refinementIntentSender: IntentSender? = null,
-    val resultIntentSender: IntentSender? = null,
-    val metadataText: CharSequence? = null,
+    val customActions: ValueUpdate<List<ChooserAction>> = ValueUpdate.Absent,
+    val modifyShareAction: ValueUpdate<ChooserAction?> = ValueUpdate.Absent,
+    val alternateIntents: ValueUpdate<List<Intent>> = ValueUpdate.Absent,
+    val callerTargets: ValueUpdate<List<ChooserTarget>> = ValueUpdate.Absent,
+    val refinementIntentSender: ValueUpdate<IntentSender?> = ValueUpdate.Absent,
+    val resultIntentSender: ValueUpdate<IntentSender?> = ValueUpdate.Absent,
+    val metadataText: ValueUpdate<CharSequence?> = ValueUpdate.Absent,
 )

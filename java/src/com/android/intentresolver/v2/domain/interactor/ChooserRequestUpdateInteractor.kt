@@ -17,12 +17,10 @@
 package com.android.intentresolver.v2.domain.interactor
 
 import android.content.Intent
-import android.content.IntentSender
-import android.service.chooser.ChooserAction
-import android.service.chooser.ChooserTarget
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -63,60 +61,26 @@ constructor(
     }
 
     private fun updateTargetIntent(targetIntent: Intent) {
-        chooserRequestRepository.update { current ->
-            current.updatedWith(targetIntent = targetIntent)
-        }
+        chooserRequestRepository.update { current -> current.copy(targetIntent = targetIntent) }
     }
 
     private fun updateChooserParameters(update: ShareouselUpdate) {
         chooserRequestRepository.update { current ->
-            current.updatedWith(
-                callerChooserTargets = update.callerTargets,
-                modifyShareAction = update.modifyShareAction,
-                additionalTargets = update.alternateIntents,
-                chosenComponentSender = update.resultIntentSender,
-                refinementIntentSender = update.refinementIntentSender,
-                metadataText = update.metadataText,
+            current.copy(
+                callerChooserTargets =
+                    update.callerTargets.getOrDefault(current.callerChooserTargets),
+                modifyShareAction =
+                    update.modifyShareAction.getOrDefault(current.modifyShareAction),
+                additionalTargets = update.alternateIntents.getOrDefault(current.additionalTargets),
+                chosenComponentSender =
+                    update.resultIntentSender.getOrDefault(current.chosenComponentSender),
+                refinementIntentSender =
+                    update.refinementIntentSender.getOrDefault(current.refinementIntentSender),
+                metadataText = update.metadataText.getOrDefault(current.metadataText),
             )
         }
     }
 }
-
-private fun ChooserRequest.updatedWith(
-    targetIntent: Intent? = null,
-    callerChooserTargets: List<ChooserTarget>? = null,
-    modifyShareAction: ChooserAction? = null,
-    additionalTargets: List<Intent>? = null,
-    chosenComponentSender: IntentSender? = null,
-    refinementIntentSender: IntentSender? = null,
-    metadataText: CharSequence? = null,
-) =
-    ChooserRequest(
-        targetIntent ?: this.targetIntent,
-        this.targetAction,
-        this.isSendActionTarget,
-        this.targetType,
-        this.launchedFromPackage,
-        this.title,
-        this.defaultTitleResource,
-        this.referrer,
-        this.filteredComponentNames,
-        callerChooserTargets ?: this.callerChooserTargets,
-        this.chooserActions,
-        modifyShareAction ?: this.modifyShareAction,
-        this.shouldRetainInOnStop,
-        additionalTargets ?: this.additionalTargets,
-        this.replacementExtras,
-        this.initialIntents,
-        chosenComponentSender ?: this.chosenComponentSender,
-        refinementIntentSender ?: this.refinementIntentSender,
-        this.sharedText,
-        this.shareTargetFilter,
-        this.additionalContentUri,
-        this.focusedItemPosition,
-        this.contentTypeHint,
-        metadataText ?: this.metadataText,
-    )
 
 @AssistedFactory
 @ViewModelScoped
