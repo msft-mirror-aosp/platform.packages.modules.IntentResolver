@@ -22,14 +22,12 @@ import android.content.Intent.ACTION_SEND_MULTIPLE
 import android.content.Intent.EXTRA_STREAM
 import android.content.IntentSender
 import android.net.Uri
-import android.service.chooser.Flags
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
-import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.android.intentresolver.mock
-import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ChooserRequest
+import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -50,26 +48,12 @@ class ChooserRequestUpdateInteractorTest {
             type = "image/png"
         }
     val initialRequest = createSomeChooserRequest(targetIntent)
-    private val chooserIntent = Intent.createChooser(targetIntent, null)
-    private val activityModel =
-        ActivityModel(
-            chooserIntent,
-            launchedFromUid = 1,
-            launchedFromPackage = "org.pkg.app",
-            referrer = null,
-        )
     private val targetIntentRepository =
         TargetIntentRepository(
             targetIntent,
             emptyList(),
         )
     private val chooserParamsUpdateRepository = ChooserParamsUpdateRepository()
-    private val fakeFlags =
-        FakeChooserServiceFlags().apply {
-            setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
-            setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, false)
-            setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
-        }
     private val testScope = TestScope()
 
     @Test
@@ -78,11 +62,9 @@ class ChooserRequestUpdateInteractorTest {
             val requestFlow = MutableStateFlow(initialRequest)
             val testSubject =
                 ChooserRequestUpdateInteractor(
-                    activityModel,
                     targetIntentRepository,
                     chooserParamsUpdateRepository,
                     requestFlow,
-                    fakeFlags,
                 )
             backgroundScope.launch { testSubject.launch() }
             testScheduler.runCurrent()
@@ -98,11 +80,9 @@ class ChooserRequestUpdateInteractorTest {
             val requestFlow = MutableStateFlow(initialRequest)
             val testSubject =
                 ChooserRequestUpdateInteractor(
-                    activityModel,
                     targetIntentRepository,
                     chooserParamsUpdateRepository,
                     requestFlow,
-                    fakeFlags,
                 )
             backgroundScope.launch { testSubject.launch() }
             targetIntentRepository.updateTargetIntent(
@@ -124,11 +104,9 @@ class ChooserRequestUpdateInteractorTest {
             val requestFlow = MutableStateFlow(initialRequest)
             val testSubject =
                 ChooserRequestUpdateInteractor(
-                    activityModel,
                     targetIntentRepository,
                     chooserParamsUpdateRepository,
                     requestFlow,
-                    fakeFlags,
                 )
             backgroundScope.launch { testSubject.launch() }
             val newResultSender = mock<IntentSender>()
@@ -146,6 +124,34 @@ class ChooserRequestUpdateInteractorTest {
             assertWithMessage("Another chooser request is expected")
                 .that(requestFlow.value.chosenComponentSender)
                 .isSameInstanceAs(newResultSender)
+        }
+
+    @Test
+    fun testTargetIntentUpdateDoesNotOverrideOtherParameters() =
+        testScope.runTest {
+            val requestFlow = MutableStateFlow(initialRequest)
+            val testSubject =
+                ChooserRequestUpdateInteractor(
+                    targetIntentRepository,
+                    chooserParamsUpdateRepository,
+                    requestFlow,
+                )
+            backgroundScope.launch { testSubject.launch() }
+
+            val newResultSender = mock<IntentSender>()
+            val newTargetIntent = Intent(Intent.ACTION_VIEW)
+            chooserParamsUpdateRepository.setUpdates(
+                ShareouselUpdate(
+                    resultIntentSender = newResultSender,
+                )
+            )
+            testScheduler.runCurrent()
+            targetIntentRepository.updateTargetIntent(newTargetIntent)
+            testScheduler.runCurrent()
+
+            assertThat(requestFlow.value.targetIntent).isSameInstanceAs(newTargetIntent)
+
+            assertThat(requestFlow.value.chosenComponentSender).isSameInstanceAs(newResultSender)
         }
 }
 
