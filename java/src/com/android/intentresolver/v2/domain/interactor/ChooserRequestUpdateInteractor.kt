@@ -17,16 +17,13 @@
 package com.android.intentresolver.v2.domain.interactor
 
 import android.content.Intent
-import android.util.Log
+import android.content.IntentSender
+import android.service.chooser.ChooserAction
+import android.service.chooser.ChooserTarget
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
-import com.android.intentresolver.inject.ChooserServiceFlags
-import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ChooserRequest
-import com.android.intentresolver.v2.ui.viewmodel.readChooserRequest
-import com.android.intentresolver.v2.validation.Invalid
-import com.android.intentresolver.v2.validation.Valid
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -39,19 +36,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val TAG = "ChooserRequestUpdate"
-
 /** Updates updates ChooserRequest with a new target intent */
 // TODO: make fully injectable
 class ChooserRequestUpdateInteractor
 @AssistedInject
 constructor(
-    private val activityModel: ActivityModel,
     private val targetIntentRepository: TargetIntentRepository,
     private val paramsUpdateRepository: ChooserParamsUpdateRepository,
     // TODO: replace with a proper repository, when available
     @Assisted private val chooserRequestRepository: MutableStateFlow<ChooserRequest>,
-    private val flags: ChooserServiceFlags,
 ) {
 
     suspend fun launch() {
@@ -70,53 +63,60 @@ constructor(
     }
 
     private fun updateTargetIntent(targetIntent: Intent) {
-        val updatedActivityModel = activityModel.updateWithTargetIntent(targetIntent)
-        when (val updatedChooserRequest = readChooserRequest(updatedActivityModel, flags)) {
-            is Valid -> chooserRequestRepository.value = updatedChooserRequest.value
-            is Invalid -> Log.w(TAG, "Failed to apply payload selection changes")
+        chooserRequestRepository.update { current ->
+            current.updatedWith(targetIntent = targetIntent)
         }
     }
 
     private fun updateChooserParameters(update: ShareouselUpdate) {
         chooserRequestRepository.update { current ->
-            ChooserRequest(
-                current.targetIntent,
-                current.targetAction,
-                current.isSendActionTarget,
-                current.targetType,
-                current.launchedFromPackage,
-                current.title,
-                current.defaultTitleResource,
-                current.referrer,
-                current.filteredComponentNames,
-                update.callerTargets ?: current.callerChooserTargets,
-                // chooser actions are handled separately
-                current.chooserActions,
-                update.modifyShareAction ?: current.modifyShareAction,
-                current.shouldRetainInOnStop,
-                update.alternateIntents ?: current.additionalTargets,
-                current.replacementExtras,
-                current.initialIntents,
-                update.resultIntentSender ?: current.chosenComponentSender,
-                update.refinementIntentSender ?: current.refinementIntentSender,
-                current.sharedText,
-                current.shareTargetFilter,
-                current.additionalContentUri,
-                current.focusedItemPosition,
-                current.contentTypeHint,
-                update.metadataText ?: current.metadataText,
+            current.updatedWith(
+                callerChooserTargets = update.callerTargets,
+                modifyShareAction = update.modifyShareAction,
+                additionalTargets = update.alternateIntents,
+                chosenComponentSender = update.resultIntentSender,
+                refinementIntentSender = update.refinementIntentSender,
+                metadataText = update.metadataText,
             )
         }
     }
-
-    private fun ActivityModel.updateWithTargetIntent(targetIntent: Intent) =
-        ActivityModel(
-            Intent(intent).apply { putExtra(Intent.EXTRA_INTENT, targetIntent) },
-            launchedFromUid,
-            launchedFromPackage,
-            referrer,
-        )
 }
+
+private fun ChooserRequest.updatedWith(
+    targetIntent: Intent? = null,
+    callerChooserTargets: List<ChooserTarget>? = null,
+    modifyShareAction: ChooserAction? = null,
+    additionalTargets: List<Intent>? = null,
+    chosenComponentSender: IntentSender? = null,
+    refinementIntentSender: IntentSender? = null,
+    metadataText: CharSequence? = null,
+) =
+    ChooserRequest(
+        targetIntent ?: this.targetIntent,
+        this.targetAction,
+        this.isSendActionTarget,
+        this.targetType,
+        this.launchedFromPackage,
+        this.title,
+        this.defaultTitleResource,
+        this.referrer,
+        this.filteredComponentNames,
+        callerChooserTargets ?: this.callerChooserTargets,
+        this.chooserActions,
+        modifyShareAction ?: this.modifyShareAction,
+        this.shouldRetainInOnStop,
+        additionalTargets ?: this.additionalTargets,
+        this.replacementExtras,
+        this.initialIntents,
+        chosenComponentSender ?: this.chosenComponentSender,
+        refinementIntentSender ?: this.refinementIntentSender,
+        this.sharedText,
+        this.shareTargetFilter,
+        this.additionalContentUri,
+        this.focusedItemPosition,
+        this.contentTypeHint,
+        metadataText ?: this.metadataText,
+    )
 
 @AssistedFactory
 @ViewModelScoped
