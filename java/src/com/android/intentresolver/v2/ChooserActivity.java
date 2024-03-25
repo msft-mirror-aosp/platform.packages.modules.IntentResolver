@@ -2448,8 +2448,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (!shouldShowContentPreview()) {
             return false;
         }
-        boolean isEmpty = mChooserMultiProfilePagerAdapter.getListAdapterForUserHandle(
-                UserHandle.of(UserHandle.myUserId())).getCount() == 0;
+        ResolverListAdapter adapter = mChooserMultiProfilePagerAdapter.getListAdapterForUserHandle(
+                UserHandle.of(UserHandle.myUserId()));
+        boolean isEmpty = adapter == null || adapter.getCount() == 0;
         return (mFeatureFlags.scrollablePreview() || mProfiles.getWorkProfilePresent())
                 && (!isEmpty || shouldShowContentPreviewWhenEmpty());
     }

@@ -44,6 +44,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.any
 import com.android.intentresolver.argumentCaptor
 import com.android.intentresolver.capture
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate.Absent
 import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.android.intentresolver.mock
 import com.android.intentresolver.whenever
@@ -51,6 +53,7 @@ import com.google.common.truth.Correspondence
 import com.google.common.truth.Correspondence.BinaryPredicate
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import java.lang.IllegalArgumentException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -175,16 +178,16 @@ class SelectionChangeCallbackImplTest {
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
         assertWithMessage("Unexpected custom actions")
-            .that(result.customActions?.map { it.icon to it.label })
+            .that(result.customActions.getOrThrow().map { it.icon to it.label })
             .containsExactly(a1.icon to a1.label, a2.icon to a2.label)
             .inOrder()
 
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText).isEqualTo(Absent)
     }
 
     @Test
@@ -213,18 +216,18 @@ class SelectionChangeCallbackImplTest {
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
         assertWithMessage("Unexpected modify share action: wrong icon")
-            .that(result.modifyShareAction?.icon)
+            .that(result.modifyShareAction.getOrThrow()?.icon)
             .isEqualTo(modifyShare.icon)
         assertWithMessage("Unexpected modify share action: wrong label")
-            .that(result.modifyShareAction?.label)
+            .that(result.modifyShareAction.getOrThrow()?.label)
             .isEqualTo(modifyShare.label)
 
-        assertThat(result.customActions).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText).isEqualTo(Absent)
     }
 
     @Test
@@ -248,24 +251,24 @@ class SelectionChangeCallbackImplTest {
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
         assertWithMessage("Wrong number of alternate intents")
-            .that(result.alternateIntents)
+            .that(result.alternateIntents.getOrThrow())
             .hasSize(1)
         assertWithMessage("Wrong alternate intent: action")
-            .that(result.alternateIntents?.get(0)?.action)
+            .that(result.alternateIntents.getOrThrow()[0].action)
             .isEqualTo(alternateIntents[0].action)
         assertWithMessage("Wrong alternate intent: categories")
-            .that(result.alternateIntents?.get(0)?.categories)
+            .that(result.alternateIntents.getOrThrow()[0].categories)
             .containsExactlyElementsIn(alternateIntents[0].categories)
         assertWithMessage("Wrong alternate intent: mime type")
-            .that(result.alternateIntents?.get(0)?.type)
+            .that(result.alternateIntents.getOrThrow()[0].type)
             .isEqualTo(alternateIntents[0].type)
 
-        assertThat(result.customActions).isNull()
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText).isEqualTo(Absent)
     }
 
     @Test
@@ -298,7 +301,7 @@ class SelectionChangeCallbackImplTest {
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
         assertWithMessage("Wrong caller targets")
-            .that(result.callerTargets)
+            .that(result.callerTargets.getOrThrow())
             .comparingElementsUsing(
                 Correspondence.from(
                     BinaryPredicate<ChooserTarget?, ChooserTarget> { actual, expected ->
@@ -313,12 +316,12 @@ class SelectionChangeCallbackImplTest {
             .containsExactly(t1, t2)
             .inOrder()
 
-        assertThat(result.customActions).isNull()
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText).isEqualTo(Absent)
     }
 
     @Test
@@ -339,13 +342,13 @@ class SelectionChangeCallbackImplTest {
         val result = testSubject.onSelectionChanged(targetIntent)
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
-        assertThat(result.customActions).isNull()
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNotNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender.getOrThrow()).isNotNull()
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText).isEqualTo(Absent)
     }
 
     @Test
@@ -366,13 +369,13 @@ class SelectionChangeCallbackImplTest {
         val result = testSubject.onSelectionChanged(targetIntent)
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
-        assertThat(result.customActions).isNull()
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNotNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender.getOrThrow()).isNotNull()
+        assertThat(result.metadataText).isEqualTo(Absent)
     }
 
     @Test
@@ -387,13 +390,13 @@ class SelectionChangeCallbackImplTest {
         val result = testSubject.onSelectionChanged(targetIntent)
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
-        assertThat(result.customActions).isNull()
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText).isEqualTo(Absent)
     }
 
     @Test
@@ -409,13 +412,13 @@ class SelectionChangeCallbackImplTest {
         val result = testSubject.onSelectionChanged(targetIntent)
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
-        assertThat(result.customActions).isNull()
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isEqualTo(metadataText)
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText.getOrThrow()).isEqualTo(metadataText)
     }
 
     @Test
@@ -440,14 +443,20 @@ class SelectionChangeCallbackImplTest {
         val result = testSubject.onSelectionChanged(targetIntent)
         assertWithMessage("Callback result should not be null").that(result).isNotNull()
         requireNotNull(result)
-        assertThat(result.customActions).isNull()
-        assertThat(result.modifyShareAction).isNull()
-        assertThat(result.alternateIntents).isNull()
-        assertThat(result.callerTargets).isNull()
-        assertThat(result.refinementIntentSender).isNull()
-        assertThat(result.resultIntentSender).isNull()
-        assertThat(result.metadataText).isNull()
+        assertThat(result.customActions.getOrThrow()).isEmpty()
+        assertThat(result.modifyShareAction.getOrThrow()).isNull()
+        assertThat(result.alternateIntents.getOrThrow()).isEmpty()
+        assertThat(result.callerTargets.getOrThrow()).isEmpty()
+        assertThat(result.refinementIntentSender.getOrThrow()).isNull()
+        assertThat(result.resultIntentSender.getOrThrow()).isNull()
+        assertThat(result.metadataText.getOrThrow()).isNull()
     }
 }
+
+private fun <T> ValueUpdate<T>.getOrThrow(): T =
+    when (this) {
+        is ValueUpdate.Value -> value
+        else -> throw IllegalArgumentException("Value is expected")
+    }
 
 private fun createUri(id: Int) = Uri.parse("content://org.pkg.images/$id.png")

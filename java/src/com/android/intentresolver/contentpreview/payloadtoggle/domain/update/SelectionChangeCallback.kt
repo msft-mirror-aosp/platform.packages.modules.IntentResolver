@@ -18,6 +18,8 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.update
 
 import android.content.ContentInterface
 import android.content.Intent
+import android.content.Intent.EXTRA_ALTERNATE_INTENTS
+import android.content.Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
 import android.content.Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION
 import android.content.Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER
@@ -31,6 +33,7 @@ import android.service.chooser.AdditionalContentContract.MethodNames.ON_SELECTIO
 import android.service.chooser.ChooserAction
 import android.service.chooser.ChooserTarget
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.inject.AdditionalContent
 import com.android.intentresolver.inject.ChooserIntent
 import com.android.intentresolver.inject.ChooserServiceFlags
@@ -88,7 +91,10 @@ constructor(
             }
             ?.let { bundle ->
                 return when (val result = readCallbackResponse(bundle, flags)) {
-                    is Valid -> result.value
+                    is Valid -> {
+                        result.warnings.forEach { it.log(TAG) }
+                        result.value
+                    }
                     is Invalid -> {
                         result.errors.forEach { it.log(TAG) }
                         null
@@ -102,18 +108,40 @@ private fun readCallbackResponse(
     flags: ChooserServiceFlags
 ): ValidationResult<ShareouselUpdate> {
     return validateFrom(bundle::get) {
-        val customActions = readChooserActions()
-        val modifyShareAction = optional(value<ChooserAction>(EXTRA_CHOOSER_MODIFY_SHARE_ACTION))
-        val alternateIntents = readAlternateIntents()
-        val callerTargets = optional(array<ChooserTarget>(EXTRA_CHOOSER_TARGETS))
+        // An error is treated as an empty collection or null as the presence of a value indicates
+        // an intention to change the old value implying that the old value is obsolete (and should
+        // not be used).
+        val customActions =
+            bundle.readValueUpdate(EXTRA_CHOOSER_CUSTOM_ACTIONS) {
+                readChooserActions() ?: emptyList()
+            }
+        val modifyShareAction =
+            bundle.readValueUpdate(EXTRA_CHOOSER_MODIFY_SHARE_ACTION) { key ->
+                optional(value<ChooserAction>(key))
+            }
+        val alternateIntents =
+            bundle.readValueUpdate(EXTRA_ALTERNATE_INTENTS) {
+                readAlternateIntents() ?: emptyList()
+            }
+        val callerTargets =
+            bundle.readValueUpdate(EXTRA_CHOOSER_TARGETS) { key ->
+                optional(array<ChooserTarget>(key)) ?: emptyList()
+            }
         val refinementIntentSender =
-            optional(value<IntentSender>(EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER))
-        val resultIntentSender = optional(value<IntentSender>(EXTRA_CHOOSER_RESULT_INTENT_SENDER))
+            bundle.readValueUpdate(EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER) { key ->
+                optional(value<IntentSender>(key))
+            }
+        val resultIntentSender =
+            bundle.readValueUpdate(EXTRA_CHOOSER_RESULT_INTENT_SENDER) { key ->
+                optional(value<IntentSender>(key))
+            }
         val metadataText =
             if (flags.enableSharesheetMetadataExtra()) {
-                optional(value<CharSequence>(EXTRA_METADATA_TEXT))
+                bundle.readValueUpdate(EXTRA_METADATA_TEXT) { key ->
+                    optional(value<CharSequence>(key))
+                }
             } else {
-                null
+                ValueUpdate.Absent
             }
 
         ShareouselUpdate(
@@ -127,6 +155,16 @@ private fun readCallbackResponse(
         )
     }
 }
+
+private inline fun <reified T> Bundle.readValueUpdate(
+    key: String,
+    block: (String) -> T
+): ValueUpdate<T> =
+    if (containsKey(key)) {
+        ValueUpdate.Value(block(key))
+    } else {
+        ValueUpdate.Absent
+    }
 
 @Module
 @InstallIn(ViewModelComponent::class)
