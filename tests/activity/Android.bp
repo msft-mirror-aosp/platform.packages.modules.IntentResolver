@@ -53,6 +53,7 @@ android_test {
         "junit",
         "kotlinx_coroutines_test",
         "mockito-target-minus-junit4",
+        "mockito-kotlin2",
         "testables",
         "truth",
         "truth-java8-extension",
