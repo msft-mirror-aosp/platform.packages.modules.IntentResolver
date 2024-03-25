@@ -25,6 +25,7 @@ import android.net.Uri
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.mock
 import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.google.common.truth.Truth.assertThat
@@ -112,7 +113,7 @@ class ChooserRequestUpdateInteractorTest {
             val newResultSender = mock<IntentSender>()
             chooserParamsUpdateRepository.setUpdates(
                 ShareouselUpdate(
-                    resultIntentSender = newResultSender,
+                    resultIntentSender = ValueUpdate.Value(newResultSender),
                 )
             )
             testScheduler.runCurrent()
@@ -142,7 +143,7 @@ class ChooserRequestUpdateInteractorTest {
             val newTargetIntent = Intent(Intent.ACTION_VIEW)
             chooserParamsUpdateRepository.setUpdates(
                 ShareouselUpdate(
-                    resultIntentSender = newResultSender,
+                    resultIntentSender = ValueUpdate.Value(newResultSender),
                 )
             )
             testScheduler.runCurrent()
@@ -152,6 +153,41 @@ class ChooserRequestUpdateInteractorTest {
             assertThat(requestFlow.value.targetIntent).isSameInstanceAs(newTargetIntent)
 
             assertThat(requestFlow.value.chosenComponentSender).isSameInstanceAs(newResultSender)
+        }
+
+    @Test
+    fun testUpdateWithNullValues() =
+        testScope.runTest {
+            val initialRequest =
+                ChooserRequest(
+                    targetIntent = targetIntent,
+                    targetAction = targetIntent.action,
+                    isSendActionTarget = true,
+                    targetType = null,
+                    launchedFromPackage = "",
+                    referrer = null,
+                    refinementIntentSender = mock<IntentSender>(),
+                    chosenComponentSender = mock<IntentSender>(),
+                )
+            val requestFlow = MutableStateFlow(initialRequest)
+            val testSubject =
+                ChooserRequestUpdateInteractor(
+                    targetIntentRepository,
+                    chooserParamsUpdateRepository,
+                    requestFlow,
+                )
+            backgroundScope.launch { testSubject.launch() }
+
+            chooserParamsUpdateRepository.setUpdates(
+                ShareouselUpdate(
+                    resultIntentSender = ValueUpdate.Value(null),
+                    refinementIntentSender = ValueUpdate.Value(null),
+                )
+            )
+            testScheduler.runCurrent()
+
+            assertThat(requestFlow.value.chosenComponentSender).isNull()
+            assertThat(requestFlow.value.refinementIntentSender).isNull()
         }
 }
 
