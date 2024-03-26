@@ -32,7 +32,7 @@ import dagger.hilt.android.components.ViewModelComponent
 
 /** Modifies target intent based on current payload selection. */
 fun interface TargetIntentModifier<Item> {
-    fun onSelectionChanged(selection: Collection<Item>): Intent
+    fun intentFromSelection(selection: Collection<Item>): Intent
 }
 
 class TargetIntentModifierImpl<Item>(
@@ -40,7 +40,7 @@ class TargetIntentModifierImpl<Item>(
     private val getUri: Item.() -> Uri,
     private val getMimeType: Item.() -> String?,
 ) : TargetIntentModifier<Item> {
-    override fun onSelectionChanged(selection: Collection<Item>): Intent {
+    override fun intentFromSelection(selection: Collection<Item>): Intent {
         val uris = selection.mapTo(ArrayList()) { it.getUri() }
         val targetMimeType =
             selection.fold(null) { target: String?, item: Item ->

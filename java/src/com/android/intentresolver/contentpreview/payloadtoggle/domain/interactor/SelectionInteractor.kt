@@ -17,15 +17,38 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.updateAndGet
 
 class SelectionInteractor
 @Inject
 constructor(
-    selectionRepo: PreviewSelectionsRepository,
+    private val selectionsRepo: PreviewSelectionsRepository,
+    private val targetIntentModifier: TargetIntentModifier<PreviewModel>,
+    private val updateTargetIntentInteractor: UpdateTargetIntentInteractor,
 ) {
+    /** Set of selected previews. */
+    val selections: StateFlow<Set<PreviewModel>>
+        get() = selectionsRepo.selections
+
     /** Amount of selected previews. */
-    val amountSelected: Flow<Int> = selectionRepo.selections.map { it.selection.size }
+    val amountSelected: Flow<Int> = selectionsRepo.selections.map { it.size }
+
+    fun select(model: PreviewModel) {
+        updateChooserRequest(selectionsRepo.selections.updateAndGet { it + model })
+    }
+
+    fun unselect(model: PreviewModel) {
+        updateChooserRequest(selectionsRepo.selections.updateAndGet { it - model })
+    }
+
+    private fun updateChooserRequest(selections: Set<PreviewModel>) {
+        val intent = targetIntentModifier.intentFromSelection(selections)
+        updateTargetIntentInteractor.updateTargetIntent(intent)
+    }
 }

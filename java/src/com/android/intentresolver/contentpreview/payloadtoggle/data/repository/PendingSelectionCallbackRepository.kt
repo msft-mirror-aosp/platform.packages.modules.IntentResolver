@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,17 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.data.repository
 
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
-import dagger.hilt.android.scopes.ViewModelScoped
+import android.content.Intent
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Chooser parameters Updates received from the sharing application payload change callback */
-// TODO: a scaffolding repository to deliver chooser parameter updates before we developed some
-//  other, more thought-through solution.
-@ViewModelScoped
-class ChooserParamsUpdateRepository @Inject constructor() {
-    val updates = MutableStateFlow<ShareouselUpdate?>(null)
-
-    fun setUpdates(update: ShareouselUpdate) {
-        updates.tryEmit(update)
-    }
+/** Tracks active async communication with sharing app to notify of target intent update. */
+@ActivityRetainedScoped
+class PendingSelectionCallbackRepository @Inject constructor() {
+    /**
+     * The target [Intent] that is has an active update request with the sharing app, or `null` if
+     * there is no active request.
+     */
+    val pendingTargetIntent: MutableStateFlow<Intent?> = MutableStateFlow(null)
 }

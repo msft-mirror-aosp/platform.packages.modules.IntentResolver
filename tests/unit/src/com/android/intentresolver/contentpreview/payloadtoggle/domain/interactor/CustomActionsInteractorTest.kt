@@ -19,16 +19,16 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.app.Activity
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import com.android.intentresolver.contentpreview.payloadtoggle.data.model.CustomActionModel
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ActionModel
 import com.android.intentresolver.icon.BitmapIcon
 import com.android.intentresolver.mock
 import com.android.intentresolver.util.comparingElementsUsingTransform
+import com.android.intentresolver.v2.data.model.fakeChooserRequest
+import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +47,14 @@ class CustomActionsInteractorTest {
         runTest(testDispatcher) {
             val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ALPHA_8)
             val icon = Icon.createWithBitmap(bitmap)
-            val chooserActions = listOf(CustomActionModel("label1", icon) {})
+            val chooserRequestRepository =
+                ChooserRequestRepository(
+                    initialRequest = fakeChooserRequest(),
+                    initialActions =
+                        listOf(
+                            CustomActionModel(label = "label1", icon = icon, performAction = {}),
+                        ),
+                )
             val underTest =
                 CustomActionsInteractor(
                     activityResultRepo = ActivityResultRepository(),
@@ -55,11 +62,8 @@ class CustomActionsInteractorTest {
                     contentResolver = mock {},
                     eventLog = mock {},
                     packageManager = mock {},
-                    targetIntentRepo =
-                        TargetIntentRepository(
-                            initialIntent = Intent(),
-                            initialActions = chooserActions,
-                        ),
+                    chooserRequestInteractor =
+                        ChooserRequestInteractor(repository = chooserRequestRepository),
                 )
             val customActions: StateFlow<List<ActionModel>> =
                 underTest.customActions.stateIn(backgroundScope)
@@ -80,9 +84,9 @@ class CustomActionsInteractorTest {
     @Test
     fun customActions_tracksRepoUpdates() =
         runTest(testDispatcher) {
-            val targetIntentRepository =
-                TargetIntentRepository(
-                    initialIntent = Intent(),
+            val chooserRequestRepository =
+                ChooserRequestRepository(
+                    initialRequest = fakeChooserRequest(),
                     initialActions = emptyList(),
                 )
             val underTest =
@@ -92,7 +96,8 @@ class CustomActionsInteractorTest {
                     contentResolver = mock {},
                     eventLog = mock {},
                     packageManager = mock {},
-                    targetIntentRepo = targetIntentRepository,
+                    chooserRequestInteractor =
+                        ChooserRequestInteractor(repository = chooserRequestRepository),
                 )
 
             val customActions: StateFlow<List<ActionModel>> =
@@ -100,7 +105,7 @@ class CustomActionsInteractorTest {
             val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ALPHA_8)
             val icon = Icon.createWithBitmap(bitmap)
             val chooserActions = listOf(CustomActionModel("label1", icon) {})
-            targetIntentRepository.customActions.value = chooserActions
+            chooserRequestRepository.customActions.value = chooserActions
             runCurrent()
 
             assertThat(customActions.value)
@@ -123,8 +128,19 @@ class CustomActionsInteractorTest {
             val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ALPHA_8)
             val icon = Icon.createWithBitmap(bitmap)
             var actionSent = false
-            val chooserActions = listOf(CustomActionModel("label1", icon) { actionSent = true })
             val activityResultRepository = ActivityResultRepository()
+            val chooserRequestRepository =
+                ChooserRequestRepository(
+                    initialRequest = fakeChooserRequest(),
+                    initialActions =
+                        listOf(
+                            CustomActionModel(
+                                label = "label1",
+                                icon = icon,
+                                performAction = { actionSent = true },
+                            )
+                        ),
+                )
             val underTest =
                 CustomActionsInteractor(
                     activityResultRepo = activityResultRepository,
@@ -132,10 +148,9 @@ class CustomActionsInteractorTest {
                     contentResolver = mock {},
                     eventLog = mock {},
                     packageManager = mock {},
-                    targetIntentRepo =
-                        TargetIntentRepository(
-                            initialIntent = Intent(),
-                            initialActions = chooserActions,
+                    chooserRequestInteractor =
+                        ChooserRequestInteractor(
+                            repository = chooserRequestRepository,
                         ),
                 )
             val customActions: StateFlow<List<ActionModel>> =
