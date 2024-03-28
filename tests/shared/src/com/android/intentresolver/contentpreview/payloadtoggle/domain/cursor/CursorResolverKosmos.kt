@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.v2.data.model
+package com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor
 
-import android.content.Intent
 import android.net.Uri
+import com.android.intentresolver.contentResolver
+import com.android.intentresolver.inject.additionalContentUri
+import com.android.intentresolver.inject.chooserIntent
+import com.android.systemui.kosmos.Kosmos
 
-fun fakeChooserRequest(
-    intent: Intent = Intent(),
-    packageName: String = "pkg",
-    referrer: Uri? = null,
-) = ChooserRequest(intent, packageName, null)
+var Kosmos.payloadToggleCursorResolver: CursorResolver<Uri?> by
+    Kosmos.Fixture { payloadToggleCursorResolverImpl }
+val Kosmos.payloadToggleCursorResolverImpl
+    get() =
+        PayloadToggleCursorResolver(
+            contentResolver,
+            additionalContentUri,
+            chooserIntent,
+        )
