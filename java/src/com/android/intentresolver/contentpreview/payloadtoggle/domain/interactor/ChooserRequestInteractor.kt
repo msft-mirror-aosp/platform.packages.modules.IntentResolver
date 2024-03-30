@@ -17,21 +17,22 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.content.Intent
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.model.CustomActionModel
+import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.map
 
-class UpdateTargetIntentInteractor
+/** Stores the target intent of the share sheet, and custom actions derived from the intent. */
+class ChooserRequestInteractor
 @Inject
 constructor(
-    private val repository: PendingSelectionCallbackRepository,
-    private val chooserRequestInteractor: UpdateChooserRequestInteractor,
+    private val repository: ChooserRequestRepository,
 ) {
-    /**
-     * Updates the target intent for the chooser. This will kick off an asynchronous IPC with the
-     * sharing application, so that it can react to the new intent.
-     */
-    fun updateTargetIntent(targetIntent: Intent) {
-        chooserRequestInteractor.setTargetIntent(targetIntent)
-        repository.pendingTargetIntent.value = targetIntent
-    }
+    val targetIntent: Flow<Intent>
+        get() = repository.chooserRequest.map { it.targetIntent }
+
+    val customActions: Flow<List<CustomActionModel>>
+        get() = repository.customActions.asSharedFlow()
 }

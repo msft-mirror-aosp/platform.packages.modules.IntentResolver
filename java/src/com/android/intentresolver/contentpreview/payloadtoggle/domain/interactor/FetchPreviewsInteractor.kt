@@ -41,10 +41,10 @@ constructor(
     private val uriMetadataReader: UriMetadataReader,
     @PayloadToggle private val cursorResolver: CursorResolver<@JvmSuppressWildcards Uri?>,
 ) {
-    suspend fun launch() = coroutineScope {
+    suspend fun activate() = coroutineScope {
         val cursor = async { cursorResolver.getCursor() }
         val initialPreviewMap: Set<PreviewModel> = getInitialPreviews()
-        selectionRepository.setSelection(initialPreviewMap)
+        selectionRepository.selections.value = initialPreviewMap
         setCursorPreviews.setPreviews(
             previewsByKey = initialPreviewMap,
             startIndex = focusedItemIdx,

@@ -20,21 +20,21 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.FetchPreviewsInteractor
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.UpdateTargetIntentInteractor
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.ProcessTargetIntentUpdatesInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.ChooserServiceFlags
-import com.android.intentresolver.v2.domain.interactor.ChooserRequestUpdateInteractorFactory
+import com.android.intentresolver.v2.data.model.ChooserRequest
+import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
 import com.android.intentresolver.v2.ui.model.ActivityModel
 import com.android.intentresolver.v2.ui.model.ActivityModel.Companion.ACTIVITY_MODEL_KEY
-import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.Valid
+import com.android.intentresolver.v2.validation.ValidationResult
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -47,11 +47,17 @@ class ChooserViewModel
 constructor(
     args: SavedStateHandle,
     private val shareouselViewModelProvider: Lazy<ShareouselViewModel>,
-    private val updateTargetIntentInteractor: Lazy<UpdateTargetIntentInteractor>,
+    private val processUpdatesInteractor: Lazy<ProcessTargetIntentUpdatesInteractor>,
     private val fetchPreviewsInteractor: Lazy<FetchPreviewsInteractor>,
     @Background private val bgDispatcher: CoroutineDispatcher,
-    private val chooserRequestUpdateInteractorFactory: ChooserRequestUpdateInteractorFactory,
     private val flags: ChooserServiceFlags,
+    /**
+     * Provided only for the express purpose of early exit in the event of an invalid request.
+     *
+     * Note: [request] can only be safely accessed after checking if this value is [Valid].
+     */
+    val initialRequest: ValidationResult<ChooserRequest>,
+    private val chooserRequestRepository: Lazy<ChooserRequestRepository>,
 ) : ViewModel() {
 
     /** Parcelable-only references provided from the creating Activity */
@@ -60,43 +66,29 @@ constructor(
             "ActivityModel missing in SavedStateHandle! ($ACTIVITY_MODEL_KEY)"
         }
 
-    val shareouselViewModel by lazy {
+    val shareouselViewModel: ShareouselViewModel by lazy {
         // TODO: consolidate this logic, this would require a consolidated preview view model but
         //  for now just postpone starting the payload selection preview machinery until it's needed
         assert(flags.chooserPayloadToggling()) {
             "An attempt to use payload selection preview with the disabled flag"
         }
 
-        viewModelScope.launch(bgDispatcher) { updateTargetIntentInteractor.get().launch() }
-        viewModelScope.launch(bgDispatcher) { fetchPreviewsInteractor.get().launch() }
-        viewModelScope.launch { chooserRequestUpdateInteractorFactory.create(_request).launch() }
+        viewModelScope.launch(bgDispatcher) { processUpdatesInteractor.get().activate() }
+        viewModelScope.launch(bgDispatcher) { fetchPreviewsInteractor.get().activate() }
         shareouselViewModelProvider.get()
     }
-
-    /**
-     * Provided only for the express purpose of early exit in the event of an invalid request.
-     *
-     * Note: [request] can only be safely accessed after checking if this value is [Valid].
-     */
-    internal val initialRequest = readChooserRequest(activityModel, flags)
-
-    private lateinit var _request: MutableStateFlow<ChooserRequest>
 
     /**
      * A [StateFlow] of [ChooserRequest].
      *
      * Note: Only safe to access after checking if [initialRequest] is [Valid].
      */
-    lateinit var request: StateFlow<ChooserRequest>
-        private set
+    val request: StateFlow<ChooserRequest>
+        get() = chooserRequestRepository.get().chooserRequest.asStateFlow()
 
     init {
-        when (initialRequest) {
-            is Valid -> {
-                _request = MutableStateFlow(initialRequest.value)
-                request = _request.asStateFlow()
-            }
-            is Invalid -> Log.w(TAG, "initialRequest is Invalid, initialization failed")
+        if (initialRequest is Invalid) {
+            Log.w(TAG, "initialRequest is Invalid, initialization failed")
         }
     }
 }
