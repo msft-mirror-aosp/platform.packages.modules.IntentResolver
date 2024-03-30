@@ -29,9 +29,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
 import com.android.intentresolver.inject.Background
 import com.android.intentresolver.v2.annotation.JavaInterop
+import com.android.intentresolver.v2.data.model.ChooserRequest
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
-import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.Valid

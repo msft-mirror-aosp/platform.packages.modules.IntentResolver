@@ -20,6 +20,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import com.android.intentresolver.v2.data.model.ANDROID_APP_SCHEME
 import com.android.intentresolver.v2.ext.readParcelable
 import com.android.intentresolver.v2.ext.requireParcelable
 import java.util.Objects

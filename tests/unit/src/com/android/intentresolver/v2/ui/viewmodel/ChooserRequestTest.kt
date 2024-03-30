@@ -31,8 +31,8 @@ import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.inject.FakeChooserServiceFlags
+import com.android.intentresolver.v2.data.model.ChooserRequest
 import com.android.intentresolver.v2.ui.model.ActivityModel
-import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.validation.Importance
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.NoValue
@@ -126,10 +126,7 @@ class ChooserRequestTest {
     fun payloadIntents_includesTargetThenAdditional() {
         val intent1 = Intent(ACTION_SEND)
         val intent2 = Intent(ACTION_SEND_MULTIPLE)
-        val model = createActivityModel(
-            targetIntent = intent1,
-            additionalIntents = listOf(intent2)
-        )
+        val model = createActivityModel(targetIntent = intent1, additionalIntents = listOf(intent2))
 
         val result = readChooserRequest(model, fakeChooserServiceFlags)
 
@@ -229,7 +226,8 @@ class ChooserRequestTest {
         fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val uri = Uri.parse("content://org.pkg/path")
         val position = 10
-        val model = createActivityModel(targetIntent = Intent(ACTION_VIEW)).apply {
+        val model =
+            createActivityModel(targetIntent = Intent(ACTION_VIEW)).apply {
                 intent.putExtra(EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI, uri)
                 intent.putExtra(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION, position)
             }
@@ -266,7 +264,8 @@ class ChooserRequestTest {
     fun metadataText_whenFlagFalse_isNull() {
         fakeChooserServiceFlags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
         val metadataText: CharSequence = "Test metadata text"
-        val model = createActivityModel(targetIntent = Intent()).apply {
+        val model =
+            createActivityModel(targetIntent = Intent()).apply {
                 intent.putExtra(Intent.EXTRA_METADATA_TEXT, metadataText)
             }
 
@@ -283,7 +282,8 @@ class ChooserRequestTest {
         // Arrange
         fakeChooserServiceFlags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
         val metadataText: CharSequence = "Test metadata text"
-        val model = createActivityModel(targetIntent = Intent()).apply {
+        val model =
+            createActivityModel(targetIntent = Intent()).apply {
                 intent.putExtra(Intent.EXTRA_METADATA_TEXT, metadataText)
             }
 

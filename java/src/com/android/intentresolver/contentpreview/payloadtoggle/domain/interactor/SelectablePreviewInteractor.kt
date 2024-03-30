@@ -17,7 +17,6 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.net.Uri
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -25,19 +24,19 @@ import kotlinx.coroutines.flow.map
 /** An individual preview in Shareousel. */
 class SelectablePreviewInteractor(
     private val key: PreviewModel,
-    private val selectionRepo: PreviewSelectionsRepository,
+    private val selectionInteractor: SelectionInteractor,
 ) {
     val uri: Uri = key.uri
 
     /** Whether or not this preview is selected by the user. */
-    val isSelected: Flow<Boolean> = selectionRepo.selections.map { key in it.selection }
+    val isSelected: Flow<Boolean> = selectionInteractor.selections.map { key in it }
 
     /** Sets whether this preview is selected by the user. */
     fun setSelected(isSelected: Boolean) {
         if (isSelected) {
-            selectionRepo.select(key)
+            selectionInteractor.select(key)
         } else {
-            selectionRepo.unselect(key)
+            selectionInteractor.unselect(key)
         }
     }
 }
