@@ -35,6 +35,8 @@ annotation class ApplicationOwned
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ApplicationUser
 
+@Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class Broadcast
+
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class ProfileParent
 
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class Background
