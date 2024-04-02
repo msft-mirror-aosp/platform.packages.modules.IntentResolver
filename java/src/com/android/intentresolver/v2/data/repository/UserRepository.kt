@@ -38,10 +38,12 @@ import com.android.intentresolver.inject.ProfileParent
 import com.android.intentresolver.v2.data.BroadcastSubscriber
 import com.android.intentresolver.v2.shared.model.User
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
@@ -81,6 +83,15 @@ interface UserRepository {
 }
 
 private const val TAG = "UserRepository"
+
+/** The delay between entering the cached process state and entering the frozen cgroup */
+private val cachedProcessFreezeDelay: Duration = 10.seconds
+
+/** How long to continue listening for user state broadcasts while unsubscribed */
+private val stateFlowTimeout = cachedProcessFreezeDelay - 2.seconds
+
+/** How long to retain the previous user state after the state flow stops. */
+private val stateCacheTimeout = 2.seconds
 
 internal data class UserWithState(val user: User, val available: Boolean)
 
@@ -151,7 +162,7 @@ constructor(
     private class UserStateException(
         override val message: String,
         val event: UserEvent,
-        override val cause: Throwable? = null
+        override val cause: Throwable? = null,
     ) : RuntimeException("$message: event=$event", cause)
 
     private val sharingScope = CoroutineScope(scope.coroutineContext + backgroundDispatcher)
@@ -162,7 +173,15 @@ constructor(
             .runningFold(emptyList(), ::handleEvent)
             .distinctUntilChanged()
             .onEach { debugLog { "userStateList: $it" } }
-            .stateIn(sharingScope, SharingStarted.Eagerly, emptyList())
+            .stateIn(
+                sharingScope,
+                started =
+                    WhileSubscribed(
+                        stopTimeoutMillis = stateFlowTimeout.inWholeMilliseconds,
+                        replayExpirationMillis = 0 /** Immediately on stop */
+                    ),
+                listOf()
+            )
             .filterNot { it.isEmpty() }
 
     private suspend fun handleEvent(users: UserStates, event: UserEvent): UserStates {
@@ -186,7 +205,7 @@ constructor(
     }
 
     override val users: Flow<List<User>> =
-        usersWithState.map { userStateMap -> userStateMap.map { it.user } }.distinctUntilChanged()
+        usersWithState.map { userStates -> userStates.map { it.user } }.distinctUntilChanged()
 
     override val availability: Flow<Map<User, Boolean>> =
         usersWithState
