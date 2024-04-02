@@ -17,29 +17,40 @@
 package com.android.intentresolver.v2
 
 import android.os.UserHandle
+import androidx.annotation.MainThread
 import com.android.intentresolver.inject.IntentResolverFlags
 import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
 import com.android.intentresolver.v2.shared.model.User
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 @JavaInterop
+@MainThread
 class ProfileHelper
 @Inject
 constructor(
     interactor: UserInteractor,
+    private val scope: CoroutineScope,
+    private val background: CoroutineDispatcher,
     private val flags: IntentResolverFlags,
-    val profiles: List<Profile>,
-    val launchedAsProfile: Profile,
 ) {
     private val launchedByHandle: UserHandle = interactor.launchedAs
 
+    val launchedAsProfile by lazy {
+        runBlocking(background) { interactor.launchedAsProfile.first() }
+    }
+    val profiles by lazy { runBlocking(background) { interactor.profiles.first() } }
+
     // Map UserHandle back to a user within launchedByProfile
-    private val launchedByUser =
+    private val launchedByUser: User =
         when (launchedByHandle) {
             launchedAsProfile.primary.handle -> launchedAsProfile.primary
-            launchedAsProfile.clone?.handle -> launchedAsProfile.clone
+            launchedAsProfile.clone?.handle -> requireNotNull(launchedAsProfile.clone)
             else -> error("launchedByUser must be a member of launchedByProfile")
         }
     val launchedAsProfileType: Profile.Type = launchedAsProfile.type

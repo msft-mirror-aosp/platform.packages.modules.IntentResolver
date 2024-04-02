@@ -31,7 +31,6 @@ import com.android.intentresolver.inject.Background
 import com.android.intentresolver.v2.annotation.JavaInterop
 import com.android.intentresolver.v2.data.model.ChooserRequest
 import com.android.intentresolver.v2.domain.interactor.UserInteractor
-import com.android.intentresolver.v2.shared.model.Profile
 import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.Valid
@@ -43,33 +42,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 private const val TAG: String = "ChooserHelper"
-
-/**
- * Provides initial values to ChooserActivity and completes initialization from onCreate.
- *
- * This information is collected and provided on behalf of ChooserActivity to eliminate the need for
- * suspending functions within remaining synchronous startup code.
- */
-@JavaInterop
-fun interface ChooserInitializer {
-    /** @param initialState the initial state to provide to initialization */
-    fun initializeWith(initialState: InitialState)
-}
-
-/**
- * A parameter object for Initialize which contains all the values which are required "early", on
- * the main thread and outside of any coroutines. This supports code which expects to be called by
- * the system on the main thread only. (This includes everything originally called from onCreate).
- */
-@JavaInterop
-data class InitialState(
-    val profiles: List<Profile>,
-    val availability: Map<Profile, Boolean>,
-    val launchedAs: Profile
-)
 
 /**
  * __Purpose__
@@ -113,7 +87,7 @@ constructor(
     private val activity: ComponentActivity = hostActivity as ComponentActivity
     private val viewModel by activity.viewModels<ChooserViewModel>()
 
-    private lateinit var activityInitializer: ChooserInitializer
+    private lateinit var activityInitializer: Runnable
 
     var onChooserRequestChanged: Consumer<ChooserRequest> = Consumer {}
 
@@ -126,7 +100,7 @@ constructor(
      *
      * This _must_ be called from [ChooserActivity.onCreate].
      */
-    fun setInitializer(initializer: ChooserInitializer) {
+    fun setInitializer(initializer: Runnable) {
         check(activity.lifecycle.currentState == Lifecycle.State.INITIALIZED) {
             "setInitializer must be called before onCreate returns"
         }
@@ -189,14 +163,6 @@ constructor(
 
     private fun initializeActivity(request: Valid<ChooserRequest>) {
         request.warnings.forEach { it.log(TAG) }
-
-        val initialState =
-            runBlocking(background) {
-                val initialProfiles = userInteractor.profiles.first()
-                val initialAvailability = userInteractor.availability.first()
-                val launchedAsProfile = userInteractor.launchedAsProfile.first()
-                InitialState(initialProfiles, initialAvailability, launchedAsProfile)
-            }
-        activityInitializer.initializeWith(initialState)
+        activityInitializer.run()
     }
 }

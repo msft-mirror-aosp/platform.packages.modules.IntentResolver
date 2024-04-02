@@ -22,6 +22,7 @@ import com.android.intentresolver.v2.domain.interactor.UserInteractor
 import com.android.intentresolver.v2.shared.model.Profile
 import com.android.intentresolver.v2.shared.model.User
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -40,8 +41,7 @@ class ProfileAvailabilityTest {
 
     @Test
     fun testProfileAvailable() = runTest {
-        val availability = ProfileAvailability(backgroundScope, interactor, mapOf())
-        runCurrent()
+        val availability = ProfileAvailability(interactor, this, Dispatchers.IO)
 
         assertThat(availability.isAvailable(personalProfile)).isTrue()
         assertThat(availability.isAvailable(workProfile)).isTrue()
@@ -59,8 +59,7 @@ class ProfileAvailabilityTest {
 
     @Test
     fun waitingToEnableProfile() = runTest {
-        val availability = ProfileAvailability(backgroundScope, interactor, mapOf())
-        runCurrent()
+        val availability = ProfileAvailability(interactor, this, Dispatchers.IO)
 
         availability.requestQuietModeState(workProfile, true)
         assertThat(availability.waitingToEnableProfile).isFalse()
@@ -68,7 +67,6 @@ class ProfileAvailabilityTest {
 
         availability.requestQuietModeState(workProfile, false)
         assertThat(availability.waitingToEnableProfile).isTrue()
-
         runCurrent()
 
         assertThat(availability.waitingToEnableProfile).isFalse()

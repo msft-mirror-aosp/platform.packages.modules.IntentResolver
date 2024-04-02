@@ -124,6 +124,7 @@ import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.grid.ChooserGridAdapter;
 import com.android.intentresolver.icons.TargetDataLoader;
+import com.android.intentresolver.inject.Background;
 import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.measurements.Tracer;
 import com.android.intentresolver.model.AbstractResolverComparator;
@@ -184,6 +185,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
+
+import kotlinx.coroutines.CoroutineDispatcher;
 
 /**
  * The Chooser Activity handles intent resolution specifically for sharing intents -
@@ -265,6 +268,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final int SCROLL_STATUS_SCROLLING_HORIZONTAL = 2;
 
     @Inject public UserInteractor mUserInteractor;
+    @Inject @Background public CoroutineDispatcher mBackgroundDispatcher;
     @Inject public ChooserHelper mChooserHelper;
     @Inject public FeatureFlags mFeatureFlags;
     @Inject public android.service.chooser.FeatureFlags mChooserServiceFeatureFlags;
@@ -352,7 +356,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         setTheme(R.style.Theme_DeviceDefault_Chooser);
 
         // Initializer is invoked when this function returns, via Lifecycle.
-        mChooserHelper.setInitializer(this::initializeWith);
+        mChooserHelper.setInitializer(this::initialize);
         if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
             mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
         }
@@ -467,8 +471,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     /** DO NOT CALL. Only for use from ChooserHelper as a callback. */
-    private void initializeWith(InitialState initialState) {
-        Log.d(TAG, "initializeWith: " + initialState);
+    private void initialize() {
 
         mViewModel = new ViewModelProvider(this).get(ChooserViewModel.class);
         mRequest = mViewModel.getRequest().getValue();
@@ -476,14 +479,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         mProfiles =  new ProfileHelper(
                 mUserInteractor,
-                mFeatureFlags,
-                initialState.getProfiles(),
-                initialState.getLaunchedAs());
+                getCoroutineScope(getLifecycle()),
+                mBackgroundDispatcher,
+                mFeatureFlags);
 
         mProfileAvailability = new ProfileAvailability(
-                getCoroutineScope(getLifecycle()),
                 mUserInteractor,
-                initialState.getAvailability());
+                getCoroutineScope(getLifecycle()),
+                mBackgroundDispatcher);
 
         mProfileAvailability.setOnProfileStatusChange(this::onWorkProfileStatusUpdated);
 
