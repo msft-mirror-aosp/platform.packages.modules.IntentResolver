@@ -16,22 +16,27 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
-import android.content.Intent
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallback
 import javax.inject.Inject
+import kotlinx.coroutines.flow.collectLatest
 
-class UpdateTargetIntentInteractor
+/** Communicates with the sharing application to notify of changes to the target intent. */
+class ProcessTargetIntentUpdatesInteractor
 @Inject
 constructor(
+    private val selectionCallback: SelectionChangeCallback,
     private val repository: PendingSelectionCallbackRepository,
     private val chooserRequestInteractor: UpdateChooserRequestInteractor,
 ) {
-    /**
-     * Updates the target intent for the chooser. This will kick off an asynchronous IPC with the
-     * sharing application, so that it can react to the new intent.
-     */
-    fun updateTargetIntent(targetIntent: Intent) {
-        chooserRequestInteractor.setTargetIntent(targetIntent)
-        repository.pendingTargetIntent.value = targetIntent
+    /** Listen for events and update state. */
+    suspend fun activate() {
+        repository.pendingTargetIntent.collectLatest { targetIntent ->
+            targetIntent ?: return@collectLatest
+            selectionCallback.onSelectionChanged(targetIntent)?.let { update ->
+                chooserRequestInteractor.applyUpdate(update)
+            }
+            repository.pendingTargetIntent.compareAndSet(targetIntent, null)
+        }
     }
 }

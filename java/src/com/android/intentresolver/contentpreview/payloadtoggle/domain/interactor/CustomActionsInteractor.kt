@@ -21,7 +21,6 @@ import android.content.ContentResolver
 import android.content.pm.PackageManager
 import com.android.intentresolver.contentpreview.payloadtoggle.data.model.CustomActionModel
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ActionModel
 import com.android.intentresolver.icon.toComposeIcon
 import com.android.intentresolver.inject.Background
@@ -41,12 +40,12 @@ constructor(
     private val contentResolver: ContentResolver,
     private val eventLog: EventLog,
     private val packageManager: PackageManager,
-    private val targetIntentRepo: TargetIntentRepository,
+    private val chooserRequestInteractor: ChooserRequestInteractor,
 ) {
     /** List of [ActionModel] that can be presented in Shareousel. */
     val customActions: Flow<List<ActionModel>>
         get() =
-            targetIntentRepo.customActions
+            chooserRequestInteractor.customActions
                 .map { actions ->
                     actions.map { action ->
                         ActionModel(

@@ -121,7 +121,7 @@ class FetchPreviewsInteractorTest {
 
     @Test
     fun setsInitialPreviews() = runTestWithDeps { deps ->
-        backgroundScope.launch { deps.underTest.launch() }
+        backgroundScope.launch { deps.underTest.activate() }
         runCurrent()
 
         assertThat(deps.previewsRepo.previewsModel.value)
@@ -147,7 +147,7 @@ class FetchPreviewsInteractorTest {
 
     @Test
     fun lookupCursorFromContentResolver() = runTestWithDeps { deps ->
-        backgroundScope.launch { deps.underTest.launch() }
+        backgroundScope.launch { deps.underTest.activate() }
         deps.cursorResolver.complete()
         runCurrent()
 
@@ -173,7 +173,7 @@ class FetchPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 1,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch() }
+            backgroundScope.launch { deps.underTest.activate() }
             deps.cursorResolver.complete()
             runCurrent()
 
@@ -205,7 +205,7 @@ class FetchPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch() }
+            backgroundScope.launch { deps.underTest.activate() }
             deps.cursorResolver.complete()
             runCurrent()
 
@@ -237,7 +237,7 @@ class FetchPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 1,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch() }
+            backgroundScope.launch { deps.underTest.activate() }
             deps.cursorResolver.complete()
             runCurrent()
 
@@ -268,7 +268,7 @@ class FetchPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch() }
+            backgroundScope.launch { deps.underTest.activate() }
             deps.cursorResolver.complete()
             runCurrent()
 
@@ -299,7 +299,7 @@ class FetchPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch() }
+            backgroundScope.launch { deps.underTest.activate() }
             deps.cursorResolver.complete()
             runCurrent()
 
@@ -320,7 +320,7 @@ class FetchPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch() }
+            backgroundScope.launch { deps.underTest.activate() }
             deps.cursorResolver.complete()
             runCurrent()
 

@@ -44,10 +44,10 @@ import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.R
 import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.util.hasValidIcon
+import com.android.intentresolver.v2.data.model.ChooserRequest
 import com.android.intentresolver.v2.ext.hasSendAction
 import com.android.intentresolver.v2.ext.ifMatch
 import com.android.intentresolver.v2.ui.model.ActivityModel
-import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.validation.Validation
 import com.android.intentresolver.v2.validation.ValidationResult
 import com.android.intentresolver.v2.validation.types.IntentOrUri

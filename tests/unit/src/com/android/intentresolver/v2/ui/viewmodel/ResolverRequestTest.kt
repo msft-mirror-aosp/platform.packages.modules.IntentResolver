@@ -24,7 +24,6 @@ import androidx.core.os.bundleOf
 import com.android.intentresolver.v2.ResolverActivity.PROFILE_WORK
 import com.android.intentresolver.v2.shared.model.Profile.Type.WORK
 import com.android.intentresolver.v2.ui.model.ActivityModel
-import com.android.intentresolver.v2.ui.model.ChooserRequest
 import com.android.intentresolver.v2.ui.model.ResolverRequest
 import com.android.intentresolver.v2.validation.Invalid
 import com.android.intentresolver.v2.validation.UncaughtException
