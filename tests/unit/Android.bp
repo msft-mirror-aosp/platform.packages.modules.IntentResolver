@@ -51,6 +51,7 @@ android_test {
         "IntentResolver-core",
         "IntentResolver-tests-shared",
         "junit",
+        "kosmos",
         "kotlinx_coroutines_test",
         "mockito-target-minus-junit4",
         "mockito-kotlin2",

@@ -19,25 +19,21 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.net.Uri
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.CursorPreviewsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.LoadDirection
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
+import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class SetCursorPreviewsInteractorTest {
     @Test
-    fun setPreviews_noAdditionalData() = runTest {
-        val repo = CursorPreviewsRepository()
-        val underTest = SetCursorPreviewsInteractor(repo)
-
+    fun setPreviews_noAdditionalData() = runKosmosTest {
         val loadState =
-            underTest.setPreviews(
+            setCursorPreviewsInteractor.setPreviews(
                 previewsByKey =
                     setOf(
                         PreviewModel(
@@ -51,7 +47,7 @@ class SetCursorPreviewsInteractorTest {
             )
 
         assertThat(loadState.first()).isNull()
-        repo.previewsModel.value.let {
+        cursorPreviewsRepository.previewsModel.value.let {
             assertThat(it).isNotNull()
             it!!
             assertThat(it.loadMoreRight).isNull()
@@ -69,12 +65,9 @@ class SetCursorPreviewsInteractorTest {
     }
 
     @Test
-    fun setPreviews_additionalData() = runTest {
-        val repo = CursorPreviewsRepository()
-        val underTest = SetCursorPreviewsInteractor(repo)
-
+    fun setPreviews_additionalData() = runKosmosTest {
         val loadState =
-            underTest
+            setCursorPreviewsInteractor
                 .setPreviews(
                     previewsByKey =
                         setOf(
@@ -90,7 +83,7 @@ class SetCursorPreviewsInteractorTest {
                 .stateIn(backgroundScope)
 
         assertThat(loadState.value).isNull()
-        repo.previewsModel.value.let {
+        cursorPreviewsRepository.previewsModel.value.let {
             assertThat(it).isNotNull()
             it!!
             assertThat(it.loadMoreRight).isNotNull()
