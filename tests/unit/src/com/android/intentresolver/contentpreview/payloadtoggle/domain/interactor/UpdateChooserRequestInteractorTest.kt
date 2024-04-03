@@ -19,49 +19,23 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.content.Intent
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.PendingIntentSender
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.pendingSelectionCallbackRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
-import com.android.intentresolver.v2.data.model.fakeChooserRequest
-import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallback
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.selectionChangeCallback
+import com.android.intentresolver.util.runKosmosTest
+import com.android.intentresolver.v2.data.repository.chooserRequestRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class UpdateChooserRequestInteractorTest {
     @Test
-    fun updateTargetIntentWithSelection() = runTest {
-        val pendingIntentSender = PendingIntentSender {}
-        val chooserRequestRepository =
-            ChooserRequestRepository(
-                initialRequest = fakeChooserRequest(),
-                initialActions = emptyList(),
-            )
+    fun updateTargetIntentWithSelection() = runKosmosTest {
         val selectionCallbackResult = ShareouselUpdate(metadataText = ValueUpdate.Value("update"))
-        val pendingSelectionCallbackRepository = PendingSelectionCallbackRepository()
-        val updateTargetIntentInteractor =
-            UpdateTargetIntentInteractor(
-                repository = pendingSelectionCallbackRepository,
-                chooserRequestInteractor =
-                    UpdateChooserRequestInteractor(
-                        repository = chooserRequestRepository,
-                        pendingIntentSender = pendingIntentSender,
-                    )
-            )
-        val processTargetIntentUpdatesInteractor =
-            ProcessTargetIntentUpdatesInteractor(
-                selectionCallback = { selectionCallbackResult },
-                repository = pendingSelectionCallbackRepository,
-                chooserRequestInteractor =
-                    UpdateChooserRequestInteractor(
-                        repository = chooserRequestRepository,
-                        pendingIntentSender = pendingIntentSender,
-                    )
-            )
+        selectionChangeCallback = SelectionChangeCallback { selectionCallbackResult }
 
         backgroundScope.launch { processTargetIntentUpdatesInteractor.activate() }
 
