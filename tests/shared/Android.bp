@@ -31,6 +31,7 @@ java_library {
     static_libs: [
         "hamcrest",
         "IntentResolver-core",
+        "kosmos",
         "mockito-kotlin2",
         "mockito-target-minus-junit4",
         "truth",

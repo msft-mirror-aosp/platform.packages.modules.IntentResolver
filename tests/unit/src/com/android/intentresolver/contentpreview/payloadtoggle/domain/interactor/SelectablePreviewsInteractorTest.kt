@@ -19,75 +19,46 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.net.Uri
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.CursorPreviewsRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
-import com.android.intentresolver.v2.data.model.fakeChooserRequest
-import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
+import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class SelectablePreviewsInteractorTest {
 
     @Test
-    fun keySet_reflectsRepositoryInit() = runTest {
-        val repo =
-            CursorPreviewsRepository().apply {
-                previewsModel.value =
-                    PreviewsModel(
-                        previewModels =
-                            setOf(
-                                PreviewModel(
-                                    Uri.fromParts("scheme", "ssp", "fragment"),
-                                    "image/bitmap",
-                                ),
-                                PreviewModel(
-                                    Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                                    "image/bitmap",
-                                ),
-                            ),
-                        startIdx = 0,
-                        loadMoreLeft = null,
-                        loadMoreRight = null,
-                    )
-            }
-        val selectionRepo =
-            PreviewSelectionsRepository().apply {
-                selections.value =
+    fun keySet_reflectsRepositoryInit() = runKosmosTest {
+        cursorPreviewsRepository.previewsModel.value =
+            PreviewsModel(
+                previewModels =
                     setOf(
-                        PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
-                    )
-            }
-        val chooserRequestRepo =
-            ChooserRequestRepository(
-                initialRequest = fakeChooserRequest(),
-                initialActions = emptyList(),
-            )
-        val underTest =
-            SelectablePreviewsInteractor(
-                previewsRepo = repo,
-                selectionInteractor =
-                    SelectionInteractor(
-                        selectionRepo,
-                        targetIntentModifier = { error("unexpected invocation") },
-                        updateTargetIntentInteractor =
-                            UpdateTargetIntentInteractor(
-                                repository = PendingSelectionCallbackRepository(),
-                                chooserRequestInteractor =
-                                    UpdateChooserRequestInteractor(
-                                        repository = chooserRequestRepo,
-                                        pendingIntentSender = { error("unexpected invocation") },
-                                    )
-                            )
+                        PreviewModel(
+                            Uri.fromParts("scheme", "ssp", "fragment"),
+                            "image/bitmap",
+                        ),
+                        PreviewModel(
+                            Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                            "image/bitmap",
+                        ),
                     ),
+                startIdx = 0,
+                loadMoreLeft = null,
+                loadMoreRight = null,
             )
+        previewSelectionsRepository.selections.value =
+            setOf(
+                PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
+            )
+        targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
+        val underTest = selectablePreviewsInteractor
         val keySet = underTest.previews.stateIn(backgroundScope)
 
         assertThat(keySet.value).isNotNull()
@@ -111,38 +82,13 @@ class SelectablePreviewsInteractorTest {
     }
 
     @Test
-    fun keySet_reflectsRepositoryUpdate() = runTest {
-        val previewsRepo = CursorPreviewsRepository()
-        val selectionRepo =
-            PreviewSelectionsRepository().apply {
-                selections.value =
-                    setOf(
-                        PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
-                    )
-            }
-        val chooserRequestRepo =
-            ChooserRequestRepository(
-                initialRequest = fakeChooserRequest(),
-                initialActions = emptyList(),
+    fun keySet_reflectsRepositoryUpdate() = runKosmosTest {
+        previewSelectionsRepository.selections.value =
+            setOf(
+                PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
             )
-        val underTest =
-            SelectablePreviewsInteractor(
-                previewsRepo = previewsRepo,
-                selectionInteractor =
-                    SelectionInteractor(
-                        selectionRepo,
-                        targetIntentModifier = { error("unexpected invocation") },
-                        updateTargetIntentInteractor =
-                            UpdateTargetIntentInteractor(
-                                repository = PendingSelectionCallbackRepository(),
-                                chooserRequestInteractor =
-                                    UpdateChooserRequestInteractor(
-                                        repository = chooserRequestRepo,
-                                        pendingIntentSender = { error("unexpected invocation") },
-                                    )
-                            )
-                    ),
-            )
+        targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
+        val underTest = selectablePreviewsInteractor
 
         val previews = underTest.previews.stateIn(backgroundScope)
         val firstModel =
@@ -153,7 +99,7 @@ class SelectablePreviewsInteractorTest {
 
         var loadRequested = false
 
-        previewsRepo.previewsModel.value =
+        cursorPreviewsRepository.previewsModel.value =
             PreviewsModel(
                 previewModels =
                     setOf(
@@ -170,7 +116,7 @@ class SelectablePreviewsInteractorTest {
                 loadMoreLeft = null,
                 loadMoreRight = { loadRequested = true },
             )
-        selectionRepo.selections.value = emptySet()
+        previewSelectionsRepository.selections.value = emptySet()
         runCurrent()
 
         assertThat(previews.value).isNotNull()
