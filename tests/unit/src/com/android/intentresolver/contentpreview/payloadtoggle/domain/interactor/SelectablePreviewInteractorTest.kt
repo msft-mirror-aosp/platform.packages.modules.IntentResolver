@@ -25,8 +25,8 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.p
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
+import com.android.intentresolver.data.repository.chooserRequestRepository
 import com.android.intentresolver.util.runKosmosTest
-import com.android.intentresolver.v2.data.repository.chooserRequestRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

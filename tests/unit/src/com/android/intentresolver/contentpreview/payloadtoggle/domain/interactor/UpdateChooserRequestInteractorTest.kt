@@ -24,8 +24,8 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.Shar
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallback
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.selectionChangeCallback
+import com.android.intentresolver.data.repository.chooserRequestRepository
 import com.android.intentresolver.util.runKosmosTest
-import com.android.intentresolver.v2.data.repository.chooserRequestRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch

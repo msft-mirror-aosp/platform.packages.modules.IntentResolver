@@ -18,7 +18,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.content.Intent
 import com.android.intentresolver.contentpreview.payloadtoggle.data.model.CustomActionModel
-import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
+import com.android.intentresolver.data.repository.ChooserRequestRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow

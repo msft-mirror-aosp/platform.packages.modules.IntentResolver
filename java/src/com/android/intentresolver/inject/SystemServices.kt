@@ -27,8 +27,8 @@ import android.content.pm.ShortcutManager
 import android.os.UserManager
 import android.view.WindowManager
 import androidx.core.content.getSystemService
-import com.android.intentresolver.v2.data.repository.UserScopedService
-import com.android.intentresolver.v2.data.repository.UserScopedServiceImpl
+import com.android.intentresolver.data.repository.UserScopedService
+import com.android.intentresolver.data.repository.UserScopedServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

@@ -19,17 +19,18 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import com.android.intentresolver.contentpreview.payloadtoggle.data.model.CustomActionModel
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.activityResultRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ActionModel
+import com.android.intentresolver.data.model.ChooserRequest
+import com.android.intentresolver.data.repository.ChooserRequestRepository
+import com.android.intentresolver.data.repository.chooserRequestRepository
 import com.android.intentresolver.icon.BitmapIcon
 import com.android.intentresolver.util.comparingElementsUsingTransform
 import com.android.intentresolver.util.runKosmosTest
-import com.android.intentresolver.v2.data.model.fakeChooserRequest
-import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
-import com.android.intentresolver.v2.data.repository.chooserRequestRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +45,8 @@ class CustomActionsInteractorTest {
         val icon = Icon.createWithBitmap(bitmap)
         chooserRequestRepository =
             ChooserRequestRepository(
-                initialRequest = fakeChooserRequest(),
+                initialRequest =
+                    ChooserRequest(targetIntent = Intent(), launchedFromPackage = "pkg"),
                 initialActions =
                     listOf(
                         CustomActionModel(label = "label1", icon = icon, performAction = {}),
@@ -92,7 +94,8 @@ class CustomActionsInteractorTest {
         var actionSent = false
         chooserRequestRepository =
             ChooserRequestRepository(
-                initialRequest = fakeChooserRequest(),
+                initialRequest =
+                    ChooserRequest(targetIntent = Intent(), launchedFromPackage = "pkg"),
                 initialActions =
                     listOf(
                         CustomActionModel(
