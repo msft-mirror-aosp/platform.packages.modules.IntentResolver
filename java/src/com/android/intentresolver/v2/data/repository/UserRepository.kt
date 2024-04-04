@@ -16,7 +16,6 @@
 
 package com.android.intentresolver.v2.data.repository
 
-import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_MANAGED_PROFILE_AVAILABLE
 import android.content.Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE
@@ -36,14 +35,15 @@ import androidx.annotation.VisibleForTesting
 import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.Main
 import com.android.intentresolver.inject.ProfileParent
-import com.android.intentresolver.v2.data.broadcastFlow
+import com.android.intentresolver.v2.data.BroadcastSubscriber
 import com.android.intentresolver.v2.shared.model.User
-import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
@@ -84,9 +84,35 @@ interface UserRepository {
 
 private const val TAG = "UserRepository"
 
+/** The delay between entering the cached process state and entering the frozen cgroup */
+private val cachedProcessFreezeDelay: Duration = 10.seconds
+
+/** How long to continue listening for user state broadcasts while unsubscribed */
+private val stateFlowTimeout = cachedProcessFreezeDelay - 2.seconds
+
+/** How long to retain the previous user state after the state flow stops. */
+private val stateCacheTimeout = 2.seconds
+
 internal data class UserWithState(val user: User, val available: Boolean)
 
 internal typealias UserStates = List<UserWithState>
+
+internal val userBroadcastActions =
+    setOf(
+        ACTION_PROFILE_ADDED,
+        ACTION_PROFILE_REMOVED,
+
+        // Quiet mode enabled/disabled for managed
+        // From: UserController.broadcastProfileAvailabilityChanges
+        // In response to setQuietModeEnabled
+        ACTION_MANAGED_PROFILE_AVAILABLE, // quiet mode, sent for manage profiles only
+        ACTION_MANAGED_PROFILE_UNAVAILABLE, // quiet mode, sent for manage profiles only
+
+        // Quiet mode toggled for profile type, requires flag 'android.os.allow_private_profile
+        // true'
+        ACTION_PROFILE_AVAILABLE, // quiet mode,
+        ACTION_PROFILE_UNAVAILABLE, // quiet mode, sent for any profile type
+    )
 
 /** Tracks and publishes state for the parent user and associated profiles. */
 class UserRepositoryImpl
@@ -97,21 +123,26 @@ constructor(
     /** A flow of events which represent user-state changes from [UserManager]. */
     private val userEvents: Flow<UserEvent>,
     scope: CoroutineScope,
-    private val backgroundDispatcher: CoroutineDispatcher
+    private val backgroundDispatcher: CoroutineDispatcher,
 ) : UserRepository {
     @Inject
     constructor(
-        @ApplicationContext context: Context,
         @ProfileParent profileParent: UserHandle,
         userManager: UserManager,
         @Main scope: CoroutineScope,
-        @Background background: CoroutineDispatcher
+        @Background background: CoroutineDispatcher,
+        broadcastSubscriber: BroadcastSubscriber,
     ) : this(
         profileParent,
         userManager,
-        userEvents = userBroadcastFlow(context, profileParent),
+        userEvents =
+            broadcastSubscriber.createFlow(
+                createFilter(userBroadcastActions),
+                profileParent,
+                Intent::toUserEvent
+            ),
         scope,
-        background
+        background,
     )
 
     private fun debugLog(msg: () -> String) {
@@ -131,7 +162,7 @@ constructor(
     private class UserStateException(
         override val message: String,
         val event: UserEvent,
-        override val cause: Throwable? = null
+        override val cause: Throwable? = null,
     ) : RuntimeException("$message: event=$event", cause)
 
     private val sharingScope = CoroutineScope(scope.coroutineContext + backgroundDispatcher)
@@ -142,7 +173,15 @@ constructor(
             .runningFold(emptyList(), ::handleEvent)
             .distinctUntilChanged()
             .onEach { debugLog { "userStateList: $it" } }
-            .stateIn(sharingScope, SharingStarted.Eagerly, emptyList())
+            .stateIn(
+                sharingScope,
+                started =
+                    WhileSubscribed(
+                        stopTimeoutMillis = stateFlowTimeout.inWholeMilliseconds,
+                        replayExpirationMillis = 0 /** Immediately on stop */
+                    ),
+                listOf()
+            )
             .filterNot { it.isEmpty() }
 
     private suspend fun handleEvent(users: UserStates, event: UserEvent): UserStates {
@@ -166,7 +205,7 @@ constructor(
     }
 
     override val users: Flow<List<User>> =
-        usersWithState.map { userStateMap -> userStateMap.map { it.user } }.distinctUntilChanged()
+        usersWithState.map { userStates -> userStates.map { it.user } }.distinctUntilChanged()
 
     override val availability: Flow<Map<User, Boolean>> =
         usersWithState
@@ -264,7 +303,7 @@ data class UnknownEvent(
 ) : UserEvent
 
 /** Used with [broadcastFlow] to transform a UserManager broadcast action into a [UserEvent]. */
-private fun Intent.toUserEvent(): UserEvent {
+internal fun Intent.toUserEvent(): UserEvent {
     val action = action
     val user = extras?.getParcelable(EXTRA_USER, UserHandle::class.java)
     val quietMode = extras?.getBoolean(EXTRA_QUIET_MODE, false)
@@ -280,30 +319,10 @@ private fun Intent.toUserEvent(): UserEvent {
     }
 }
 
-private fun createFilter(actions: Iterable<String>): IntentFilter {
+internal fun createFilter(actions: Iterable<String>): IntentFilter {
     return IntentFilter().apply { actions.forEach(::addAction) }
 }
 
 internal fun UserInfo?.isAvailable(): Boolean {
     return this?.isQuietModeEnabled != true
-}
-
-internal fun userBroadcastFlow(context: Context, profileParent: UserHandle): Flow<UserEvent> {
-    val userActions =
-        setOf(
-            ACTION_PROFILE_ADDED,
-            ACTION_PROFILE_REMOVED,
-
-            // Quiet mode enabled/disabled for managed
-            // From: UserController.broadcastProfileAvailabilityChanges
-            // In response to setQuietModeEnabled
-            ACTION_MANAGED_PROFILE_AVAILABLE, // quiet mode, sent for manage profiles only
-            ACTION_MANAGED_PROFILE_UNAVAILABLE, // quiet mode, sent for manage profiles only
-
-            // Quiet mode toggled for profile type, requires flag 'android.os.allow_private_profile
-            // true'
-            ACTION_PROFILE_AVAILABLE, // quiet mode,
-            ACTION_PROFILE_UNAVAILABLE, // quiet mode, sent for any profile type
-        )
-    return broadcastFlow(context, createFilter(userActions), profileParent, Intent::toUserEvent)
 }
