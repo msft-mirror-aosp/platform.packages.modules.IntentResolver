@@ -24,8 +24,9 @@ import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_S
 import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
 import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
 
+import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
+
 import static com.android.intentresolver.v2.ext.CreationExtrasExtKt.addDefaultArgs;
-import static com.android.intentresolver.v2.ui.viewmodel.ResolverRequestReaderKt.readResolverRequest;
 import static com.android.internal.annotations.VisibleForTesting.Visibility.PROTECTED;
 
 import static java.util.Objects.requireNonNull;
@@ -83,14 +84,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.viewmodel.CreationExtras;
 import androidx.viewpager.widget.ViewPager;
 
-import com.android.intentresolver.AnnotatedUserHandles;
+import com.android.intentresolver.FeatureFlags;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverListAdapter;
 import com.android.intentresolver.ResolverListController;
-import com.android.intentresolver.WorkProfileAvailabilityManager;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
@@ -99,12 +100,14 @@ import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.icons.DefaultTargetDataLoader;
 import com.android.intentresolver.icons.TargetDataLoader;
+import com.android.intentresolver.inject.Background;
 import com.android.intentresolver.model.ResolverRankerServiceResolverComparator;
 import com.android.intentresolver.v2.data.repository.DevicePolicyResources;
+import com.android.intentresolver.v2.domain.interactor.UserInteractor;
 import com.android.intentresolver.v2.emptystate.NoAppsAvailableEmptyStateProvider;
+import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider.DevicePolicyBlockerEmptyState;
-import com.android.intentresolver.v2.emptystate.ResolverNoCrossProfileEmptyStateProvider;
-import com.android.intentresolver.v2.emptystate.ResolverWorkProfilePausedEmptyStateProvider;
+import com.android.intentresolver.v2.emptystate.WorkProfilePausedEmptyStateProvider;
 import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter;
 import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter.ProfileType;
 import com.android.intentresolver.v2.profiles.OnProfileSelectedListener;
@@ -115,11 +118,7 @@ import com.android.intentresolver.v2.shared.model.Profile;
 import com.android.intentresolver.v2.ui.ActionTitle;
 import com.android.intentresolver.v2.ui.model.ActivityModel;
 import com.android.intentresolver.v2.ui.model.ResolverRequest;
-import com.android.intentresolver.v2.validation.Finding;
-import com.android.intentresolver.v2.validation.FindingsKt;
-import com.android.intentresolver.v2.validation.Invalid;
-import com.android.intentresolver.v2.validation.Valid;
-import com.android.intentresolver.v2.validation.ValidationResult;
+import com.android.intentresolver.v2.ui.viewmodel.ResolverViewModel;
 import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.content.PackageMonitor;
@@ -131,7 +130,6 @@ import com.google.common.collect.ImmutableList;
 import dagger.hilt.android.AndroidEntryPoint;
 
 import kotlin.Pair;
-import kotlin.Unit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -139,9 +137,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import javax.inject.Inject;
+
+import kotlinx.coroutines.CoroutineDispatcher;
 
 /**
  * This is a copy of ResolverActivity to support IntentResolver's ChooserActivity. This code is
@@ -153,12 +152,18 @@ import javax.inject.Inject;
 public class ResolverActivity extends Hilt_ResolverActivity implements
         ResolverListAdapter.ResolverListCommunicator {
 
+    @Inject @Background public CoroutineDispatcher mBackgroundDispatcher;
+    @Inject public UserInteractor mUserInteractor;
+    @Inject public ResolverHelper mResolverHelper;
     @Inject public PackageManager mPackageManager;
     @Inject public DevicePolicyResources mDevicePolicyResources;
     @Inject public IntentForwarding mIntentForwarding;
-    private ResolverRequest mResolverRequest;
-    private ActivityModel mActivityModel;
-    protected ActivityLogic mLogic;
+    @Inject public FeatureFlags mFeatureFlags;
+
+    private ResolverViewModel mViewModel;
+    private ResolverRequest mRequest;
+    private ProfileHelper mProfiles;
+    private ProfileAvailability mProfileAvailability;
     protected TargetDataLoader mTargetDataLoader;
     private boolean mResolvingHome;
 
@@ -217,16 +222,9 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             }
         };
     }
+
     protected ActivityModel createActivityModel() {
         return ActivityModel.createFrom(this);
-    }
-
-    @VisibleForTesting
-    protected ActivityLogic createActivityLogic() {
-        return  new ResolverActivityLogic(
-                TAG,
-                /* activity = */ this,
-                this::onWorkProfileStatusUpdated);
     }
 
     @NonNull
@@ -234,46 +232,123 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     public CreationExtras getDefaultViewModelCreationExtras() {
         return addDefaultArgs(
                 super.getDefaultViewModelCreationExtras(),
-                new Pair<>(ActivityModel.ACTIVITY_MODEL_KEY, ActivityModel.createFrom(this)));
+                new Pair<>(ActivityModel.ACTIVITY_MODEL_KEY, createActivityModel()));
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(R.style.Theme_DeviceDefault_Resolver);
-        mActivityModel = createActivityModel();
-
         Log.i(TAG, "onCreate");
-        Log.i(TAG, "activityModel=" + mActivityModel.toString());
-        int callerUid = mActivityModel.getLaunchedFromUid();
-        if (callerUid < 0 || UserHandle.isIsolated(callerUid)) {
-            Log.e(TAG, "Can't start a resolver from uid " + callerUid);
-            finish();
-        }
+        setTheme(R.style.Theme_DeviceDefault_Resolver);
+        mResolverHelper.setInitializer(this::initialize);
+    }
 
-        ValidationResult<ResolverRequest> result = readResolverRequest(mActivityModel);
-        if (result instanceof Invalid) {
-            ((Invalid) result).getErrors().forEach(new Consumer<Finding>() {
-                @Override
-                public void accept(Finding finding) {
-                    FindingsKt.log(finding, TAG);
-                }
-            });
-            finish();
+    @Override
+    protected final void onStart() {
+        super.onStart();
+        this.getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        final Window window = this.getWindow();
+        final WindowManager.LayoutParams attrs = window.getAttributes();
+        attrs.privateFlags &= ~SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
+        window.setAttributes(attrs);
+
+        if (mRegistered) {
+            mPersonalPackageMonitor.unregister();
+            if (mWorkPackageMonitor != null) {
+                mWorkPackageMonitor.unregister();
+            }
+            mRegistered = false;
         }
-        mResolverRequest = ((Valid<ResolverRequest>) result).getValue();
-        mLogic = createActivityLogic();
-        mResolvingHome = mResolverRequest.isResolvingHome();
+        final Intent intent = getIntent();
+        if ((intent.getFlags() & FLAG_ACTIVITY_NEW_TASK) != 0 && !isVoiceInteraction()
+                && !mResolvingHome) {
+            // This resolver is in the unusual situation where it has been
+            // launched at the top of a new task.  We don't let it be added
+            // to the recent tasks shown to the user, and we need to make sure
+            // that each time we are launched we get the correct launching
+            // uid (not re-using the same resolver from an old launching uid),
+            // so we will now finish ourself since being no longer visible,
+            // the user probably can't get back to us.
+            if (!isChangingConfigurations()) {
+                finish();
+            }
+        }
+    }
+
+    @Override
+    protected final void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
+        if (viewPager != null) {
+            outState.putInt(LAST_SHOWN_TAB_KEY, viewPager.getCurrentItem());
+        }
+    }
+
+    @Override
+    protected final void onRestart() {
+        super.onRestart();
+        if (!mRegistered) {
+            mPersonalPackageMonitor.register(
+                    this,
+                    getMainLooper(),
+                    mProfiles.getPersonalHandle(),
+                    false);
+            if (mProfiles.getWorkProfilePresent()) {
+                if (mWorkPackageMonitor == null) {
+                    mWorkPackageMonitor = createPackageMonitor(
+                            mMultiProfilePagerAdapter.getWorkListAdapter());
+                }
+                mWorkPackageMonitor.register(
+                        this,
+                        getMainLooper(),
+                        mProfiles.getWorkHandle(),
+                        false);
+            }
+            mRegistered = true;
+        }
+        mMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (!isChangingConfigurations() && mPickOptionRequest != null) {
+            mPickOptionRequest.cancel();
+        }
+        if (mMultiProfilePagerAdapter != null
+                && mMultiProfilePagerAdapter.getActiveListAdapter() != null) {
+            mMultiProfilePagerAdapter.getActiveListAdapter().onDestroy();
+        }
+    }
+
+    private void initialize() {
+        mViewModel = new ViewModelProvider(this).get(ResolverViewModel.class);
+        mRequest = mViewModel.getRequest().getValue();
+
+        mProfiles =  new ProfileHelper(
+                mUserInteractor,
+                getCoroutineScope(getLifecycle()),
+                mBackgroundDispatcher,
+                mFeatureFlags);
+
+        mProfileAvailability = new ProfileAvailability(
+                mUserInteractor,
+                getCoroutineScope(getLifecycle()),
+                mBackgroundDispatcher);
+
+        mProfileAvailability.setOnProfileStatusChange(this::onWorkProfileStatusUpdated);
+
+        mResolvingHome = mRequest.isResolvingHome();
         mTargetDataLoader = new DefaultTargetDataLoader(
                 this,
                 getLifecycle(),
-                mResolverRequest.isAudioCaptureDevice());
-        init();
-        restore(savedInstanceState);
-    }
-
-    private void init() {
-        Intent intent = mResolverRequest.getIntent();
+                mRequest.isAudioCaptureDevice());
 
         // The last argument of createResolverListAdapter is whether to do special handling
         // of the last used choice to highlight it in the list.  We need to always
@@ -284,10 +359,10 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // different "last chosen" activities in the different profiles, and PackageManager doesn't
         // provide any more information to help us select between them.
         boolean filterLastUsed = !isVoiceInteraction()
-                && !hasWorkProfile() && !hasCloneProfile();
+                && !mProfiles.getWorkProfilePresent() && !mProfiles.getCloneUserPresent();
         mMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
                 new Intent[0],
-                /* resolutionList = */ mResolverRequest.getResolutionList(),
+                /* resolutionList = */ mRequest.getResolutionList(),
                 filterLastUsed
         );
         if (configureContentView(mTargetDataLoader)) {
@@ -299,16 +374,16 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         mPersonalPackageMonitor.register(
                 this,
                 getMainLooper(),
-                requireAnnotatedUserHandles().personalProfileUserHandle,
+                mProfiles.getPersonalHandle(),
                 false
         );
-        if (hasWorkProfile()) {
+        if (mProfiles.getWorkProfilePresent()) {
             mWorkPackageMonitor = createPackageMonitor(
                     mMultiProfilePagerAdapter.getWorkListAdapter());
             mWorkPackageMonitor.register(
                     this,
                     getMainLooper(),
-                    requireAnnotatedUserHandles().workProfileUserHandle,
+                    mProfiles.getWorkHandle(),
                     false
             );
         }
@@ -337,7 +412,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
 
             mResolverDrawerLayout = rdl;
         }
-
+        Intent intent = mViewModel.getRequest().getValue().getIntent();
         final Set<String> categories = intent.getCategories();
         MetricsLogger.action(this, mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()
                 ? MetricsProto.MetricsEvent.ACTION_SHOW_APP_DISAMBIG_APP_FEATURED
@@ -364,7 +439,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             List<ResolveInfo> resolutionList,
             boolean filterLastUsed) {
         ResolverMultiProfilePagerAdapter resolverMultiProfilePagerAdapter = null;
-        if (hasWorkProfile()) {
+        if (mProfiles.getWorkProfilePresent()) {
             resolverMultiProfilePagerAdapter =
                     createResolverMultiProfilePagerAdapterForTwoProfiles(
                             initialIntents, resolutionList, filterLastUsed);
@@ -407,12 +482,11 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                         /* devicePolicyEventCategory= */
                                 ResolverActivity.METRICS_CATEGORY_RESOLVER);
 
-        return new ResolverNoCrossProfileEmptyStateProvider(
-                requireAnnotatedUserHandles().personalProfileUserHandle,
+        return new NoCrossProfileEmptyStateProvider(
+                mProfiles,
                 noWorkToPersonalEmptyState,
                 noPersonalToWorkEmptyState,
-                createCrossProfileIntentsChecker(),
-                requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch);
+                createCrossProfileIntentsChecker());
     }
 
     /**
@@ -432,12 +506,12 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             mFooterSpacer = new Space(getApplicationContext());
         } else {
             ((ResolverMultiProfilePagerAdapter) mMultiProfilePagerAdapter)
-                .getActiveAdapterView().removeFooterView(mFooterSpacer);
+                    .getActiveAdapterView().removeFooterView(mFooterSpacer);
         }
         mFooterSpacer.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT,
-                                                                   mSystemWindowInsets.bottom));
+                mSystemWindowInsets.bottom));
         ((ResolverMultiProfilePagerAdapter) mMultiProfilePagerAdapter)
-            .getActiveAdapterView().addFooterView(mFooterSpacer);
+                .getActiveAdapterView().addFooterView(mFooterSpacer);
     }
 
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
@@ -466,7 +540,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
-        if (hasWorkProfile() && !useLayoutWithDefault()
+        if (mProfiles.getWorkProfilePresent() && !useLayoutWithDefault()
                 && !shouldUseMiniResolver()) {
             updateIntentPickerPaddings();
         }
@@ -479,52 +553,6 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
 
     public int getLayoutResource() {
         return R.layout.resolver_list;
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        final Window window = this.getWindow();
-        final WindowManager.LayoutParams attrs = window.getAttributes();
-        attrs.privateFlags &= ~SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
-        window.setAttributes(attrs);
-
-        if (mRegistered) {
-            mPersonalPackageMonitor.unregister();
-            if (mWorkPackageMonitor != null) {
-                mWorkPackageMonitor.unregister();
-            }
-            mRegistered = false;
-        }
-        final Intent intent = getIntent();
-        if ((intent.getFlags() & FLAG_ACTIVITY_NEW_TASK) != 0 && !isVoiceInteraction()
-                && !mResolvingHome) {
-            // This resolver is in the unusual situation where it has been
-            // launched at the top of a new task.  We don't let it be added
-            // to the recent tasks shown to the user, and we need to make sure
-            // that each time we are launched we get the correct launching
-            // uid (not re-using the same resolver from an old launching uid),
-            // so we will now finish ourself since being no longer visible,
-            // the user probably can't get back to us.
-            if (!isChangingConfigurations()) {
-                finish();
-            }
-        }
-        // TODO: should we clean up the work-profile manager before we potentially finish() above?
-        mLogic.getWorkProfileAvailabilityManager().unregisterWorkProfileStateReceiver(this);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (!isChangingConfigurations() && mPickOptionRequest != null) {
-            mPickOptionRequest.cancel();
-        }
-        if (mMultiProfilePagerAdapter != null
-                && mMultiProfilePagerAdapter.getActiveListAdapter() != null) {
-            mMultiProfilePagerAdapter.getActiveListAdapter().onDestroy();
-        }
     }
 
     // referenced by layout XML: android:onClick="onButtonClick"
@@ -582,7 +610,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     protected void onListRebuilt(ResolverListAdapter listAdapter, boolean rebuildCompleted) {
         final ItemClickListener listener = new ItemClickListener();
         setupAdapterListView((ListView) mMultiProfilePagerAdapter.getActiveAdapterView(), listener);
-        if (hasWorkProfile()) {
+        if (mProfiles.getWorkProfilePresent()) {
             final ResolverDrawerLayout rdl = findViewById(com.android.internal.R.id.contentPanel);
             if (rdl != null) {
                 rdl.setMaxCollapsedHeight(getResources()
@@ -598,7 +626,8 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         final Intent intent = target != null ? target.getResolvedIntent() : null;
 
         if (intent != null /*&& mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()*/
-                && mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredResolveList() != null) {
+                && mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredResolveList()
+                != null) {
             // Build a reasonable intent filter, based on what matched.
             IntentFilter filter = new IntentFilter();
             Intent filterIntent;
@@ -761,8 +790,8 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         ResolverRankerServiceResolverComparator resolverComparator =
                 new ResolverRankerServiceResolverComparator(
                         this,
-                        mResolverRequest.getIntent(),
-                        mActivityModel.getReferrerPackage(),
+                        mRequest.getIntent(),
+                        mViewModel.getActivityModel().getReferrerPackage(),
                         null,
                         null,
                         getResolverRankerServiceUserHandleList(userHandle),
@@ -770,17 +799,17 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         return new ResolverListController(
                 this,
                 mPackageManager,
-                mActivityModel.getIntent(),
-                mActivityModel.getReferrerPackage(),
-                mActivityModel.getLaunchedFromUid(),
+                mRequest.getIntent(),
+                mViewModel.getActivityModel().getReferrerPackage(),
+                mViewModel.getActivityModel().getLaunchedFromUid(),
                 resolverComparator,
-                getQueryIntentsUser(userHandle));
+                mProfiles.getQueryIntentsHandle(userHandle));
     }
 
     /**
      * Finishing procedures to be performed after the list has been rebuilt.
      * </p>Subclasses must call postRebuildListInternal at the end of postRebuildList.
-     * @param rebuildCompleted
+     *
      * @return <code>true</code> if the activity is finishing and creation should halt.
      */
     protected boolean postRebuildList(boolean rebuildCompleted) {
@@ -802,7 +831,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     protected void onProfileTabSelected(int currentPage) {
         setupViewVisibilities();
         maybeLogProfileChange();
-        if (hasWorkProfile()) {
+        if (mProfiles.getWorkProfilePresent()) {
             // The device policy logger is only concerned with sessions that include a work profile.
             DevicePolicyEventLogger
                     .createEvent(DevicePolicyEnums.RESOLVER_SWITCH_TABS)
@@ -814,6 +843,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
 
     /**
      * Add a label to signify that the user can pick a different app.
+     *
      * @param adapter The adapter used to provide data to item views.
      */
     public void addUseDifferentAppLabelIfNecessary(ResolverListAdapter adapter) {
@@ -823,7 +853,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             stub.setVisibility(View.VISIBLE);
             TextView textView = (TextView) LayoutInflater.from(this).inflate(
                     R.layout.resolver_different_item_header, null, false);
-            if (hasWorkProfile()) {
+            if (mProfiles.getWorkProfilePresent()) {
                 textView.setGravity(Gravity.CENTER);
             }
             stub.addView(textView);
@@ -875,7 +905,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     public final void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
         if (!mMultiProfilePagerAdapter.onHandlePackagesChanged(
                 listAdapter,
-                mLogic.getWorkProfileAvailabilityManager().isWaitingToEnableWorkProfile())) {
+                mProfileAvailability.getWaitingToEnableProfile())) {
             // We no longer have any items... just finish the activity.
             finish();
         }
@@ -888,13 +918,12 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         return new CrossProfileIntentsChecker(getContentResolver());
     }
 
-    protected Unit onWorkProfileStatusUpdated() {
+    private void onWorkProfileStatusUpdated() {
         if (mMultiProfilePagerAdapter.getActiveProfile() == PROFILE_WORK) {
             mMultiProfilePagerAdapter.rebuildActiveTab(true);
         } else {
             mMultiProfilePagerAdapter.clearInactiveProfileCache();
         }
-        return Unit.INSTANCE;
     }
 
     // @NonFinalForTesting
@@ -906,9 +935,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             List<ResolveInfo> resolutionList,
             boolean filterLastUsed,
             UserHandle userHandle) {
-        UserHandle initialIntentsUserSpace = isLaunchedAsCloneProfile()
-                && userHandle.equals(requireAnnotatedUserHandles().personalProfileUserHandle)
-                ? requireAnnotatedUserHandles().cloneProfileUserHandle : userHandle;
+        UserHandle initialIntentsUserSpace = mProfiles.getQueryIntentsHandle(userHandle);
         return new ResolverListAdapter(
                 context,
                 payloadIntents,
@@ -917,7 +944,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                 filterLastUsed,
                 createListController(userHandle),
                 userHandle,
-                mResolverRequest.getIntent(),
+                mRequest.getIntent(),
                 this,
                 initialIntentsUserSpace,
                 mTargetDataLoader);
@@ -928,8 +955,10 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         final EmptyStateProvider blockerEmptyStateProvider = createBlockerEmptyStateProvider();
 
         final EmptyStateProvider workProfileOffEmptyStateProvider =
-                new ResolverWorkProfilePausedEmptyStateProvider(this, workProfileUserHandle,
-                        mLogic.getWorkProfileAvailabilityManager(),
+                new WorkProfilePausedEmptyStateProvider(
+                        this,
+                        mProfiles,
+                        mProfileAvailability,
                         /* onSwitchOnWorkSelectedListener= */
                         () -> {
                             if (mOnSwitchOnWorkSelectedListener != null) {
@@ -941,9 +970,9 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         final EmptyStateProvider noAppsEmptyStateProvider = new NoAppsAvailableEmptyStateProvider(
                 this,
                 workProfileUserHandle,
-                requireAnnotatedUserHandles().personalProfileUserHandle,
+                mProfiles.getPersonalHandle(),
                 getMetricsCategory(),
-                requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch
+                mProfiles.getTabOwnerUserHandleForLaunch()
         );
 
         // Return composite provider, the order matters (the higher, the more priority)
@@ -954,18 +983,17 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         );
     }
 
-    private ResolverMultiProfilePagerAdapter
-            createResolverMultiProfilePagerAdapterForOneProfile(
-                    Intent[] initialIntents,
-                    List<ResolveInfo> resolutionList,
-                    boolean filterLastUsed) {
+    private ResolverMultiProfilePagerAdapter createResolverMultiProfilePagerAdapterForOneProfile(
+            Intent[] initialIntents,
+            List<ResolveInfo> resolutionList,
+            boolean filterLastUsed) {
         ResolverListAdapter personalAdapter = createResolverListAdapter(
                 /* context */ this,
-                mResolverRequest.getPayloadIntents(),
+                mRequest.getPayloadIntents(),
                 initialIntents,
                 resolutionList,
                 filterLastUsed,
-                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle
+                /* userHandle */ mProfiles.getPersonalHandle()
         );
         return new ResolverMultiProfilePagerAdapter(
                 /* context */ this,
@@ -980,12 +1008,12 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                 /* workProfileQuietModeChecker= */ () -> false,
                 /* defaultProfile= */ PROFILE_PERSONAL,
                 /* workProfileUserHandle= */ null,
-                requireAnnotatedUserHandles().cloneProfileUserHandle);
+                mProfiles.getCloneHandle());
     }
 
     private UserHandle getIntentUser() {
-        return Objects.requireNonNullElse(mResolverRequest.getCallingUser(),
-                requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch);
+        return Objects.requireNonNullElse(mRequest.getCallingUser(),
+                mProfiles.getTabOwnerUserHandleForLaunch());
     }
 
     private ResolverMultiProfilePagerAdapter createResolverMultiProfilePagerAdapterForTwoProfiles(
@@ -997,10 +1025,10 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // this happens, we check for it here and set the current profile's tab.
         int selectedProfile = getCurrentProfile();
         UserHandle intentUser = getIntentUser();
-        if (!requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch.equals(intentUser)) {
-            if (requireAnnotatedUserHandles().personalProfileUserHandle.equals(intentUser)) {
+        if (!mProfiles.getTabOwnerUserHandleForLaunch().equals(intentUser)) {
+            if (mProfiles.getPersonalHandle().equals(intentUser)) {
                 selectedProfile = PROFILE_PERSONAL;
-            } else if (requireAnnotatedUserHandles().workProfileUserHandle.equals(intentUser)) {
+            } else if (mProfiles.getWorkHandle().equals(intentUser)) {
                 selectedProfile = PROFILE_WORK;
             }
         } else {
@@ -1014,17 +1042,17 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // resolver list. So filterLastUsed should be false for the other profile.
         ResolverListAdapter personalAdapter = createResolverListAdapter(
                 /* context */ this,
-                mResolverRequest.getPayloadIntents(),
+                mRequest.getPayloadIntents(),
                 selectedProfile == PROFILE_PERSONAL ? initialIntents : null,
                 resolutionList,
                 (filterLastUsed && UserHandle.myUserId()
-                        == requireAnnotatedUserHandles().personalProfileUserHandle.getIdentifier()),
-                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle
+                        == mProfiles.getPersonalHandle().getIdentifier()),
+                /* userHandle */ mProfiles.getPersonalHandle()
         );
-        UserHandle workProfileUserHandle = requireAnnotatedUserHandles().workProfileUserHandle;
+        UserHandle workProfileUserHandle = mProfiles.getWorkHandle();
         ResolverListAdapter workAdapter = createResolverListAdapter(
                 /* context */ this,
-                mResolverRequest.getPayloadIntents(),
+                mRequest.getPayloadIntents(),
                 selectedProfile == PROFILE_WORK ? initialIntents : null,
                 resolutionList,
                 (filterLastUsed && UserHandle.myUserId()
@@ -1047,10 +1075,13 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                                 TAB_TAG_WORK,
                                 workAdapter)),
                 createEmptyStateProvider(workProfileUserHandle),
-                () -> mLogic.getWorkProfileAvailabilityManager().isQuietModeEnabled(),
+                /* Supplier<Boolean> (QuietMode enabled) == !(available) */
+                () -> !(mProfiles.getWorkProfilePresent()
+                        && mProfileAvailability.isAvailable(
+                        requireNonNull(mProfiles.getWorkProfile()))),
                 selectedProfile,
                 workProfileUserHandle,
-                requireAnnotatedUserHandles().cloneProfileUserHandle);
+                mProfiles.getCloneHandle());
     }
 
     /**
@@ -1058,7 +1089,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
      * #EXTRA_SELECTED_PROFILE} extra was supplied, or {@code -1} if no extra was supplied.
      */
     final int getSelectedProfileExtra() {
-        Profile.Type selected = mResolverRequest.getSelectedProfile();
+        Profile.Type selected = mRequest.getSelectedProfile();
         if (selected == null) {
             return -1;
         }
@@ -1070,27 +1101,9 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     }
 
     protected final @ProfileType int getCurrentProfile() {
-        UserHandle launchUser = requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch;
-        UserHandle personalUser = requireAnnotatedUserHandles().personalProfileUserHandle;
+        UserHandle launchUser = mProfiles.getTabOwnerUserHandleForLaunch();
+        UserHandle personalUser = mProfiles.getPersonalHandle();
         return launchUser.equals(personalUser) ? PROFILE_PERSONAL : PROFILE_WORK;
-    }
-
-    private AnnotatedUserHandles requireAnnotatedUserHandles() {
-        return requireNonNull(mLogic.getAnnotatedUserHandles());
-    }
-
-    private boolean hasWorkProfile() {
-        return requireAnnotatedUserHandles().workProfileUserHandle != null;
-    }
-
-    private boolean hasCloneProfile() {
-        return requireAnnotatedUserHandles().cloneProfileUserHandle != null;
-    }
-
-    protected final boolean isLaunchedAsCloneProfile() {
-        UserHandle launchUser = requireAnnotatedUserHandles().userHandleSharesheetLaunchedAs;
-        UserHandle cloneUser = requireAnnotatedUserHandles().cloneProfileUserHandle;
-        return hasCloneProfile() && launchUser.equals(cloneUser);
     }
 
     private void updateIntentPickerPaddings() {
@@ -1109,14 +1122,15 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     }
 
     private void maybeLogCrossProfileTargetLaunch(TargetInfo cti, UserHandle currentUserHandle) {
-        if (!hasWorkProfile() || currentUserHandle.equals(getUser())) {
+        // TODO: Test isolation bug, referencing getUser() will break tests with faked profiles
+        if (!mProfiles.getWorkProfilePresent() || currentUserHandle.equals(getUser())) {
             return;
         }
         DevicePolicyEventLogger
                 .createEvent(DevicePolicyEnums.RESOLVER_CROSS_PROFILE_TARGET_OPENED)
                 .setBoolean(
                         currentUserHandle.equals(
-                                requireAnnotatedUserHandles().personalProfileUserHandle))
+                                mProfiles.getPersonalHandle()))
                 .setStrings(getMetricsCategory(),
                         cti.isInDirectShareMetricsCategory() ? "direct_share" : "other_target")
                 .write();
@@ -1172,56 +1186,6 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         }
     }
 
-    @Override
-    protected final void onRestart() {
-        super.onRestart();
-        if (!mRegistered) {
-            mPersonalPackageMonitor.register(
-                    this,
-                    getMainLooper(),
-                    requireAnnotatedUserHandles().personalProfileUserHandle,
-                    false);
-            if (hasWorkProfile()) {
-                if (mWorkPackageMonitor == null) {
-                    mWorkPackageMonitor = createPackageMonitor(
-                            mMultiProfilePagerAdapter.getWorkListAdapter());
-                }
-                mWorkPackageMonitor.register(
-                        this,
-                        getMainLooper(),
-                        requireAnnotatedUserHandles().workProfileUserHandle,
-                        false);
-            }
-            mRegistered = true;
-        }
-        WorkProfileAvailabilityManager workProfileAvailabilityManager =
-                mLogic.getWorkProfileAvailabilityManager();
-        if (hasWorkProfile() && workProfileAvailabilityManager.isWaitingToEnableWorkProfile()) {
-            if (workProfileAvailabilityManager.isQuietModeEnabled()) {
-                workProfileAvailabilityManager.markWorkProfileEnabledBroadcastReceived();
-            }
-        }
-        mMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
-    }
-
-    @Override
-    protected final void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-        if (viewPager != null) {
-            outState.putInt(LAST_SHOWN_TAB_KEY, viewPager.getCurrentItem());
-        }
-    }
-
-    @Override
-    protected final void onStart() {
-        super.onStart();
-        this.getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
-        if (hasWorkProfile()) {
-            mLogic.getWorkProfileAvailabilityManager().registerWorkProfileStateReceiver(this);
-        }
-    }
-
     private boolean hasManagedProfile() {
         UserManager userManager = (UserManager) getSystemService(Context.USER_SERVICE);
         if (userManager == null) {
@@ -1261,7 +1225,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // In case of clonedProfile being active, we do not allow the 'Always' option in the
         // disambiguation dialog of Personal Profile as the package manager cannot distinguish
         // between cross-profile preferred activities.
-        if (hasCloneProfile()
+        if (mProfiles.getCloneUserPresent()
                 && (mMultiProfilePagerAdapter.getActiveProfile() == PROFILE_PERSONAL)) {
             mAlwaysButton.setEnabled(false);
             return;
@@ -1295,7 +1259,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
 
             if (!hasRecordPermission) {
                 // OK, we know the record permission, is this a capture device
-                boolean hasAudioCapture = mResolverRequest.isAudioCaptureDevice();
+                boolean hasAudioCapture = mViewModel.getRequest().getValue().isAudioCaptureDevice();
                 enabled = !hasAudioCapture;
             }
         }
@@ -1378,7 +1342,8 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // We partially rebuild the inactive adapter to determine if we should auto launch
         // isTabLoaded will be true here if the empty state screen is shown instead of the list.
         // To date, we really only care about "partially rebuilding" tabs for work and/or personal.
-        boolean rebuildCompleted = mMultiProfilePagerAdapter.rebuildTabs(hasWorkProfile());
+        boolean rebuildCompleted =
+                mMultiProfilePagerAdapter.rebuildTabs(mProfiles.getWorkProfilePresent());
 
         if (shouldUseMiniResolver()) {
             configureMiniResolverContent(targetDataLoader);
@@ -1392,7 +1357,8 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             mLayoutId = getLayoutResource();
         }
         setContentView(mLayoutId);
-        mMultiProfilePagerAdapter.setupViewPager(findViewById(com.android.internal.R.id.profile_pager));
+        mMultiProfilePagerAdapter.setupViewPager(
+                findViewById(com.android.internal.R.id.profile_pager));
         boolean result = postRebuildList(rebuildCompleted);
         Trace.endSection();
         return result;
@@ -1483,7 +1449,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // If needed, show that intent is forwarded
         // from managed profile to owner or other way around.
         String profileSwitchMessage =
-                mIntentForwarding.forwardMessageFor(mResolverRequest.getIntent());
+                mIntentForwarding.forwardMessageFor(mRequest.getIntent());
         if (profileSwitchMessage != null) {
             Toast.makeText(this, profileSwitchMessage, Toast.LENGTH_LONG).show();
         }
@@ -1493,9 +1459,10 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
             }
         } catch (RuntimeException e) {
             Slog.wtf(TAG,
-                    "Unable to launch as uid " + mActivityModel.getLaunchedFromUid()
-                    + " package " + getLaunchedFromPackage() + ", while running in "
-                    + ActivityThread.currentProcessName(), e);
+                    "Unable to launch as uid "
+                            + mViewModel.getActivityModel().getLaunchedFromUid()
+                            + " package " + mViewModel.getActivityModel().getLaunchedFromPackage()
+                            + ", while running in " + ActivityThread.currentProcessName(), e);
         }
     }
 
@@ -1515,7 +1482,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
 
         setupViewVisibilities();
 
-        if (hasWorkProfile()) {
+        if (mProfiles.getWorkProfilePresent()) {
             setupProfileTabs();
         }
 
@@ -1638,7 +1605,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         DevicePolicyEventLogger
                 .createEvent(DevicePolicyEnums.RESOLVER_AUTOLAUNCH_CROSS_PROFILE_TARGET)
                 .setBoolean(activeListAdapter.getUserHandle()
-                        .equals(requireAnnotatedUserHandles().personalProfileUserHandle))
+                        .equals(mProfiles.getPersonalHandle()))
                 .setStrings(getMetricsCategory())
                 .write();
         safelyStartActivity(activeProfileTarget);
@@ -1697,7 +1664,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         DevicePolicyEventLogger
                 .createEvent(DevicePolicyEnums.RESOLVER_AUTOLAUNCH_CROSS_PROFILE_TARGET)
                 .setBoolean(activeListAdapter.getUserHandle()
-                        .equals(requireAnnotatedUserHandles().personalProfileUserHandle))
+                        .equals(mProfiles.getPersonalHandle()))
                 .setStrings(getMetricsCategory())
                 .write();
         safelyStartActivity(activeProfileTarget);
@@ -1755,17 +1722,17 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                 && !listAdapter.getUserHandle().equals(mHeaderCreatorUser)) {
             return;
         }
-        if (!hasWorkProfile()
+        if (!mProfiles.getWorkProfilePresent()
                 && listAdapter.getCount() == 0 && listAdapter.getPlaceholderCount() == 0) {
             final TextView titleView = findViewById(com.android.internal.R.id.title);
             if (titleView != null) {
                 titleView.setVisibility(View.GONE);
             }
         }
-
-        CharSequence title = mResolverRequest.getTitle() != null
-                ? mResolverRequest.getTitle()
-                : getTitleForAction(mResolverRequest.getIntent(), 0);
+        ResolverRequest request = mViewModel.getRequest().getValue();
+        CharSequence title = mViewModel.getRequest().getValue().getTitle() != null
+                ? request.getTitle()
+                : getTitleForAction(request.getIntent(), 0);
 
         if (!TextUtils.isEmpty(title)) {
             final TextView titleView = findViewById(com.android.internal.R.id.title);
@@ -1811,7 +1778,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // We only use the default app layout when the profile of the active user has a
         // filtered item. We always show the same default app even in the inactive user profile.
         return mMultiProfilePagerAdapter.getListAdapterForUserHandle(
-                requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch
+                mProfiles.getTabOwnerUserHandleForLaunch()
         ).hasFilteredItem();
     }
 
@@ -1943,7 +1910,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
      * {@link ResolverListController} configured for the provided {@code userHandle}.
      */
     protected final UserHandle getQueryIntentsUser(UserHandle userHandle) {
-        return requireAnnotatedUserHandles().getQueryIntentsUser(userHandle);
+        return mProfiles.getQueryIntentsHandle(userHandle);
     }
 
     /**
@@ -1963,9 +1930,9 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         // Add clonedProfileUserHandle to the list only if we are:
         // a. Building the Personal Tab.
         // b. CloneProfile exists on the device.
-        if (userHandle.equals(requireAnnotatedUserHandles().personalProfileUserHandle)
-                && hasCloneProfile()) {
-            userList.add(requireAnnotatedUserHandles().cloneProfileUserHandle);
+        if (userHandle.equals(mProfiles.getPersonalHandle())
+                && mProfiles.getCloneUserPresent()) {
+            userList.add(mProfiles.getCloneHandle());
         }
         return userList;
     }
