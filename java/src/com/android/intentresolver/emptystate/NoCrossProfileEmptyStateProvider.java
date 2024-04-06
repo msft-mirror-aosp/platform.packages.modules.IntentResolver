@@ -19,13 +19,19 @@ package com.android.intentresolver.emptystate;
 import android.app.admin.DevicePolicyEventLogger;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.UserHandle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
+import com.android.intentresolver.ProfileHelper;
 import com.android.intentresolver.ResolverListAdapter;
+import com.android.intentresolver.shared.model.Profile;
+import com.android.intentresolver.shared.model.User;
+
+import java.util.List;
 
 /**
  * Empty state provider that does not allow cross profile sharing, it will return a blocker
@@ -33,45 +39,56 @@ import com.android.intentresolver.ResolverListAdapter;
  */
 public class NoCrossProfileEmptyStateProvider implements EmptyStateProvider {
 
-    private final UserHandle mPersonalProfileUserHandle;
+    private final ProfileHelper mProfileHelper;
     private final EmptyState mNoWorkToPersonalEmptyState;
     private final EmptyState mNoPersonalToWorkEmptyState;
     private final CrossProfileIntentsChecker mCrossProfileIntentsChecker;
-    private final UserHandle mTabOwnerUserHandleForLaunch;
 
-    public NoCrossProfileEmptyStateProvider(UserHandle personalUserHandle,
+    public NoCrossProfileEmptyStateProvider(
+            ProfileHelper profileHelper,
             EmptyState noWorkToPersonalEmptyState,
             EmptyState noPersonalToWorkEmptyState,
-            CrossProfileIntentsChecker crossProfileIntentsChecker,
-            UserHandle tabOwnerUserHandleForLaunch) {
-        mPersonalProfileUserHandle = personalUserHandle;
+            CrossProfileIntentsChecker crossProfileIntentsChecker) {
+        mProfileHelper = profileHelper;
         mNoWorkToPersonalEmptyState = noWorkToPersonalEmptyState;
         mNoPersonalToWorkEmptyState = noPersonalToWorkEmptyState;
         mCrossProfileIntentsChecker = crossProfileIntentsChecker;
-        mTabOwnerUserHandleForLaunch = tabOwnerUserHandleForLaunch;
+    }
+
+    private boolean anyCrossProfileAllowedIntents(ResolverListAdapter selected, UserHandle source) {
+        List<Intent> intents = selected.getIntents();
+        UserHandle target = selected.getUserHandle();
+        return mCrossProfileIntentsChecker.hasCrossProfileIntents(intents,
+                source.getIdentifier(), target.getIdentifier());
     }
 
     @Nullable
     @Override
-    public EmptyState getEmptyState(ResolverListAdapter resolverListAdapter) {
-        boolean shouldShowBlocker =
-                !mTabOwnerUserHandleForLaunch.equals(resolverListAdapter.getUserHandle())
-                        && !mCrossProfileIntentsChecker
-                        .hasCrossProfileIntents(resolverListAdapter.getIntents(),
-                                mTabOwnerUserHandleForLaunch.getIdentifier(),
-                                resolverListAdapter.getUserHandle().getIdentifier());
+    public EmptyState getEmptyState(ResolverListAdapter adapter) {
+        Profile launchedAsProfile = mProfileHelper.getLaunchedAsProfile();
+        User launchedAs = mProfileHelper.getLaunchedAsProfile().getPrimary();
+        UserHandle tabOwnerHandle = adapter.getUserHandle();
+        boolean launchedAsSameUser = launchedAs.getHandle().equals(tabOwnerHandle);
+        Profile.Type tabOwnerType = mProfileHelper.findProfileType(tabOwnerHandle);
 
-        if (!shouldShowBlocker) {
+        // Not applicable for private profile.
+        if (launchedAsProfile.getType() == Profile.Type.PRIVATE
+                || tabOwnerType == Profile.Type.PRIVATE) {
             return null;
         }
 
-        if (resolverListAdapter.getUserHandle().equals(mPersonalProfileUserHandle)) {
-            return mNoWorkToPersonalEmptyState;
-        } else {
-            return mNoPersonalToWorkEmptyState;
+        // Allow access to the tab when launched by the same user as the tab owner
+        // or when there is at least one target which is permitted for cross-profile.
+        if (launchedAsSameUser || anyCrossProfileAllowedIntents(adapter, tabOwnerHandle)) {
+            return null;
         }
-    }
 
+        switch (launchedAsProfile.getType()) {
+            case WORK:  return mNoWorkToPersonalEmptyState;
+            case PERSONAL: return mNoPersonalToWorkEmptyState;
+        }
+        return null;
+    }
 
     /**
      * Empty state that gets strings from the device policy manager and tracks events into
@@ -91,14 +108,10 @@ public class NoCrossProfileEmptyStateProvider implements EmptyStateProvider {
         @NonNull
         private final String mEventCategory;
 
-        public DevicePolicyBlockerEmptyState(
-                @NonNull Context context,
-                String devicePolicyStringTitleId,
-                @StringRes int defaultTitleResource,
-                String devicePolicyStringSubtitleId,
-                @StringRes int defaultSubtitleResource,
-                int devicePolicyEventId,
-                @NonNull String devicePolicyEventCategory) {
+        public DevicePolicyBlockerEmptyState(@NonNull Context context,
+                String devicePolicyStringTitleId, @StringRes int defaultTitleResource,
+                String devicePolicyStringSubtitleId, @StringRes int defaultSubtitleResource,
+                int devicePolicyEventId, @NonNull String devicePolicyEventCategory) {
             mContext = context;
             mDevicePolicyStringTitleId = devicePolicyStringTitleId;
             mDefaultTitleResource = defaultTitleResource;

@@ -40,13 +40,13 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.selectionInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
+import com.android.intentresolver.data.repository.chooserRequestRepository
 import com.android.intentresolver.icon.BitmapIcon
 import com.android.intentresolver.logging.FakeEventLog
 import com.android.intentresolver.logging.eventLog
 import com.android.intentresolver.util.KosmosTestScope
 import com.android.intentresolver.util.comparingElementsUsingTransform
 import com.android.intentresolver.util.runKosmosTest
-import com.android.intentresolver.v2.data.repository.chooserRequestRepository
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.Kosmos.Fixture
 import com.google.common.truth.Truth.assertThat
