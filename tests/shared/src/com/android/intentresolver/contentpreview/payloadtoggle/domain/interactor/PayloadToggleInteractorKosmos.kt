@@ -29,10 +29,10 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.pen
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.selectionChangeCallback
 import com.android.intentresolver.contentpreview.uriMetadataReader
+import com.android.intentresolver.data.repository.chooserRequestRepository
 import com.android.intentresolver.inject.contentUris
 import com.android.intentresolver.logging.eventLog
 import com.android.intentresolver.packageManager
-import com.android.intentresolver.v2.data.repository.chooserRequestRepository
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.Kosmos.Fixture
 

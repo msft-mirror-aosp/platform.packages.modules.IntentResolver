@@ -32,7 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.composable.Shareousel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
-import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel
+import com.android.intentresolver.ui.viewmodel.ChooserViewModel
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ShareouselContentPreviewUi : ContentPreviewUi() {

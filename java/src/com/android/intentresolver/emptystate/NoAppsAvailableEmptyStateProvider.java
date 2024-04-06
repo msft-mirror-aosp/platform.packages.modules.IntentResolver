@@ -52,11 +52,9 @@ public class NoAppsAvailableEmptyStateProvider implements EmptyStateProvider {
     @NonNull
     private final UserHandle mTabOwnerUserHandleForLaunch;
 
-    public NoAppsAvailableEmptyStateProvider(
-            @NonNull Context context,
+    public NoAppsAvailableEmptyStateProvider(@NonNull Context context,
             @Nullable UserHandle workProfileUserHandle,
-            @Nullable UserHandle personalProfileUserHandle,
-            @NonNull String metricsCategory,
+            @Nullable UserHandle personalProfileUserHandle, @NonNull String metricsCategory,
             @NonNull UserHandle tabOwnerUserHandleForLaunch) {
         mContext = context;
         mWorkProfileUserHandle = workProfileUserHandle;
@@ -125,22 +123,21 @@ public class NoAppsAvailableEmptyStateProvider implements EmptyStateProvider {
     public static class NoAppsAvailableEmptyState implements EmptyState {
 
         @NonNull
-        private String mTitle;
+        private final String mTitle;
 
         @NonNull
-        private String mMetricsCategory;
+        private final String mMetricsCategory;
 
-        private boolean mIsPersonalProfile;
+        private final boolean mIsPersonalProfile;
 
-        public NoAppsAvailableEmptyState(@NonNull String title,
-                                         @NonNull String metricsCategory,
-                                         boolean isPersonalProfile) {
+        public NoAppsAvailableEmptyState(@NonNull String title, @NonNull String metricsCategory,
+                boolean isPersonalProfile) {
             mTitle = title;
             mMetricsCategory = metricsCategory;
             mIsPersonalProfile = isPersonalProfile;
         }
 
-        @Nullable
+        @NonNull
         @Override
         public String getTitle() {
             return mTitle;
