@@ -80,11 +80,11 @@ constructor(
             launchedByUser.handle
         }
 
-    fun findProfileType(handle: UserHandle): Profile.Type? {
-        val matched =
-            profiles.firstOrNull { it.primary.handle == handle || it.clone?.handle == handle }
-        return matched?.type
+    fun findProfile(handle: UserHandle): Profile? {
+        return profiles.firstOrNull { it.primary.handle == handle || it.clone?.handle == handle }
     }
+
+    fun findProfileType(handle: UserHandle): Profile.Type? = findProfile(handle)?.type
 
     // Name retained for ease of review, to be renamed later
     fun getQueryIntentsHandle(handle: UserHandle): UserHandle? {
