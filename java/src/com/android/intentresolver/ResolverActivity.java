@@ -127,6 +127,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 import kotlin.Pair;
 
+import kotlinx.coroutines.CoroutineDispatcher;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -135,8 +137,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.inject.Inject;
-
-import kotlinx.coroutines.CoroutineDispatcher;
 
 /**
  * This is a copy of ResolverActivity to support IntentResolver's ChooserActivity. This code is

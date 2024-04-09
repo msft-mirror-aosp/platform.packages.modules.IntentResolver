@@ -155,6 +155,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 import kotlin.Pair;
 
+import kotlinx.coroutines.CoroutineDispatcher;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -171,8 +173,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
-
-import kotlinx.coroutines.CoroutineDispatcher;
 
 /**
  * The Chooser Activity handles intent resolution specifically for sharing intents -
