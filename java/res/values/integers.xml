@@ -17,5 +17,5 @@
 <resources>
     <!-- Note that this is the value for landscape phones, the value for all screens taller than
          480dp is set in values-h480dp/integers.xml -->
-    <integer name="text_preview_lines">1</integer>
+    <integer name="text_preview_lines">3</integer>
 </resources>
