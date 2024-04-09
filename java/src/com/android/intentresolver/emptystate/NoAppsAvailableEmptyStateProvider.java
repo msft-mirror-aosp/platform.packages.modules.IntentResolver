@@ -21,9 +21,7 @@ import static com.android.intentresolver.shared.model.Profile.Type.PERSONAL;
 
 import static java.util.Objects.requireNonNull;
 
-import android.app.admin.DevicePolicyEventLogger;
 import android.os.UserHandle;
-import android.stats.devicepolicy.nano.DevicePolicyEnums;
 
 import androidx.annotation.NonNull;
 
@@ -81,36 +79,4 @@ public class NoAppsAvailableEmptyStateProvider implements EmptyStateProvider {
         }
     }
 
-    public static class NoAppsAvailableEmptyState implements EmptyState {
-
-        @NonNull
-        private final String mTitle;
-
-        @NonNull
-        private final String mMetricsCategory;
-
-        private final boolean mIsPersonalProfile;
-
-        public NoAppsAvailableEmptyState(@NonNull String title, @NonNull String metricsCategory,
-                boolean isPersonalProfile) {
-            mTitle = title;
-            mMetricsCategory = metricsCategory;
-            mIsPersonalProfile = isPersonalProfile;
-        }
-
-        @NonNull
-        @Override
-        public String getTitle() {
-            return mTitle;
-        }
-
-        @Override
-        public void onEmptyStateShown() {
-            DevicePolicyEventLogger.createEvent(
-                            DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_APPS_RESOLVED)
-                    .setStrings(mMetricsCategory)
-                    .setBoolean(/*isPersonalProfile*/ mIsPersonalProfile)
-                    .write();
-        }
-    }
 }

@@ -16,15 +16,10 @@
 
 package com.android.intentresolver.emptystate;
 
-import android.app.admin.DevicePolicyEventLogger;
-import android.app.admin.DevicePolicyManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.UserHandle;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 
 import com.android.intentresolver.ProfileHelper;
 import com.android.intentresolver.ResolverListAdapter;
@@ -91,63 +86,4 @@ public class NoCrossProfileEmptyStateProvider implements EmptyStateProvider {
         return null;
     }
 
-    /**
-     * Empty state that gets strings from the device policy manager and tracks events into
-     * event logger of the device policy events.
-     */
-    public static class DevicePolicyBlockerEmptyState implements EmptyState {
-
-        @NonNull
-        private final Context mContext;
-        private final String mDevicePolicyStringTitleId;
-        @StringRes
-        private final int mDefaultTitleResource;
-        private final String mDevicePolicyStringSubtitleId;
-        @StringRes
-        private final int mDefaultSubtitleResource;
-        private final int mEventId;
-        @NonNull
-        private final String mEventCategory;
-
-        public DevicePolicyBlockerEmptyState(@NonNull Context context,
-                String devicePolicyStringTitleId, @StringRes int defaultTitleResource,
-                String devicePolicyStringSubtitleId, @StringRes int defaultSubtitleResource,
-                int devicePolicyEventId, @NonNull String devicePolicyEventCategory) {
-            mContext = context;
-            mDevicePolicyStringTitleId = devicePolicyStringTitleId;
-            mDefaultTitleResource = defaultTitleResource;
-            mDevicePolicyStringSubtitleId = devicePolicyStringSubtitleId;
-            mDefaultSubtitleResource = defaultSubtitleResource;
-            mEventId = devicePolicyEventId;
-            mEventCategory = devicePolicyEventCategory;
-        }
-
-        @Nullable
-        @Override
-        public String getTitle() {
-            return mContext.getSystemService(DevicePolicyManager.class).getResources().getString(
-                    mDevicePolicyStringTitleId,
-                    () -> mContext.getString(mDefaultTitleResource));
-        }
-
-        @Nullable
-        @Override
-        public String getSubtitle() {
-            return mContext.getSystemService(DevicePolicyManager.class).getResources().getString(
-                    mDevicePolicyStringSubtitleId,
-                    () -> mContext.getString(mDefaultSubtitleResource));
-        }
-
-        @Override
-        public void onEmptyStateShown() {
-            DevicePolicyEventLogger.createEvent(mEventId)
-                    .setStrings(mEventCategory)
-                    .write();
-        }
-
-        @Override
-        public boolean shouldSkipDataRebuild() {
-            return true;
-        }
-    }
 }
