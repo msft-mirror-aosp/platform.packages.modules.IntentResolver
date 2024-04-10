@@ -31,11 +31,11 @@ import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
 
-import java.util.List;
-import java.util.Objects;
-
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.Flow;
+
+import java.util.List;
+import java.util.Objects;
 
 class UnifiedContentPreviewUi extends ContentPreviewUi {
     private final boolean mShowEditAction;

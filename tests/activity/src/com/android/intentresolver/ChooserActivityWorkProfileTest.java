@@ -27,7 +27,6 @@ import static androidx.test.espresso.matcher.ViewMatchers.isSelected;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
-import static com.android.intentresolver.ChooserWrapperActivity.sOverrides;
 import static com.android.intentresolver.ChooserActivityWorkProfileTest.TestCase.ExpectedBlocker.NO_BLOCKER;
 import static com.android.intentresolver.ChooserActivityWorkProfileTest.TestCase.ExpectedBlocker.PERSONAL_PROFILE_ACCESS_BLOCKER;
 import static com.android.intentresolver.ChooserActivityWorkProfileTest.TestCase.ExpectedBlocker.PERSONAL_PROFILE_SHARE_BLOCKER;
@@ -35,6 +34,7 @@ import static com.android.intentresolver.ChooserActivityWorkProfileTest.TestCase
 import static com.android.intentresolver.ChooserActivityWorkProfileTest.TestCase.ExpectedBlocker.WORK_PROFILE_SHARE_BLOCKER;
 import static com.android.intentresolver.ChooserActivityWorkProfileTest.TestCase.Tab.PERSONAL;
 import static com.android.intentresolver.ChooserActivityWorkProfileTest.TestCase.Tab.WORK;
+import static com.android.intentresolver.ChooserWrapperActivity.sOverrides;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.mockito.ArgumentMatchers.eq;
