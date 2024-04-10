@@ -32,10 +32,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.content.Intent;
 import android.metrics.LogMaker;
 
+import com.android.intentresolver.contentpreview.ContentPreviewType;
 import com.android.intentresolver.logging.EventLogImpl.SharesheetStandardEvent;
 import com.android.intentresolver.logging.EventLogImpl.SharesheetStartedEvent;
 import com.android.intentresolver.logging.EventLogImpl.SharesheetTargetSelectedEvent;
-import com.android.intentresolver.contentpreview.ContentPreviewType;
 import com.android.internal.logging.InstanceId;
 import com.android.internal.logging.InstanceIdSequence;
 import com.android.internal.logging.MetricsLogger;

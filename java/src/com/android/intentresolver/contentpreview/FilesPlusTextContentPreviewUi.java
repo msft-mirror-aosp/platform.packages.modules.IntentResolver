@@ -36,11 +36,11 @@ import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
 
+import kotlinx.coroutines.CoroutineScope;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
-
-import kotlinx.coroutines.CoroutineScope;
 
 /**
  * FilesPlusTextContentPreviewUi is shown when the user is sending 1 or more files along with
