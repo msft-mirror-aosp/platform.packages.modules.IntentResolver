@@ -34,7 +34,7 @@ constructor(
         repository.pendingTargetIntent.collectLatest { targetIntent ->
             targetIntent ?: return@collectLatest
             selectionCallback.onSelectionChanged(targetIntent)?.let { update ->
-                chooserRequestInteractor.applyUpdate(update)
+                chooserRequestInteractor.applyUpdate(targetIntent, update)
             }
             repository.pendingTargetIntent.compareAndSet(targetIntent, null)
         }
