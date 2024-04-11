@@ -76,7 +76,6 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
                 .padding(vertical = 16.dp),
     ) {
         PreviewCarousel(keySet, viewModel)
-        Spacer(Modifier.height(16.dp))
         ActionCarousel(viewModel)
     }
 }
@@ -153,16 +152,19 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
 @Composable
 private fun ActionCarousel(viewModel: ShareouselViewModel) {
     val actions by viewModel.actions.collectAsStateWithLifecycle(initialValue = emptyList())
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.height(32.dp),
-    ) {
-        itemsIndexed(actions) { idx, actionViewModel ->
-            ShareouselAction(
-                label = actionViewModel.label,
-                onClick = { actionViewModel.onClicked() },
-            ) {
-                actionViewModel.icon?.let { Image(icon = it, modifier = Modifier.size(16.dp)) }
+    if (actions.isNotEmpty()) {
+        Spacer(Modifier.height(16.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.height(32.dp),
+        ) {
+            itemsIndexed(actions) { idx, actionViewModel ->
+                ShareouselAction(
+                    label = actionViewModel.label,
+                    onClick = { actionViewModel.onClicked() },
+                ) {
+                    actionViewModel.icon?.let { Image(icon = it, modifier = Modifier.size(16.dp)) }
+                }
             }
         }
     }
