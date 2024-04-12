@@ -33,6 +33,8 @@ import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.composable.Shareousel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 import com.android.intentresolver.ui.viewmodel.ChooserViewModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ShareouselContentPreviewUi : ContentPreviewUi() {
@@ -56,7 +58,7 @@ class ShareouselContentPreviewUi : ContentPreviewUi() {
                 val viewModel: ShareouselViewModel = vm.shareouselViewModel
 
                 headlineViewParent?.let {
-                    LaunchedEffect(viewModel) { bindHeadline(viewModel, headlineViewParent) }
+                    LaunchedEffect(viewModel) { bindHeader(viewModel, headlineViewParent) }
                 }
 
                 MaterialTheme(
@@ -73,11 +75,31 @@ class ShareouselContentPreviewUi : ContentPreviewUi() {
         }
     }
 
+    private suspend fun bindHeader(viewModel: ShareouselViewModel, headlineViewParent: View) {
+        coroutineScope {
+            launch { bindHeadline(viewModel, headlineViewParent) }
+            launch { bindMetadataText(viewModel, headlineViewParent) }
+        }
+    }
+
     private suspend fun bindHeadline(viewModel: ShareouselViewModel, headlineViewParent: View) {
         viewModel.headline.collect { headline ->
             headlineViewParent.findViewById<TextView>(R.id.headline)?.apply {
                 if (headline.isNotBlank()) {
                     text = headline
+                    visibility = View.VISIBLE
+                } else {
+                    visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    private suspend fun bindMetadataText(viewModel: ShareouselViewModel, headlineViewParent: View) {
+        viewModel.metadataText.collect { metadata ->
+            headlineViewParent.findViewById<TextView>(R.id.metadata)?.apply {
+                if (metadata?.isNotBlank() == true) {
+                    text = metadata
                     visibility = View.VISIBLE
                 } else {
                     visibility = View.GONE
