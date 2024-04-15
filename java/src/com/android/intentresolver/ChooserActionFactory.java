@@ -93,6 +93,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
 
     @Nullable
     private final Runnable mCopyButtonRunnable;
+    @Nullable
     private final Runnable mEditButtonRunnable;
     private final ImmutableList<ChooserAction> mCustomActions;
     private final @Nullable ChooserAction mModifyShareAction;
@@ -149,7 +150,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     ChooserActionFactory(
             Context context,
             @Nullable Runnable copyButtonRunnable,
-            Runnable editButtonRunnable,
+            @Nullable Runnable editButtonRunnable,
             List<ChooserAction> customActions,
             @Nullable ChooserAction modifyShareAction,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
@@ -278,6 +279,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return clipData;
     }
 
+    @Nullable
     private static TargetInfo getEditSharingTarget(
             Context context,
             Intent originalIntent,
@@ -324,11 +326,13 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return dri;
     }
 
+    @Nullable
     private static Runnable makeEditButtonRunnable(
-            TargetInfo editSharingTarget,
+            @Nullable TargetInfo editSharingTarget,
             Callable</* @Nullable */ View> firstVisibleImageQuery,
             ActionActivityStarter activityStarter,
             EventLog logger) {
+        if (editSharingTarget == null) return null;
         return () -> {
             // Log share completion via edit.
             logger.logActionSelected(EventLog.SELECTION_TYPE_EDIT);
