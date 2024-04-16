@@ -21,6 +21,7 @@ import com.android.intentresolver.contentpreview.HeadlineGenerator
 import com.android.intentresolver.contentpreview.ImageLoader
 import com.android.intentresolver.contentpreview.ImagePreviewImageLoader
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.PayloadToggle
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.ChooserRequestInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.CustomActionsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectablePreviewsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectionInteractor
@@ -47,6 +48,8 @@ import kotlinx.coroutines.plus
 data class ShareouselViewModel(
     /** Text displayed at the top of the share sheet when Shareousel is present. */
     val headline: Flow<String>,
+    /** App-provided text shown beneath the headline. */
+    val metadataText: Flow<CharSequence?>,
     /**
      * Previews which are available for presentation within Shareousel. Use [preview] to create a
      * [ShareouselPreviewViewModel] for a given [PreviewModel].
@@ -68,6 +71,7 @@ object ShareouselViewModelModule {
         actionsInteractor: CustomActionsInteractor,
         headlineGenerator: HeadlineGenerator,
         selectionInteractor: SelectionInteractor,
+        chooserRequestInteractor: ChooserRequestInteractor,
         // TODO: remove if possible
         @ViewModelOwned scope: CoroutineScope,
     ): ShareouselViewModel {
@@ -87,6 +91,7 @@ object ShareouselViewModelModule {
                         ContentType.Video -> headlineGenerator.getVideosHeadline(numItems)
                     }
                 },
+            metadataText = chooserRequestInteractor.metadataText,
             previews = keySet,
             actions =
                 actionsInteractor.customActions.map { actions ->
