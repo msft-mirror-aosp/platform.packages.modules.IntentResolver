@@ -35,4 +35,7 @@ constructor(
 
     val customActions: Flow<List<CustomActionModel>>
         get() = repository.customActions.asSharedFlow()
+
+    val metadataText: Flow<CharSequence?>
+        get() = repository.chooserRequest.map { it.metadataText }
 }

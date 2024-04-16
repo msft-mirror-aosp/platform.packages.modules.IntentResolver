@@ -33,6 +33,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.Pen
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.pendingIntentSender
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.chooserRequestInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.customActionsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.headlineGenerator
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.payloadToggleImageLoader
@@ -40,6 +41,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.selectionInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
+import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.data.repository.chooserRequestRepository
 import com.android.intentresolver.icon.BitmapIcon
 import com.android.intentresolver.logging.FakeEventLog
@@ -65,6 +67,7 @@ class ShareouselViewModelTest {
             imageLoader = payloadToggleImageLoader,
             actionsInteractor = customActionsInteractor,
             headlineGenerator = headlineGenerator,
+            chooserRequestInteractor = chooserRequestInteractor,
             selectionInteractor = selectionInteractor,
             scope = viewModelScope,
         )
@@ -86,6 +89,21 @@ class ShareouselViewModelTest {
             )
         runCurrent()
         assertThat(shareouselViewModel.headline.first()).isEqualTo("IMAGES: 2")
+    }
+
+    @Test
+    fun metadataText() = runTest {
+        val request =
+            ChooserRequest(
+                targetIntent = Intent(),
+                launchedFromPackage = "",
+                metadataText = "Hello"
+            )
+        chooserRequestRepository.chooserRequest.value = request
+
+        runCurrent()
+
+        assertThat(shareouselViewModel.metadataText.first()).isEqualTo("Hello")
     }
 
     @Test
