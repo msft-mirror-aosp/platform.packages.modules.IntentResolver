@@ -112,6 +112,7 @@ import com.android.intentresolver.profiles.ResolverMultiProfilePagerAdapter;
 import com.android.intentresolver.profiles.TabConfig;
 import com.android.intentresolver.shared.model.Profile;
 import com.android.intentresolver.ui.ActionTitle;
+import com.android.intentresolver.ui.ProfilePagerResources;
 import com.android.intentresolver.ui.model.ActivityModel;
 import com.android.intentresolver.ui.model.ResolverRequest;
 import com.android.intentresolver.ui.viewmodel.ResolverViewModel;
@@ -153,6 +154,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     @Inject public ResolverHelper mResolverHelper;
     @Inject public PackageManager mPackageManager;
     @Inject public DevicePolicyResources mDevicePolicyResources;
+    @Inject public ProfilePagerResources mProfilePagerResources;
     @Inject public IntentForwarding mIntentForwarding;
     @Inject public FeatureFlags mFeatureFlags;
 
@@ -963,12 +965,11 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
                         },
                         getMetricsCategory());
 
-        final EmptyStateProvider noAppsEmptyStateProvider = new NoAppsAvailableEmptyStateProvider(
-                this,
-                workProfileUserHandle,
-                mProfiles.getPersonalHandle(),
+        EmptyStateProvider noAppsEmptyStateProvider = new NoAppsAvailableEmptyStateProvider(
+                mProfiles,
+                mProfileAvailability,
                 getMetricsCategory(),
-                mProfiles.getTabOwnerUserHandleForLaunch()
+                mProfilePagerResources
         );
 
         // Return composite provider, the order matters (the higher, the more priority)

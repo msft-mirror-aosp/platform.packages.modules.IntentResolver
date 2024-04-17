@@ -1051,11 +1051,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                         getMetricsCategory());
 
         EmptyStateProvider noAppsEmptyStateProvider = new NoAppsAvailableEmptyStateProvider(
-                this,
-                profileHelper.getWorkHandle(),
-                profileHelper.getPersonalHandle(),
+                mProfiles,
+                mProfileAvailability,
                 getMetricsCategory(),
-                profileHelper.getTabOwnerUserHandleForLaunch()
+                mProfilePagerResources
         );
 
         // Return composite provider, the order matters (the higher, the more priority)
