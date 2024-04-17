@@ -99,7 +99,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     private final Context mContext;
 
     @Nullable private Runnable mCopyButtonRunnable;
-    private Runnable mEditButtonRunnable;
+    @Nullable private Runnable mEditButtonRunnable;
     private final ImmutableList<ChooserAction> mCustomActions;
     private final Consumer<Boolean> mExcludeSharedTextAction;
     @Nullable private final ShareResultSender mShareResultSender;
@@ -158,7 +158,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     ChooserActionFactory(
             Context context,
             @Nullable Runnable copyButtonRunnable,
-            Runnable editButtonRunnable,
+            @Nullable Runnable editButtonRunnable,
             List<ChooserAction> customActions,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
             EventLog log,
@@ -174,10 +174,12 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         mFinishCallback = finishCallback;
 
         if (mShareResultSender != null) {
-            mEditButtonRunnable = () -> {
-                mShareResultSender.onActionSelected(ShareAction.SYSTEM_EDIT);
-                editButtonRunnable.run();
-            };
+            if (mEditButtonRunnable != null) {
+                mEditButtonRunnable = () -> {
+                    mShareResultSender.onActionSelected(ShareAction.SYSTEM_EDIT);
+                    editButtonRunnable.run();
+                };
+            }
             if (mCopyButtonRunnable != null) {
                 mCopyButtonRunnable = () -> {
                     mShareResultSender.onActionSelected(ShareAction.SYSTEM_COPY);
@@ -281,6 +283,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return clipData;
     }
 
+    @Nullable
     private static TargetInfo getEditSharingTarget(
             Context context,
             Intent originalIntent,
@@ -325,11 +328,13 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return dri;
     }
 
+    @Nullable
     private static Runnable makeEditButtonRunnable(
-            TargetInfo editSharingTarget,
+            @Nullable TargetInfo editSharingTarget,
             Callable</* @Nullable */ View> firstVisibleImageQuery,
             ActionActivityStarter activityStarter,
             EventLog log) {
+        if (editSharingTarget == null) return null;
         return () -> {
             // Log share completion via edit.
             log.logActionSelected(EventLog.SELECTION_TYPE_EDIT);
