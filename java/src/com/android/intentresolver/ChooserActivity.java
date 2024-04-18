@@ -97,6 +97,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.android.intentresolver.ChooserRefinementManager.RefinementType;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
@@ -568,23 +569,52 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mRefinementManager = new ViewModelProvider(this).get(ChooserRefinementManager.class);
         mRefinementManager.getRefinementCompletion().observe(this, completion -> {
             if (completion.consume()) {
-                TargetInfo targetInfo = completion.getTargetInfo();
-                // targetInfo is non-null if the refinement process was successful.
-                if (targetInfo != null) {
-                    maybeRemoveSharedText(targetInfo);
+                if (completion.getRefinedIntent() == null) {
+                    finish();
+                    return;
+                }
 
-                    // We already block suspended targets from going to refinement, and we probably
-                    // can't recover a Chooser session if that's the reason the refined target fails
-                    // to launch now. Fire-and-forget the refined launch; ignore the return value
-                    // and just make sure the Sharesheet session gets cleaned up regardless.
-                    final ResolveInfo ri = targetInfo.getResolveInfo();
-                    final Intent intent1 = targetInfo.getResolvedIntent();
+                // Prepare to regenerate our "system actions" based on the refined intent.
+                // TODO: optimize if needed. `TARGET_INFO` cases don't require a new action
+                // factory at all. And if we break up `ChooserActionFactory`, we could avoid
+                // resolving a new editor intent unless we're handling an `EDIT_ACTION`.
+                ChooserActionFactory refinedActionFactory =
+                        createChooserActionFactory(completion.getRefinedIntent());
+                switch (completion.getType()) {
+                    case TARGET_INFO: {
+                        TargetInfo refinedTarget = completion
+                                .getOriginalTargetInfo()
+                                .tryToCloneWithAppliedRefinement(
+                                        completion.getRefinedIntent());
+                        if (refinedTarget == null) {
+                            Log.e(TAG, "Failed to apply refinement to any matching source intent");
+                        } else {
+                            maybeRemoveSharedText(refinedTarget);
 
-                    safelyStartActivity(targetInfo);
+                            // We already block suspended targets from going to refinement, and we
+                            // probably can't recover a Chooser session if that's the reason the
+                            // refined target fails to launch now. Fire-and-forget the refined
+                            // launch, and make sure Sharesheet gets cleaned up regardless of the
+                            // outcome of that launch.launch; ignore
 
-                    // Rely on the ActivityManager to pop up a dialog regarding app suspension
-                    // and return false
-                    targetInfo.isSuspended();
+                            safelyStartActivity(refinedTarget);
+                        }
+                    }
+                    break;
+
+                    case COPY_ACTION: {
+                        if (refinedActionFactory.getCopyButtonRunnable() != null) {
+                            refinedActionFactory.getCopyButtonRunnable().run();
+                        }
+                    }
+                    break;
+
+                    case EDIT_ACTION: {
+                        if (refinedActionFactory.getEditButtonRunnable() != null) {
+                            refinedActionFactory.getEditButtonRunnable().run();
+                        }
+                    }
+                    break;
                 }
 
                 finish();
@@ -597,12 +627,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getTargetIntent(),
                 mRequest.getAdditionalContentUri(),
                 mChooserServiceFeatureFlags.chooserPayloadToggling());
+        ChooserContentPreviewUi.ActionFactory actionFactory =
+                decorateActionFactoryWithRefinement(
+                        createChooserActionFactory(mRequest.getTargetIntent()));
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
                 previewViewModel.getPreviewDataProvider(),
                 mRequest.getTargetIntent(),
                 previewViewModel.getImageLoader(),
-                createChooserActionFactory(),
+                actionFactory,
                 createModifyShareActionFactory(),
                 mEnterTransitionAnimationDelegate,
                 new HeadlineGeneratorImpl(this),
@@ -2090,10 +2123,67 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return PreviewViewModel.Companion.getFactory();
     }
 
-    private ChooserActionFactory createChooserActionFactory() {
+    private ChooserContentPreviewUi.ActionFactory decorateActionFactoryWithRefinement(
+            ChooserContentPreviewUi.ActionFactory originalFactory) {
+        if (!mFeatureFlags.refineSystemActions()) {
+            return originalFactory;
+        }
+
+        return new ChooserContentPreviewUi.ActionFactory() {
+            @Override
+            @Nullable
+            public Runnable getEditButtonRunnable() {
+                return () -> {
+                    if (!mRefinementManager.maybeHandleSelection(
+                            RefinementType.EDIT_ACTION,
+                            List.of(mRequest.getTargetIntent()),
+                            null,
+                            mRequest.getRefinementIntentSender(),
+                            getApplication(),
+                            getMainThreadHandler())) {
+                        originalFactory.getEditButtonRunnable().run();
+                    }
+                };
+            }
+
+            @Override
+            @Nullable
+            public Runnable getCopyButtonRunnable() {
+                return () -> {
+                    if (!mRefinementManager.maybeHandleSelection(
+                            RefinementType.COPY_ACTION,
+                            List.of(mRequest.getTargetIntent()),
+                            null,
+                            mRequest.getRefinementIntentSender(),
+                            getApplication(),
+                            getMainThreadHandler())) {
+                        originalFactory.getCopyButtonRunnable().run();
+                    }
+                };
+            }
+
+            @Override
+            public List<ActionRow.Action> createCustomActions() {
+                return originalFactory.createCustomActions();
+            }
+
+            @Override
+            @Nullable
+            public ActionRow.Action getModifyShareAction() {
+                return originalFactory.getModifyShareAction();
+            }
+
+            @Override
+            public Consumer<Boolean> getExcludeSharedTextAction() {
+                return originalFactory.getExcludeSharedTextAction();
+            }
+        };
+    }
+
+    private ChooserActionFactory createChooserActionFactory(Intent targetIntent) {
         return new ChooserActionFactory(
                 this,
-                mRequest.getTargetIntent(),
+                targetIntent,
                 mRequest.getLaunchedFromPackage(),
                 mRequest.getChooserActions(),
                 mImageEditor,
