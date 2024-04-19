@@ -50,4 +50,12 @@ constructor(
             Profile.Type.PRIVATE -> privateTabAccessibilityLabel
         }
     }
+
+    fun noAppsMessage(type: Profile.Type): String {
+        return when (type) {
+            Profile.Type.PERSONAL -> devicePolicyResources.noPersonalApps
+            Profile.Type.WORK -> devicePolicyResources.noWorkApps
+            Profile.Type.PRIVATE -> resources.getString(R.string.resolver_no_private_apps_available)
+        }
+    }
 }
