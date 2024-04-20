@@ -18,6 +18,9 @@ package com.android.intentresolver.data.repository
 import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyResources.Strings.Core.FORWARD_INTENT_TO_PERSONAL
 import android.app.admin.DevicePolicyResources.Strings.Core.FORWARD_INTENT_TO_WORK
+import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROSS_PROFILE_BLOCKED_TITLE
+import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_NO_PERSONAL_APPS
+import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_NO_WORK_APPS
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_PERSONAL_TAB
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_PERSONAL_TAB_ACCESSIBILITY
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_WORK_PROFILE_NOT_SUPPORTED
@@ -81,6 +84,46 @@ constructor(
                 resources.getString(R.string.forward_intent_to_work)
             }
         )
+    }
+
+    val noPersonalApps by lazy {
+        requireNotNull(
+            policyResources.getString(RESOLVER_NO_PERSONAL_APPS) {
+                resources.getString(R.string.resolver_no_personal_apps_available)
+            }
+        )
+    }
+
+    val noWorkApps by lazy {
+        requireNotNull(
+            policyResources.getString(RESOLVER_NO_WORK_APPS) {
+                resources.getString(R.string.resolver_no_work_apps_available)
+            }
+        )
+    }
+
+    val crossProfileBlocked by lazy {
+        requireNotNull(
+            policyResources.getString(RESOLVER_CROSS_PROFILE_BLOCKED_TITLE) {
+                resources.getString(R.string.resolver_cross_profile_blocked)
+            }
+        )
+    }
+
+    fun toPersonalBlockedByPolicyMessage(sendAction: Boolean): String {
+        return if (sendAction) {
+            resources.getString(R.string.resolver_cant_share_with_personal_apps_explanation)
+        } else {
+            resources.getString(R.string.resolver_cant_access_personal_apps_explanation)
+        }
+    }
+
+    fun toWorkBlockedByPolicyMessage(sendAction: Boolean): String {
+        return if (sendAction) {
+            resources.getString(R.string.resolver_cant_share_with_work_apps_explanation)
+        } else {
+            resources.getString(R.string.resolver_cant_access_work_apps_explanation)
+        }
     }
 
     fun getWorkProfileNotSupportedMessage(launcherName: String): String {

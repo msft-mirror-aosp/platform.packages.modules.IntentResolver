@@ -295,6 +295,9 @@
     <!-- Error message. This text lets the user know that their current personal apps don't support the specific content. [CHAR LIMIT=NONE] -->
     <string name="resolver_no_personal_apps_available">No personal apps</string>
 
+    <!-- Error message. This text lets the user know that their current private apps don't support the specific content. [CHAR LIMIT=NONE] -->
+    <string name="resolver_no_private_apps_available">No private apps</string>
+
     <!-- Dialog title. User must choose between opening content in a cross-profile app or same-profile browser. [CHAR LIMIT=NONE] -->
     <string name="miniresolver_open_in_personal">Open <xliff:g id="app" example="YouTube">%s</xliff:g> in your personal profile?</string>
     <!-- Dialog title. User must choose between opening content in a cross-profile app or same-profile browser. [CHAR LIMIT=NONE] -->
