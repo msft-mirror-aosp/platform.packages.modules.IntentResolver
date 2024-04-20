@@ -53,6 +53,24 @@ class ProfileAvailability(
         }
     }
 
+    /**
+     * The number of profiles which are visible. All profiles count except for private which is
+     * hidden when locked.
+     */
+    fun visibleProfileCount() =
+        runBlocking(background) {
+            val availability = userInteractor.availability.first()
+            val profiles = userInteractor.profiles.first()
+            profiles
+                .filter {
+                    when (it.type) {
+                        Profile.Type.PRIVATE -> availability[it] == true
+                        else -> true
+                    }
+                }
+                .size
+        }
+
     /** Used by WorkProfilePausedEmptyStateProvider */
     fun requestQuietModeState(profile: Profile, quietMode: Boolean) {
         val enableProfile = !quietMode
