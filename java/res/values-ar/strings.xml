@@ -49,7 +49,7 @@
     <string name="forward_intent_to_work" msgid="2906094223089139419">"أنت تستخدم هذا التطبيق في ملفك الشخصي للعمل"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"دائمًا"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"مرة واحدة فقط"</string>
-    <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"لا يتوافق تطبيق \"<xliff:g id="APP">%1$s</xliff:g>\" مع الملف الشخصي للعمل."</string>
+    <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"لا يتوافق تطبيق \"<xliff:g id="APP">%1$s</xliff:g>\" مع ملف العمل."</string>
     <string name="pin_specific_target" msgid="5057063421361441406">"تثبيت <xliff:g id="LABEL">%1$s</xliff:g>"</string>
     <string name="unpin_specific_target" msgid="3115158908159857777">"إزالة تثبيت <xliff:g id="LABEL">%1$s</xliff:g>"</string>
     <string name="screenshot_edit" msgid="3857183660047569146">"تعديل"</string>
@@ -72,7 +72,7 @@
     <string name="image_preview_a11y_description" msgid="297102643932491797">"صورة مصغّرة لمعاينة صورة"</string>
     <string name="video_preview_a11y_description" msgid="683440858811095990">"صورة مصغّرة لمعاينة فيديو"</string>
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"صورة مصغّرة لمعاينة ملف"</string>
-    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"ما مِن أشخاص مقترحين للمشاركة معهم."</string>
+    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"ما مِن أشخاص مقترحين للمشاركة معهم"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏لم يتم منح هذا التطبيق إذن تسجيل، ولكن يمكنه تسجيل الصوت من خلال جهاز USB هذا."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"شخصي"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"للعمل"</string>
