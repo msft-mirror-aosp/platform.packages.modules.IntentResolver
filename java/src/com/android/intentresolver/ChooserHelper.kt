@@ -28,9 +28,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.intentresolver.annotation.JavaInterop
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
 import com.android.intentresolver.data.model.ChooserRequest
-import com.android.intentresolver.domain.interactor.UserInteractor
-import com.android.intentresolver.inject.Background
 import com.android.intentresolver.ui.viewmodel.ChooserViewModel
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.Valid
@@ -38,9 +37,13 @@ import com.android.intentresolver.validation.log
 import dagger.hilt.android.scopes.ActivityScoped
 import java.util.function.Consumer
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 private const val TAG: String = "ChooserHelper"
@@ -79,17 +82,19 @@ class ChooserHelper
 @Inject
 constructor(
     hostActivity: Activity,
-    private val userInteractor: UserInteractor,
     private val activityResultRepo: ActivityResultRepository,
-    @Background private val background: CoroutineDispatcher,
+    private val pendingSelectionCallbackRepo: PendingSelectionCallbackRepository,
 ) : DefaultLifecycleObserver {
     // This is guaranteed by Hilt, since only a ComponentActivity is injectable.
     private val activity: ComponentActivity = hostActivity as ComponentActivity
     private val viewModel by activity.viewModels<ChooserViewModel>()
 
+    // TODO: provide the following through an init object passed into [setInitialize]
     private lateinit var activityInitializer: Runnable
-
+    /** Invoked when there are updates to ChooserRequest */
     var onChooserRequestChanged: Consumer<ChooserRequest> = Consumer {}
+    /** Invoked when there are a new change to payload selection */
+    var onPendingSelection: Runnable = Runnable {}
 
     init {
         activity.lifecycle.addObserver(this)
@@ -130,8 +135,25 @@ constructor(
         }
 
         activity.lifecycleScope.launch {
+            val hasPendingCallbackFlow =
+                pendingSelectionCallbackRepo.pendingTargetIntent
+                    .map { it != null }
+                    .distinctUntilChanged()
+                    .onEach { hasPendingCallback ->
+                        if (hasPendingCallback) {
+                            onPendingSelection.run()
+                        }
+                    }
             activity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.request.collect { onChooserRequestChanged.accept(it) }
+                viewModel.request
+                    .combine(hasPendingCallbackFlow) { request, hasPendingCallback ->
+                        request to hasPendingCallback
+                    }
+                    // only take ChooserRequest if there are no pending callbacks
+                    .filter { !it.second }
+                    .map { it.first }
+                    .distinctUntilChanged(areEquivalent = { old, new -> old === new })
+                    .collect { onChooserRequestChanged.accept(it) }
             }
         }
     }
