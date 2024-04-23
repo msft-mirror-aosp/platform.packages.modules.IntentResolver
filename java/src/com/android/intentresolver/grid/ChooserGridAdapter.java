@@ -149,9 +149,7 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
 
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
-        if (mFeatureFlags.scrollablePreview()) {
-            mRecyclerView = recyclerView;
-        }
+        mRecyclerView = recyclerView;
     }
 
     @Override
@@ -212,22 +210,7 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
      * This area includes the content preview (if present) and action row.
      */
     public int getSystemRowCount() {
-        // For the tabbed case we show the sticky content preview above the tabs,
-        // please refer to shouldShowStickyContentPreview
-        if (mChooserActivityDelegate.shouldShowTabs()
-                || mFeatureFlags.scrollablePreview()) {
-            return 0;
-        }
-
-        if (!mShouldShowContentPreview) {
-            return 0;
-        }
-
-        if (mChooserListAdapter == null || mChooserListAdapter.getCount() == 0) {
-            return 0;
-        }
-
-        return 1;
+        return 0;
     }
 
     public int getFooterRowCount() {

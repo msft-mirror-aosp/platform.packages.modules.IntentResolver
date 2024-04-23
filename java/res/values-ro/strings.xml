@@ -90,6 +90,8 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Reactivează"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Nicio aplicație pentru lucru"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Nicio aplicație personală"</string>
+    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
+    <skip />
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Deschizi <xliff:g id="APP">%s</xliff:g> în profilul personal?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Deschizi <xliff:g id="APP">%s</xliff:g> în profilul de serviciu?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Folosește browserul personal"</string>

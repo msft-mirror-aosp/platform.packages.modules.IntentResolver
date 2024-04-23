@@ -31,7 +31,7 @@ constructor(
      * sharing application, so that it can react to the new intent.
      */
     fun updateTargetIntent(targetIntent: Intent) {
-        chooserRequestInteractor.setTargetIntent(targetIntent)
         repository.pendingTargetIntent.value = targetIntent
+        chooserRequestInteractor.setTargetIntent(targetIntent)
     }
 }

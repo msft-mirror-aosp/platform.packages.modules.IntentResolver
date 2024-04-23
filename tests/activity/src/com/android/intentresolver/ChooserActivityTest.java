@@ -88,7 +88,6 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
-import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
@@ -2229,7 +2228,6 @@ public class ChooserActivityTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(Flags.FLAG_SCROLLABLE_PREVIEW)
     public void testWorkTab_previewIsScrollable() {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
