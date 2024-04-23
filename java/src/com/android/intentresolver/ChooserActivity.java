@@ -506,8 +506,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles,
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
+                mMaxTargetsPerRow);
 
         if (!configureContentView(mTargetDataLoader)) {
             mPersonalPackageMonitor = createPackageMonitor(
@@ -728,8 +727,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles,
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
+                mMaxTargetsPerRow);
         mChooserMultiProfilePagerAdapter.setCurrentPage(currentPage);
         if (mPersonalPackageMonitor != null) {
             mPersonalPackageMonitor.unregister();
@@ -1191,9 +1189,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         boolean rebuildCompleted = mChooserMultiProfilePagerAdapter.rebuildTabs(
                 mProfiles.getWorkProfilePresent());
 
-        mLayoutId = mFeatureFlags.scrollablePreview()
-                ? R.layout.chooser_grid_scrollable_preview
-                : R.layout.chooser_grid;
+        mLayoutId = R.layout.chooser_grid_scrollable_preview;
 
         setContentView(mLayoutId);
         mTabHost = findViewById(com.android.internal.R.id.profile_tabhost);
@@ -1362,8 +1358,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles,
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
+                mMaxTargetsPerRow);
     }
 
     private ChooserMultiProfilePagerAdapter createMultiProfilePagerAdapter(
@@ -1373,8 +1368,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             ProfileHelper profileHelper,
             ProfileAvailability profileAvailability,
             List<Intent> initialIntents,
-            int maxTargetsPerRow,
-            FeatureFlags featureFlags) {
+            int maxTargetsPerRow) {
         Log.d(TAG, "createMultiProfilePagerAdapter");
 
         Profile launchedAs = profileHelper.getLaunchedAsProfile();
@@ -1418,8 +1412,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 launchedAs.getType().ordinal(),
                 profileHelper.getWorkHandle(),
                 profileHelper.getCloneHandle(),
-                maxTargetsPerRow,
-                featureFlags);
+                maxTargetsPerRow);
     }
 
     protected EmptyStateProvider createBlockerEmptyStateProvider() {
@@ -1576,9 +1569,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 getResources(),
                 getLayoutInflater(),
                 parent,
-                mFeatureFlags.scrollablePreview()
-                        ? findViewById(R.id.chooser_headline_row_container)
-                        : null);
+                findViewById(R.id.chooser_headline_row_container));
 
         if (layout != null) {
             adjustPreviewWidth(getResources().getConfiguration().orientation, layout);
@@ -2477,8 +2468,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         ResolverListAdapter adapter = mChooserMultiProfilePagerAdapter.getListAdapterForUserHandle(
                 UserHandle.of(UserHandle.myUserId()));
         boolean isEmpty = adapter == null || adapter.getCount() == 0;
-        return (mFeatureFlags.scrollablePreview() || mProfiles.getWorkProfilePresent())
-                && (!isEmpty || shouldShowContentPreviewWhenEmpty());
+        return !isEmpty || shouldShowContentPreviewWhenEmpty();
     }
 
     /**
