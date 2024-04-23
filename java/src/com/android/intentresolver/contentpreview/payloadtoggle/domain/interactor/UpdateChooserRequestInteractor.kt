@@ -34,9 +34,10 @@ constructor(
     private val repository: ChooserRequestRepository,
     @CustomAction private val pendingIntentSender: PendingIntentSender,
 ) {
-    fun applyUpdate(update: ShareouselUpdate) {
+    fun applyUpdate(targetIntent: Intent, update: ShareouselUpdate) {
         repository.chooserRequest.update { current ->
             current.copy(
+                targetIntent = targetIntent,
                 callerChooserTargets =
                     update.callerTargets.getOrDefault(current.callerChooserTargets),
                 modifyShareAction =

@@ -84,6 +84,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -218,9 +219,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private boolean mRegistered;
     private PackageMonitor mPersonalPackageMonitor;
     private PackageMonitor mWorkPackageMonitor;
-    protected View mProfileView;
 
     protected ResolverDrawerLayout mResolverDrawerLayout;
+    private TabHost mTabHost;
+    private ResolverViewPager mViewPager;
     protected ChooserMultiProfilePagerAdapter mChooserMultiProfilePagerAdapter;
     protected final LatencyTracker mLatencyTracker = getLatencyTracker();
 
@@ -305,8 +307,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private final EnterTransitionAnimationDelegate mEnterTransitionAnimationDelegate =
             new EnterTransitionAnimationDelegate(this, () -> mResolverDrawerLayout);
 
-    private final View mContentView = null;
-
     private final Map<Integer, ProfileRecord> mProfileRecords = new HashMap<>();
 
     private boolean mExcludeSharedText = false;
@@ -345,6 +345,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mChooserHelper.setInitializer(this::initialize);
         if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
             mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
+            mChooserHelper.setOnPendingSelection(this::onPendingSelection);
         }
     }
 
@@ -406,9 +407,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected final void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-        if (viewPager != null) {
-            outState.putInt(LAST_SHOWN_TAB_KEY, viewPager.getCurrentItem());
+        if (mViewPager != null) {
+            outState.putInt(LAST_SHOWN_TAB_KEY, mViewPager.getCurrentItem());
         }
     }
 
@@ -506,8 +506,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles,
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
+                mMaxTargetsPerRow);
 
         if (!configureContentView(mTargetDataLoader)) {
             mPersonalPackageMonitor = createPackageMonitor(
@@ -648,7 +647,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void onChooserRequestChanged(ChooserRequest chooserRequest) {
-        // intentional reference comarison
+        // intentional reference comparison
         if (mRequest == chooserRequest) {
             return;
         }
@@ -658,6 +657,23 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mChooserContentPreviewUi.updateModifyShareAction();
         if (recreateAdapters) {
             recreatePagerAdapter();
+        } else {
+            setTabsViewEnabled(true);
+        }
+    }
+
+    private void onPendingSelection() {
+        setTabsViewEnabled(false);
+    }
+
+    private void onAppTargetsLoaded(ResolverListAdapter listAdapter) {
+        if (mChooserMultiProfilePagerAdapter == null) {
+            return;
+        }
+        if (!isProfilePagerAdapterAttached()
+                && listAdapter == mChooserMultiProfilePagerAdapter.getActiveListAdapter()) {
+            mChooserMultiProfilePagerAdapter.setupViewPager(mViewPager);
+            setTabsViewEnabled(true);
         }
     }
 
@@ -698,9 +714,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getShareTargetFilter()
         );
 
+        int currentPage = mChooserMultiProfilePagerAdapter.getCurrentPage();
         if (mChooserMultiProfilePagerAdapter != null) {
             mChooserMultiProfilePagerAdapter.destroy();
         }
+        // Update the pager adapter but do not attach it to the view till the targets are reloaded,
+        // see onChooserAppTargetsLoaded method.
         mChooserMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
                 /* context = */ this,
                 mProfilePagerResources,
@@ -708,10 +727,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles,
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
-        mChooserMultiProfilePagerAdapter.setupViewPager(
-                requireViewById(com.android.internal.R.id.profile_pager));
+                mMaxTargetsPerRow);
+        mChooserMultiProfilePagerAdapter.setCurrentPage(currentPage);
         if (mPersonalPackageMonitor != null) {
             mPersonalPackageMonitor.unregister();
         }
@@ -736,15 +753,25 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
         postRebuildList(
                 mChooserMultiProfilePagerAdapter.rebuildTabs(
-                    mProfiles.getWorkProfilePresent()
-                            || mProfiles.getPrivateProfilePresent()));
+                    mProfiles.getWorkProfilePresent() || mProfiles.getPrivateProfilePresent()));
+        setTabsViewEnabled(false);
+    }
+
+    private void setTabsViewEnabled(boolean isEnabled) {
+        TabWidget tabs = mTabHost.getTabWidget();
+        if (tabs != null) {
+            tabs.setEnabled(isEnabled);
+        }
+        View tabContent = mTabHost.findViewById(com.android.internal.R.id.profile_pager);
+        if (tabContent != null) {
+            tabContent.setEnabled(isEnabled);
+        }
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-        if (viewPager != null) {
-            viewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
+        if (mViewPager != null) {
+            mViewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
         }
         mChooserMultiProfilePagerAdapter.clearInactiveProfileCache();
     }
@@ -1162,13 +1189,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         boolean rebuildCompleted = mChooserMultiProfilePagerAdapter.rebuildTabs(
                 mProfiles.getWorkProfilePresent());
 
-        mLayoutId = mFeatureFlags.scrollablePreview()
-                ? R.layout.chooser_grid_scrollable_preview
-                : R.layout.chooser_grid;
+        mLayoutId = R.layout.chooser_grid_scrollable_preview;
 
         setContentView(mLayoutId);
-        mChooserMultiProfilePagerAdapter.setupViewPager(
-                requireViewById(com.android.internal.R.id.profile_pager));
+        mTabHost = findViewById(com.android.internal.R.id.profile_tabhost);
+        mViewPager = requireViewById(com.android.internal.R.id.profile_pager);
+        mChooserMultiProfilePagerAdapter.setupViewPager(mViewPager);
         boolean result = postRebuildList(rebuildCompleted);
         Trace.endSection();
         return result;
@@ -1235,16 +1261,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void setupProfileTabs() {
-        TabHost tabHost = findViewById(com.android.internal.R.id.profile_tabhost);
-        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-
         mChooserMultiProfilePagerAdapter.setupProfileTabs(
                 getLayoutInflater(),
-                tabHost,
-                viewPager,
+                mTabHost,
+                mViewPager,
                 R.layout.resolver_profile_tab_button,
                 com.android.internal.R.id.profile_pager,
-                () -> onProfileTabSelected(viewPager.getCurrentItem()),
+                () -> onProfileTabSelected(mViewPager.getCurrentItem()),
                 new OnProfileSelectedListener() {
                     @Override
                     public void onProfilePageSelected(@ProfileType int profileId, int pageNumber) {}
@@ -1255,8 +1278,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                     }
                 });
         mOnSwitchOnWorkSelectedListener = () -> {
-            View workTab = tabHost.getTabWidget().getChildAt(
-                            mChooserMultiProfilePagerAdapter.getPageNumberForProfile(PROFILE_WORK));
+            View workTab = mTabHost.getTabWidget().getChildAt(
+                    mChooserMultiProfilePagerAdapter.getPageNumberForProfile(PROFILE_WORK));
             workTab.setFocusable(true);
             workTab.setFocusableInTouchMode(true);
             workTab.requestFocus();
@@ -1335,8 +1358,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles,
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
+                mMaxTargetsPerRow);
     }
 
     private ChooserMultiProfilePagerAdapter createMultiProfilePagerAdapter(
@@ -1346,8 +1368,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             ProfileHelper profileHelper,
             ProfileAvailability profileAvailability,
             List<Intent> initialIntents,
-            int maxTargetsPerRow,
-            FeatureFlags featureFlags) {
+            int maxTargetsPerRow) {
         Log.d(TAG, "createMultiProfilePagerAdapter");
 
         Profile launchedAs = profileHelper.getLaunchedAsProfile();
@@ -1391,8 +1412,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 launchedAs.getType().ordinal(),
                 profileHelper.getWorkHandle(),
                 profileHelper.getCloneHandle(),
-                maxTargetsPerRow,
-                featureFlags);
+                maxTargetsPerRow);
     }
 
     protected EmptyStateProvider createBlockerEmptyStateProvider() {
@@ -1486,9 +1506,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
                     mSystemWindowInsets.right, 0);
         }
-        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-        if (viewPager.isLayoutRtl()) {
-            mChooserMultiProfilePagerAdapter.setupViewPager(viewPager);
+        if (mViewPager.isLayoutRtl()) {
+            mChooserMultiProfilePagerAdapter.setupViewPager(mViewPager);
         }
 
         mShouldDisplayLandscape = shouldDisplayLandscape(newConfig.orientation);
@@ -1550,9 +1569,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 getResources(),
                 getLayoutInflater(),
                 parent,
-                mFeatureFlags.scrollablePreview()
-                        ? findViewById(R.id.chooser_headline_row_container)
-                        : null);
+                findViewById(R.id.chooser_headline_row_container));
 
         if (layout != null) {
             adjustPreviewWidth(getResources().getConfiguration().orientation, layout);
@@ -2151,7 +2168,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
      */
     private void handleLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft,
             int oldTop, int oldRight, int oldBottom) {
-        if (mChooserMultiProfilePagerAdapter == null) {
+        if (mChooserMultiProfilePagerAdapter == null || !isProfilePagerAdapterAttached()) {
             return;
         }
         RecyclerView recyclerView = mChooserMultiProfilePagerAdapter.getActiveAdapterView();
@@ -2268,6 +2285,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return Math.min(offset, bottom - top);
     }
 
+    private boolean isProfilePagerAdapterAttached() {
+        return mChooserMultiProfilePagerAdapter == mViewPager.getAdapter();
+    }
+
     /**
      * If we have a tabbed view and are showing 1 row in the current profile and an empty
      * state screen in another profile, to prevent cropping of the empty state screen we show
@@ -2295,9 +2316,17 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         //TODO: move this block inside ChooserListAdapter (should be called when
         // ResolverListAdapter#mPostListReadyRunnable is executed.
         if (chooserListAdapter.getDisplayResolveInfoCount() == 0) {
+            if (rebuildComplete && mChooserServiceFeatureFlags.chooserPayloadToggling()) {
+                onAppTargetsLoaded(listAdapter);
+            }
             chooserListAdapter.notifyDataSetChanged();
         } else {
-            chooserListAdapter.updateAlphabeticalList();
+            if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
+                chooserListAdapter.updateAlphabeticalList(
+                        () -> onAppTargetsLoaded(listAdapter));
+            } else {
+                chooserListAdapter.updateAlphabeticalList();
+            }
         }
 
         if (rebuildComplete) {
@@ -2439,8 +2468,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         ResolverListAdapter adapter = mChooserMultiProfilePagerAdapter.getListAdapterForUserHandle(
                 UserHandle.of(UserHandle.myUserId()));
         boolean isEmpty = adapter == null || adapter.getCount() == 0;
-        return (mFeatureFlags.scrollablePreview() || mProfiles.getWorkProfilePresent())
-                && (!isEmpty || shouldShowContentPreviewWhenEmpty());
+        return !isEmpty || shouldShowContentPreviewWhenEmpty();
     }
 
     /**
@@ -2541,8 +2569,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void setHorizontalScrollingEnabled(boolean enabled) {
-        ResolverViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-        viewPager.setSwipingEnabled(enabled);
+        mViewPager.setSwipingEnabled(enabled);
     }
 
     private void setVerticalScrollEnabled(boolean enabled) {

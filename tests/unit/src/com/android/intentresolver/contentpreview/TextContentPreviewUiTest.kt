@@ -76,7 +76,9 @@ class TextContentPreviewUiTest {
     @Test
     fun test_display_headlineIsDisplayed() {
         val layoutInflater = LayoutInflater.from(context)
-        val gridLayout = layoutInflater.inflate(R.layout.chooser_grid, null, false) as ViewGroup
+        val gridLayout =
+            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
+                as ViewGroup
 
         val previewView =
             testSubject.display(
@@ -125,7 +127,9 @@ class TextContentPreviewUiTest {
     @Test
     fun test_display_albumHeadlineOverride() {
         val layoutInflater = LayoutInflater.from(context)
-        val gridLayout = layoutInflater.inflate(R.layout.chooser_grid, null, false) as ViewGroup
+        val gridLayout =
+            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
+                as ViewGroup
 
         val albumSubject =
             TextContentPreviewUi(

@@ -61,7 +61,9 @@ class FileContentPreviewUiTest {
     @Test
     fun test_display_titleAndMetadataIsDisplayed() {
         val layoutInflater = LayoutInflater.from(context)
-        val gridLayout = layoutInflater.inflate(R.layout.chooser_grid, null, false) as ViewGroup
+        val gridLayout =
+            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
+                as ViewGroup
 
         val previewView =
             testSubject.display(
