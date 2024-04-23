@@ -1567,7 +1567,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 getResources(),
                 getLayoutInflater(),
                 parent,
-                findViewById(R.id.chooser_headline_row_container));
+                requireViewById(R.id.chooser_headline_row_container));
 
         if (layout != null) {
             adjustPreviewWidth(getResources().getConfiguration().orientation, layout);

@@ -54,7 +54,6 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     private List<FileInfo> mFiles;
     @Nullable
     private ViewGroup mContentPreviewView;
-    @Nullable
     private View mHeadlineView;
 
     UnifiedContentPreviewUi(
@@ -93,7 +92,7 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
@@ -109,10 +108,10 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     }
 
     private ViewGroup displayInternal(
-            LayoutInflater layoutInflater, ViewGroup parent, @Nullable View headlineViewParent) {
+            LayoutInflater layoutInflater, ViewGroup parent, View headlineViewParent) {
         mContentPreviewView = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_image, parent, false);
-        mHeadlineView = headlineViewParent == null ? mContentPreviewView : headlineViewParent;
+        mHeadlineView = headlineViewParent;
         inflateHeadline(mHeadlineView);
 
         final ActionRow actionRow =
