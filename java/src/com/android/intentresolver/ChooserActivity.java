@@ -609,9 +609,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getMetadataText(),
                 mChooserServiceFeatureFlags.chooserPayloadToggling());
         updateStickyContentPreview();
-        if (shouldShowStickyContentPreview()
-                || mChooserMultiProfilePagerAdapter
-                .getCurrentRootAdapter().getSystemRowCount() != 0) {
+        if (shouldShowStickyContentPreview()) {
             getEventLog().logActionShareWithPreview(
                     mChooserContentPreviewUi.getPreferredContentPreview());
         }
@@ -1977,16 +1975,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 context,
                 new ChooserGridAdapter.ChooserActivityDelegate() {
                     @Override
-                    public boolean shouldShowTabs() {
-                        return mProfiles.getWorkProfilePresent();
-                    }
-
-                    @Override
-                    public View buildContentPreview(ViewGroup parent) {
-                        return createContentPreviewView(parent);
-                    }
-
-                    @Override
                     public void onTargetSelected(int itemIndex) {
                         startSelected(itemIndex, false, true);
                     }
@@ -2229,8 +2217,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             int top, int bottom, RecyclerView recyclerView, ChooserGridAdapter gridAdapter) {
 
         int offset = mSystemWindowInsets != null ? mSystemWindowInsets.bottom : 0;
-        int rowsToShow = gridAdapter.getSystemRowCount()
-                + gridAdapter.getServiceTargetRowCount()
+        int rowsToShow = gridAdapter.getServiceTargetRowCount()
                 + gridAdapter.getCallerAndRankedTargetRowCount();
 
         // then this is most likely not a SEND_* action, so check
