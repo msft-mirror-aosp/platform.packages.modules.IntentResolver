@@ -29,12 +29,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -76,7 +80,6 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
                 .padding(vertical = 16.dp),
     ) {
         PreviewCarousel(keySet, viewModel)
-        Spacer(Modifier.height(16.dp))
         ActionCarousel(viewModel)
     }
 }
@@ -153,16 +156,31 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
 @Composable
 private fun ActionCarousel(viewModel: ShareouselViewModel) {
     val actions by viewModel.actions.collectAsStateWithLifecycle(initialValue = emptyList())
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.height(32.dp),
-    ) {
-        itemsIndexed(actions) { idx, actionViewModel ->
-            ShareouselAction(
-                label = actionViewModel.label,
-                onClick = { actionViewModel.onClicked() },
-            ) {
-                actionViewModel.icon?.let { Image(icon = it, modifier = Modifier.size(16.dp)) }
+    if (actions.isNotEmpty()) {
+        Spacer(Modifier.height(16.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.height(32.dp),
+        ) {
+            itemsIndexed(actions) { idx, actionViewModel ->
+                if (idx == 0) {
+                    Spacer(Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal)))
+                }
+                ShareouselAction(
+                    label = actionViewModel.label,
+                    onClick = { actionViewModel.onClicked() },
+                ) {
+                    actionViewModel.icon?.let {
+                        Image(
+                            icon = it,
+                            modifier = Modifier.size(16.dp),
+                            colorFilter = ColorFilter.tint(LocalContentColor.current)
+                        )
+                    }
+                }
+                if (idx == actions.size - 1) {
+                    Spacer(Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal)))
+                }
             }
         }
     }
@@ -179,7 +197,15 @@ private fun ShareouselAction(
         onClick = onClick,
         label = { Text(label) },
         leadingIcon = leadingIcon,
-        modifier = modifier
+        border = null,
+        shape = RoundedCornerShape(1000.dp), // pill shape.
+        colors =
+            AssistChipDefaults.assistChipColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                labelColor = MaterialTheme.colorScheme.onSurface,
+                leadingIconContentColor = MaterialTheme.colorScheme.onSurface
+            ),
+        modifier = modifier,
     )
 }
 

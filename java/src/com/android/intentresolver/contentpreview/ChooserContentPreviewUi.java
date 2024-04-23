@@ -37,11 +37,11 @@ import com.android.intentresolver.ContentTypeHint;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 
+import kotlinx.coroutines.CoroutineScope;
+
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import kotlinx.coroutines.CoroutineScope;
 
 /**
  * Collection of helpers for building the content preview UI displayed in

@@ -16,7 +16,6 @@
 
 package com.android.intentresolver;
 
-import static java.util.Objects.requireNonNullElse;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -43,7 +42,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;

@@ -41,7 +41,6 @@ import java.util.function.Consumer;
 
 import javax.inject.Inject;
 
-
 /**
  * Helper class to manage Sharesheet's "refinement" flow, where callers supply a "refinement
  * activity" that will be invoked when a target is selected, allowing the calling app to add

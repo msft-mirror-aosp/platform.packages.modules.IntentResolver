@@ -23,7 +23,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.toC
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.onValue
-import com.android.intentresolver.v2.data.repository.ChooserRequestRepository
+import com.android.intentresolver.data.repository.ChooserRequestRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.update
 

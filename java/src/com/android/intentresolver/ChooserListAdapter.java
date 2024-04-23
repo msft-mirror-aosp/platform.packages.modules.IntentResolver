@@ -48,6 +48,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
+import com.android.intentresolver.chooser.DisplayResolveInfoAzInfoComparator;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.NotSelectableTargetInfo;
 import com.android.intentresolver.chooser.SelectableTargetInfo;
@@ -478,8 +479,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
     }
 
     public void updateAlphabeticalList() {
-        final ChooserActivity.AzInfoComparator comparator =
-                new ChooserActivity.AzInfoComparator(mContext);
+        final DisplayResolveInfoAzInfoComparator
+                comparator = new DisplayResolveInfoAzInfoComparator(mContext);
         final List<DisplayResolveInfo> allTargets = new ArrayList<>();
         allTargets.addAll(getTargetsInCurrentDisplayList());
         allTargets.addAll(mCallerTargets);
@@ -711,7 +712,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
     public void addServiceResults(
             @Nullable DisplayResolveInfo origTarget,
             List<ChooserTarget> targets,
-            @ChooserActivity.ShareTargetType int targetType,
+            int targetType,
             Map<ChooserTarget, ShortcutInfo> directShareToShortcutInfos,
             Map<ChooserTarget, AppTarget> directShareToAppTargets) {
         // Avoid inserting any potentially late results.
@@ -748,7 +749,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
      */
     public float getBaseScore(
             DisplayResolveInfo target,
-            @ChooserActivity.ShareTargetType int targetType) {
+            int targetType) {
         if (target == null) {
             return CALLER_TARGET_SCORE_BOOST;
         }

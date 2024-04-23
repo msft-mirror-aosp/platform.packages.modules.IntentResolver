@@ -20,12 +20,12 @@ import android.content.Intent
 import android.net.Uri
 import android.service.chooser.ChooserAction
 import androidx.lifecycle.SavedStateHandle
+import com.android.intentresolver.data.model.ChooserRequest
+import com.android.intentresolver.ui.model.ActivityModel
+import com.android.intentresolver.ui.viewmodel.readChooserRequest
 import com.android.intentresolver.util.ownedByCurrentUser
-import com.android.intentresolver.v2.data.model.ChooserRequest
-import com.android.intentresolver.v2.ui.model.ActivityModel
-import com.android.intentresolver.v2.ui.viewmodel.readChooserRequest
-import com.android.intentresolver.v2.validation.Valid
-import com.android.intentresolver.v2.validation.ValidationResult
+import com.android.intentresolver.validation.Valid
+import com.android.intentresolver.validation.ValidationResult
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
