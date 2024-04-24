@@ -16,13 +16,6 @@ flag {
 }
 
 flag {
-  name: "scrollable_preview"
-  namespace: "intentresolver"
-  description: "Makes preview scrollable with multiple profiles"
-  bug: "287102904"
-}
-
-flag {
   name: "target_data_caching"
   namespace: "intentresolver"
   description: "Enables caching target icons and labels in a local DB"

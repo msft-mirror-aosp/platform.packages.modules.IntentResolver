@@ -27,7 +27,6 @@ import androidx.viewpager.widget.PagerAdapter;
 
 import com.android.intentresolver.ChooserListAdapter;
 import com.android.intentresolver.ChooserRecyclerViewAccessibilityDelegate;
-import com.android.intentresolver.FeatureFlags;
 import com.android.intentresolver.R;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.grid.ChooserGridAdapter;
@@ -56,8 +55,7 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
             @ProfileType int defaultProfile,
             UserHandle workProfileUserHandle,
             UserHandle cloneProfileUserHandle,
-            int maxTargetsPerRow,
-            FeatureFlags featureFlags) {
+            int maxTargetsPerRow) {
         this(
                 context,
                 new ChooserProfileAdapterBinder(maxTargetsPerRow),
@@ -67,8 +65,7 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
                 defaultProfile,
                 workProfileUserHandle,
                 cloneProfileUserHandle,
-                new BottomPaddingOverrideSupplier(context),
-                featureFlags);
+                new BottomPaddingOverrideSupplier(context));
     }
 
     private ChooserMultiProfilePagerAdapter(
@@ -80,10 +77,9 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
             @ProfileType int defaultProfile,
             UserHandle workProfileUserHandle,
             UserHandle cloneProfileUserHandle,
-            BottomPaddingOverrideSupplier bottomPaddingOverrideSupplier,
-            FeatureFlags featureFlags) {
+            BottomPaddingOverrideSupplier bottomPaddingOverrideSupplier) {
         super(
-                        gridAdapter -> gridAdapter.getListAdapter(),
+                gridAdapter -> gridAdapter.getListAdapter(),
                 adapterBinder,
                 tabs,
                 emptyStateProvider,
@@ -91,7 +87,7 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
                 defaultProfile,
                 workProfileUserHandle,
                 cloneProfileUserHandle,
-                        () -> makeProfileView(context, featureFlags),
+                () -> makeProfileView(context),
                 bottomPaddingOverrideSupplier);
         mAdapterBinder = adapterBinder;
         mBottomPaddingOverrideSupplier = bottomPaddingOverrideSupplier;
@@ -116,12 +112,10 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
         }
     }
 
-    private static ViewGroup makeProfileView(
-            Context context, FeatureFlags featureFlags) {
+    private static ViewGroup makeProfileView(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        ViewGroup rootView = featureFlags.scrollablePreview()
-                ? (ViewGroup) inflater.inflate(R.layout.chooser_list_per_profile_wrap, null, false)
-                : (ViewGroup) inflater.inflate(R.layout.chooser_list_per_profile, null, false);
+        ViewGroup rootView =
+                (ViewGroup) inflater.inflate(R.layout.chooser_list_per_profile_wrap, null, false);
         RecyclerView recyclerView = rootView.findViewById(com.android.internal.R.id.resolver_list);
         recyclerView.setAccessibilityDelegateCompat(
                 new ChooserRecyclerViewAccessibilityDelegate(recyclerView));

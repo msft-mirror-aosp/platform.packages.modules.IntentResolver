@@ -302,15 +302,7 @@ public class MultiProfilePagerAdapter<
         viewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                mCurrentPage = position;
-                if (!mLoadedPages.contains(position)) {
-                    rebuildActiveTab(true);
-                    mLoadedPages.add(position);
-                }
-                if (mOnProfileSelectedListener != null) {
-                    mOnProfileSelectedListener.onProfilePageSelected(
-                            getProfileForPageNumber(position), position);
-                }
+                MultiProfilePagerAdapter.this.onPageSelected(position);
             }
 
             @Override
@@ -323,6 +315,18 @@ public class MultiProfilePagerAdapter<
         viewPager.setAdapter(this);
         viewPager.setCurrentItem(mCurrentPage);
         mLoadedPages.add(mCurrentPage);
+    }
+
+    private void onPageSelected(int position) {
+        mCurrentPage = position;
+        if (!mLoadedPages.contains(position)) {
+            rebuildActiveTab(true);
+            mLoadedPages.add(position);
+        }
+        if (mOnProfileSelectedListener != null) {
+            mOnProfileSelectedListener.onProfilePageSelected(
+                    getProfileForPageNumber(position), position);
+        }
     }
 
     public void clearInactiveProfileCache() {
@@ -349,6 +353,13 @@ public class MultiProfilePagerAdapter<
 
     public int getCurrentPage() {
         return mCurrentPage;
+    }
+
+    /**
+     * Set active adapter page. A support method for the poayload reselection logic.
+     */
+    public void setCurrentPage(int page) {
+        onPageSelected(page);
     }
 
     public final @ProfileType int getActiveProfile() {

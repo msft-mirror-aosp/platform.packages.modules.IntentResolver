@@ -347,9 +347,16 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 false);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        notifyDataSetChanged();
+    }
+
     @VisibleForTesting
     @Override
     public void onBindView(View view, TargetInfo info, int position) {
+        view.setEnabled(!isDestroyed());
         final ViewHolder holder = (ViewHolder) view.getTag();
 
         resetViewHolder(holder);
@@ -478,7 +485,17 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
+    /**
+     * Group application targets
+     */
     public void updateAlphabeticalList() {
+        updateAlphabeticalList(() -> {});
+    }
+
+    /**
+     * Group application targets
+     */
+    public void updateAlphabeticalList(Runnable onCompleted) {
         final DisplayResolveInfoAzInfoComparator
                 comparator = new DisplayResolveInfoAzInfoComparator(mContext);
         final List<DisplayResolveInfo> allTargets = new ArrayList<>();
@@ -523,6 +540,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 mSortedList.clear();
                 mSortedList.addAll(newList);
                 notifyDataSetChanged();
+                onCompleted.run();
             }
 
             private void loadMissingLabels(List<DisplayResolveInfo> targets) {
