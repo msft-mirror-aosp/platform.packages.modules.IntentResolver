@@ -45,9 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
@@ -68,6 +66,7 @@ fun Shareousel(viewModel: ShareouselViewModel) {
     } else {
         Spacer(
             Modifier.height(dimensionResource(R.dimen.chooser_preview_image_height_tall) + 64.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
         )
     }
 }
@@ -130,12 +129,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
             }
                 ?: run {
                     // TODO: look at ScrollableImagePreviewView.setLoading()
-                    Box(
-                        modifier =
-                            Modifier.fillMaxHeight()
-                                .aspectRatio(2f / 5f)
-                                .border(1.dp, Color.Red, RectangleShape)
-                    )
+                    Box(modifier = Modifier.fillMaxHeight().aspectRatio(2f / 5f))
                 }
         },
         contentType = contentType,
