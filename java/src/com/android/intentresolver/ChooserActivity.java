@@ -508,6 +508,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
 
+        maybeDisableRecentsScreenshot(mProfiles, mProfileAvailability);
+
         if (!configureContentView(mTargetDataLoader)) {
             mPersonalPackageMonitor = createPackageMonitor(
                     mChooserMultiProfilePagerAdapter.getPersonalListAdapter());
@@ -644,6 +646,20 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         );
         mEnterTransitionAnimationDelegate.postponeTransition();
         Tracer.INSTANCE.markLaunched();
+    }
+
+    private void maybeDisableRecentsScreenshot(
+            ProfileHelper profileHelper, ProfileAvailability profileAvailability) {
+        for (Profile profile : profileHelper.getProfiles()) {
+            if (profile.getType() == Profile.Type.PRIVATE) {
+                if (profileAvailability.isAvailable(profile)) {
+                    // Show blank screen in Recent preview if private profile is available
+                    // to not leak its presence.
+                    setRecentsScreenshotEnabled(false);
+                }
+                return;
+            }
+        }
     }
 
     private void onChooserRequestChanged(ChooserRequest chooserRequest) {
