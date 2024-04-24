@@ -1390,7 +1390,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
 
         // Load the icon asynchronously
         ImageView icon = findViewById(com.android.internal.R.id.icon);
-        targetDataLoader.loadAppTargetIcon(
+        targetDataLoader.getOrLoadAppTargetIcon(
                 otherProfileResolveInfo,
                 inactiveAdapter.getUserHandle(),
                 (drawable) -> {

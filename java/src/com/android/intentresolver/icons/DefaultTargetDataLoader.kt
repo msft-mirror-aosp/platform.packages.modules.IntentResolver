@@ -62,11 +62,11 @@ class DefaultTargetDataLoader(
         )
     }
 
-    override fun loadAppTargetIcon(
+    override fun getOrLoadAppTargetIcon(
         info: DisplayResolveInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
-    ) {
+    ): Drawable? {
         val taskId = nextTaskId.getAndIncrement()
         LoadIconTask(context, info, userHandle, presentationFactory) { result ->
                 removeTask(taskId)
@@ -74,6 +74,7 @@ class DefaultTargetDataLoader(
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
+        return null
     }
 
     override fun loadDirectShareIcon(
