@@ -67,233 +67,98 @@ class UnifiedContentPreviewUiTest {
         get() = getInstrumentation().context
 
     @Test
-    fun test_displayImagesWithoutUriMetadata_showImagesHeadline() {
-        testLoadingHeadline("image/*", files = null) { previewView ->
+    fun test_displayImagesWithoutUriMetadataHeader_showImagesHeadline() {
+        testLoadingHeadline("image/*", files = null) { headlineRow ->
             verify(headlineGenerator, times(1)).getImagesHeadline(2)
-            verifyPreviewHeadline(previewView, IMAGE_HEADLINE)
-            verifyPreviewMetadata(previewView, testMetadataText)
+            verifyPreviewHeadline(headlineRow, IMAGE_HEADLINE)
+            verifyPreviewMetadata(headlineRow, testMetadataText)
         }
     }
 
     @Test
-    fun test_displayImagesWithoutUriMetadataExternalHeader_showImagesHeadline() {
-        testLoadingExternalHeadline("image/*", files = null) { externalHeaderView ->
-            verify(headlineGenerator, times(1)).getImagesHeadline(2)
-            verifyPreviewHeadline(externalHeaderView, IMAGE_HEADLINE)
-            verifyPreviewMetadata(externalHeaderView, testMetadataText)
-        }
-    }
-
-    @Test
-    fun test_displayVideosWithoutUriMetadata_showImagesHeadline() {
-        testLoadingHeadline("video/*", files = null) { previewView ->
+    fun test_displayVideosWithoutUriMetadataHeader_showImagesHeadline() {
+        testLoadingHeadline("video/*", files = null) { headlineRow ->
             verify(headlineGenerator, times(1)).getVideosHeadline(2)
-            verifyPreviewHeadline(previewView, VIDEO_HEADLINE)
-            verifyPreviewMetadata(previewView, testMetadataText)
+            verifyPreviewHeadline(headlineRow, VIDEO_HEADLINE)
+            verifyPreviewMetadata(headlineRow, testMetadataText)
         }
     }
 
     @Test
-    fun test_displayVideosWithoutUriMetadataExternalHeader_showImagesHeadline() {
-        testLoadingExternalHeadline("video/*", files = null) { externalHeaderView ->
-            verify(headlineGenerator, times(1)).getVideosHeadline(2)
-            verifyPreviewHeadline(externalHeaderView, VIDEO_HEADLINE)
-            verifyPreviewMetadata(externalHeaderView, testMetadataText)
-        }
-    }
-
-    @Test
-    fun test_displayDocumentsWithoutUriMetadata_showImagesHeadline() {
-        testLoadingHeadline("application/pdf", files = null) { previewView ->
+    fun test_displayDocumentsWithoutUriMetadataHeader_showImagesHeadline() {
+        testLoadingHeadline("application/pdf", files = null) { headlineRow ->
             verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(previewView, FILES_HEADLINE)
-            verifyPreviewMetadata(previewView, testMetadataText)
+            verifyPreviewHeadline(headlineRow, FILES_HEADLINE)
+            verifyPreviewMetadata(headlineRow, testMetadataText)
         }
     }
 
     @Test
-    fun test_displayDocumentsWithoutUriMetadataExternalHeader_showImagesHeadline() {
-        testLoadingExternalHeadline("application/pdf", files = null) { externalHeaderView ->
+    fun test_displayMixedContentWithoutUriMetadataHeader_showImagesHeadline() {
+        testLoadingHeadline("*/*", files = null) { headlineRow ->
             verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(externalHeaderView, FILES_HEADLINE)
-            verifyPreviewMetadata(externalHeaderView, testMetadataText)
+            verifyPreviewHeadline(headlineRow, FILES_HEADLINE)
+            verifyPreviewMetadata(headlineRow, testMetadataText)
         }
     }
 
     @Test
-    fun test_displayMixedContentWithoutUriMetadata_showImagesHeadline() {
-        testLoadingHeadline("*/*", files = null) { previewView ->
-            verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(previewView, FILES_HEADLINE)
-            verifyPreviewMetadata(previewView, testMetadataText)
-        }
-    }
-
-    @Test
-    fun test_displayMixedContentWithoutUriMetadataExternalHeader_showImagesHeadline() {
-        testLoadingExternalHeadline("*/*", files = null) { externalHeader ->
-            verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(externalHeader, FILES_HEADLINE)
-            verifyPreviewMetadata(externalHeader, testMetadataText)
-        }
-    }
-
-    @Test
-    fun test_displayImagesWithUriMetadataSet_showImagesHeadline() {
+    fun test_displayImagesWithUriMetadataSetHeader_showImagesHeadline() {
         val uri = Uri.parse("content://pkg.app/image.png")
         val files =
             listOf(
                 FileInfo.Builder(uri).withMimeType("image/png").build(),
                 FileInfo.Builder(uri).withMimeType("image/jpeg").build(),
             )
-        testLoadingHeadline("image/*", files) { preivewView ->
+        testLoadingHeadline("image/*", files) { headlineRow ->
             verify(headlineGenerator, times(1)).getImagesHeadline(2)
-            verifyPreviewHeadline(preivewView, IMAGE_HEADLINE)
+            verifyPreviewHeadline(headlineRow, IMAGE_HEADLINE)
         }
     }
 
     @Test
-    fun test_displayImagesWithUriMetadataSetExternalHeader_showImagesHeadline() {
-        val uri = Uri.parse("content://pkg.app/image.png")
-        val files =
-            listOf(
-                FileInfo.Builder(uri).withMimeType("image/png").build(),
-                FileInfo.Builder(uri).withMimeType("image/jpeg").build(),
-            )
-        testLoadingExternalHeadline("image/*", files) { externalHeader ->
-            verify(headlineGenerator, times(1)).getImagesHeadline(2)
-            verifyPreviewHeadline(externalHeader, IMAGE_HEADLINE)
-        }
-    }
-
-    @Test
-    fun test_displayVideosWithUriMetadataSet_showImagesHeadline() {
+    fun test_displayVideosWithUriMetadataSetHeader_showImagesHeadline() {
         val uri = Uri.parse("content://pkg.app/image.png")
         val files =
             listOf(
                 FileInfo.Builder(uri).withMimeType("video/mp4").build(),
                 FileInfo.Builder(uri).withMimeType("video/mp4").build(),
             )
-        testLoadingHeadline("video/*", files) { previewView ->
+        testLoadingHeadline("video/*", files) { headlineRow ->
             verify(headlineGenerator, times(1)).getVideosHeadline(2)
-            verifyPreviewHeadline(previewView, VIDEO_HEADLINE)
+            verifyPreviewHeadline(headlineRow, VIDEO_HEADLINE)
         }
     }
 
     @Test
-    fun test_displayVideosWithUriMetadataSetExternalHeader_showImagesHeadline() {
-        val uri = Uri.parse("content://pkg.app/image.png")
-        val files =
-            listOf(
-                FileInfo.Builder(uri).withMimeType("video/mp4").build(),
-                FileInfo.Builder(uri).withMimeType("video/mp4").build(),
-            )
-        testLoadingExternalHeadline("video/*", files) { externalHeader ->
-            verify(headlineGenerator, times(1)).getVideosHeadline(2)
-            verifyPreviewHeadline(externalHeader, VIDEO_HEADLINE)
-        }
-    }
-
-    @Test
-    fun test_displayImagesAndVideosWithUriMetadataSet_showImagesHeadline() {
+    fun test_displayImagesAndVideosWithUriMetadataSetHeader_showImagesHeadline() {
         val uri = Uri.parse("content://pkg.app/image.png")
         val files =
             listOf(
                 FileInfo.Builder(uri).withMimeType("image/png").build(),
                 FileInfo.Builder(uri).withMimeType("video/mp4").build(),
             )
-        testLoadingHeadline("*/*", files) { previewView ->
+        testLoadingHeadline("*/*", files) { headlineRow ->
             verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(previewView, FILES_HEADLINE)
+            verifyPreviewHeadline(headlineRow, FILES_HEADLINE)
         }
     }
 
     @Test
-    fun test_displayImagesAndVideosWithUriMetadataSetExternalHeader_showImagesHeadline() {
-        val uri = Uri.parse("content://pkg.app/image.png")
-        val files =
-            listOf(
-                FileInfo.Builder(uri).withMimeType("image/png").build(),
-                FileInfo.Builder(uri).withMimeType("video/mp4").build(),
-            )
-        testLoadingExternalHeadline("*/*", files) { externalHeader ->
-            verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(externalHeader, FILES_HEADLINE)
-        }
-    }
-
-    @Test
-    fun test_displayDocumentsWithUriMetadataSet_showImagesHeadline() {
+    fun test_displayDocumentsWithUriMetadataSetHeader_showImagesHeadline() {
         val uri = Uri.parse("content://pkg.app/image.png")
         val files =
             listOf(
                 FileInfo.Builder(uri).withMimeType("application/pdf").build(),
                 FileInfo.Builder(uri).withMimeType("application/pdf").build(),
             )
-        testLoadingHeadline("application/pdf", files) { previewView ->
+        testLoadingHeadline("application/pdf", files) { headlineRow ->
             verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(previewView, FILES_HEADLINE)
-        }
-    }
-
-    @Test
-    fun test_displayDocumentsWithUriMetadataSetExternalHeader_showImagesHeadline() {
-        val uri = Uri.parse("content://pkg.app/image.png")
-        val files =
-            listOf(
-                FileInfo.Builder(uri).withMimeType("application/pdf").build(),
-                FileInfo.Builder(uri).withMimeType("application/pdf").build(),
-            )
-        testLoadingExternalHeadline("application/pdf", files) { externalHeader ->
-            verify(headlineGenerator, times(1)).getFilesHeadline(2)
-            verifyPreviewHeadline(externalHeader, FILES_HEADLINE)
+            verifyPreviewHeadline(headlineRow, FILES_HEADLINE)
         }
     }
 
     private fun testLoadingHeadline(
-        intentMimeType: String,
-        files: List<FileInfo>?,
-        verificationBlock: (ViewGroup?) -> Unit,
-    ) {
-        testScope.runTest {
-            val endMarker = FileInfo.Builder(Uri.EMPTY).build()
-            val emptySourceFlow = MutableSharedFlow<FileInfo>(replay = 1)
-            val testSubject =
-                UnifiedContentPreviewUi(
-                    testScope,
-                    /*isSingleImage=*/ false,
-                    intentMimeType,
-                    actionFactory,
-                    imageLoader,
-                    DefaultMimeTypeClassifier,
-                    object : TransitionElementStatusCallback {
-                        override fun onTransitionElementReady(name: String) = Unit
-                        override fun onAllTransitionElementsReady() = Unit
-                    },
-                    files?.let { it.asFlow() } ?: emptySourceFlow.takeWhile { it !== endMarker },
-                    /*itemCount=*/ 2,
-                    headlineGenerator,
-                    testMetadataText,
-                )
-            val layoutInflater = LayoutInflater.from(context)
-            val gridLayout =
-                layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
-                    as ViewGroup
-
-            val previewView =
-                testSubject.display(
-                    context.resources,
-                    LayoutInflater.from(context),
-                    gridLayout,
-                    /*headlineViewParent=*/ null
-                )
-            emptySourceFlow.tryEmit(endMarker)
-
-            verificationBlock(previewView)
-        }
-    }
-
-    private fun testLoadingExternalHeadline(
         intentMimeType: String,
         files: List<FileInfo>?,
         verificationBlock: (View?) -> Unit,
@@ -322,26 +187,20 @@ class UnifiedContentPreviewUiTest {
             val gridLayout =
                 layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
                     as ViewGroup
-            val externalHeaderView =
-                gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
+            val headlineRow = gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
 
-            assertWithMessage("External headline should not be inflated by default")
-                .that(externalHeaderView.findViewById<View>(R.id.headline))
+            assertWithMessage("Headline row should not be inflated by default")
+                .that(headlineRow.findViewById<View>(R.id.headline))
                 .isNull()
 
-            val previewView =
-                testSubject.display(
-                    context.resources,
-                    LayoutInflater.from(context),
-                    gridLayout,
-                    externalHeaderView,
-                )
-
+            testSubject.display(
+                context.resources,
+                LayoutInflater.from(context),
+                gridLayout,
+                headlineRow,
+            )
             emptySourceFlow.tryEmit(endMarker)
-
-            verifyInternalHeadlineAbsence(previewView)
-            verifyInternalMetadataAbsence(previewView)
-            verificationBlock(externalHeaderView)
+            verificationBlock(headlineRow)
         }
     }
 
@@ -362,22 +221,5 @@ class UnifiedContentPreviewUiTest {
 
     private fun verifyPreviewMetadata(headerViewParent: View?, expectedText: CharSequence) {
         verifyTextViewText(headerViewParent, R.id.metadata, expectedText)
-    }
-
-    private fun verifyInternalHeadlineAbsence(previewView: ViewGroup?) {
-        assertWithMessage("Preview parent should not be null").that(previewView).isNotNull()
-        assertWithMessage(
-                "Preview headline should not be inflated when an external headline is used"
-            )
-            .that(previewView?.findViewById<View>(R.id.headline))
-            .isNull()
-    }
-    private fun verifyInternalMetadataAbsence(previewView: ViewGroup?) {
-        assertWithMessage("Preview parent should not be null").that(previewView).isNotNull()
-        assertWithMessage(
-                "Preview metadata should not be inflated when an external metadata is used"
-            )
-            .that(previewView?.findViewById<View>(R.id.metadata))
-            .isNull()
     }
 }

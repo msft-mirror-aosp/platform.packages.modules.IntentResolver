@@ -34,8 +34,8 @@ import com.android.intentresolver.shared.model.User;
 import java.util.List;
 
 /**
- * Empty state provider that does not allow cross profile sharing, it will return a blocker
- * in case if the profile of the current tab is not the same as the profile of the calling app.
+ * Empty state provider that informs about a lack of cross profile sharing. It will return
+ * an empty state in case there are no intents which can be forwarded to another profile.
  */
 public class NoCrossProfileEmptyStateProvider implements EmptyStateProvider {
 
@@ -79,7 +79,8 @@ public class NoCrossProfileEmptyStateProvider implements EmptyStateProvider {
 
         // Allow access to the tab when launched by the same user as the tab owner
         // or when there is at least one target which is permitted for cross-profile.
-        if (launchedAsSameUser || anyCrossProfileAllowedIntents(adapter, tabOwnerHandle)) {
+        if (launchedAsSameUser || anyCrossProfileAllowedIntents(adapter,
+                /* source = */ launchedAs.getHandle())) {
             return null;
         }
 

@@ -29,7 +29,7 @@ internal class NoContextPreviewUi(private val type: Int) : ContentPreviewUi() {
         resources: Resources?,
         layoutInflater: LayoutInflater?,
         parent: ViewGroup?,
-        headlineViewParent: View?,
+        headlineViewParent: View,
     ): ViewGroup? {
         Log.e(TAG, "Unexpected content preview type: $type")
         return null

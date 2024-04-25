@@ -97,7 +97,6 @@ public final class ChooserContentPreviewUi {
     @VisibleForTesting
     final ContentPreviewUi mContentPreviewUi;
     private final Supplier</*@Nullable*/ActionRow.Action> mModifyShareActionFactory;
-    @Nullable
     private View mHeadlineParent;
 
     public ChooserContentPreviewUi(
@@ -226,15 +225,12 @@ public final class ChooserContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
 
         ViewGroup layout =
                 mContentPreviewUi.display(resources, layoutInflater, parent, headlineViewParent);
-        mHeadlineParent = headlineViewParent == null ? layout : headlineViewParent;
-        if (mHeadlineParent != null) {
-            ContentPreviewUi.displayModifyShareAction(
-                    mHeadlineParent, mModifyShareActionFactory.get());
-        }
+        mHeadlineParent = headlineViewParent;
+        ContentPreviewUi.displayModifyShareAction(mHeadlineParent, mModifyShareActionFactory.get());
         return layout;
     }
 
@@ -242,10 +238,7 @@ public final class ChooserContentPreviewUi {
      * Update Modify Share Action, if it is inflated.
      */
     public void updateModifyShareAction() {
-        if (mHeadlineParent != null) {
-            ContentPreviewUi.displayModifyShareAction(
-                    mHeadlineParent, mModifyShareActionFactory.get());
-        }
+        ContentPreviewUi.displayModifyShareAction(mHeadlineParent, mModifyShareActionFactory.get());
     }
 
     private static TextContentPreviewUi createTextPreview(
