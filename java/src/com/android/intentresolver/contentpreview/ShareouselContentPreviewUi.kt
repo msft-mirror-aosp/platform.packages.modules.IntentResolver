@@ -45,21 +45,17 @@ class ShareouselContentPreviewUi : ContentPreviewUi() {
         resources: Resources,
         layoutInflater: LayoutInflater,
         parent: ViewGroup,
-        headlineViewParent: View?,
+        headlineViewParent: View,
     ): ViewGroup = displayInternal(parent, headlineViewParent)
 
-    private fun displayInternal(parent: ViewGroup, headlineViewParent: View?): ViewGroup {
-        if (headlineViewParent != null) {
-            inflateHeadline(headlineViewParent)
-        }
+    private fun displayInternal(parent: ViewGroup, headlineViewParent: View): ViewGroup {
+        inflateHeadline(headlineViewParent)
         return ComposeView(parent.context).apply {
             setContent {
                 val vm: ChooserViewModel = viewModel()
                 val viewModel: ShareouselViewModel = vm.shareouselViewModel
 
-                headlineViewParent?.let {
-                    LaunchedEffect(viewModel) { bindHeader(viewModel, headlineViewParent) }
-                }
+                LaunchedEffect(viewModel) { bindHeader(viewModel, headlineViewParent) }
 
                 MaterialTheme(
                     colorScheme =

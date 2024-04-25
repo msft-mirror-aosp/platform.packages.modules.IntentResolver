@@ -44,9 +44,13 @@ class TextContentPreviewUiTest {
     private val actionFactory =
         object : ChooserContentPreviewUi.ActionFactory {
             override fun getEditButtonRunnable(): Runnable? = null
+
             override fun getCopyButtonRunnable(): Runnable? = null
+
             override fun createCustomActions(): List<ActionRow.Action> = emptyList()
+
             override fun getModifyShareAction(): ActionRow.Action? = null
+
             override fun getExcludeSharedTextAction(): Consumer<Boolean> = Consumer<Boolean> {}
         }
     private val imageLoader = mock<ImageLoader>()
@@ -79,47 +83,21 @@ class TextContentPreviewUiTest {
         val gridLayout =
             layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
                 as ViewGroup
+        val headlineRow = gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
 
         val previewView =
             testSubject.display(
                 context.resources,
                 layoutInflater,
                 gridLayout,
-                /*headlineViewParent=*/ null
+                headlineRow,
             )
 
         assertThat(previewView).isNotNull()
-        val headlineView = previewView?.findViewById<TextView>(R.id.headline)
+        val headlineView = headlineRow.findViewById<TextView>(R.id.headline)
         assertThat(headlineView).isNotNull()
         assertThat(headlineView?.text).isEqualTo(text)
-        val metadataView = previewView?.findViewById<TextView>(R.id.metadata)
-        assertThat(metadataView).isNotNull()
-        assertThat(metadataView?.text).isEqualTo(testMetadataText)
-    }
-
-    @Test
-    fun test_displayWithExternalHeaderView_externalHeaderIsDisplayed() {
-        val layoutInflater = LayoutInflater.from(context)
-        val gridLayout =
-            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
-                as ViewGroup
-        val externalHeaderView =
-            gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
-
-        assertThat(externalHeaderView.findViewById<View>(R.id.headline)).isNull()
-        assertThat(externalHeaderView.findViewById<View>(R.id.metadata)).isNull()
-
-        val previewView =
-            testSubject.display(context.resources, layoutInflater, gridLayout, externalHeaderView)
-
-        assertThat(previewView).isNotNull()
-        assertThat(previewView.findViewById<View>(R.id.headline)).isNull()
-        assertThat(previewView.findViewById<View>(R.id.metadata)).isNull()
-
-        val headlineView = externalHeaderView.findViewById<TextView>(R.id.headline)
-        assertThat(headlineView).isNotNull()
-        assertThat(headlineView?.text).isEqualTo(text)
-        val metadataView = externalHeaderView.findViewById<TextView>(R.id.metadata)
+        val metadataView = headlineRow.findViewById<TextView>(R.id.metadata)
         assertThat(metadataView).isNotNull()
         assertThat(metadataView?.text).isEqualTo(testMetadataText)
     }
@@ -130,6 +108,7 @@ class TextContentPreviewUiTest {
         val gridLayout =
             layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
                 as ViewGroup
+        val headlineRow = gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
 
         val albumSubject =
             TextContentPreviewUi(
@@ -149,14 +128,14 @@ class TextContentPreviewUiTest {
                 context.resources,
                 layoutInflater,
                 gridLayout,
-                /*headlineViewParent=*/ null
+                headlineRow,
             )
 
         assertThat(previewView).isNotNull()
-        val headlineView = previewView?.findViewById<TextView>(R.id.headline)
+        val headlineView = headlineRow.findViewById<TextView>(R.id.headline)
         assertThat(headlineView).isNotNull()
         assertThat(headlineView?.text).isEqualTo(albumHeadline)
-        val metadataView = previewView?.findViewById<TextView>(R.id.metadata)
+        val metadataView = headlineRow.findViewById<TextView>(R.id.metadata)
         assertThat(metadataView).isNotNull()
         assertThat(metadataView?.text).isEqualTo(testMetadataText)
     }

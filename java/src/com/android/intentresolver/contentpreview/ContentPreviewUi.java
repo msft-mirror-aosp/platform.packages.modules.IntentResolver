@@ -48,7 +48,7 @@ public abstract class ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent);
+            View headlineViewParent);
 
     protected static void updateViewWithImage(ImageView imageView, Bitmap image) {
         if (image == null) {
