@@ -76,7 +76,7 @@ class FileContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         return displayInternal(resources, layoutInflater, parent, headlineViewParent);
     }
 
@@ -84,12 +84,9 @@ class FileContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         mContentPreview = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_file, parent, false);
-        if (headlineViewParent == null) {
-            headlineViewParent = mContentPreview;
-        }
         inflateHeadline(headlineViewParent);
 
         displayHeadline(headlineViewParent, mHeadlineGenerator.getFilesHeadline(mFileCount));
