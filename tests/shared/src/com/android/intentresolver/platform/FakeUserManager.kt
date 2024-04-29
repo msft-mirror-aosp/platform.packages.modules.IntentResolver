@@ -26,22 +26,18 @@ import android.os.IUserManager
 import android.os.UserHandle
 import android.os.UserManager
 import androidx.annotation.NonNull
-import com.android.intentresolver.THROWS_EXCEPTION
 import com.android.intentresolver.data.repository.AvailabilityChange
 import com.android.intentresolver.data.repository.ProfileAdded
 import com.android.intentresolver.data.repository.ProfileRemoved
 import com.android.intentresolver.data.repository.UserEvent
-import com.android.intentresolver.mock
 import com.android.intentresolver.platform.FakeUserManager.State
-import com.android.intentresolver.whenever
 import kotlin.random.Random
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
-import org.mockito.Mockito.RETURNS_SELF
-import org.mockito.Mockito.doAnswer
-import org.mockito.Mockito.doReturn
-import org.mockito.Mockito.withSettings
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 /**
  * A stand-in for [UserManager] to support testing of data layer components which depend on it.
@@ -211,11 +207,16 @@ class FakeUserManager(val state: State = State()) :
 }
 
 /** A safe mock of [Context] which throws on any unstubbed method call. */
-private fun mockContext(user: UserHandle = UserHandle.SYSTEM): Context {
-    return mock<Context>(withSettings().defaultAnswer(THROWS_EXCEPTION)) {
-        doAnswer(RETURNS_SELF).whenever(this).applicationContext
-        doReturn(user).whenever(this).user
-        doReturn(user.identifier).whenever(this).userId
+private fun mockContext(userHandle: UserHandle = UserHandle.SYSTEM): Context {
+    return mock<Context>(
+        defaultAnswer = {
+            error("Unstubbed behavior invoked! (${it.method}(${it.arguments.asList()})")
+        }
+    ) {
+        // Careful! Specify behaviors *first* to avoid throwing while stubbing!
+        doReturn(mock).whenever(mock).applicationContext
+        doReturn(userHandle).whenever(mock).user
+        doReturn(userHandle.identifier).whenever(mock).userId
     }
 }
 
@@ -229,7 +230,11 @@ private fun FakeUserManager.ProfileType.toUserType(): String {
 
 /** A safe mock of [IUserManager] which throws on any unstubbed method call. */
 fun mockService(): IUserManager {
-    return mock<IUserManager>(withSettings().defaultAnswer(THROWS_EXCEPTION))
+    return mock<IUserManager>(
+        defaultAnswer = {
+            error("Unstubbed behavior invoked! ${it.method}(${it.arguments.asList()}")
+        }
+    )
 }
 
 val UserInfo.debugString: String
