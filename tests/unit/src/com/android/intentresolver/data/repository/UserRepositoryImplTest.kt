@@ -22,12 +22,10 @@ import android.os.UserHandle.SYSTEM
 import android.os.UserHandle.USER_SYSTEM
 import android.os.UserManager
 import com.android.intentresolver.coroutines.collectLastValue
-import com.android.intentresolver.mock
 import com.android.intentresolver.platform.FakeUserManager
 import com.android.intentresolver.platform.FakeUserManager.ProfileType
 import com.android.intentresolver.shared.model.User
 import com.android.intentresolver.shared.model.User.Role
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +33,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.mockito.Mockito
-import org.mockito.Mockito.doReturn
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 internal class UserRepositoryImplTest {
     private val userManager = FakeUserManager()
@@ -204,24 +203,22 @@ internal class UserRepositoryImplTest {
     }
 }
 
-@Suppress("SameParameterValue", "DEPRECATION")
+@Suppress("SameParameterValue")
 private fun mockUserManager(validUser: Int, invalidUser: Int) =
     mock<UserManager> {
         val info = UserInfo(validUser, "", "", UserInfo.FLAG_FULL)
-        doReturn(listOf(info)).whenever(this).getEnabledProfiles(Mockito.anyInt())
-
-        doReturn(info).whenever(this).getUserInfo(Mockito.eq(validUser))
-
-        doReturn(listOf<UserInfo>()).whenever(this).getEnabledProfiles(Mockito.eq(invalidUser))
-
-        doReturn(null).whenever(this).getUserInfo(Mockito.eq(invalidUser))
+        on { getEnabledProfiles(any()) } doReturn listOf(info)
+        on { getUserInfo(validUser) } doReturn info
+        on { getEnabledProfiles(invalidUser) } doReturn listOf()
+        on { getUserInfo(invalidUser) } doReturn null
     }
 
-private fun TestScope.createUserRepository(userManager: FakeUserManager) =
-    UserRepositoryImpl(
+private fun TestScope.createUserRepository(userManager: FakeUserManager): UserRepositoryImpl {
+    return UserRepositoryImpl(
         profileParent = userManager.state.primaryUserHandle,
         userManager = userManager,
         userEvents = userManager.state.userEvents,
         scope = backgroundScope,
         backgroundDispatcher = Dispatchers.Unconfined
     )
+}

@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ឈប់ផ្អាក"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"គ្មាន​កម្មវិធី​ការងារ​ទេ"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"គ្មាន​កម្មវិធី​ផ្ទាល់ខ្លួន​ទេ"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"គ្មានកម្មវិធីឯកជនទេ"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"បើក <xliff:g id="APP">%s</xliff:g> នៅក្នុងកម្រង​ព័ត៌មាន​ផ្ទាល់​ខ្លួនរបស់អ្នកឬ?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"បើក <xliff:g id="APP">%s</xliff:g> នៅក្នុងកម្រងព័ត៌មានការងាររបស់អ្នកឬ?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ប្រើ​កម្មវិធីរុករក​តាមអ៊ីនធឺណិត​ផ្ទាល់ខ្លួន"</string>
