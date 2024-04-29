@@ -22,15 +22,15 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.intentresolver.any
-import com.android.intentresolver.mock
 import com.google.common.truth.Truth.assertThat
 import java.util.Optional
 import java.util.function.Supplier
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 
 class EmptyStateUiHelperTest {
     private val context = InstrumentationRegistry.getInstrumentation().getContext()

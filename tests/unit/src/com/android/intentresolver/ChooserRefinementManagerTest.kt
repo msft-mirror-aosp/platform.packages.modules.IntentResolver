@@ -29,8 +29,8 @@ import androidx.lifecycle.Observer
 import androidx.test.annotation.UiThreadTest
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.intentresolver.ChooserRefinementManager.RefinementCompletion
+import com.android.intentresolver.ChooserRefinementManager.RefinementType
 import com.android.intentresolver.chooser.ImmutableTargetInfo
-import com.android.intentresolver.chooser.TargetInfo
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -55,15 +55,15 @@ class ChooserRefinementManagerTest {
         object : Observer<RefinementCompletion> {
             val failureCountDown = CountDownLatch(1)
             val successCountDown = CountDownLatch(1)
-            var latestTargetInfo: TargetInfo? = null
+            var latestRefinedIntent: Intent? = null
 
             override fun onChanged(completion: RefinementCompletion) {
                 if (completion.consume()) {
-                    val targetInfo = completion.targetInfo
-                    if (targetInfo == null) {
+                    val refinedIntent = completion.refinedIntent
+                    if (refinedIntent == null) {
                         failureCountDown.countDown()
                     } else {
-                        latestTargetInfo = targetInfo
+                        latestRefinedIntent = refinedIntent
                         successCountDown.countDown()
                     }
                 }
@@ -115,8 +115,7 @@ class ChooserRefinementManagerTest {
         receiver?.send(Activity.RESULT_OK, bundle)
 
         assertThat(completionObserver.successCountDown.await(1000, TimeUnit.MILLISECONDS)).isTrue()
-        assertThat(completionObserver.latestTargetInfo?.resolvedIntent?.action)
-            .isEqualTo(Intent.ACTION_VIEW)
+        assertThat(completionObserver.latestRefinedIntent?.action).isEqualTo(Intent.ACTION_VIEW)
     }
 
     @Test
@@ -231,10 +230,11 @@ class ChooserRefinementManagerTest {
 
     @Test
     fun testRefinementCompletion() {
-        val refinementCompletion = RefinementCompletion(exampleTargetInfo)
-        assertThat(refinementCompletion.targetInfo).isEqualTo(exampleTargetInfo)
+        val refinementCompletion =
+            RefinementCompletion(RefinementType.TARGET_INFO, exampleTargetInfo, null)
+        assertThat(refinementCompletion.originalTargetInfo).isEqualTo(exampleTargetInfo)
         assertThat(refinementCompletion.consume()).isTrue()
-        assertThat(refinementCompletion.targetInfo).isEqualTo(exampleTargetInfo)
+        assertThat(refinementCompletion.originalTargetInfo).isEqualTo(exampleTargetInfo)
 
         // can only consume once.
         assertThat(refinementCompletion.consume()).isFalse()
