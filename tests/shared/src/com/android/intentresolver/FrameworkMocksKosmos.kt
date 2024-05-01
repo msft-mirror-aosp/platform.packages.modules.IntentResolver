@@ -20,6 +20,6 @@ import android.content.ContentResolver
 import android.content.pm.PackageManager
 import com.android.systemui.kosmos.Kosmos
 
-var Kosmos.contentResolver by Kosmos.Fixture { mock<ContentResolver> {} }
+var Kosmos.contentResolver by Kosmos.Fixture { org.mockito.kotlin.mock<ContentResolver> {} }
 var Kosmos.contentInterface by Kosmos.Fixture { contentResolver }
-var Kosmos.packageManager by Kosmos.Fixture { mock<PackageManager> {} }
+var Kosmos.packageManager by Kosmos.Fixture { org.mockito.kotlin.mock<PackageManager> {} }

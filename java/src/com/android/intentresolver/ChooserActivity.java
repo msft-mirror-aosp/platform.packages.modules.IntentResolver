@@ -98,6 +98,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import com.android.intentresolver.ChooserRefinementManager.RefinementType;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
@@ -508,6 +509,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
 
+        maybeDisableRecentsScreenshot(mProfiles, mProfileAvailability);
+
         if (!configureContentView(mTargetDataLoader)) {
             mPersonalPackageMonitor = createPackageMonitor(
                     mChooserMultiProfilePagerAdapter.getPersonalListAdapter());
@@ -567,23 +570,52 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mRefinementManager = new ViewModelProvider(this).get(ChooserRefinementManager.class);
         mRefinementManager.getRefinementCompletion().observe(this, completion -> {
             if (completion.consume()) {
-                TargetInfo targetInfo = completion.getTargetInfo();
-                // targetInfo is non-null if the refinement process was successful.
-                if (targetInfo != null) {
-                    maybeRemoveSharedText(targetInfo);
+                if (completion.getRefinedIntent() == null) {
+                    finish();
+                    return;
+                }
 
-                    // We already block suspended targets from going to refinement, and we probably
-                    // can't recover a Chooser session if that's the reason the refined target fails
-                    // to launch now. Fire-and-forget the refined launch; ignore the return value
-                    // and just make sure the Sharesheet session gets cleaned up regardless.
-                    final ResolveInfo ri = targetInfo.getResolveInfo();
-                    final Intent intent1 = targetInfo.getResolvedIntent();
+                // Prepare to regenerate our "system actions" based on the refined intent.
+                // TODO: optimize if needed. `TARGET_INFO` cases don't require a new action
+                // factory at all. And if we break up `ChooserActionFactory`, we could avoid
+                // resolving a new editor intent unless we're handling an `EDIT_ACTION`.
+                ChooserActionFactory refinedActionFactory =
+                        createChooserActionFactory(completion.getRefinedIntent());
+                switch (completion.getType()) {
+                    case TARGET_INFO: {
+                        TargetInfo refinedTarget = completion
+                                .getOriginalTargetInfo()
+                                .tryToCloneWithAppliedRefinement(
+                                        completion.getRefinedIntent());
+                        if (refinedTarget == null) {
+                            Log.e(TAG, "Failed to apply refinement to any matching source intent");
+                        } else {
+                            maybeRemoveSharedText(refinedTarget);
 
-                    safelyStartActivity(targetInfo);
+                            // We already block suspended targets from going to refinement, and we
+                            // probably can't recover a Chooser session if that's the reason the
+                            // refined target fails to launch now. Fire-and-forget the refined
+                            // launch, and make sure Sharesheet gets cleaned up regardless of the
+                            // outcome of that launch.launch; ignore
 
-                    // Rely on the ActivityManager to pop up a dialog regarding app suspension
-                    // and return false
-                    targetInfo.isSuspended();
+                            safelyStartActivity(refinedTarget);
+                        }
+                    }
+                    break;
+
+                    case COPY_ACTION: {
+                        if (refinedActionFactory.getCopyButtonRunnable() != null) {
+                            refinedActionFactory.getCopyButtonRunnable().run();
+                        }
+                    }
+                    break;
+
+                    case EDIT_ACTION: {
+                        if (refinedActionFactory.getEditButtonRunnable() != null) {
+                            refinedActionFactory.getEditButtonRunnable().run();
+                        }
+                    }
+                    break;
                 }
 
                 finish();
@@ -596,12 +628,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getTargetIntent(),
                 mRequest.getAdditionalContentUri(),
                 mChooserServiceFeatureFlags.chooserPayloadToggling());
+        ChooserContentPreviewUi.ActionFactory actionFactory =
+                decorateActionFactoryWithRefinement(
+                        createChooserActionFactory(mRequest.getTargetIntent()));
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
                 previewViewModel.getPreviewDataProvider(),
                 mRequest.getTargetIntent(),
                 previewViewModel.getImageLoader(),
-                createChooserActionFactory(),
+                actionFactory,
                 createModifyShareActionFactory(),
                 mEnterTransitionAnimationDelegate,
                 new HeadlineGeneratorImpl(this),
@@ -609,9 +644,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getMetadataText(),
                 mChooserServiceFeatureFlags.chooserPayloadToggling());
         updateStickyContentPreview();
-        if (shouldShowStickyContentPreview()
-                || mChooserMultiProfilePagerAdapter
-                .getCurrentRootAdapter().getSystemRowCount() != 0) {
+        if (shouldShowStickyContentPreview()) {
             getEventLog().logActionShareWithPreview(
                     mChooserContentPreviewUi.getPreferredContentPreview());
         }
@@ -644,6 +677,20 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         );
         mEnterTransitionAnimationDelegate.postponeTransition();
         Tracer.INSTANCE.markLaunched();
+    }
+
+    private void maybeDisableRecentsScreenshot(
+            ProfileHelper profileHelper, ProfileAvailability profileAvailability) {
+        for (Profile profile : profileHelper.getProfiles()) {
+            if (profile.getType() == Profile.Type.PRIVATE) {
+                if (profileAvailability.isAvailable(profile)) {
+                    // Show blank screen in Recent preview if private profile is available
+                    // to not leak its presence.
+                    setRecentsScreenshotEnabled(false);
+                }
+                return;
+            }
+        }
     }
 
     private void onChooserRequestChanged(ChooserRequest chooserRequest) {
@@ -1569,7 +1616,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 getResources(),
                 getLayoutInflater(),
                 parent,
-                findViewById(R.id.chooser_headline_row_container));
+                requireViewById(R.id.chooser_headline_row_container));
 
         if (layout != null) {
             adjustPreviewWidth(getResources().getConfiguration().orientation, layout);
@@ -1977,16 +2024,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 context,
                 new ChooserGridAdapter.ChooserActivityDelegate() {
                     @Override
-                    public boolean shouldShowTabs() {
-                        return mProfiles.getWorkProfilePresent();
-                    }
-
-                    @Override
-                    public View buildContentPreview(ViewGroup parent) {
-                        return createContentPreviewView(parent);
-                    }
-
-                    @Override
                     public void onTargetSelected(int itemIndex) {
                         startSelected(itemIndex, false, true);
                     }
@@ -2106,10 +2143,67 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return PreviewViewModel.Companion.getFactory();
     }
 
-    private ChooserActionFactory createChooserActionFactory() {
+    private ChooserContentPreviewUi.ActionFactory decorateActionFactoryWithRefinement(
+            ChooserContentPreviewUi.ActionFactory originalFactory) {
+        if (!mFeatureFlags.refineSystemActions()) {
+            return originalFactory;
+        }
+
+        return new ChooserContentPreviewUi.ActionFactory() {
+            @Override
+            @Nullable
+            public Runnable getEditButtonRunnable() {
+                return () -> {
+                    if (!mRefinementManager.maybeHandleSelection(
+                            RefinementType.EDIT_ACTION,
+                            List.of(mRequest.getTargetIntent()),
+                            null,
+                            mRequest.getRefinementIntentSender(),
+                            getApplication(),
+                            getMainThreadHandler())) {
+                        originalFactory.getEditButtonRunnable().run();
+                    }
+                };
+            }
+
+            @Override
+            @Nullable
+            public Runnable getCopyButtonRunnable() {
+                return () -> {
+                    if (!mRefinementManager.maybeHandleSelection(
+                            RefinementType.COPY_ACTION,
+                            List.of(mRequest.getTargetIntent()),
+                            null,
+                            mRequest.getRefinementIntentSender(),
+                            getApplication(),
+                            getMainThreadHandler())) {
+                        originalFactory.getCopyButtonRunnable().run();
+                    }
+                };
+            }
+
+            @Override
+            public List<ActionRow.Action> createCustomActions() {
+                return originalFactory.createCustomActions();
+            }
+
+            @Override
+            @Nullable
+            public ActionRow.Action getModifyShareAction() {
+                return originalFactory.getModifyShareAction();
+            }
+
+            @Override
+            public Consumer<Boolean> getExcludeSharedTextAction() {
+                return originalFactory.getExcludeSharedTextAction();
+            }
+        };
+    }
+
+    private ChooserActionFactory createChooserActionFactory(Intent targetIntent) {
         return new ChooserActionFactory(
                 this,
-                mRequest.getTargetIntent(),
+                targetIntent,
                 mRequest.getLaunchedFromPackage(),
                 mRequest.getChooserActions(),
                 mImageEditor,
@@ -2229,8 +2323,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             int top, int bottom, RecyclerView recyclerView, ChooserGridAdapter gridAdapter) {
 
         int offset = mSystemWindowInsets != null ? mSystemWindowInsets.bottom : 0;
-        int rowsToShow = gridAdapter.getSystemRowCount()
-                + gridAdapter.getServiceTargetRowCount()
+        int rowsToShow = gridAdapter.getServiceTargetRowCount()
                 + gridAdapter.getCallerAndRankedTargetRowCount();
 
         // then this is most likely not a SEND_* action, so check

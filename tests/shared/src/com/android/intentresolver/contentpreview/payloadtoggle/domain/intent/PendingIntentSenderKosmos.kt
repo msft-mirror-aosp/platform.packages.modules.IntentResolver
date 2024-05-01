@@ -16,7 +16,7 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.intent
 
-import com.android.intentresolver.mock
 import com.android.systemui.kosmos.Kosmos
+import org.mockito.kotlin.mock
 
 var Kosmos.pendingIntentSender by Kosmos.Fixture { mock<PendingIntentSender> {} }

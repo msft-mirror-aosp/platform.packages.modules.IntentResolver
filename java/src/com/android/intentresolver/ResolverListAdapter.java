@@ -840,7 +840,7 @@ public class ResolverListAdapter extends BaseAdapter {
                 userHandle);
     }
 
-    public final List<Intent> getIntents() {
+    public List<Intent> getIntents() {
         // TODO: immutable copy?
         return mIntents;
     }

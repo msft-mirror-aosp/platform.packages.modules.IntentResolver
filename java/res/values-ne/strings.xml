@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"अनपज गर्नुहोस्"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"यो सामग्री खोल्न मिल्ने कुनै पनि कामसम्बन्धी एप छैन"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"यो सामग्री खोल्न मिल्ने कुनै पनि व्यक्तिगत एप छैन"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"कुनै पनि निजी एप छैन"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> तपाईंको व्यक्तिगत प्रोफाइलमा खोल्ने हो?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> तपाईंको कार्य प्रोफाइलमा खोल्ने हो?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"व्यक्तिगत ब्राउजर प्रयोग गर्नुहोस्"</string>

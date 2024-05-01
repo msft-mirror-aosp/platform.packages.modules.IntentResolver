@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"විරාම නොකරන්න"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"කාර්යාල යෙදුම් නැත"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"පුද්ගලික යෙදුම් නැත"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"පුද්ගලික යෙදුම් නැත"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> ඔබගේ පුද්ගලික පැතිකඩ තුළ විවෘත කරන්නද?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> ඔබගේ කාර්යාල පැතිකඩ තුළ විවෘත කරන්නද?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"පුද්ගලික බ්‍රව්සරය භාවිත කරන්න"</string>

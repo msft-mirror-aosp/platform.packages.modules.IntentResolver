@@ -108,7 +108,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
@@ -133,10 +133,10 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
     private ViewGroup displayInternal(
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         mContentPreviewView = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_files_text, parent, false);
-        mHeadliveView = headlineViewParent == null ? mContentPreviewView : headlineViewParent;
+        mHeadliveView = headlineViewParent;
         inflateHeadline(mHeadliveView);
 
         final ActionRow actionRow =
