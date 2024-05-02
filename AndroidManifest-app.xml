@@ -41,6 +41,13 @@
             android:relinquishTaskIdentity="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden"
             android:visibleToInstantApps="true"
+            android:exported="false" />
+
+        <!-- This alias needs to be maintained until there are no more devices that could be
+             upgrading from T QPR3. (b/283722356) -->
+        <activity-alias
+            android:name=".ChooserActivityLauncher"
+            android:targetActivity=".ChooserActivity"
             android:exported="true">
 
             <intent-filter android:priority="500">
@@ -49,7 +56,7 @@
                 <category android:name="android.intent.category.VOICE" />
             </intent-filter>
 
-        </activity>
+        </activity-alias>
 
         <provider android:name="androidx.startup.InitializationProvider"
                 android:authorities="${applicationId}.androidx-startup"
