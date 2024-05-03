@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"Сними слика со"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"Снимање слика со <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"Сними слика"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"Користи различна апликација"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"Употреби друга апликација"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"Избирање дејство"</string>
     <string name="noApplications" msgid="1139487441772284671">"Нема апликации што можат да го извршат ова дејство."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Ја користите апликацијата надвор од работниот профил"</string>
@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Прекини ја паузата"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Нема работни апликации"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Нема лични апликации"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Нема приватни апликации"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Да се отвори <xliff:g id="APP">%s</xliff:g> во личниот профил?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Да се отвори <xliff:g id="APP">%s</xliff:g> во работниот профил?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Користи личен прелистувач"</string>
