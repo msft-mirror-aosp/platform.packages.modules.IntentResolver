@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Berraktibatu"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Ez dago laneko aplikaziorik"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Ez dago aplikazio pertsonalik"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Aplikazio pribaturik ez"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Profil pertsonalean ireki nahi duzu <xliff:g id="APP">%s</xliff:g>?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Laneko profilean ireki nahi duzu <xliff:g id="APP">%s</xliff:g>?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Erabili arakatzaile pertsonala"</string>
