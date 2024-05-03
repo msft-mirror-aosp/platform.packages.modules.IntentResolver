@@ -416,6 +416,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected final void onRestart() {
         super.onRestart();
+        if (mFeatureFlags.fixPrivateSpaceLockedOnRestart()) {
+            if (mChooserMultiProfilePagerAdapter.hasPageForProfile(Profile.Type.PRIVATE.ordinal())
+                    && !mProfileAvailability.isAvailable(mProfiles.getPrivateProfile())) {
+                Log.d(TAG, "Exiting due to unavailable profile");
+                finish();
+                return;
+            }
+        }
+
         if (!mRegistered) {
             mPersonalPackageMonitor.register(
                     this,
