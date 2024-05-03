@@ -21,13 +21,13 @@ import android.database.MatrixCursor
 import android.media.MediaMetadata
 import android.net.Uri
 import android.provider.DocumentsContract
-import com.android.intentresolver.any
-import com.android.intentresolver.anyOrNull
-import com.android.intentresolver.eq
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class UriMetadataReaderTest {
     private val uri = Uri.parse("content://org.pkg.app/item")

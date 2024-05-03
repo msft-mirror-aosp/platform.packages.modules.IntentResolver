@@ -24,8 +24,6 @@ import android.net.Uri
 import android.platform.test.flag.junit.CheckFlagsRule
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import android.provider.DocumentsContract
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -36,10 +34,12 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito.any
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PreviewDataProviderTest {
