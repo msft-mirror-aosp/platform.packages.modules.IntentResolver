@@ -20,11 +20,9 @@ import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_WORK
 
 import static java.util.Objects.requireNonNull;
 
-import android.app.admin.DevicePolicyEventLogger;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.os.UserHandle;
-import android.stats.devicepolicy.nano.DevicePolicyEnums;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -93,37 +91,4 @@ public class WorkProfilePausedEmptyStateProvider implements EmptyStateProvider {
         }, mMetricsCategory);
     }
 
-    public static class WorkProfileOffEmptyState implements EmptyState {
-
-        private final String mTitle;
-        private final ClickListener mOnClick;
-        private final String mMetricsCategory;
-
-        public WorkProfileOffEmptyState(String title, @NonNull ClickListener onClick,
-                @NonNull String metricsCategory) {
-            mTitle = title;
-            mOnClick = onClick;
-            mMetricsCategory = metricsCategory;
-        }
-
-        @Nullable
-        @Override
-        public String getTitle() {
-            return mTitle;
-        }
-
-        @Nullable
-        @Override
-        public ClickListener getButtonClickListener() {
-            return mOnClick;
-        }
-
-        @Override
-        public void onEmptyStateShown() {
-            DevicePolicyEventLogger
-                    .createEvent(DevicePolicyEnums.RESOLVER_EMPTY_STATE_WORK_APPS_DISABLED)
-                    .setStrings(mMetricsCategory)
-                    .write();
-        }
-    }
 }
