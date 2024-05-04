@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Reactivar"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Non hai ningunha aplicación do traballo compatible"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Non hai ningunha aplicación persoal compatible"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Non hai ningunha aplicación privada"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Queres abrir <xliff:g id="APP">%s</xliff:g> no teu perfil persoal?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Queres abrir <xliff:g id="APP">%s</xliff:g> no teu perfil de traballo?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Utilizar navegador persoal"</string>
