@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"மீண்டும் இயக்கு"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"பணி ஆப்ஸ் எதுவுமில்லை"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"தனிப்பட்ட ஆப்ஸ் எதுவுமில்லை"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"தனிப்பட்ட ஆப்ஸ் எதுவுமில்லை"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"உங்கள் தனிப்பட்ட கணக்கில் <xliff:g id="APP">%s</xliff:g> ஆப்ஸைத் திறக்கவா?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"உங்கள் பணிக் கணக்கில் <xliff:g id="APP">%s</xliff:g> ஆப்ஸைத் திறக்கவா?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"தனிப்பட்ட உலாவியைப் பயன்படுத்து"</string>
