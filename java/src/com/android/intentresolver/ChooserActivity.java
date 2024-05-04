@@ -1170,19 +1170,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         safelyStartActivityAsUser(cti, user, null);
     }
 
-    protected WindowInsets super_onApplyWindowInsets(View v, WindowInsets insets) {
-        mSystemWindowInsets = insets.getSystemWindowInsets();
-
-        mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
-                mSystemWindowInsets.right, 0);
-
-        // Need extra padding so the list can fully scroll up
-        // To accommodate for window insets
-        applyFooterView(mSystemWindowInsets.bottom);
-
-        return insets.consumeSystemWindowInsets();
-    }
-
     @Override // ResolverListCommunicator
     public final void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
         if (!mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
@@ -2649,16 +2636,23 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
-        if (mProfiles.getWorkProfilePresent()) {
+        mSystemWindowInsets = insets.getInsets(WindowInsets.Type.systemBars());
+        if (mFeatureFlags.fixEmptyStatePadding() || mProfiles.getWorkProfilePresent()) {
             mChooserMultiProfilePagerAdapter
-                    .setEmptyStateBottomOffset(insets.getSystemWindowInsetBottom());
+                    .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
         }
 
-        WindowInsets result = super_onApplyWindowInsets(v, insets);
+        mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
+                mSystemWindowInsets.right, 0);
+
+        // Need extra padding so the list can fully scroll up
+        // To accommodate for window insets
+        applyFooterView(mSystemWindowInsets.bottom);
+
         if (mResolverDrawerLayout != null) {
             mResolverDrawerLayout.requestLayout();
         }
-        return result;
+        return WindowInsets.CONSUMED;
     }
 
     private void setHorizontalScrollingEnabled(boolean enabled) {
