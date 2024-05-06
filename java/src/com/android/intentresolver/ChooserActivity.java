@@ -17,14 +17,7 @@
 package com.android.intentresolver;
 
 import static android.app.VoiceInteractor.PickOptionRequest.Option;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_PERSONAL;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_WORK;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_PERSONAL;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_WORK;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROSS_PROFILE_BLOCKED_TITLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL;
-import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
 import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
 
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
@@ -111,8 +104,6 @@ import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
 import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
-import com.android.intentresolver.emptystate.DevicePolicyBlockerEmptyState;
-import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.emptystate.NoAppsAvailableEmptyStateProvider;
 import com.android.intentresolver.emptystate.NoCrossProfileEmptyStateProvider;
@@ -213,7 +204,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final String TAB_TAG_WORK = "work";
 
     private static final String LAST_SHOWN_TAB_KEY = "last_shown_tab_key";
-    protected static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
+    public static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
 
     private int mLayoutId;
     private UserHandle mHeaderCreatorUser;
@@ -1450,39 +1441,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     protected EmptyStateProvider createBlockerEmptyStateProvider() {
-        final boolean isSendAction = mRequest.isSendActionTarget();
-
-        final EmptyState noWorkToPersonalEmptyState =
-                new DevicePolicyBlockerEmptyState(
-                        /* context= */ this,
-                        /* devicePolicyStringTitleId= */ RESOLVER_CROSS_PROFILE_BLOCKED_TITLE,
-                        /* defaultTitleResource= */ R.string.resolver_cross_profile_blocked,
-                        /* devicePolicyStringSubtitleId= */
-                        isSendAction ? RESOLVER_CANT_SHARE_WITH_PERSONAL : RESOLVER_CANT_ACCESS_PERSONAL,
-                        /* defaultSubtitleResource= */
-                        isSendAction ? R.string.resolver_cant_share_with_personal_apps_explanation
-                                : R.string.resolver_cant_access_personal_apps_explanation,
-                        /* devicePolicyEventId= */ RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL,
-                        /* devicePolicyEventCategory= */ ResolverActivity.METRICS_CATEGORY_CHOOSER);
-
-        final EmptyState noPersonalToWorkEmptyState =
-                new DevicePolicyBlockerEmptyState(
-                        /* context= */ this,
-                        /* devicePolicyStringTitleId= */ RESOLVER_CROSS_PROFILE_BLOCKED_TITLE,
-                        /* defaultTitleResource= */ R.string.resolver_cross_profile_blocked,
-                        /* devicePolicyStringSubtitleId= */
-                        isSendAction ? RESOLVER_CANT_SHARE_WITH_WORK : RESOLVER_CANT_ACCESS_WORK,
-                        /* defaultSubtitleResource= */
-                        isSendAction ? R.string.resolver_cant_share_with_work_apps_explanation
-                                : R.string.resolver_cant_access_work_apps_explanation,
-                        /* devicePolicyEventId= */ RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK,
-                        /* devicePolicyEventCategory= */ ResolverActivity.METRICS_CATEGORY_CHOOSER);
-
         return new NoCrossProfileEmptyStateProvider(
                 mProfiles,
-                noWorkToPersonalEmptyState,
-                noPersonalToWorkEmptyState,
-                createCrossProfileIntentsChecker());
+                mDevicePolicyResources,
+                createCrossProfileIntentsChecker(),
+                mRequest.isSendActionTarget());
     }
 
     private int findSelectedProfile() {

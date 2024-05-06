@@ -20,34 +20,35 @@ import android.content.Intent
 import com.android.intentresolver.ProfileHelper
 import com.android.intentresolver.ResolverListAdapter
 import com.android.intentresolver.annotation.JavaInterop
+import com.android.intentresolver.data.repository.DevicePolicyResources
 import com.android.intentresolver.data.repository.FakeUserRepository
 import com.android.intentresolver.domain.interactor.UserInteractor
 import com.android.intentresolver.inject.FakeIntentResolverFlags
 import com.android.intentresolver.shared.model.User
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Test
-import org.mockito.ArgumentMatchers.anyInt
-import org.mockito.ArgumentMatchers.anyList
+import org.mockito.Mockito.never
+import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.same
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.mockito.verification.VerificationMode
 
 @OptIn(JavaInterop::class)
 class NoCrossProfileEmptyStateProviderTest {
 
     private val personalUser = User(0, User.Role.PERSONAL)
     private val workUser = User(10, User.Role.WORK)
+    private val privateUser = User(11, User.Role.PRIVATE)
     private val flags = FakeIntentResolverFlags()
-    private val personalBlocker = mock<EmptyState>()
-    private val workBlocker = mock<EmptyState>()
 
-    private val userRepository = FakeUserRepository(listOf(personalUser, workUser))
+    private val userRepository = FakeUserRepository(listOf(personalUser, workUser, privateUser))
 
     private val personalIntents = listOf(Intent("PERSONAL"))
     private val personalListAdapter =
@@ -61,96 +62,169 @@ class NoCrossProfileEmptyStateProviderTest {
             on { userHandle } doReturn workUser.handle
             on { intents } doReturn workIntents
         }
+    private val privateIntents = listOf(Intent("PRIVATE"))
+    private val privateListAdapter =
+        mock<ResolverListAdapter> {
+            on { userHandle } doReturn privateUser.handle
+            on { intents } doReturn privateIntents
+        }
 
-    // Pretend that no intent can ever be forwarded
-    val crossProfileIntentsChecker =
+    private val devicePolicyResources =
+        mock<DevicePolicyResources> {
+            on { crossProfileBlocked } doReturn "Cross profile blocked"
+            on { toPersonalBlockedByPolicyMessage(any()) } doReturn "Blocked to Personal"
+            on { toWorkBlockedByPolicyMessage(any()) } doReturn "Blocked to Work"
+            on { toPrivateBlockedByPolicyMessage(any()) } doReturn "Blocked to Private"
+        }
+
+    // If asked, no intent can ever be forwarded between any pair of users.
+    private val crossProfileIntentsChecker =
         mock<CrossProfileIntentsChecker> {
             on {
                 hasCrossProfileIntents(
-                    /* intents = */ anyList(),
-                    /* source = */ anyInt(),
-                    /* target = */ anyInt()
+                    /* intents = */ any(),
+                    /* source = */ any(),
+                    /* target = */ any()
                 )
-            } doReturn false
+            } doReturn false /* Never allow */
         }
-    private val sourceUserId = argumentCaptor<Int>()
-    private val targetUserId = argumentCaptor<Int>()
 
     @Test
-    fun testPersonalToWork() {
-        val userInteractor = UserInteractor(userRepository, launchedAs = personalUser.handle)
-
-        val profileHelper =
-            ProfileHelper(
-                userInteractor,
-                CoroutineScope(Dispatchers.Unconfined),
-                Dispatchers.Unconfined,
-                flags
-            )
-
-        val provider =
-            NoCrossProfileEmptyStateProvider(
-                /* profileHelper = */ profileHelper,
-                /* noWorkToPersonalEmptyState = */ personalBlocker,
-                /* noPersonalToWorkEmptyState = */ workBlocker,
-                /* crossProfileIntentsChecker = */ crossProfileIntentsChecker
-            )
-
-        // Personal to personal, not blocked
-        assertThat(provider.getEmptyState(personalListAdapter)).isNull()
-        // Not called because sourceUser == targetUser
-        verify(crossProfileIntentsChecker, never())
-            .hasCrossProfileIntents(anyList(), anyInt(), anyInt())
-
-        // Personal to work, blocked
-        assertThat(provider.getEmptyState(workListAdapter)).isSameInstanceAs(workBlocker)
-
-        verify(crossProfileIntentsChecker, times(1))
-            .hasCrossProfileIntents(
-                same(workIntents),
-                sourceUserId.capture(),
-                targetUserId.capture()
-            )
-        assertThat(sourceUserId.firstValue).isEqualTo(personalUser.id)
-        assertThat(targetUserId.firstValue).isEqualTo(workUser.id)
+    fun verifyTestSetup() {
+        assertThat(workListAdapter.userHandle).isEqualTo(workUser.handle)
+        assertThat(personalListAdapter.userHandle).isEqualTo(personalUser.handle)
+        assertThat(privateListAdapter.userHandle).isEqualTo(privateUser.handle)
     }
 
     @Test
-    fun testWorkToPersonal() {
-        val userInteractor = UserInteractor(userRepository, launchedAs = workUser.handle)
-
-        val profileHelper =
-            ProfileHelper(
-                userInteractor,
-                CoroutineScope(Dispatchers.Unconfined),
-                Dispatchers.Unconfined,
-                flags
-            )
+    fun sameProfilePermitted() {
+        val profileHelper = createProfileHelper(launchedAs = workUser)
 
         val provider =
             NoCrossProfileEmptyStateProvider(
-                /* profileHelper = */ profileHelper,
-                /* noWorkToPersonalEmptyState = */ personalBlocker,
-                /* noPersonalToWorkEmptyState = */ workBlocker,
-                /* crossProfileIntentsChecker = */ crossProfileIntentsChecker
+                profileHelper,
+                devicePolicyResources,
+                crossProfileIntentsChecker,
+                /* isShare = */ true
             )
 
         // Work to work, not blocked
         assertThat(provider.getEmptyState(workListAdapter)).isNull()
-        // Not called because sourceUser == targetUser
-        verify(crossProfileIntentsChecker, never())
-            .hasCrossProfileIntents(anyList(), anyInt(), anyInt())
 
-        // Work to personal, blocked
-        assertThat(provider.getEmptyState(personalListAdapter)).isSameInstanceAs(personalBlocker)
+        crossProfileIntentsChecker.verifyCalled(never())
+    }
 
-        verify(crossProfileIntentsChecker, times(1))
-            .hasCrossProfileIntents(
-                same(personalIntents),
-                sourceUserId.capture(),
-                targetUserId.capture()
+    @Test
+    fun testPersonalToWork() {
+        val profileHelper = createProfileHelper(launchedAs = personalUser)
+
+        val provider =
+            NoCrossProfileEmptyStateProvider(
+                profileHelper,
+                devicePolicyResources,
+                crossProfileIntentsChecker,
+                /* isShare = */ true
             )
-        assertThat(sourceUserId.firstValue).isEqualTo(workUser.id)
-        assertThat(targetUserId.firstValue).isEqualTo(personalUser.id)
+
+        val result = provider.getEmptyState(workListAdapter)
+        assertThat(result).isNotNull()
+        assertThat(result?.title).isEqualTo("Cross profile blocked")
+        assertThat(result?.subtitle).isEqualTo("Blocked to Work")
+
+        crossProfileIntentsChecker.verifyCalled(times(1), workIntents, personalUser, workUser)
+    }
+
+    @Test
+    fun testWorkToPersonal() {
+        val profileHelper = createProfileHelper(launchedAs = workUser)
+
+        val provider =
+            NoCrossProfileEmptyStateProvider(
+                profileHelper,
+                devicePolicyResources,
+                crossProfileIntentsChecker,
+                /* isShare = */ true
+            )
+
+        val result = provider.getEmptyState(personalListAdapter)
+        assertThat(result).isNotNull()
+        assertThat(result?.title).isEqualTo("Cross profile blocked")
+        assertThat(result?.subtitle).isEqualTo("Blocked to Personal")
+
+        crossProfileIntentsChecker.verifyCalled(times(1), personalIntents, workUser, personalUser)
+    }
+
+    @Test
+    fun testWorkToPrivate() {
+        val profileHelper = createProfileHelper(launchedAs = workUser)
+
+        val provider =
+            NoCrossProfileEmptyStateProvider(
+                profileHelper,
+                devicePolicyResources,
+                crossProfileIntentsChecker,
+                /* isShare = */ true
+            )
+
+        val result = provider.getEmptyState(privateListAdapter)
+        assertThat(result).isNotNull()
+        assertThat(result?.title).isEqualTo("Cross profile blocked")
+        assertThat(result?.subtitle).isEqualTo("Blocked to Private")
+
+        // effective target user is personalUser due to "delegate from parent"
+        crossProfileIntentsChecker.verifyCalled(times(1), privateIntents, workUser, personalUser)
+    }
+
+    @Test
+    fun testPrivateToPersonal() {
+        val profileHelper = createProfileHelper(launchedAs = privateUser)
+
+        val provider =
+            NoCrossProfileEmptyStateProvider(
+                profileHelper,
+                devicePolicyResources,
+                crossProfileIntentsChecker,
+                /* isShare = */ true
+            )
+
+        // Private -> Personal is always allowed:
+        // Private delegates to the parent profile for policy; so personal->personal is allowed.
+        assertThat(provider.getEmptyState(personalListAdapter)).isNull()
+
+        crossProfileIntentsChecker.verifyCalled(never())
+    }
+
+    private fun createProfileHelper(launchedAs: User): ProfileHelper {
+        val userInteractor = UserInteractor(userRepository, launchedAs = launchedAs.handle)
+
+        return ProfileHelper(
+            userInteractor,
+            CoroutineScope(Dispatchers.Unconfined),
+            Dispatchers.Unconfined,
+            flags
+        )
+    }
+
+    private fun CrossProfileIntentsChecker.verifyCalled(
+        mode: VerificationMode,
+        list: List<Intent>? = null,
+        sourceUser: User? = null,
+        targetUser: User? = null,
+    ) {
+        val sourceUserId = argumentCaptor<Int>()
+        val targetUserId = argumentCaptor<Int>()
+
+        verify(this, mode)
+            .hasCrossProfileIntents(same(list), sourceUserId.capture(), targetUserId.capture())
+        sourceUser?.apply {
+            assertWithMessage("hasCrossProfileIntents: source")
+                .that(sourceUserId.firstValue)
+                .isEqualTo(id)
+        }
+        targetUser?.apply {
+            assertWithMessage("hasCrossProfileIntents: target")
+                .that(targetUserId.firstValue)
+                .isEqualTo(id)
+        }
     }
 }

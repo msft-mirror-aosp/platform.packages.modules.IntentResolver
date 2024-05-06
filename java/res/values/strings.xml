@@ -284,6 +284,12 @@
     <!-- Error message. This message lets the user know that their IT admin doesn't allow them to open this specific content with an app in their personal profile. [CHAR LIMIT=NONE] -->
     <string name="resolver_cant_access_personal_apps_explanation">This content can\u2019t be opened with personal apps</string>
 
+    <!-- Error message. This text is explaining that the user's IT admin doesn't allow this specific content to be shared with apps in the private profile. [CHAR LIMIT=NONE] -->
+    <string name="resolver_cant_share_with_private_apps_explanation">This content can\u2019t be shared with private apps</string>
+
+    <!-- Error message. This message lets the user know that their IT admin doesn't allow them to open this specific content with an app in their private profile. [CHAR LIMIT=NONE] -->
+    <string name="resolver_cant_access_private_apps_explanation">This content can\u2019t be opened with private apps</string>
+
     <!-- Error message. This text lets the user know that they need to turn on work apps in order to share or open content. There's also a button a user can tap to turn on the apps. [CHAR LIMIT=NONE] -->
     <string name="resolver_turn_on_work_apps">Work apps are paused</string>
     <!-- Button text. This button unpauses a user's work apps and data. [CHAR LIMIT=NONE] -->
