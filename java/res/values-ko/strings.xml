@@ -90,8 +90,7 @@
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"일시중지 해제"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"직장 앱 없음"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"개인 앱 없음"</string>
-    <!-- no translation found for resolver_no_private_apps_available (4164473548027417456) -->
-    <skip />
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"비공개 앱을 사용할 수 없습니다."</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"개인 프로필에서 <xliff:g id="APP">%s</xliff:g> 앱을 여시겠습니까?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"직장 프로필에서 <xliff:g id="APP">%s</xliff:g> 앱을 여시겠습니까?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"개인 브라우저 사용"</string>
