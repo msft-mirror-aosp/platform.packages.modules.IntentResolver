@@ -18,7 +18,6 @@ package com.android.intentresolver.contentpreview
 
 import android.content.ContentInterface
 import android.content.Intent
-import android.database.Cursor
 import android.media.MediaMetadata
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -31,6 +30,7 @@ import androidx.annotation.OpenForTesting
 import androidx.annotation.VisibleForTesting
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_FILE
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE
+import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT
 import com.android.intentresolver.measurements.runTracing
 import com.android.intentresolver.util.ownedByCurrentUser
@@ -74,7 +74,11 @@ open class PreviewDataProvider
 constructor(
     private val scope: CoroutineScope,
     private val targetIntent: Intent,
+    private val additionalContentUri: Uri?,
     private val contentResolver: ContentInterface,
+    // TODO: replace with the ChooserServiceFlags ref when PreviewViewModel dependencies are sorted
+    // out
+    private val isPayloadTogglingEnabled: Boolean,
     private val typeClassifier: MimeTypeClassifier = DefaultMimeTypeClassifier,
 ) {
 
@@ -100,6 +104,9 @@ constructor(
     open val uriCount: Int
         get() = records.size
 
+    val uris: List<Uri>
+        get() = records.map { it.uri }
+
     /**
      * Returns a [Flow] of [FileInfo], for each shared URI in order, with [FileInfo.mimeType] and
      * [FileInfo.previewUri] set (a data projection tailored for the image preview UI).
@@ -122,6 +129,9 @@ constructor(
              * IMAGE, FILE, TEXT. */
             if (!targetIntent.isSend || records.isEmpty()) {
                 CONTENT_PREVIEW_TEXT
+            } else if (isPayloadTogglingEnabled && shouldShowPayloadSelection()) {
+                // TODO: replace with the proper flags injection
+                CONTENT_PREVIEW_PAYLOAD_SELECTION
             } else {
                 try {
                     runBlocking(scope.coroutineContext) {
@@ -138,6 +148,22 @@ constructor(
                 }
             }
         }
+    }
+
+    private fun shouldShowPayloadSelection(): Boolean {
+        val extraContentUri = additionalContentUri ?: return false
+        return runCatching {
+                val authority = extraContentUri.authority
+                records.firstOrNull { authority == it.uri.authority } == null
+            }
+            .onFailure {
+                Log.w(
+                    ContentPreviewUi.TAG,
+                    "Failed to check URI authorities; no payload toggling",
+                    it
+                )
+            }
+            .getOrDefault(false)
     }
 
     /**
@@ -250,8 +276,7 @@ constructor(
         val isImageType: Boolean
             get() = typeClassifier.isImageType(mimeType)
         val supportsImageType: Boolean by lazy {
-            contentResolver.getStreamTypesSafe(uri)?.firstOrNull(typeClassifier::isImageType) !=
-                null
+            contentResolver.getStreamTypesSafe(uri).firstOrNull(typeClassifier::isImageType) != null
         }
         val supportsThumbnail: Boolean
             get() = query.supportsThumbnail
@@ -263,7 +288,8 @@ constructor(
         private val query by lazy { readQueryResult() }
 
         private fun readQueryResult(): QueryResult =
-            contentResolver.querySafe(uri)?.use { cursor ->
+            // TODO: rewrite using methods from UiMetadataHelpers.kt
+            contentResolver.querySafe(uri, METADATA_COLUMNS)?.use { cursor ->
                 if (!cursor.moveToFirst()) return@use null
 
                 var flagColIdx = -1
@@ -343,52 +369,4 @@ private fun getFileName(uri: Uri): String {
     } else {
         fileName.substring(index + 1)
     }
-}
-
-private fun ContentInterface.getTypeSafe(uri: Uri): String? =
-    runTracing("getType") {
-        try {
-            getType(uri)
-        } catch (e: SecurityException) {
-            logProviderPermissionWarning(uri, "mime type")
-            null
-        } catch (t: Throwable) {
-            Log.e(ContentPreviewUi.TAG, "Failed to read metadata, uri: $uri", t)
-            null
-        }
-    }
-
-private fun ContentInterface.getStreamTypesSafe(uri: Uri): Array<String>? =
-    runTracing("getStreamTypes") {
-        try {
-            getStreamTypes(uri, "*/*")
-        } catch (e: SecurityException) {
-            logProviderPermissionWarning(uri, "stream types")
-            null
-        } catch (t: Throwable) {
-            Log.e(ContentPreviewUi.TAG, "Failed to read stream types, uri: $uri", t)
-            null
-        }
-    }
-
-private fun ContentInterface.querySafe(uri: Uri): Cursor? =
-    runTracing("query") {
-        try {
-            query(uri, METADATA_COLUMNS, null, null)
-        } catch (e: SecurityException) {
-            logProviderPermissionWarning(uri, "metadata")
-            null
-        } catch (t: Throwable) {
-            Log.e(ContentPreviewUi.TAG, "Failed to read metadata, uri: $uri", t)
-            null
-        }
-    }
-
-private fun logProviderPermissionWarning(uri: Uri, dataName: String) {
-    // The ContentResolver already logs the exception. Log something more informative.
-    Log.w(
-        ContentPreviewUi.TAG,
-        "Could not read $uri $dataName. If a preview is desired, call Intent#setClipData() to" +
-            " ensure that the sharesheet is given permission."
-    )
 }

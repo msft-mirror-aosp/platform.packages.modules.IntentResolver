@@ -3,30 +3,23 @@ package com.android.intentresolver.v2
 import androidx.activity.ComponentActivity
 import com.android.intentresolver.AnnotatedUserHandles
 import com.android.intentresolver.WorkProfileAvailabilityManager
-import com.android.intentresolver.icons.TargetDataLoader
 
 /** Activity logic for use when testing [ChooserActivity]. */
 class TestChooserActivityLogic(
     tag: String,
-    activityProvider: () -> ComponentActivity,
+    activity: ComponentActivity,
     onWorkProfileStatusUpdated: () -> Unit,
-    targetDataLoaderProvider: () -> TargetDataLoader,
-    onPreinitialization: () -> Unit,
-    private val overrideData: ChooserActivityOverrideData,
+    private val annotatedUserHandlesOverride: AnnotatedUserHandles?,
+    private val workProfileAvailabilityOverride: WorkProfileAvailabilityManager?,
 ) :
     ChooserActivityLogic(
         tag,
-        activityProvider,
+        activity,
         onWorkProfileStatusUpdated,
-        targetDataLoaderProvider,
-        onPreinitialization,
     ) {
+    override val annotatedUserHandles: AnnotatedUserHandles?
+        get() = annotatedUserHandlesOverride ?: super.annotatedUserHandles
 
-    override val annotatedUserHandles: AnnotatedUserHandles? by lazy {
-        overrideData.annotatedUserHandles
-    }
-
-    override val workProfileAvailabilityManager: WorkProfileAvailabilityManager by lazy {
-        overrideData.mWorkProfileAvailability ?: super.workProfileAvailabilityManager
-    }
+    override val workProfileAvailabilityManager: WorkProfileAvailabilityManager
+        get() = workProfileAvailabilityOverride ?: super.workProfileAvailabilityManager
 }

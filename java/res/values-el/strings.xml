@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{Κοινοποίηση βίντεο με σύνδεσμο}other{Κοινοποίηση # βίντεο με σύνδεσμο}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{Κοινοποίηση αρχείου με κείμενο}other{Κοινοποίηση # αρχείων με κείμενο}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{Κοινοποίηση αρχείου με σύνδεσμο}other{Κοινοποίηση # αρχείων με σύνδεσμο}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"Κοινοποίηση λευκώματος"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Μόνο εικόνα}other{Μόνο εικόνες}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Μόνο βίντεο}other{Μόνο βίντεο}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Μόνο αρχείο}other{Μόνο αρχεία}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Δεν έχει εκχωρηθεί άδεια εγγραφής σε αυτή την εφαρμογή, αλλά μέσω αυτής της συσκευής USB θα μπορεί να εγγράφει ήχο."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Προσωπικό"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Εργασία"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Ιδιωτική"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Προσωπική προβολή"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Προβολή εργασίας"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Ιδιωτική προβολή"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Αποκλείστηκε από τον διαχειριστή IT"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Δεν είναι δυνατή η κοινοποίηση αυτού του περιεχομένου με εφαρμογές εργασιών"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Δεν είναι δυνατό το άνοιγμα αυτού του περιεχομένου με εφαρμογές εργασιών"</string>

@@ -16,34 +16,29 @@
 
 package com.android.intentresolver.v2;
 
-import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_PERSONAL;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_WORK;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROSS_PROFILE_BLOCKED_TITLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.content.PermissionChecker.PID_UNKNOWN;
 import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL;
 import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
 import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
 
+import static com.android.intentresolver.v2.ext.CreationExtrasExtKt.addDefaultArgs;
+import static com.android.intentresolver.v2.ui.viewmodel.ResolverRequestReaderKt.readResolverRequest;
 import static com.android.internal.annotations.VisibleForTesting.Visibility.PROTECTED;
 
-import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
 
-import android.app.ActivityManager;
 import android.app.ActivityThread;
 import android.app.VoiceInteractor.PickOptionRequest;
 import android.app.VoiceInteractor.PickOptionRequest.Option;
 import android.app.VoiceInteractor.Prompt;
 import android.app.admin.DevicePolicyEventLogger;
-import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.PermissionChecker;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -51,7 +46,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.content.pm.UserInfo;
 import android.content.res.Configuration;
-import android.content.res.TypedArray;
 import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
@@ -83,15 +77,13 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Space;
 import android.widget.TabHost;
-import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.annotation.UiThread;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.viewmodel.CreationExtras;
 import androidx.viewpager.widget.ViewPager;
 
 import com.android.intentresolver.AnnotatedUserHandles;
@@ -105,24 +97,40 @@ import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
 import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
+import com.android.intentresolver.icons.DefaultTargetDataLoader;
 import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.model.ResolverRankerServiceResolverComparator;
-import com.android.intentresolver.v2.MultiProfilePagerAdapter.MyUserIdProvider;
-import com.android.intentresolver.v2.MultiProfilePagerAdapter.OnSwitchOnWorkSelectedListener;
-import com.android.intentresolver.v2.MultiProfilePagerAdapter.Profile;
 import com.android.intentresolver.v2.data.repository.DevicePolicyResources;
 import com.android.intentresolver.v2.emptystate.NoAppsAvailableEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider.DevicePolicyBlockerEmptyState;
-import com.android.intentresolver.v2.emptystate.WorkProfilePausedEmptyStateProvider;
+import com.android.intentresolver.v2.emptystate.ResolverWorkProfilePausedEmptyStateProvider;
+import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter;
+import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter.ProfileType;
+import com.android.intentresolver.v2.profiles.OnProfileSelectedListener;
+import com.android.intentresolver.v2.profiles.OnSwitchOnWorkSelectedListener;
+import com.android.intentresolver.v2.profiles.ResolverMultiProfilePagerAdapter;
+import com.android.intentresolver.v2.profiles.TabConfig;
+import com.android.intentresolver.v2.shared.model.Profile;
 import com.android.intentresolver.v2.ui.ActionTitle;
+import com.android.intentresolver.v2.ui.model.ActivityModel;
+import com.android.intentresolver.v2.ui.model.ResolverRequest;
+import com.android.intentresolver.v2.validation.Finding;
+import com.android.intentresolver.v2.validation.FindingsKt;
+import com.android.intentresolver.v2.validation.Invalid;
+import com.android.intentresolver.v2.validation.Valid;
+import com.android.intentresolver.v2.validation.ValidationResult;
 import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.content.PackageMonitor;
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto;
-import com.android.internal.util.LatencyTracker;
 
+import com.google.common.collect.ImmutableList;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+import kotlin.Pair;
 import kotlin.Unit;
 
 import java.util.ArrayList;
@@ -131,6 +139,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+
+import javax.inject.Inject;
 
 /**
  * This is a copy of ResolverActivity to support IntentResolver's ChooserActivity. This code is
@@ -138,23 +149,18 @@ import java.util.Set;
  * frameworks/base/core/java/com/android/internal/app/ResolverActivity.java for that), the full
  * migration is not complete.
  */
-@UiThread
-public class ResolverActivity extends FragmentActivity implements
+@AndroidEntryPoint(FragmentActivity.class)
+public class ResolverActivity extends Hilt_ResolverActivity implements
         ResolverListAdapter.ResolverListCommunicator {
 
-    private final List<Runnable> mInit = new ArrayList<>();
-
+    @Inject public PackageManager mPackageManager;
+    @Inject public DevicePolicyResources mDevicePolicyResources;
+    @Inject public IntentForwarding mIntentForwarding;
+    private ResolverRequest mResolverRequest;
+    private ActivityModel mActivityModel;
     protected ActivityLogic mLogic;
-
-    private DevicePolicyResources mDevicePolicyResources;
-
-    public ResolverActivity() {
-        mIsIntentPicker = getClass().equals(ResolverActivity.class);
-    }
-
-    protected ResolverActivity(boolean isIntentPicker) {
-        mIsIntentPicker = isIntentPicker;
-    }
+    protected TargetDataLoader mTargetDataLoader;
+    private boolean mResolvingHome;
 
     private Button mAlwaysButton;
     private Button mOnceButton;
@@ -163,9 +169,7 @@ public class ResolverActivity extends FragmentActivity implements
     private int mLayoutId;
     private PickTargetOptionRequest mPickOptionRequest;
     // Expected to be true if this object is ResolverActivity or is ResolverWrapperActivity.
-    private final boolean mIsIntentPicker;
     protected ResolverDrawerLayout mResolverDrawerLayout;
-    protected PackageManager mPm;
 
     private static final String TAG = "ResolverActivity";
     private static final boolean DEBUG = false;
@@ -176,64 +180,33 @@ public class ResolverActivity extends FragmentActivity implements
     protected Insets mSystemWindowInsets = null;
     private Space mFooterSpacer = null;
 
-    /** See {@link #setRetainInOnStop}. */
-    private boolean mRetainInOnStop;
-
     protected static final String METRICS_CATEGORY_RESOLVER = "intent_resolver";
     protected static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
 
     /** Tracks if we should ignore future broadcasts telling us the work profile is enabled */
-    private boolean mWorkProfileHasBeenEnabled = false;
+    private final boolean mWorkProfileHasBeenEnabled = false;
 
-    private static final String TAB_TAG_PERSONAL = "personal";
-    private static final String TAB_TAG_WORK = "work";
+    protected static final String TAB_TAG_PERSONAL = "personal";
+    protected static final String TAB_TAG_WORK = "work";
 
     private PackageMonitor mPersonalPackageMonitor;
     private PackageMonitor mWorkPackageMonitor;
 
-    @VisibleForTesting
-    protected MultiProfilePagerAdapter mMultiProfilePagerAdapter;
+    protected ResolverMultiProfilePagerAdapter mMultiProfilePagerAdapter;
 
-
-    // Intent extra for connected audio devices
-    public static final String EXTRA_IS_AUDIO_CAPTURE_DEVICE = "is_audio_capture_device";
-
-    /**
-     * Integer extra to indicate which profile should be automatically selected.
-     * <p>Can only be used if there is a work profile.
-     * <p>Possible values can be either {@link #PROFILE_PERSONAL} or {@link #PROFILE_WORK}.
-     */
-    protected static final String EXTRA_SELECTED_PROFILE =
-            "com.android.internal.app.ResolverActivity.EXTRA_SELECTED_PROFILE";
-
-    /**
-     * {@link UserHandle} extra to indicate the user of the user that the starting intent
-     * originated from.
-     * <p>This is not necessarily the same as {@link #getUserId()} or {@link UserHandle#myUserId()},
-     * as there are edge cases when the intent resolver is launched in the other profile.
-     * For example, when we have 0 resolved apps in current profile and multiple resolved
-     * apps in the other profile, opening a link from the current profile launches the intent
-     * resolver in the other one. b/148536209 for more info.
-     */
-    static final String EXTRA_CALLING_USER =
-            "com.android.internal.app.ResolverActivity.EXTRA_CALLING_USER";
-
-    protected static final int PROFILE_PERSONAL = MultiProfilePagerAdapter.PROFILE_PERSONAL;
-    protected static final int PROFILE_WORK = MultiProfilePagerAdapter.PROFILE_WORK;
+    public static final int PROFILE_PERSONAL = MultiProfilePagerAdapter.PROFILE_PERSONAL;
+    public static final int PROFILE_WORK = MultiProfilePagerAdapter.PROFILE_WORK;
 
     private UserHandle mHeaderCreatorUser;
 
     @Nullable
     private OnSwitchOnWorkSelectedListener mOnSwitchOnWorkSelectedListener;
 
-    protected final LatencyTracker mLatencyTracker = getLatencyTracker();
-
     protected PackageMonitor createPackageMonitor(ResolverListAdapter listAdapter) {
         return new PackageMonitor() {
             @Override
             public void onSomePackagesChanged() {
                 listAdapter.handlePackagesChanged();
-                updateProfileViewButton();
             }
 
             @Override
@@ -244,65 +217,63 @@ public class ResolverActivity extends FragmentActivity implements
             }
         };
     }
-    protected interface Initializer {
-        void initialize(ActivityLogic value);
+    protected ActivityModel createActivityModel() {
+        return ActivityModel.createFrom(this);
     }
 
-    protected void setLogic(ActivityLogic logic) {
-        mLogic = logic;
+    @VisibleForTesting
+    protected ActivityLogic createActivityLogic() {
+        return  new ResolverActivityLogic(
+                TAG,
+                /* activity = */ this,
+                this::onWorkProfileStatusUpdated);
     }
 
-    protected void addInitializer(Runnable initializer) {
-        mInit.add(initializer);
+    @NonNull
+    @Override
+    public CreationExtras getDefaultViewModelCreationExtras() {
+        return addDefaultArgs(
+                super.getDefaultViewModelCreationExtras(),
+                new Pair<>(ActivityModel.ACTIVITY_MODEL_KEY, ActivityModel.createFrom(this)));
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (isFinishing()) {
-            // Performing a clean exit:
-            //    Skip initializing anything.
-            return;
-        }
-        mDevicePolicyResources = new DevicePolicyResources(getApplication().getResources(),
-                requireNonNull(getSystemService(DevicePolicyManager.class)));
-        setLogic(new ResolverActivityLogic(
-                TAG,
-                () -> this,
-                this::onWorkProfileStatusUpdated));
-        addInitializer(this::init);
-    }
+        setTheme(R.style.Theme_DeviceDefault_Resolver);
+        mActivityModel = createActivityModel();
 
-    @Override
-    protected final void onPostCreate(@Nullable Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        mInit.forEach(Runnable::run);
-
-        if (savedInstanceState != null) {
-            resetButtonBar();
-            ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-            if (viewPager != null) {
-                viewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
-            }
-            mMultiProfilePagerAdapter.clearInactiveProfileCache();
+        Log.i(TAG, "onCreate");
+        Log.i(TAG, "activityModel=" + mActivityModel.toString());
+        int callerUid = mActivityModel.getLaunchedFromUid();
+        if (callerUid < 0 || UserHandle.isIsolated(callerUid)) {
+            Log.e(TAG, "Can't start a resolver from uid " + callerUid);
+            finish();
         }
+
+        ValidationResult<ResolverRequest> result = readResolverRequest(mActivityModel);
+        if (result instanceof Invalid) {
+            ((Invalid) result).getErrors().forEach(new Consumer<Finding>() {
+                @Override
+                public void accept(Finding finding) {
+                    FindingsKt.log(finding, TAG);
+                }
+            });
+            finish();
+        }
+        mResolverRequest = ((Valid<ResolverRequest>) result).getValue();
+        mLogic = createActivityLogic();
+        mResolvingHome = mResolverRequest.isResolvingHome();
+        mTargetDataLoader = new DefaultTargetDataLoader(
+                this,
+                getLifecycle(),
+                mResolverRequest.isAudioCaptureDevice());
+        init();
+        restore(savedInstanceState);
     }
 
     private void init() {
-        setTheme(mLogic.getThemeResId());
-        mLogic.preInitialization();
-
-        Intent intent = mLogic.getTargetIntent();
-        List<Intent> initialIntents = mLogic.getInitialIntents();
-        TargetDataLoader targetDataLoader = mLogic.getTargetDataLoader();
-
-        // Calling UID did not have valid permissions
-        if (mLogic.getAnnotatedUserHandles() == null) {
-            finish();
-            return;
-        }
-
-        mPm = getPackageManager();
+        Intent intent = mResolverRequest.getIntent();
 
         // The last argument of createResolverListAdapter is whether to do special handling
         // of the last used choice to highlight it in the list.  We need to always
@@ -312,15 +283,14 @@ public class ResolverActivity extends FragmentActivity implements
         // We also turn it off when clonedProfile is present on the device, because we might have
         // different "last chosen" activities in the different profiles, and PackageManager doesn't
         // provide any more information to help us select between them.
-        boolean filterLastUsed = mLogic.getSupportsAlwaysUseOption() && !isVoiceInteraction()
-                && !shouldShowTabs() && !hasCloneProfile();
+        boolean filterLastUsed = !isVoiceInteraction()
+                && !hasWorkProfile() && !hasCloneProfile();
         mMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
-                requireNonNullElse(initialIntents, emptyList()).toArray(new Intent[0]),
-                /* resolutionList = */ null,
-                filterLastUsed,
-                targetDataLoader
+                new Intent[0],
+                /* resolutionList = */ mResolverRequest.getResolutionList(),
+                filterLastUsed
         );
-        if (configureContentView(targetDataLoader)) {
+        if (configureContentView(mTargetDataLoader)) {
             return;
         }
 
@@ -354,7 +324,7 @@ public class ResolverActivity extends FragmentActivity implements
                 }
             });
 
-            boolean hasTouchScreen = getPackageManager()
+            boolean hasTouchScreen = mPackageManager
                     .hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN);
 
             if (isVoiceInteraction() || !hasTouchScreen) {
@@ -368,12 +338,6 @@ public class ResolverActivity extends FragmentActivity implements
             mResolverDrawerLayout = rdl;
         }
 
-        mProfileView = findViewById(com.android.internal.R.id.profile_button);
-        if (mProfileView != null) {
-            mProfileView.setOnClickListener(this::onProfileClick);
-            updateProfileViewButton();
-        }
-
         final Set<String> categories = intent.getCategories();
         MetricsLogger.action(this, mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()
                 ? MetricsProto.MetricsEvent.ACTION_SHOW_APP_DISAMBIG_APP_FEATURED
@@ -382,19 +346,31 @@ public class ResolverActivity extends FragmentActivity implements
                         + (categories != null ? Arrays.toString(categories.toArray()) : ""));
     }
 
-    protected MultiProfilePagerAdapter createMultiProfilePagerAdapter(
+    private void restore(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            // onRestoreInstanceState
+            resetButtonBar();
+            ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
+            if (viewPager != null) {
+                viewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
+            }
+        }
+
+        mMultiProfilePagerAdapter.clearInactiveProfileCache();
+    }
+
+    protected ResolverMultiProfilePagerAdapter createMultiProfilePagerAdapter(
             Intent[] initialIntents,
             List<ResolveInfo> resolutionList,
-            boolean filterLastUsed,
-            TargetDataLoader targetDataLoader) {
-        MultiProfilePagerAdapter resolverMultiProfilePagerAdapter = null;
-        if (shouldShowTabs()) {
+            boolean filterLastUsed) {
+        ResolverMultiProfilePagerAdapter resolverMultiProfilePagerAdapter = null;
+        if (hasWorkProfile()) {
             resolverMultiProfilePagerAdapter =
                     createResolverMultiProfilePagerAdapterForTwoProfiles(
-                            initialIntents, resolutionList, filterLastUsed, targetDataLoader);
+                            initialIntents, resolutionList, filterLastUsed);
         } else {
             resolverMultiProfilePagerAdapter = createResolverMultiProfilePagerAdapterForOneProfile(
-                    initialIntents, resolutionList, filterLastUsed, targetDataLoader);
+                    initialIntents, resolutionList, filterLastUsed);
         }
         return resolverMultiProfilePagerAdapter;
     }
@@ -448,9 +424,7 @@ public class ResolverActivity extends FragmentActivity implements
         if (useLayoutWithDefault()) return true;
 
         View buttonBar = findViewById(com.android.internal.R.id.button_bar);
-        if (buttonBar == null || buttonBar.getVisibility() == View.GONE) return true;
-
-        return false;
+        return buttonBar == null || buttonBar.getVisibility() == View.GONE;
     }
 
     protected void applyFooterView(int height) {
@@ -492,7 +466,7 @@ public class ResolverActivity extends FragmentActivity implements
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
-        if (mIsIntentPicker && shouldShowTabs() && !useLayoutWithDefault()
+        if (hasWorkProfile() && !useLayoutWithDefault()
                 && !shouldUseMiniResolver()) {
             updateIntentPickerPaddings();
         }
@@ -525,7 +499,7 @@ public class ResolverActivity extends FragmentActivity implements
         }
         final Intent intent = getIntent();
         if ((intent.getFlags() & FLAG_ACTIVITY_NEW_TASK) != 0 && !isVoiceInteraction()
-                && !mLogic.getResolvingHome() && !mRetainInOnStop) {
+                && !mResolvingHome) {
             // This resolver is in the unusual situation where it has been
             // launched at the top of a new task.  We don't let it be added
             // to the recent tasks shown to the user, and we need to make sure
@@ -553,6 +527,7 @@ public class ResolverActivity extends FragmentActivity implements
         }
     }
 
+    // referenced by layout XML: android:onClick="onButtonClick"
     public void onButtonClick(View v) {
         final int id = v.getId();
         ListView listView = (ListView) mMultiProfilePagerAdapter.getActiveAdapterView();
@@ -570,8 +545,8 @@ public class ResolverActivity extends FragmentActivity implements
         }
         ResolveInfo ri = mMultiProfilePagerAdapter.getActiveListAdapter()
                 .resolveInfoForPosition(which, hasIndexBeenFiltered);
-        if (mLogic.getResolvingHome() && hasManagedProfile() && !supportsManagedProfiles(ri)) {
-            String launcherName = ri.activityInfo.loadLabel(getPackageManager()).toString();
+        if (mResolvingHome && hasManagedProfile() && !supportsManagedProfiles(ri)) {
+            String launcherName = ri.activityInfo.loadLabel(mPackageManager).toString();
             Toast.makeText(this,
                     mDevicePolicyResources.getWorkProfileNotSupportedMessage(launcherName),
                     Toast.LENGTH_LONG).show();
@@ -584,15 +559,12 @@ public class ResolverActivity extends FragmentActivity implements
             return;
         }
         if (onTargetSelected(target, always)) {
-            if (always && mLogic.getSupportsAlwaysUseOption()) {
+            if (always) {
                 MetricsLogger.action(
                         this, MetricsProto.MetricsEvent.ACTION_APP_DISAMBIG_ALWAYS);
-            } else if (mLogic.getSupportsAlwaysUseOption()) {
-                MetricsLogger.action(
-                        this, MetricsProto.MetricsEvent.ACTION_APP_DISAMBIG_JUST_ONCE);
             } else {
                 MetricsLogger.action(
-                        this, MetricsProto.MetricsEvent.ACTION_APP_DISAMBIG_TAP);
+                        this, MetricsProto.MetricsEvent.ACTION_APP_DISAMBIG_JUST_ONCE);
             }
             MetricsLogger.action(this,
                     mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()
@@ -602,9 +574,6 @@ public class ResolverActivity extends FragmentActivity implements
         }
     }
 
-    /**
-     * Replace me in subclasses!
-     */
     @Override // ResolverListCommunicator
     public Intent getReplacementIntent(ActivityInfo aInfo, Intent defIntent) {
         return defIntent;
@@ -613,7 +582,7 @@ public class ResolverActivity extends FragmentActivity implements
     protected void onListRebuilt(ResolverListAdapter listAdapter, boolean rebuildCompleted) {
         final ItemClickListener listener = new ItemClickListener();
         setupAdapterListView((ListView) mMultiProfilePagerAdapter.getActiveAdapterView(), listener);
-        if (shouldShowTabs() && mIsIntentPicker) {
+        if (hasWorkProfile()) {
             final ResolverDrawerLayout rdl = findViewById(com.android.internal.R.id.contentPanel);
             if (rdl != null) {
                 rdl.setMaxCollapsedHeight(getResources()
@@ -628,8 +597,7 @@ public class ResolverActivity extends FragmentActivity implements
         final ResolveInfo ri = target.getResolveInfo();
         final Intent intent = target != null ? target.getResolvedIntent() : null;
 
-        if (intent != null && (mLogic.getSupportsAlwaysUseOption()
-                || mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem())
+        if (intent != null /*&& mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()*/
                 && mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredResolveList() != null) {
             // Build a reasonable intent filter, based on what matched.
             IntentFilter filter = new IntentFilter();
@@ -672,7 +640,7 @@ public class ResolverActivity extends FragmentActivity implements
                 // or "content:" schemes (see IntentFilter for the reason).
                 if (cat != IntentFilter.MATCH_CATEGORY_TYPE
                         || (!"file".equals(data.getScheme())
-                                && !"content".equals(data.getScheme()))) {
+                        && !"content".equals(data.getScheme()))) {
                     filter.addDataScheme(data.getScheme());
 
                     // Look through the resolved filter to determine which part
@@ -730,7 +698,7 @@ public class ResolverActivity extends FragmentActivity implements
                 }
 
                 int bestMatch = 0;
-                for (int i=0; i<N; i++) {
+                for (int i = 0; i < N; i++) {
                     ResolveInfo r = mMultiProfilePagerAdapter.getActiveListAdapter()
                             .getUnfilteredResolveList().get(i).getResolveInfoAt(0);
                     set[i] = new ComponentName(r.activityInfo.packageName,
@@ -748,7 +716,7 @@ public class ResolverActivity extends FragmentActivity implements
 
                 if (always) {
                     final int userId = getUserId();
-                    final PackageManager pm = getPackageManager();
+                    final PackageManager pm = mPackageManager;
 
                     // Set the preferred Activity
                     pm.addUniquePreferredActivity(filter, bestMatch, set, intent.getComponent());
@@ -757,7 +725,8 @@ public class ResolverActivity extends FragmentActivity implements
                         // Set default Browser if needed
                         final String packageName = pm.getDefaultBrowserPackageNameAsUser(userId);
                         if (TextUtils.isEmpty(packageName)) {
-                            pm.setDefaultBrowserPackageNameAsUser(ri.activityInfo.packageName, userId);
+                            pm.setDefaultBrowserPackageNameAsUser(ri.activityInfo.packageName,
+                                    userId);
                         }
                     }
                 } else {
@@ -771,21 +740,11 @@ public class ResolverActivity extends FragmentActivity implements
             }
         }
 
-        if (target != null) {
-            safelyStartActivity(target);
+        safelyStartActivity(target);
 
-            // Rely on the ActivityManager to pop up a dialog regarding app suspension
-            // and return false
-            if (target.isSuspended()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public void onActivityStarted(TargetInfo cti) {
-        // Do nothing
+        // Rely on the ActivityManager to pop up a dialog regarding app suspension
+        // and return false
+        return !target.isSuspended();
     }
 
     @Override // ResolverListCommunicator
@@ -797,34 +756,23 @@ public class ResolverActivity extends FragmentActivity implements
         return !target.isSuspended();
     }
 
-    // TODO: this method takes an unused `UserHandle` because the override in `ChooserActivity` uses
-    // that data to set up other components as dependencies of the controller. In reality, these
-    // methods don't require polymorphism, because they're only invoked from within their respective
-    // concrete class; `ResolverActivity` will never call this method expecting to get a
-    // `ChooserListController` (subclass) result, because `ResolverActivity` only invokes this
-    // method as part of handling `createMultiProfilePagerAdapter()`, which is itself overridden in
-    // `ChooserActivity`. A future refactoring could better express the coupling between the adapter
-    // and controller types; in the meantime, structuring as an override (with matching signatures)
-    // shows that these methods are *structurally* related, and helps to prevent any regressions in
-    // the future if resolver *were* to make any (non-overridden) calls to a version that used a
-    // different signature (and thus didn't return the subclass type).
     @VisibleForTesting
     protected ResolverListController createListController(UserHandle userHandle) {
         ResolverRankerServiceResolverComparator resolverComparator =
                 new ResolverRankerServiceResolverComparator(
                         this,
-                        mLogic.getTargetIntent(),
-                        mLogic.getReferrerPackageName(),
+                        mResolverRequest.getIntent(),
+                        mActivityModel.getReferrerPackage(),
                         null,
                         null,
                         getResolverRankerServiceUserHandleList(userHandle),
                         null);
         return new ResolverListController(
                 this,
-                mPm,
-                mLogic.getTargetIntent(),
-                mLogic.getReferrerPackageName(),
-                requireAnnotatedUserHandles().userIdOfCallingApp,
+                mPackageManager,
+                mActivityModel.getIntent(),
+                mActivityModel.getReferrerPackage(),
+                mActivityModel.getLaunchedFromUid(),
                 resolverComparator,
                 getQueryIntentsUser(userHandle));
     }
@@ -839,13 +787,30 @@ public class ResolverActivity extends FragmentActivity implements
         return postRebuildListInternal(rebuildCompleted);
     }
 
-    void onHorizontalSwipeStateChanged(int state) {}
-
     /**
      * Callback called when user changes the profile tab.
-     * <p>This method is intended to be overridden by subclasses.
      */
-    protected void onProfileTabSelected() { }
+    /* TODO: consider merging with the customized considerations of our implemented
+     * {@link MultiProfilePagerAdapter.OnProfileSelectedListener}. The only apparent distinctions
+     * between the respective listener callbacks would occur in the triggering patterns during init
+     * (when the `OnProfileSelectedListener` is registered after a possible tab-change), or possibly
+     * if there's some way to trigger an update in one model but not the other.  If there's an
+     * initialization dependency, we can probably reason about it with confidence. If there's a
+     * discrepancy between the `TabHost` and pager-adapter data models, that inconsistency is
+     * likely to be a bug that would benefit from consolidation.
+     */
+    protected void onProfileTabSelected(int currentPage) {
+        setupViewVisibilities();
+        maybeLogProfileChange();
+        if (hasWorkProfile()) {
+            // The device policy logger is only concerned with sessions that include a work profile.
+            DevicePolicyEventLogger
+                    .createEvent(DevicePolicyEnums.RESOLVER_SWITCH_TABS)
+                    .setInt(currentPage)
+                    .setStrings(getMetricsCategory())
+                    .write();
+        }
+    }
 
     /**
      * Add a label to signify that the user can pick a different app.
@@ -858,7 +823,7 @@ public class ResolverActivity extends FragmentActivity implements
             stub.setVisibility(View.VISIBLE);
             TextView textView = (TextView) LayoutInflater.from(this).inflate(
                     R.layout.resolver_different_item_header, null, false);
-            if (shouldShowTabs()) {
+            if (hasWorkProfile()) {
                 textView.setGravity(Gravity.CENTER);
             }
             stub.addView(textView);
@@ -866,9 +831,6 @@ public class ResolverActivity extends FragmentActivity implements
     }
 
     protected void resetButtonBar() {
-        if (!mLogic.getSupportsAlwaysUseOption()) {
-            return;
-        }
         final ViewGroup buttonLayout = findViewById(com.android.internal.R.id.button_bar);
         if (buttonLayout == null) {
             Log.e(TAG, "Layout unexpectedly does not have a button bar");
@@ -921,21 +883,13 @@ public class ResolverActivity extends FragmentActivity implements
 
     protected void maybeLogProfileChange() {}
 
-    // @NonFinalForTesting
-    @VisibleForTesting
-    protected MyUserIdProvider createMyUserIdProvider() {
-        return new MyUserIdProvider();
-    }
-
-    // @NonFinalForTesting
     @VisibleForTesting
     protected CrossProfileIntentsChecker createCrossProfileIntentsChecker() {
         return new CrossProfileIntentsChecker(getContentResolver());
     }
 
     protected Unit onWorkProfileStatusUpdated() {
-        if (mMultiProfilePagerAdapter.getCurrentUserHandle().equals(
-                requireAnnotatedUserHandles().workProfileUserHandle)) {
+        if (mMultiProfilePagerAdapter.getActiveProfile() == PROFILE_WORK) {
             mMultiProfilePagerAdapter.rebuildActiveTab(true);
         } else {
             mMultiProfilePagerAdapter.clearInactiveProfileCache();
@@ -951,8 +905,7 @@ public class ResolverActivity extends FragmentActivity implements
             Intent[] initialIntents,
             List<ResolveInfo> resolutionList,
             boolean filterLastUsed,
-            UserHandle userHandle,
-            TargetDataLoader targetDataLoader) {
+            UserHandle userHandle) {
         UserHandle initialIntentsUserSpace = isLaunchedAsCloneProfile()
                 && userHandle.equals(requireAnnotatedUserHandles().personalProfileUserHandle)
                 ? requireAnnotatedUserHandles().cloneProfileUserHandle : userHandle;
@@ -964,26 +917,10 @@ public class ResolverActivity extends FragmentActivity implements
                 filterLastUsed,
                 createListController(userHandle),
                 userHandle,
-                mLogic.getTargetIntent(),
+                mResolverRequest.getIntent(),
                 this,
                 initialIntentsUserSpace,
-                targetDataLoader);
-    }
-
-    private LatencyTracker getLatencyTracker() {
-        return LatencyTracker.getInstance(this);
-    }
-
-    /**
-     * Get the string resource to be used as a label for the link to the resolver activity for an
-     * action.
-     *
-     * @param action The action to resolve
-     *
-     * @return The string resource to be used as a label
-     */
-    public static @StringRes int getLabelRes(String action) {
-        return ActionTitle.forAction(action).labelRes;
+                mTargetDataLoader);
     }
 
     protected final EmptyStateProvider createEmptyStateProvider(
@@ -991,7 +928,7 @@ public class ResolverActivity extends FragmentActivity implements
         final EmptyStateProvider blockerEmptyStateProvider = createBlockerEmptyStateProvider();
 
         final EmptyStateProvider workProfileOffEmptyStateProvider =
-                new WorkProfilePausedEmptyStateProvider(this, workProfileUserHandle,
+                new ResolverWorkProfilePausedEmptyStateProvider(this, workProfileUserHandle,
                         mLogic.getWorkProfileAvailabilityManager(),
                         /* onSwitchOnWorkSelectedListener= */
                         () -> {
@@ -1021,36 +958,40 @@ public class ResolverActivity extends FragmentActivity implements
             createResolverMultiProfilePagerAdapterForOneProfile(
                     Intent[] initialIntents,
                     List<ResolveInfo> resolutionList,
-                    boolean filterLastUsed,
-                    TargetDataLoader targetDataLoader) {
-        ResolverListAdapter adapter = createResolverListAdapter(
+                    boolean filterLastUsed) {
+        ResolverListAdapter personalAdapter = createResolverListAdapter(
                 /* context */ this,
-                mLogic.getPayloadIntents(),
+                mResolverRequest.getPayloadIntents(),
                 initialIntents,
                 resolutionList,
                 filterLastUsed,
-                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle,
-                targetDataLoader);
+                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle
+        );
         return new ResolverMultiProfilePagerAdapter(
                 /* context */ this,
-                adapter,
+                ImmutableList.of(
+                        new TabConfig<>(
+                                PROFILE_PERSONAL,
+                                mDevicePolicyResources.getPersonalTabLabel(),
+                                mDevicePolicyResources.getPersonalTabAccessibilityLabel(),
+                                TAB_TAG_PERSONAL,
+                                personalAdapter)),
                 createEmptyStateProvider(/* workProfileUserHandle= */ null),
                 /* workProfileQuietModeChecker= */ () -> false,
+                /* defaultProfile= */ PROFILE_PERSONAL,
                 /* workProfileUserHandle= */ null,
                 requireAnnotatedUserHandles().cloneProfileUserHandle);
     }
 
     private UserHandle getIntentUser() {
-        return getIntent().hasExtra(EXTRA_CALLING_USER)
-                ? getIntent().getParcelableExtra(EXTRA_CALLING_USER)
-                : requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch;
+        return Objects.requireNonNullElse(mResolverRequest.getCallingUser(),
+                requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch);
     }
 
     private ResolverMultiProfilePagerAdapter createResolverMultiProfilePagerAdapterForTwoProfiles(
             Intent[] initialIntents,
             List<ResolveInfo> resolutionList,
-            boolean filterLastUsed,
-            TargetDataLoader targetDataLoader) {
+            boolean filterLastUsed) {
         // In the edge case when we have 0 apps in the current profile and >1 apps in the other,
         // the intent resolver is started in the other profile. Since this is the only case when
         // this happens, we check for it here and set the current profile's tab.
@@ -1073,27 +1014,38 @@ public class ResolverActivity extends FragmentActivity implements
         // resolver list. So filterLastUsed should be false for the other profile.
         ResolverListAdapter personalAdapter = createResolverListAdapter(
                 /* context */ this,
-                mLogic.getPayloadIntents(),
+                mResolverRequest.getPayloadIntents(),
                 selectedProfile == PROFILE_PERSONAL ? initialIntents : null,
                 resolutionList,
                 (filterLastUsed && UserHandle.myUserId()
                         == requireAnnotatedUserHandles().personalProfileUserHandle.getIdentifier()),
-                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle,
-                targetDataLoader);
+                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle
+        );
         UserHandle workProfileUserHandle = requireAnnotatedUserHandles().workProfileUserHandle;
         ResolverListAdapter workAdapter = createResolverListAdapter(
                 /* context */ this,
-                mLogic.getPayloadIntents(),
+                mResolverRequest.getPayloadIntents(),
                 selectedProfile == PROFILE_WORK ? initialIntents : null,
                 resolutionList,
                 (filterLastUsed && UserHandle.myUserId()
                         == workProfileUserHandle.getIdentifier()),
-                /* userHandle */ workProfileUserHandle,
-                targetDataLoader);
+                /* userHandle */ workProfileUserHandle
+        );
         return new ResolverMultiProfilePagerAdapter(
                 /* context */ this,
-                personalAdapter,
-                workAdapter,
+                ImmutableList.of(
+                        new TabConfig<>(
+                                PROFILE_PERSONAL,
+                                mDevicePolicyResources.getPersonalTabLabel(),
+                                mDevicePolicyResources.getPersonalTabAccessibilityLabel(),
+                                TAB_TAG_PERSONAL,
+                                personalAdapter),
+                        new TabConfig<>(
+                                PROFILE_WORK,
+                                mDevicePolicyResources.getWorkTabLabel(),
+                                mDevicePolicyResources.getWorkTabAccessibilityLabel(),
+                                TAB_TAG_WORK,
+                                workAdapter)),
                 createEmptyStateProvider(workProfileUserHandle),
                 () -> mLogic.getWorkProfileAvailabilityManager().isQuietModeEnabled(),
                 selectedProfile,
@@ -1104,23 +1056,20 @@ public class ResolverActivity extends FragmentActivity implements
     /**
      * Returns {@link #PROFILE_PERSONAL} or {@link #PROFILE_WORK} if the {@link
      * #EXTRA_SELECTED_PROFILE} extra was supplied, or {@code -1} if no extra was supplied.
-     * @throws IllegalArgumentException if the value passed to the {@link #EXTRA_SELECTED_PROFILE}
-     * extra is not {@link #PROFILE_PERSONAL} or {@link #PROFILE_WORK}
      */
     final int getSelectedProfileExtra() {
-        int selectedProfile = -1;
-        if (getIntent().hasExtra(EXTRA_SELECTED_PROFILE)) {
-            selectedProfile = getIntent().getIntExtra(EXTRA_SELECTED_PROFILE, /* defValue = */ -1);
-            if (selectedProfile != PROFILE_PERSONAL && selectedProfile != PROFILE_WORK) {
-                throw new IllegalArgumentException(EXTRA_SELECTED_PROFILE + " has invalid value "
-                        + selectedProfile + ". Must be either ResolverActivity.PROFILE_PERSONAL or "
-                        + "ResolverActivity.PROFILE_WORK.");
-            }
+        Profile.Type selected = mResolverRequest.getSelectedProfile();
+        if (selected == null) {
+            return -1;
         }
-        return selectedProfile;
+        switch (selected) {
+            case PERSONAL: return PROFILE_PERSONAL;
+            case WORK: return PROFILE_WORK;
+            default: return -1;
+        }
     }
 
-    protected final @Profile int getCurrentProfile() {
+    protected final @ProfileType int getCurrentProfile() {
         UserHandle launchUser = requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch;
         UserHandle personalUser = requireAnnotatedUserHandles().personalProfileUserHandle;
         return launchUser.equals(personalUser) ? PROFILE_PERSONAL : PROFILE_WORK;
@@ -1142,24 +1091,6 @@ public class ResolverActivity extends FragmentActivity implements
         UserHandle launchUser = requireAnnotatedUserHandles().userHandleSharesheetLaunchedAs;
         UserHandle cloneUser = requireAnnotatedUserHandles().cloneProfileUserHandle;
         return hasCloneProfile() && launchUser.equals(cloneUser);
-    }
-
-    protected final boolean shouldShowTabs() {
-        return hasWorkProfile();
-    }
-
-    protected final void onProfileClick(View v) {
-        final DisplayResolveInfo dri =
-                mMultiProfilePagerAdapter.getActiveListAdapter().getOtherProfile();
-        if (dri == null) {
-            return;
-        }
-
-        // Do not show the profile switch message anymore.
-        mLogic.clearProfileSwitchMessage();
-
-        onTargetSelected(dri, false);
-        finish();
     }
 
     private void updateIntentPickerPaddings() {
@@ -1219,28 +1150,8 @@ public class ResolverActivity extends FragmentActivity implements
         return new Option(getOrLoadDisplayLabel(target), index);
     }
 
-    @Override // ResolverListCommunicator
-    public final void updateProfileViewButton() {
-        if (mProfileView == null) {
-            return;
-        }
-
-        final DisplayResolveInfo dri =
-                mMultiProfilePagerAdapter.getActiveListAdapter().getOtherProfile();
-        if (dri != null && !shouldShowTabs()) {
-            mProfileView.setVisibility(View.VISIBLE);
-            View text = mProfileView.findViewById(com.android.internal.R.id.profile_button);
-            if (!(text instanceof TextView)) {
-                text = mProfileView.findViewById(com.android.internal.R.id.text1);
-            }
-            ((TextView) text).setText(dri.getDisplayLabel());
-        } else {
-            mProfileView.setVisibility(View.GONE);
-        }
-    }
-
     protected final CharSequence getTitleForAction(Intent intent, int defaultTitleRes) {
-        final ActionTitle title = mLogic.getResolvingHome()
+        final ActionTitle title = mResolvingHome
                 ? ActionTitle.HOME
                 : ActionTitle.forAction(intent.getAction());
 
@@ -1258,12 +1169,6 @@ public class ResolverActivity extends FragmentActivity implements
                                     mMultiProfilePagerAdapter
                                         .getActiveListAdapter().getFilteredItem()))
                     : getString(title.titleRes);
-        }
-    }
-
-    final void dismiss() {
-        if (!isFinishing()) {
-            finish();
         }
     }
 
@@ -1297,17 +1202,6 @@ public class ResolverActivity extends FragmentActivity implements
             }
         }
         mMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
-        updateProfileViewButton();
-    }
-
-    @Override
-    protected final void onStart() {
-        super.onStart();
-
-        this.getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
-        if (hasWorkProfile()) {
-            mLogic.getWorkProfileAvailabilityManager().registerWorkProfileStateReceiver(this);
-        }
     }
 
     @Override
@@ -1316,6 +1210,15 @@ public class ResolverActivity extends FragmentActivity implements
         ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
         if (viewPager != null) {
             outState.putInt(LAST_SHOWN_TAB_KEY, viewPager.getCurrentItem());
+        }
+    }
+
+    @Override
+    protected final void onStart() {
+        super.onStart();
+        this.getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
+        if (hasWorkProfile()) {
+            mLogic.getWorkProfileAvailabilityManager().registerWorkProfileStateReceiver(this);
         }
     }
 
@@ -1340,7 +1243,7 @@ public class ResolverActivity extends FragmentActivity implements
 
     private boolean supportsManagedProfiles(ResolveInfo resolveInfo) {
         try {
-            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(
+            ApplicationInfo appInfo = mPackageManager.getApplicationInfo(
                     resolveInfo.activityInfo.packageName, 0 /* default flags */);
             return appInfo.targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP;
         } catch (NameNotFoundException e) {
@@ -1358,7 +1261,8 @@ public class ResolverActivity extends FragmentActivity implements
         // In case of clonedProfile being active, we do not allow the 'Always' option in the
         // disambiguation dialog of Personal Profile as the package manager cannot distinguish
         // between cross-profile preferred activities.
-        if (hasCloneProfile() && (mMultiProfilePagerAdapter.getCurrentPage() == PROFILE_PERSONAL)) {
+        if (hasCloneProfile()
+                && (mMultiProfilePagerAdapter.getActiveProfile() == PROFILE_PERSONAL)) {
             mAlwaysButton.setEnabled(false);
             return;
         }
@@ -1384,16 +1288,14 @@ public class ResolverActivity extends FragmentActivity implements
         if (ri != null) {
             ActivityInfo activityInfo = ri.activityInfo;
 
-            boolean hasRecordPermission =
-                    mPm.checkPermission(android.Manifest.permission.RECORD_AUDIO,
+            boolean hasRecordPermission = mPackageManager
+                    .checkPermission(android.Manifest.permission.RECORD_AUDIO,
                             activityInfo.packageName)
                             == PackageManager.PERMISSION_GRANTED;
 
             if (!hasRecordPermission) {
                 // OK, we know the record permission, is this a capture device
-                boolean hasAudioCapture =
-                        getIntent().getBooleanExtra(
-                                ResolverActivity.EXTRA_IS_AUDIO_CAPTURE_DEVICE, false);
+                boolean hasAudioCapture = mResolverRequest.isAudioCaptureDevice();
                 enabled = !hasAudioCapture;
             }
         }
@@ -1406,10 +1308,8 @@ public class ResolverActivity extends FragmentActivity implements
         if (isAutolaunching()) {
             return;
         }
-        if (mIsIntentPicker) {
-            ((ResolverMultiProfilePagerAdapter) mMultiProfilePagerAdapter)
-                    .setUseLayoutWithDefault(useLayoutWithDefault());
-        }
+        mMultiProfilePagerAdapter.setUseLayoutWithDefault(useLayoutWithDefault());
+
         if (mMultiProfilePagerAdapter.shouldShowEmptyStateScreen(listAdapter)) {
             mMultiProfilePagerAdapter.showEmptyResolverListEmptyState(listAdapter);
         } else {
@@ -1458,39 +1358,6 @@ public class ResolverActivity extends FragmentActivity implements
         }
     }
 
-    @VisibleForTesting
-    protected void safelyStartActivityInternal(
-            TargetInfo cti, UserHandle user, @Nullable Bundle options) {
-        // If the target is suspended, the activity will not be successfully launched.
-        // Do not unregister from package manager updates in this case
-        if (!cti.isSuspended() && mRegistered) {
-            if (mPersonalPackageMonitor != null) {
-                mPersonalPackageMonitor.unregister();
-            }
-            if (mWorkPackageMonitor != null) {
-                mWorkPackageMonitor.unregister();
-            }
-            mRegistered = false;
-        }
-        // If needed, show that intent is forwarded
-        // from managed profile to owner or other way around.
-        String profileSwitchMessage = mLogic.getProfileSwitchMessage();
-        if (profileSwitchMessage != null) {
-            Toast.makeText(this, profileSwitchMessage, Toast.LENGTH_LONG).show();
-        }
-        try {
-            if (cti.startAsCaller(this, options, user.getIdentifier())) {
-                onActivityStarted(cti);
-                maybeLogCrossProfileTargetLaunch(cti, user);
-            }
-        } catch (RuntimeException e) {
-            Slog.wtf(TAG,
-                    "Unable to launch as uid " + requireAnnotatedUserHandles().userIdOfCallingApp
-                    + " package " + getLaunchedFromPackage() + ", while running in "
-                    + ActivityThread.currentProcessName(), e);
-        }
-    }
-
     final void showTargetDetails(ResolveInfo ri) {
         Intent in = new Intent().setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 .setData(Uri.fromParts("package", ri.activityInfo.packageName, null))
@@ -1511,7 +1378,7 @@ public class ResolverActivity extends FragmentActivity implements
         // We partially rebuild the inactive adapter to determine if we should auto launch
         // isTabLoaded will be true here if the empty state screen is shown instead of the list.
         // To date, we really only care about "partially rebuilding" tabs for work and/or personal.
-        boolean rebuildCompleted = mMultiProfilePagerAdapter.rebuildTabs(shouldShowTabs());
+        boolean rebuildCompleted = mMultiProfilePagerAdapter.rebuildTabs(hasWorkProfile());
 
         if (shouldUseMiniResolver()) {
             configureMiniResolverContent(targetDataLoader);
@@ -1541,11 +1408,6 @@ public class ResolverActivity extends FragmentActivity implements
         mLayoutId = R.layout.miniresolver;
         setContentView(mLayoutId);
 
-        // TODO: try to dedupe and use the pager's `getActiveProfile()` instead of the activity
-        // `getCurrentProfile()` (or align them if they're not currently equivalent). If they truly
-        // need to be distinct here, then `getCurrentProfile()` should at *least* get a more
-        // specific name -- but note that checking `getCurrentProfile()` here, then following
-        // `getActiveProfile()` to find the "in/active adapter," is exactly the legacy behavior.
         boolean inWorkProfile = getCurrentProfile() == PROFILE_WORK;
 
         ResolverListAdapter sameProfileAdapter =
@@ -1604,17 +1466,69 @@ public class ResolverActivity extends FragmentActivity implements
                 && mMultiProfilePagerAdapter.hasPageForProfile(PROFILE_WORK);
     }
 
+    @VisibleForTesting
+    protected void safelyStartActivityInternal(
+            TargetInfo cti, UserHandle user, @Nullable Bundle options) {
+        // If the target is suspended, the activity will not be successfully launched.
+        // Do not unregister from package manager updates in this case
+        if (!cti.isSuspended() && mRegistered) {
+            if (mPersonalPackageMonitor != null) {
+                mPersonalPackageMonitor.unregister();
+            }
+            if (mWorkPackageMonitor != null) {
+                mWorkPackageMonitor.unregister();
+            }
+            mRegistered = false;
+        }
+        // If needed, show that intent is forwarded
+        // from managed profile to owner or other way around.
+        String profileSwitchMessage =
+                mIntentForwarding.forwardMessageFor(mResolverRequest.getIntent());
+        if (profileSwitchMessage != null) {
+            Toast.makeText(this, profileSwitchMessage, Toast.LENGTH_LONG).show();
+        }
+        try {
+            if (cti.startAsCaller(this, options, user.getIdentifier())) {
+                maybeLogCrossProfileTargetLaunch(cti, user);
+            }
+        } catch (RuntimeException e) {
+            Slog.wtf(TAG,
+                    "Unable to launch as uid " + mActivityModel.getLaunchedFromUid()
+                    + " package " + getLaunchedFromPackage() + ", while running in "
+                    + ActivityThread.currentProcessName(), e);
+        }
+    }
+
+    /**
+     * Finishing procedures to be performed after the list has been rebuilt.
+     * @param rebuildCompleted
+     * @return <code>true</code> if the activity is finishing and creation should halt.
+     */
+    final boolean postRebuildListInternal(boolean rebuildCompleted) {
+        int count = mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();
+
+        // We only rebuild asynchronously when we have multiple elements to sort. In the case where
+        // we're already done, we can check if we should auto-launch immediately.
+        if (rebuildCompleted && maybeAutolaunchActivity()) {
+            return true;
+        }
+
+        setupViewVisibilities();
+
+        if (hasWorkProfile()) {
+            setupProfileTabs();
+        }
+
+        return false;
+    }
+
     /**
      * Mini resolver should be used when all of the following are true:
      * 1. This is the intent picker (ResolverActivity).
-     * 2. There are exactly two tabs, for the "personal" and "work" profiles.
-     * 3. This profile only has web browser matches.
-     * 4. The other profile has a single non-browser match.
+     * 2. This profile only has web browser matches.
+     * 3. The other profile has a single non-browser match.
      */
     private boolean shouldUseMiniResolver() {
-        if (!mIsIntentPicker) {
-            return false;
-        }
         if (!isTwoPagePersonalAndWorkConfiguration()) {
             return false;
         }
@@ -1650,50 +1564,6 @@ public class ResolverActivity extends FragmentActivity implements
         }
 
         return true;
-    }
-
-    /**
-     * Finishing procedures to be performed after the list has been rebuilt.
-     * @param rebuildCompleted
-     * @return <code>true</code> if the activity is finishing and creation should halt.
-     */
-    final boolean postRebuildListInternal(boolean rebuildCompleted) {
-        int count = mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();
-
-        // We only rebuild asynchronously when we have multiple elements to sort. In the case where
-        // we're already done, we can check if we should auto-launch immediately.
-        if (rebuildCompleted && maybeAutolaunchActivity()) {
-            return true;
-        }
-
-        setupViewVisibilities();
-
-        if (shouldShowTabs()) {
-            setupProfileTabs();
-        }
-
-        return false;
-    }
-
-    private int isPermissionGranted(String permission, int uid) {
-        return ActivityManager.checkComponentPermission(permission, uid,
-                /* owningUid= */-1, /* exported= */ true);
-    }
-
-    /**
-     * @return {@code true} if a resolved target is autolaunched, otherwise {@code false}
-     */
-    private boolean maybeAutolaunchActivity() {
-        int numberOfProfiles = mMultiProfilePagerAdapter.getItemCount();
-        if (numberOfProfiles == 1 && maybeAutolaunchIfSingleTarget()) {
-            return true;
-        } else if (maybeAutolaunchIfCrossProfileSupported()) {
-            // TODO(b/280988288): If the ChooserActivity is shown we should consider showing the
-            //  correct intent-picker UIs (e.g., mini-resolver) if it was launched without
-            //  ACTION_SEND.
-            return true;
-        }
-        return false;
     }
 
     private boolean maybeAutolaunchIfSingleTarget() {
@@ -1761,7 +1631,7 @@ public class ResolverActivity extends FragmentActivity implements
         }
 
         String packageName = activeProfileTarget.getResolvedComponentName().getPackageName();
-        if (!canAppInteractCrossProfiles(packageName)) {
+        if (!mIntentForwarding.canAppInteractAcrossProfiles(this, packageName)) {
             return false;
         }
 
@@ -1776,131 +1646,66 @@ public class ResolverActivity extends FragmentActivity implements
         return true;
     }
 
-    /**
-     * Returns whether the package has the necessary permissions to interact across profiles on
-     * behalf of a given user.
-     *
-     * <p>This means meeting the following condition:
-     * <ul>
-     *     <li>The app's {@link ApplicationInfo#crossProfile} flag must be true, and at least
-     *     one of the following conditions must be fulfilled</li>
-     *     <li>{@code Manifest.permission.INTERACT_ACROSS_USERS_FULL} granted.</li>
-     *     <li>{@code Manifest.permission.INTERACT_ACROSS_USERS} granted.</li>
-     *     <li>{@code Manifest.permission.INTERACT_ACROSS_PROFILES} granted, or the corresponding
-     *     AppOps {@code android:interact_across_profiles} is set to "allow".</li>
-     * </ul>
-     *
-     */
-    private boolean canAppInteractCrossProfiles(String packageName) {
-        ApplicationInfo applicationInfo;
-        try {
-            applicationInfo = getPackageManager().getApplicationInfo(packageName, 0);
-        } catch (NameNotFoundException e) {
-            Log.e(TAG, "Package " + packageName + " does not exist on current user.");
-            return false;
-        }
-        if (!applicationInfo.crossProfile) {
-            return false;
-        }
-
-        int packageUid = applicationInfo.uid;
-
-        if (isPermissionGranted(android.Manifest.permission.INTERACT_ACROSS_USERS_FULL,
-                packageUid) == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        if (isPermissionGranted(android.Manifest.permission.INTERACT_ACROSS_USERS, packageUid)
-                == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        if (PermissionChecker.checkPermissionForPreflight(this, INTERACT_ACROSS_PROFILES,
-                PID_UNKNOWN, packageUid, packageName) == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        return false;
-    }
-
     private boolean isAutolaunching() {
         return !mRegistered && isFinishing();
     }
 
-    private void setupProfileTabs() {
-        maybeHideDivider();
-        TabHost tabHost = findViewById(com.android.internal.R.id.profile_tabhost);
-        tabHost.setup();
-        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
-        viewPager.setSaveEnabled(false);
+    /**
+     * @return {@code true} if a resolved target is autolaunched, otherwise {@code false}
+     */
+    private boolean maybeAutolaunchActivity() {
+        if (!isTwoPagePersonalAndWorkConfiguration()) {
+            return false;
+        }
 
-        Button personalButton = (Button) getLayoutInflater().inflate(
-                R.layout.resolver_profile_tab_button, tabHost.getTabWidget(), false);
-        personalButton.setText(mDevicePolicyResources.getPersonalTabLabel());
-        personalButton.setContentDescription(
-                mDevicePolicyResources.getPersonalTabAccessibilityLabel());
+        ResolverListAdapter activeListAdapter =
+                (mMultiProfilePagerAdapter.getActiveProfile() == PROFILE_PERSONAL)
+                        ? mMultiProfilePagerAdapter.getPersonalListAdapter()
+                        : mMultiProfilePagerAdapter.getWorkListAdapter();
 
-        TabHost.TabSpec tabSpec = tabHost.newTabSpec(TAB_TAG_PERSONAL)
-                .setContent(com.android.internal.R.id.profile_pager)
-                .setIndicator(personalButton);
-        tabHost.addTab(tabSpec);
+        ResolverListAdapter inactiveListAdapter =
+                (mMultiProfilePagerAdapter.getActiveProfile() == PROFILE_PERSONAL)
+                        ? mMultiProfilePagerAdapter.getWorkListAdapter()
+                        : mMultiProfilePagerAdapter.getPersonalListAdapter();
 
-        Button workButton = (Button) getLayoutInflater().inflate(
-                R.layout.resolver_profile_tab_button, tabHost.getTabWidget(), false);
-        workButton.setText(mDevicePolicyResources.getWorkTabLabel());
-        workButton.setContentDescription(mDevicePolicyResources.getWorkTabAccessibilityLabel());
+        if (!activeListAdapter.isTabLoaded() || !inactiveListAdapter.isTabLoaded()) {
+            return false;
+        }
 
-        tabSpec = tabHost.newTabSpec(TAB_TAG_WORK)
-                .setContent(com.android.internal.R.id.profile_pager)
-                .setIndicator(workButton);
-        tabHost.addTab(tabSpec);
+        if ((activeListAdapter.getUnfilteredCount() != 1)
+                || (inactiveListAdapter.getUnfilteredCount() != 1)) {
+            return false;
+        }
 
-        TabWidget tabWidget = tabHost.getTabWidget();
-        tabWidget.setVisibility(View.VISIBLE);
-        updateActiveTabStyle(tabHost);
+        TargetInfo activeProfileTarget = activeListAdapter.targetInfoForPosition(0, false);
+        TargetInfo inactiveProfileTarget = inactiveListAdapter.targetInfoForPosition(0, false);
+        if (!Objects.equals(
+                activeProfileTarget.getResolvedComponentName(),
+                inactiveProfileTarget.getResolvedComponentName())) {
+            return false;
+        }
 
-        tabHost.setOnTabChangedListener(tabId -> {
-            updateActiveTabStyle(tabHost);
-            if (TAB_TAG_PERSONAL.equals(tabId)) {
-                viewPager.setCurrentItem(0);
-            } else {
-                viewPager.setCurrentItem(1);
-            }
-            setupViewVisibilities();
-            maybeLogProfileChange();
-            onProfileTabSelected();
-            DevicePolicyEventLogger
-                    .createEvent(DevicePolicyEnums.RESOLVER_SWITCH_TABS)
-                    .setInt(viewPager.getCurrentItem())
-                    .setStrings(getMetricsCategory())
-                    .write();
-        });
+        if (!shouldAutoLaunchSingleChoice(activeProfileTarget)) {
+            return false;
+        }
 
-        viewPager.setVisibility(View.VISIBLE);
-        tabHost.setCurrentTab(mMultiProfilePagerAdapter.getCurrentPage());
-        mMultiProfilePagerAdapter.setOnProfileSelectedListener(
-                new MultiProfilePagerAdapter.OnProfileSelectedListener() {
-                    @Override
-                    public void onProfileSelected(int index) {
-                        tabHost.setCurrentTab(index);
-                        resetButtonBar();
-                        resetCheckedItem();
-                    }
+        String packageName = activeProfileTarget.getResolvedComponentName().getPackageName();
+        if (!mIntentForwarding.canAppInteractAcrossProfiles(this, packageName)) {
+            return false;
+        }
 
-                    @Override
-                    public void onProfilePageStateChanged(int state) {
-                        onHorizontalSwipeStateChanged(state);
-                    }
-                });
-        mOnSwitchOnWorkSelectedListener = () -> {
-            final View workTab = tabHost.getTabWidget().getChildAt(1);
-            workTab.setFocusable(true);
-            workTab.setFocusableInTouchMode(true);
-            workTab.requestFocus();
-        };
+        DevicePolicyEventLogger
+                .createEvent(DevicePolicyEnums.RESOLVER_AUTOLAUNCH_CROSS_PROFILE_TARGET)
+                .setBoolean(activeListAdapter.getUserHandle()
+                        .equals(requireAnnotatedUserHandles().personalProfileUserHandle))
+                .setStrings(getMetricsCategory())
+                .write();
+        safelyStartActivity(activeProfileTarget);
+        finish();
+        return true;
     }
 
     private void maybeHideDivider() {
-        if (!mIsIntentPicker) {
-            return;
-        }
         final View divider = findViewById(com.android.internal.R.id.divider);
         if (divider == null) {
             return;
@@ -1909,27 +1714,9 @@ public class ResolverActivity extends FragmentActivity implements
     }
 
     private void resetCheckedItem() {
-        if (!mIsIntentPicker) {
-            return;
-        }
         mLastSelected = ListView.INVALID_POSITION;
         ((ResolverMultiProfilePagerAdapter) mMultiProfilePagerAdapter)
                 .clearCheckedItemsInInactiveProfiles();
-    }
-
-    private static int getAttrColor(Context context, int attr) {
-        TypedArray ta = context.obtainStyledAttributes(new int[]{attr});
-        int colorAccent = ta.getColor(0, 0);
-        ta.recycle();
-        return colorAccent;
-    }
-
-    private void updateActiveTabStyle(TabHost tabHost) {
-        int currentTab = tabHost.getCurrentTab();
-        TextView selected = (TextView) tabHost.getTabWidget().getChildAt(currentTab);
-        TextView unselected = (TextView) tabHost.getTabWidget().getChildAt(1 - currentTab);
-        selected.setSelected(true);
-        unselected.setSelected(false);
     }
 
     private void setupViewVisibilities() {
@@ -1957,10 +1744,7 @@ public class ResolverActivity extends FragmentActivity implements
     private void setupAdapterListView(ListView listView, ItemClickListener listener) {
         listView.setOnItemClickListener(listener);
         listView.setOnItemLongClickListener(listener);
-
-        if (mLogic.getSupportsAlwaysUseOption()) {
-            listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-        }
+        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
     }
 
     /**
@@ -1971,7 +1755,7 @@ public class ResolverActivity extends FragmentActivity implements
                 && !listAdapter.getUserHandle().equals(mHeaderCreatorUser)) {
             return;
         }
-        if (!shouldShowTabs()
+        if (!hasWorkProfile()
                 && listAdapter.getCount() == 0 && listAdapter.getPlaceholderCount() == 0) {
             final TextView titleView = findViewById(com.android.internal.R.id.title);
             if (titleView != null) {
@@ -1979,10 +1763,9 @@ public class ResolverActivity extends FragmentActivity implements
             }
         }
 
-
-        CharSequence title = mLogic.getTitle() != null
-                ? mLogic.getTitle()
-                : getTitleForAction(mLogic.getTargetIntent(), mLogic.getDefaultTitleResId());
+        CharSequence title = mResolverRequest.getTitle() != null
+                ? mResolverRequest.getTitle()
+                : getTitleForAction(mResolverRequest.getIntent(), 0);
 
         if (!TextUtils.isEmpty(title)) {
             final TextView titleView = findViewById(com.android.internal.R.id.title);
@@ -2027,19 +1810,9 @@ public class ResolverActivity extends FragmentActivity implements
     public final boolean useLayoutWithDefault() {
         // We only use the default app layout when the profile of the active user has a
         // filtered item. We always show the same default app even in the inactive user profile.
-        boolean adapterForCurrentUserHasFilteredItem =
-                mMultiProfilePagerAdapter.getListAdapterForUserHandle(
-                        requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch
-                ).hasFilteredItem();
-        return mLogic.getSupportsAlwaysUseOption() && adapterForCurrentUserHasFilteredItem;
-    }
-
-    /**
-     * If {@code retainInOnStop} is set to true, we will not finish ourselves when onStop gets
-     * called and we are launched in a new task.
-     */
-    protected final void setRetainInOnStop(boolean retainInOnStop) {
-        mRetainInOnStop = retainInOnStop;
+        return mMultiProfilePagerAdapter.getListAdapterForUserHandle(
+                requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch
+        ).hasFilteredItem();
     }
 
     final class ItemClickListener implements AdapterView.OnItemClickListener,
@@ -2096,11 +1869,37 @@ public class ResolverActivity extends FragmentActivity implements
 
     }
 
-    /** Determine whether a given match result is considered "specific" in our application. */
-    public static final boolean isSpecificUriMatch(int match) {
-        match = (match & IntentFilter.MATCH_CATEGORY_MASK);
-        return match >= IntentFilter.MATCH_CATEGORY_HOST
-                && match <= IntentFilter.MATCH_CATEGORY_PATH;
+    private void setupProfileTabs() {
+        maybeHideDivider();
+
+        TabHost tabHost = findViewById(com.android.internal.R.id.profile_tabhost);
+        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
+
+        mMultiProfilePagerAdapter.setupProfileTabs(
+                getLayoutInflater(),
+                tabHost,
+                viewPager,
+                R.layout.resolver_profile_tab_button,
+                com.android.internal.R.id.profile_pager,
+                () -> onProfileTabSelected(viewPager.getCurrentItem()),
+                new OnProfileSelectedListener() {
+                    @Override
+                    public void onProfilePageSelected(@ProfileType int profileId, int pageNumber) {
+                        resetButtonBar();
+                        resetCheckedItem();
+                    }
+
+                    @Override
+                    public void onProfilePageStateChanged(int state) {}
+                });
+        mOnSwitchOnWorkSelectedListener = () -> {
+            final View workTab =
+                    tabHost.getTabWidget().getChildAt(
+                            mMultiProfilePagerAdapter.getPageNumberForProfile(PROFILE_WORK));
+            workTab.setFocusable(true);
+            workTab.setFocusableInTouchMode(true);
+            workTab.requestFocus();
+        };
     }
 
     static final class PickTargetOptionRequest extends PickOptionRequest {
@@ -2173,7 +1972,7 @@ public class ResolverActivity extends FragmentActivity implements
 
     private CharSequence getOrLoadDisplayLabel(TargetInfo info) {
         if (info.isDisplayResolveInfo()) {
-            mLogic.getTargetDataLoader().getOrLoadLabel((DisplayResolveInfo) info);
+            mTargetDataLoader.getOrLoadLabel((DisplayResolveInfo) info);
         }
         CharSequence displayLabel = info.getDisplayLabel();
         return displayLabel == null ? "" : displayLabel;

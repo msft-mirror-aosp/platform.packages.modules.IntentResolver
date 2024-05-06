@@ -17,24 +17,41 @@
 package com.android.intentresolver
 
 import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.android.intentresolver.contentpreview.BasePreviewViewModel
 import com.android.intentresolver.contentpreview.ImageLoader
-import com.android.intentresolver.contentpreview.PreviewDataProvider
+import com.android.intentresolver.contentpreview.PayloadToggleInteractor
 
 /** A test content preview model that supports image loader override. */
 class TestContentPreviewViewModel(
     private val viewModel: BasePreviewViewModel,
-    private val imageLoader: ImageLoader? = null,
+    override val imageLoader: ImageLoader,
 ) : BasePreviewViewModel() {
-    override fun createOrReuseProvider(
-        targetIntent: Intent
-    ): PreviewDataProvider = viewModel.createOrReuseProvider(targetIntent)
 
-    override fun createOrReuseImageLoader(): ImageLoader =
-        imageLoader ?: viewModel.createOrReuseImageLoader()
+    override val previewDataProvider
+        get() = viewModel.previewDataProvider
+
+    override val payloadToggleInteractor: PayloadToggleInteractor?
+        get() = viewModel.payloadToggleInteractor
+
+    override fun init(
+        targetIntent: Intent,
+        chooserIntent: Intent,
+        additionalContentUri: Uri?,
+        focusedItemIdx: Int,
+        isPayloadTogglingEnabled: Boolean,
+    ) {
+        viewModel.init(
+            targetIntent,
+            chooserIntent,
+            additionalContentUri,
+            focusedItemIdx,
+            isPayloadTogglingEnabled
+        )
+    }
 
     companion object {
         fun wrap(
@@ -47,10 +64,12 @@ class TestContentPreviewViewModel(
                     modelClass: Class<T>,
                     extras: CreationExtras
                 ): T {
+                    val wrapped = factory.create(modelClass, extras) as BasePreviewViewModel
                     return TestContentPreviewViewModel(
-                        factory.create(modelClass, extras) as BasePreviewViewModel,
-                        imageLoader,
-                    ) as T
+                        wrapped,
+                        imageLoader ?: wrapped.imageLoader,
+                    )
+                        as T
                 }
             }
     }

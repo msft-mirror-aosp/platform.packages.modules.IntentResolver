@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{লিঙ্ক সহ ভিডিও শেয়ার করা হচ্ছে}one{লিঙ্ক সহ #টি ভিডিও শেয়ার করা হচ্ছে}other{লিঙ্ক সহ #টি ভিডিও শেয়ার করা হচ্ছে}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{টেক্সট সহ ফাইল শেয়ার করা হচ্ছে}one{টেক্সট সহ #টি ফাইল শেয়ার করা হচ্ছে}other{টেক্সট সহ #টি ফাইল শেয়ার করা হচ্ছে}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{লিঙ্ক সহ ফাইল শেয়ার করা হচ্ছে}one{লিঙ্ক সহ #টি ফাইল শেয়ার করা হচ্ছে}other{লিঙ্ক সহ #টি ফাইল শেয়ার করা হচ্ছে}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"অ্যালবাম শেয়ার করা হচ্ছে"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{শুধু ছবি}one{শুধু ছবি}other{শুধু ছবি}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{শুধু ভিডিও}one{শুধু ভিডিও}other{শুধু ভিডিও}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{শুধু ফাইল}one{শুধু ফাইল}other{শুধু ফাইল}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"এই অ্যাপকে রেকর্ড করার অনুমতি দেওয়া হয়নি কিন্তু USB ডিভাইসের মাধ্যমে সেটি অডিও রেকর্ড করতে পারে।"</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"ব্যক্তিগত"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"অফিস"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"ব্যক্তিগত"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"ব্যক্তিগত ভিউ"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"অফিসের ভিউ"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"ব্যক্তিগত ভিউ"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"আপনার আইটি অ্যাডমিন ব্লক করেছেন"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"অফিসের অ্যাপে এই কন্টেন্ট শেয়ার করা যাবে না"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"অফিসের অ্যাপে এই খোলা যাবে না"</string>

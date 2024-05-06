@@ -30,6 +30,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.android.intentresolver.ContentTypeHint;
 import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 
@@ -42,26 +43,33 @@ class TextContentPreviewUi extends ContentPreviewUi {
     @Nullable
     private final CharSequence mPreviewTitle;
     @Nullable
+    private final CharSequence mMetadata;
+    @Nullable
     private final Uri mPreviewThumbnail;
     private final ImageLoader mImageLoader;
     private final ChooserContentPreviewUi.ActionFactory mActionFactory;
     private final HeadlineGenerator mHeadlineGenerator;
+    private final ContentTypeHint mContentTypeHint;
 
     TextContentPreviewUi(
             CoroutineScope scope,
             @Nullable CharSequence sharingText,
             @Nullable CharSequence previewTitle,
+            @Nullable CharSequence metadata,
             @Nullable Uri previewThumbnail,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
-            HeadlineGenerator headlineGenerator) {
+            HeadlineGenerator headlineGenerator,
+            ContentTypeHint contentTypeHint) {
         mScope = scope;
         mSharingText = sharingText;
         mPreviewTitle = previewTitle;
+        mMetadata = metadata;
         mPreviewThumbnail = previewThumbnail;
         mImageLoader = imageLoader;
         mActionFactory = actionFactory;
         mHeadlineGenerator = headlineGenerator;
+        mContentTypeHint = contentTypeHint;
     }
 
     @Override
@@ -139,7 +147,11 @@ class TextContentPreviewUi extends ContentPreviewUi {
             copyButton.setVisibility(View.GONE);
         }
 
-        displayHeadline(headlineViewParent, mHeadlineGenerator.getTextHeadline(mSharingText));
+        String headlineText = (mContentTypeHint == ContentTypeHint.ALBUM)
+                ? mHeadlineGenerator.getAlbumHeadline()
+                : mHeadlineGenerator.getTextHeadline(mSharingText);
+        displayHeadline(headlineViewParent, headlineText);
+        displayMetadata(headlineViewParent, mMetadata);
 
         return contentPreviewLayout;
     }

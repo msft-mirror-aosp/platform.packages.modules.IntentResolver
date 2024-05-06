@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{လင့်ခ်ပါသောဗီဒီယိုကို မျှဝေနေသည်}other{လင့်ခ်ပါသောဗီဒီယို # ခုကို မျှဝေနေသည်}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{စာသားပါသောဖိုင်ကို မျှဝေနေသည်}other{စာသားပါသောဖိုင် # ခုကို မျှဝေနေသည်}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{လင့်ခ်ပါသောဖိုင်ကို မျှဝေနေသည်}other{လင့်ခ်ပါသောဖိုင် # ခုကို မျှဝေနေသည်}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"အယ်လ်ဘမ် မျှဝေနေသည်"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{ပုံသာလျှင်}other{ပုံများသာလျှင်}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{ဗီဒီယိုသာလျှင်}other{ဗီဒီယိုများသာလျှင်}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{ဖိုင်သာလျှင်}other{ဖိုင်များသာလျှင်}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"ဤအက်ပ်ကို အသံဖမ်းခွင့် ပေးမထားသော်လည်း ၎င်းသည် ဤ USB စက်ပစ္စည်းမှတစ်ဆင့် အသံများကို ဖမ်းယူနိုင်ပါသည်။"</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"ကိုယ်ပိုင်"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"အလုပ်"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"သီးသန့်"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"ပုဂ္ဂိုလ်ရေးဆိုင်ရာ မြင်ကွင်း"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"အလုပ် မြင်ကွင်း"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"သီးသန့်ပြသခြင်း"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"သင်၏ IT စီမံခန့်ခွဲသူက ပိတ်ထားသည်"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"ဤအကြောင်းအရာကို အလုပ်သုံးအက်ပ်များဖြင့် မမျှဝေနိုင်ပါ"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ဤအကြောင်းအရာကို အလုပ်သုံးအက်ပ်များဖြင့် မဖွင့်နိုင်ပါ"</string>

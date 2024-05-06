@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.intentresolver.v2;
+package com.android.intentresolver.v2.profiles;
 
 import android.annotation.IntDef;
 import android.annotation.Nullable;
 import android.os.Trace;
 import android.os.UserHandle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TabHost;
+import android.widget.TextView;
 
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -28,33 +32,21 @@ import androidx.viewpager.widget.ViewPager;
 import com.android.intentresolver.ResolverListAdapter;
 import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
-import com.android.intentresolver.v2.emptystate.EmptyStateUiHelper;
 import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * Skeletal {@link PagerAdapter} implementation for a UI with per-profile tabs (as in Sharesheet).
- * <p>
- * TODO: attempt to further restrict visibility/improve encapsulation in the methods we expose.
- * <p>
- * TODO: deprecate and audit/fix usages of any methods that refer to the "active" or "inactive"
- * <p>
- * adapters; these were marked {@link VisibleForTesting} and their usage seems like an accident
- * waiting to happen since clients seem to make assumptions about which adapter will be "active" in
- * a particular context, and more explicit APIs would make sure those were valid.
- * <p>
- * TODO: consider renaming legacy methods (e.g. why do we know it's a "list", not just a "page"?)
- * <p>
- * TODO: this is part of an in-progress refactor to merge with `GenericMultiProfilePagerAdapter`.
- * As originally noted there, we've reduced explicit references to the `ResolverListAdapter` base
- * type and may be able to drop the type constraint.
  *
  * @param <PageViewT> the type of the widget that represents the contents of a page in this adapter
  * @param <SinglePageAdapterT> the type of a "root" adapter class to be instantiated and included in
@@ -69,24 +61,11 @@ public class MultiProfilePagerAdapter<
         SinglePageAdapterT,
         ListAdapterT extends ResolverListAdapter> extends PagerAdapter {
 
-    /**
-     * Delegate to set up a given adapter and page view to be used together.
-     * @param <PageViewT> (as in {@link MultiProfilePagerAdapter}).
-     * @param <SinglePageAdapterT> (as in {@link MultiProfilePagerAdapter}).
-     */
-    public interface AdapterBinder<PageViewT, SinglePageAdapterT> {
-        /**
-         * The given {@code view} will be associated with the given {@code adapter}. Do any work
-         * necessary to configure them compatibly, introduce them to each other, etc.
-         */
-        void bind(PageViewT view, SinglePageAdapterT adapter);
-    }
-
     public static final int PROFILE_PERSONAL = 0;
     public static final int PROFILE_WORK = 1;
 
     @IntDef({PROFILE_PERSONAL, PROFILE_WORK})
-    public @interface Profile {}
+    public @interface ProfileType {}
 
     private final Function<SinglePageAdapterT, ListAdapterT> mListAdapterExtractor;
     private final AdapterBinder<PageViewT, SinglePageAdapterT> mAdapterBinder;
@@ -99,22 +78,21 @@ public class MultiProfilePagerAdapter<
     private final UserHandle mCloneProfileUserHandle;
     private final Supplier<Boolean> mWorkProfileQuietModeChecker;  // True when work is quiet.
 
-    private Set<Integer> mLoadedPages;
+    private final Set<Integer> mLoadedPages;
     private int mCurrentPage;
     private OnProfileSelectedListener mOnProfileSelectedListener;
 
     protected MultiProfilePagerAdapter(
             Function<SinglePageAdapterT, ListAdapterT> listAdapterExtractor,
             AdapterBinder<PageViewT, SinglePageAdapterT> adapterBinder,
-            ImmutableList<SinglePageAdapterT> adapters,
+            ImmutableList<TabConfig<SinglePageAdapterT>> tabs,
             EmptyStateProvider emptyStateProvider,
             Supplier<Boolean> workProfileQuietModeChecker,
-            @Profile int defaultProfile,
+            @ProfileType int defaultProfile,
             UserHandle workProfileUserHandle,
             UserHandle cloneProfileUserHandle,
             Supplier<ViewGroup> pageViewInflater,
             Supplier<Optional<Integer>> containerBottomPaddingOverrideSupplier) {
-        mCurrentPage = defaultProfile;
         mLoadedPages = new HashSet<>();
         mWorkProfileUserHandle = workProfileUserHandle;
         mCloneProfileUserHandle = cloneProfileUserHandle;
@@ -127,21 +105,190 @@ public class MultiProfilePagerAdapter<
 
         ImmutableList.Builder<ProfileDescriptor<PageViewT, SinglePageAdapterT>> items =
                 new ImmutableList.Builder<>();
-        for (SinglePageAdapterT adapter : adapters) {
-            items.add(createProfileDescriptor(adapter, containerBottomPaddingOverrideSupplier));
+        for (TabConfig<SinglePageAdapterT> tab : tabs) {
+            // TODO: consider representing tabConfig in a different data structure that can ensure
+            // uniqueness of their profile assignments (while still respecting the client's
+            // requested tab order).
+            items.add(
+                    createProfileDescriptor(
+                            tab.mProfile,
+                            tab.mTabLabel,
+                            tab.mTabAccessibilityLabel,
+                            tab.mTabTag,
+                            tab.mPageAdapter,
+                            containerBottomPaddingOverrideSupplier));
         }
         mItems = items.build();
+
+        mCurrentPage =
+                hasPageForProfile(defaultProfile) ? getPageNumberForProfile(defaultProfile) : 0;
     }
 
     private ProfileDescriptor<PageViewT, SinglePageAdapterT> createProfileDescriptor(
+            @ProfileType int profile,
+            String tabLabel,
+            String tabAccessibilityLabel,
+            String tabTag,
             SinglePageAdapterT adapter,
             Supplier<Optional<Integer>> containerBottomPaddingOverrideSupplier) {
         return new ProfileDescriptor<>(
-                mPageViewInflater.get(), adapter, containerBottomPaddingOverrideSupplier);
+                profile,
+                tabLabel,
+                tabAccessibilityLabel,
+                tabTag,
+                mPageViewInflater.get(),
+                adapter,
+                containerBottomPaddingOverrideSupplier);
     }
 
-    public void setOnProfileSelectedListener(OnProfileSelectedListener listener) {
-        mOnProfileSelectedListener = listener;
+    private boolean hasPageForIndex(int pageIndex) {
+        return (pageIndex >= 0) && (pageIndex < getCount());
+    }
+
+    public final boolean hasPageForProfile(@ProfileType int profile) {
+        return hasPageForIndex(getPageNumberForProfile(profile));
+    }
+
+    private @ProfileType int getProfileForPageNumber(int position) {
+        if (hasPageForIndex(position)) {
+            return mItems.get(position).mProfile;
+        }
+        return -1;
+    }
+
+    public int getPageNumberForProfile(@ProfileType int profile) {
+        for (int i = 0; i < mItems.size(); ++i) {
+            if (profile == mItems.get(i).mProfile) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private ListAdapterT getListAdapterForPageNumber(int pageNumber) {
+        SinglePageAdapterT pageAdapter = getPageAdapterForIndex(pageNumber);
+        if (pageAdapter == null) {
+            return null;
+        }
+        return mListAdapterExtractor.apply(pageAdapter);
+    }
+
+    private @ProfileType int getProfileForUserHandle(UserHandle userHandle) {
+        if (userHandle.equals(getCloneUserHandle())) {
+            // TODO: can we push this special case elsewhere -- e.g., when we check against each
+            // list adapter's user handle in the loop below, could we instead ask the list adapter
+            // whether it "represents" the queried user handle, and have the personal list adapter
+            // return true because it knows it's also associated with the clone profile? Or if we
+            // don't want to make modifications to the list adapter, maybe we could at least specify
+            // it in our per-page configuration data that we use to build our tabs/pages, and then
+            // maintain the relevant bookkeeping in our own ProfileDescriptor?
+            return PROFILE_PERSONAL;
+        }
+        for (int i = 0; i < mItems.size(); ++i) {
+            ListAdapterT listAdapter = getListAdapterForPageNumber(i);
+            if (listAdapter.getUserHandle().equals(userHandle)) {
+                return mItems.get(i).mProfile;
+            }
+        }
+        return -1;
+    }
+
+    private int getPageNumberForUserHandle(UserHandle userHandle) {
+        return getPageNumberForProfile(getProfileForUserHandle(userHandle));
+    }
+
+    /**
+     * Returns the {@link ListAdapterT} instance of the profile that represents
+     * <code>userHandle</code>. If there is no such adapter for the specified
+     * <code>userHandle</code>, returns {@code null}.
+     * <p>For example, if there is a work profile on the device with user id 10, calling this method
+     * with <code>UserHandle.of(10)</code> returns the work profile {@link ListAdapterT}.
+     */
+    @Nullable
+    public final ListAdapterT getListAdapterForUserHandle(UserHandle userHandle) {
+        return getListAdapterForPageNumber(getPageNumberForUserHandle(userHandle));
+    }
+
+    @Nullable
+    private ProfileDescriptor<PageViewT, SinglePageAdapterT> getDescriptorForUserHandle(
+            UserHandle userHandle) {
+        return getItem(getPageNumberForUserHandle(userHandle));
+    }
+
+    private int getPageNumberForTabTag(String tag) {
+        for (int i = 0; i < mItems.size(); ++i) {
+            if (Objects.equals(mItems.get(i).mTabTag, tag)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void updateActiveTabStyle(TabHost tabHost) {
+        int currentTab = tabHost.getCurrentTab();
+
+        for (int pageNumber = 0; pageNumber < getItemCount(); ++pageNumber) {
+            // TODO: can we avoid this downcast by pushing our knowledge of the intended view type
+            // somewhere else?
+            TextView tabText = (TextView) tabHost.getTabWidget().getChildAt(pageNumber);
+            tabText.setSelected(currentTab == pageNumber);
+        }
+    }
+
+    public void setupProfileTabs(
+            LayoutInflater layoutInflater,
+            TabHost tabHost,
+            ViewPager viewPager,
+            int tabButtonLayoutResId,
+            int tabPageContentViewId,
+            Runnable onTabChangeListener,
+            OnProfileSelectedListener clientOnProfileSelectedListener) {
+        tabHost.setup();
+        viewPager.setSaveEnabled(false);
+
+        for (int pageNumber = 0; pageNumber < getItemCount(); ++pageNumber) {
+            ProfileDescriptor<PageViewT, SinglePageAdapterT> descriptor = mItems.get(pageNumber);
+            Button profileButton = (Button) layoutInflater.inflate(
+                    tabButtonLayoutResId, tabHost.getTabWidget(), false);
+            profileButton.setText(descriptor.mTabLabel);
+            profileButton.setContentDescription(descriptor.mTabAccessibilityLabel);
+
+            TabHost.TabSpec profileTabSpec = tabHost.newTabSpec(descriptor.mTabTag)
+                    .setContent(tabPageContentViewId)
+                    .setIndicator(profileButton);
+            tabHost.addTab(profileTabSpec);
+        }
+
+        tabHost.getTabWidget().setVisibility(View.VISIBLE);
+
+        updateActiveTabStyle(tabHost);
+
+        tabHost.setOnTabChangedListener(tabTag -> {
+            updateActiveTabStyle(tabHost);
+
+            int pageNumber = getPageNumberForTabTag(tabTag);
+            if (pageNumber >= 0) {
+                viewPager.setCurrentItem(pageNumber);
+            }
+            onTabChangeListener.run();
+        });
+
+        viewPager.setVisibility(View.VISIBLE);
+        tabHost.setCurrentTab(getCurrentPage());
+        mOnProfileSelectedListener =
+                new OnProfileSelectedListener() {
+                    @Override
+                    public void onProfilePageSelected(@ProfileType int profileId, int pageNumber) {
+                        tabHost.setCurrentTab(pageNumber);
+                        clientOnProfileSelectedListener.onProfilePageSelected(
+                                profileId, pageNumber);
+                    }
+
+                    @Override
+                    public void onProfilePageStateChanged(int state) {
+                        clientOnProfileSelectedListener.onProfilePageStateChanged(state);
+                    }
+                };
     }
 
     /**
@@ -159,7 +306,8 @@ public class MultiProfilePagerAdapter<
                     mLoadedPages.add(position);
                 }
                 if (mOnProfileSelectedListener != null) {
-                    mOnProfileSelectedListener.onProfileSelected(position);
+                    mOnProfileSelectedListener.onProfilePageSelected(
+                            getProfileForPageNumber(position), position);
                 }
             }
 
@@ -176,10 +324,7 @@ public class MultiProfilePagerAdapter<
     }
 
     public void clearInactiveProfileCache() {
-        if (mLoadedPages.size() == 1) {
-            return;
-        }
-        mLoadedPages.remove(1 - mCurrentPage);
+        forEachInactivePage(pageNumber -> mLoadedPages.remove(pageNumber));
     }
 
     @Override
@@ -204,12 +349,8 @@ public class MultiProfilePagerAdapter<
         return mCurrentPage;
     }
 
-    public final @Profile int getActiveProfile() {
-        // TODO: here and elsewhere in this class, distinguish between a "profile ID" integer and
-        // its mapped "page index." When we support more than two profiles, this won't be a "stable
-        // mapping" -- some particular profile may not be represented by a "page," but the ones that
-        // are will be assigned contiguous page numbers that skip over the holes.
-        return getCurrentPage();
+    public final @ProfileType int getActiveProfile() {
+        return getProfileForPageNumber(getCurrentPage());
     }
 
     @VisibleForTesting
@@ -241,7 +382,11 @@ public class MultiProfilePagerAdapter<
      * <code>1</code> would return the work profile {@link ProfileDescriptor}.</li>
      * </ul>
      */
+    @Nullable
     private ProfileDescriptor<PageViewT, SinglePageAdapterT> getItem(int pageIndex) {
+        if (!hasPageForIndex(pageIndex)) {
+            return null;
+        }
         return mItems.get(pageIndex);
     }
 
@@ -263,7 +408,7 @@ public class MultiProfilePagerAdapter<
     }
 
     public final PageViewT getListViewForIndex(int index) {
-        return getItem(index).mView;
+        return getItem(index).getView();
     }
 
     /**
@@ -273,8 +418,11 @@ public class MultiProfilePagerAdapter<
      * depending on the adapter type.
      */
     @VisibleForTesting
-    public final SinglePageAdapterT getAdapterForIndex(int index) {
-        return getItem(index).mAdapter;
+    public final SinglePageAdapterT getPageAdapterForIndex(int index) {
+        if (!hasPageForIndex(index)) {
+            return null;
+        }
+        return getItem(index).getAdapter();
     }
 
     /**
@@ -282,26 +430,7 @@ public class MultiProfilePagerAdapter<
      * by <code>pageIndex</code>.
      */
     public final void setupListAdapter(int pageIndex) {
-        mAdapterBinder.bind(getListViewForIndex(pageIndex), getAdapterForIndex(pageIndex));
-    }
-
-    /**
-     * Returns the {@link ListAdapterT} instance of the profile that represents
-     * <code>userHandle</code>. If there is no such adapter for the specified
-     * <code>userHandle</code>, returns {@code null}.
-     * <p>For example, if there is a work profile on the device with user id 10, calling this method
-     * with <code>UserHandle.of(10)</code> returns the work profile {@link ListAdapterT}.
-     */
-    @Nullable
-    public final ListAdapterT getListAdapterForUserHandle(UserHandle userHandle) {
-        if (getPersonalListAdapter().getUserHandle().equals(userHandle)
-                || userHandle.equals(getCloneUserHandle())) {
-            return getPersonalListAdapter();
-        } else if ((getWorkListAdapter() != null)
-                && getWorkListAdapter().getUserHandle().equals(userHandle)) {
-            return getWorkListAdapter();
-        }
-        return null;
+        mAdapterBinder.bind(getListViewForIndex(pageIndex), getPageAdapterForIndex(pageIndex));
     }
 
     /**
@@ -309,70 +438,35 @@ public class MultiProfilePagerAdapter<
      * to the user.
      * <p>For example, if the user is viewing the work tab in the share sheet, this method returns
      * the work profile {@link ListAdapterT}.
-     * @see #getInactiveListAdapter()
      */
     @VisibleForTesting
     public final ListAdapterT getActiveListAdapter() {
-        return mListAdapterExtractor.apply(getAdapterForIndex(getCurrentPage()));
-    }
-
-    /**
-     * If this is a device with a work profile, returns the {@link ListAdapterT} instance
-     * of the profile that is <b><i>not</i></b> currently visible to the user. Otherwise returns
-     * {@code null}.
-     * <p>For example, if the user is viewing the work tab in the share sheet, this method returns
-     * the personal profile {@link ListAdapterT}.
-     * @see #getActiveListAdapter()
-     */
-    @VisibleForTesting
-    @Nullable
-    public final ListAdapterT getInactiveListAdapter() {
-        if (getCount() < 2) {
-            return null;
-        }
-        return mListAdapterExtractor.apply(getAdapterForIndex(1 - getCurrentPage()));
+        return getListAdapterForPageNumber(getCurrentPage());
     }
 
     public final ListAdapterT getPersonalListAdapter() {
-        return mListAdapterExtractor.apply(getAdapterForIndex(PROFILE_PERSONAL));
-    }
-
-    /** @return whether our tab data contains a page for the specified {@code profile} ID. */
-    public final boolean hasPageForProfile(@Profile int profile) {
-        // TODO: here and elsewhere in this class, distinguish between a "profile ID" integer and
-        // its mapped "page index." When we support more than two profiles, this won't be a "stable
-        // mapping" -- some particular profile may not be represented by a "page," but the ones that
-        // are will be assigned contiguous page numbers that skip over the holes.
-        return hasAdapterForIndex(profile);
+        return getListAdapterForPageNumber(getPageNumberForProfile(PROFILE_PERSONAL));
     }
 
     @Nullable
     public final ListAdapterT getWorkListAdapter() {
-        if (!hasAdapterForIndex(PROFILE_WORK)) {
+        if (!hasPageForProfile(PROFILE_WORK)) {
             return null;
         }
-        return mListAdapterExtractor.apply(getAdapterForIndex(PROFILE_WORK));
+        return getListAdapterForPageNumber(getPageNumberForProfile(PROFILE_WORK));
     }
 
     public final SinglePageAdapterT getCurrentRootAdapter() {
-        return getAdapterForIndex(getCurrentPage());
+        return getPageAdapterForIndex(getCurrentPage());
     }
 
     public final PageViewT getActiveAdapterView() {
         return getListViewForIndex(getCurrentPage());
     }
 
-    @Nullable
-    public final PageViewT getInactiveAdapterView() {
-        if (getCount() < 2) {
-            return null;
-        }
-        return getListViewForIndex(1 - getCurrentPage());
-    }
-
     private boolean anyAdapterHasItems() {
         for (int i = 0; i < mItems.size(); ++i) {
-            ListAdapterT listAdapter = mListAdapterExtractor.apply(getAdapterForIndex(i));
+            ListAdapterT listAdapter = getListAdapterForPageNumber(i);
             if (listAdapter.getCount() > 0) {
                 return true;
             }
@@ -381,13 +475,10 @@ public class MultiProfilePagerAdapter<
     }
 
     public void refreshPackagesInAllTabs() {
-        // TODO: handle all inactive profiles; for now we can only have at most one. It's unclear if
-        // this legacy logic really requires the active tab to be rebuilt first, or if we could just
-        // iterate over the tabs in arbitrary order.
+        // TODO: it's unclear if this legacy logic really requires the active tab to be rebuilt
+        // first, or if we could just iterate over the tabs in arbitrary order.
         getActiveListAdapter().handlePackagesChanged();
-        if (getCount() > 1) {
-            getInactiveListAdapter().handlePackagesChanged();
-        }
+        forEachInactivePage(page -> getListAdapterForPageNumber(page).handlePackagesChanged());
     }
 
     /**
@@ -445,9 +536,10 @@ public class MultiProfilePagerAdapter<
         // autolaunch conditions).
         boolean rebuildCompleted = rebuildActiveTab(true) || getActiveListAdapter().isTabLoaded();
         if (includePartialRebuildOfInactiveTabs) {
-            boolean rebuildInactiveCompleted =
-                    rebuildInactiveTab(false) || getInactiveListAdapter().isTabLoaded();
-            rebuildCompleted = rebuildCompleted && rebuildInactiveCompleted;
+            // Per legacy logic, avoid short-circuiting (TODO: why? possibly so that we *start*
+            // loading the inactive tabs even if we're still waiting on the active tab to finish?).
+            boolean completedRebuildingInactiveTabs = rebuildInactiveTabs(false);
+            rebuildCompleted = rebuildCompleted && completedRebuildingInactiveTabs;
         }
         return rebuildCompleted;
     }
@@ -464,26 +556,41 @@ public class MultiProfilePagerAdapter<
     }
 
     /**
-     * Rebuilds the tab that is not currently visible to the user, if such one exists.
-     * <p>Returns {@code true} if rebuild has completed.
+     * Rebuilds any tabs that are not currently visible to the user.
+     * <p>Returns {@code true} if rebuild has completed in all inactive tabs.
      */
-    private boolean rebuildInactiveTab(boolean doPostProcessing) {
+    private boolean rebuildInactiveTabs(boolean doPostProcessing) {
         Trace.beginSection("MultiProfilePagerAdapter#rebuildInactiveTab");
-        if (getItemCount() == 1) {
-            Trace.endSection();
-            return false;
-        }
-        boolean result = rebuildTab(getInactiveListAdapter(), doPostProcessing);
+        AtomicBoolean allRebuildsComplete = new AtomicBoolean(true);
+        forEachInactivePage(pageNumber -> {
+            // Evaluate the rebuild for every inactive page, even if we've already seen some adapter
+            // return an "incomplete" status (i.e., even if `allRebuildsComplete` is already false)
+            // and so we already know we'll end up returning false for the batch.
+            // TODO: any particular reason the per-page legacy logic was set up in this order, or
+            // could we possibly short-circuit the rebuild if the tab is already "loaded"?
+            ListAdapterT inactiveAdapter = getListAdapterForPageNumber(pageNumber);
+            boolean rebuildInactivePageCompleted =
+                    rebuildTab(inactiveAdapter, doPostProcessing) || inactiveAdapter.isTabLoaded();
+            if (!rebuildInactivePageCompleted) {
+                allRebuildsComplete.set(false);
+            }
+        });
         Trace.endSection();
-        return result;
+        return allRebuildsComplete.get();
     }
 
-    private int userHandleToPageIndex(UserHandle userHandle) {
-        if (userHandle.equals(getPersonalListAdapter().getUserHandle())) {
-            return PROFILE_PERSONAL;
-        } else {
-            return PROFILE_WORK;
+    protected void forEachPage(Consumer<Integer> pageNumberHandler) {
+        for (int pageNumber = 0; pageNumber < getItemCount(); ++pageNumber) {
+            pageNumberHandler.accept(pageNumber);
         }
+    }
+
+    protected void forEachInactivePage(Consumer<Integer> inactivePageNumberHandler) {
+        forEachPage(pageNumber -> {
+            if (pageNumber != getCurrentPage()) {
+                inactivePageNumberHandler.accept(pageNumber);
+            }
+        });
     }
 
     protected boolean rebuildTab(ListAdapterT activeListAdapter, boolean doPostProcessing) {
@@ -497,10 +604,6 @@ public class MultiProfilePagerAdapter<
     private boolean shouldSkipRebuild(ListAdapterT activeListAdapter) {
         EmptyState emptyState = mEmptyStateProvider.getEmptyState(activeListAdapter);
         return emptyState != null && emptyState.shouldSkipDataRebuild();
-    }
-
-    private boolean hasAdapterForIndex(int pageIndex) {
-        return (pageIndex < getCount());
     }
 
     /**
@@ -531,8 +634,8 @@ public class MultiProfilePagerAdapter<
 
         if (emptyState.getButtonClickListener() != null) {
             clickListener = v -> emptyState.getButtonClickListener().onClick(() -> {
-                ProfileDescriptor<PageViewT, SinglePageAdapterT> descriptor = getItem(
-                        userHandleToPageIndex(listAdapter.getUserHandle()));
+                ProfileDescriptor<PageViewT, SinglePageAdapterT> descriptor =
+                        getDescriptorForUserHandle(listAdapter.getUserHandle());
                 descriptor.mEmptyStateUi.showSpinner();
             });
         }
@@ -540,24 +643,12 @@ public class MultiProfilePagerAdapter<
         showEmptyState(listAdapter, emptyState, clickListener);
     }
 
-    /**
-     * Class to get user id of the current process
-     */
-    public static class MyUserIdProvider {
-        /**
-         * @return user id of the current process
-         */
-        public int getMyUserId() {
-            return UserHandle.myUserId();
-        }
-    }
-
     private void showEmptyState(
             ListAdapterT activeListAdapter,
             EmptyState emptyState,
             View.OnClickListener buttonOnClick) {
-        ProfileDescriptor<PageViewT, SinglePageAdapterT> descriptor = getItem(
-                userHandleToPageIndex(activeListAdapter.getUserHandle()));
+        ProfileDescriptor<PageViewT, SinglePageAdapterT> descriptor =
+                getDescriptorForUserHandle(activeListAdapter.getUserHandle());
         descriptor.mEmptyStateUi.showEmptyState(emptyState, buttonOnClick);
         activeListAdapter.markTabLoaded();
     }
@@ -571,8 +662,8 @@ public class MultiProfilePagerAdapter<
     }
 
     public void showListView(ListAdapterT activeListAdapter) {
-        ProfileDescriptor<PageViewT, SinglePageAdapterT> descriptor = getItem(
-                userHandleToPageIndex(activeListAdapter.getUserHandle()));
+        ProfileDescriptor<PageViewT, SinglePageAdapterT> descriptor =
+                getDescriptorForUserHandle(activeListAdapter.getUserHandle());
         descriptor.mEmptyStateUi.hide();
     }
 
@@ -581,11 +672,14 @@ public class MultiProfilePagerAdapter<
      * application state.
      */
     public final boolean shouldShowEmptyStateScreenInAnyInactiveAdapter() {
-        if (getCount() < 2) {
-            return false;
-        }
-        // TODO: check against *any* inactive adapter; for now we only have one.
-        return shouldShowEmptyStateScreen(getInactiveListAdapter());
+        AtomicBoolean anyEmpty = new AtomicBoolean(false);
+        // TODO: The "inactive" condition is legacy logic. Could we simplify and ask "any"?
+        forEachInactivePage(pageNumber -> {
+            if (shouldShowEmptyStateScreen(getListAdapterForPageNumber(pageNumber))) {
+                anyEmpty.set(true);
+            }
+        });
+        return anyEmpty.get();
     }
 
     public boolean shouldShowEmptyStateScreen(ListAdapterT listAdapter) {
@@ -595,72 +689,4 @@ public class MultiProfilePagerAdapter<
                     && mWorkProfileQuietModeChecker.get());
     }
 
-    // TODO: `ChooserActivity` also has a per-profile record type. Maybe the "multi-profile pager"
-    // should be the owner of all per-profile data (especially now that the API is generic)?
-    private static class ProfileDescriptor<PageViewT, SinglePageAdapterT> {
-        final ViewGroup mRootView;
-        final EmptyStateUiHelper mEmptyStateUi;
-
-        // TODO: post-refactoring, we may not need to retain these ivars directly (since they may
-        // be encapsulated within the `EmptyStateUiHelper`?).
-        private final ViewGroup mEmptyStateView;
-
-        private final SinglePageAdapterT mAdapter;
-        private final PageViewT mView;
-
-        ProfileDescriptor(
-                ViewGroup rootView,
-                SinglePageAdapterT adapter,
-                Supplier<Optional<Integer>> containerBottomPaddingOverrideSupplier) {
-            mRootView = rootView;
-            mAdapter = adapter;
-            mEmptyStateView = rootView.findViewById(com.android.internal.R.id.resolver_empty_state);
-            mView = (PageViewT) rootView.findViewById(com.android.internal.R.id.resolver_list);
-            mEmptyStateUi = new EmptyStateUiHelper(
-                    rootView,
-                    com.android.internal.R.id.resolver_list,
-                    containerBottomPaddingOverrideSupplier);
-        }
-
-        protected ViewGroup getEmptyStateView() {
-            return mEmptyStateView;
-        }
-
-        private void setupContainerPadding() {
-            mEmptyStateUi.setupContainerPadding();
-        }
-    }
-
-    /** Listener interface for changes between the per-profile UI tabs. */
-    public interface OnProfileSelectedListener {
-        /**
-         * Callback for when the user changes the active tab from personal to work or vice versa.
-         * <p>This callback is only called when the intent resolver or share sheet shows
-         * the work and personal profiles.
-         * @param profileIndex {@link #PROFILE_PERSONAL} if the personal profile was selected or
-         * {@link #PROFILE_WORK} if the work profile was selected.
-         */
-        void onProfileSelected(int profileIndex);
-
-
-        /**
-         * Callback for when the scroll state changes. Useful for discovering when the user begins
-         * dragging, when the pager is automatically settling to the current page, or when it is
-         * fully stopped/idle.
-         * @param state {@link ViewPager#SCROLL_STATE_IDLE}, {@link ViewPager#SCROLL_STATE_DRAGGING}
-         *              or {@link ViewPager#SCROLL_STATE_SETTLING}
-         * @see ViewPager.OnPageChangeListener#onPageScrollStateChanged
-         */
-        void onProfilePageStateChanged(int state);
-    }
-
-    /**
-     * Listener for when the user switches on the work profile from the work tab.
-     */
-    public interface OnSwitchOnWorkSelectedListener {
-        /**
-         * Callback for when the user switches on the work profile from the work tab.
-         */
-        void onSwitchOnWorkSelected();
-    }
 }

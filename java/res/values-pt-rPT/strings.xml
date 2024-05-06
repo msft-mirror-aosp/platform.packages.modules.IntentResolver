@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{A partilhar vídeo com link}many{A partilhar # vídeos com link}other{A partilhar # vídeos com link}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{A partilhar ficheiro com texto}many{A partilhar # ficheiros com texto}other{A partilhar # ficheiros com texto}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{A partilhar ficheiro com link}many{A partilhar # ficheiros com link}other{A partilhar # ficheiros com link}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"A partilhar álbum"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Apenas imagem}many{Apenas imagens}other{Apenas imagens}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Apenas vídeo}many{Apenas vídeos}other{Apenas vídeos}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Apenas ficheiro}many{Apenas ficheiros}other{Apenas ficheiros}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Esta app não recebeu autorização de gravação, mas pode capturar áudio através deste dispositivo USB."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Pessoal"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Trabalho"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Privada"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Vista pessoal"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Vista de trabalho"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Vista privada"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Bloqueado pelo administrador de TI"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Não é possível partilhar este conteúdo com apps de trabalho"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Não é possível abrir este conteúdo com apps de trabalho"</string>
