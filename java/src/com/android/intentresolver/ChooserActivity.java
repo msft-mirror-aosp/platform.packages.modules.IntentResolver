@@ -2612,7 +2612,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
         mSystemWindowInsets = insets.getInsets(WindowInsets.Type.systemBars());
-        if (mFeatureFlags.fixEmptyStatePadding() || mProfiles.getWorkProfilePresent()) {
+        if (mFeatureFlags.fixEmptyStatePaddingBug() || mProfiles.getWorkProfilePresent()) {
             mChooserMultiProfilePagerAdapter
                     .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
         }
