@@ -25,15 +25,15 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.R
 import com.android.intentresolver.ResolverListAdapter
 import com.android.intentresolver.emptystate.EmptyStateProvider
-import com.android.intentresolver.mock
 import com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL
 import com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK
-import com.android.intentresolver.whenever
 import com.google.common.collect.ImmutableList
 import com.google.common.truth.Truth.assertThat
 import java.util.Optional
 import java.util.function.Supplier
 import org.junit.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 class MultiProfilePagerAdapterTest {
     private val PERSONAL_USER_HANDLE = UserHandle.of(10)
@@ -48,7 +48,7 @@ class MultiProfilePagerAdapterTest {
     @Test
     fun testSinglePageProfileAdapter() {
         val personalListAdapter =
-            mock<ResolverListAdapter> { whenever(getUserHandle()).thenReturn(PERSONAL_USER_HANDLE) }
+            mock<ResolverListAdapter> { on { userHandle } doReturn PERSONAL_USER_HANDLE }
         val pagerAdapter =
             MultiProfilePagerAdapter(
                 { listAdapter: ResolverListAdapter -> listAdapter },
@@ -87,9 +87,9 @@ class MultiProfilePagerAdapterTest {
     @Test
     fun testTwoProfilePagerAdapter() {
         val personalListAdapter =
-            mock<ResolverListAdapter> { whenever(getUserHandle()).thenReturn(PERSONAL_USER_HANDLE) }
+            mock<ResolverListAdapter> { on { userHandle } doReturn PERSONAL_USER_HANDLE }
         val workListAdapter =
-            mock<ResolverListAdapter> { whenever(getUserHandle()).thenReturn(WORK_USER_HANDLE) }
+            mock<ResolverListAdapter> { on { userHandle } doReturn WORK_USER_HANDLE }
         val pagerAdapter =
             MultiProfilePagerAdapter(
                 { listAdapter: ResolverListAdapter -> listAdapter },
@@ -134,9 +134,9 @@ class MultiProfilePagerAdapterTest {
     @Test
     fun testTwoProfilePagerAdapter_workIsDefault() {
         val personalListAdapter =
-            mock<ResolverListAdapter> { whenever(getUserHandle()).thenReturn(PERSONAL_USER_HANDLE) }
+            mock<ResolverListAdapter> { on { userHandle } doReturn PERSONAL_USER_HANDLE }
         val workListAdapter =
-            mock<ResolverListAdapter> { whenever(getUserHandle()).thenReturn(WORK_USER_HANDLE) }
+            mock<ResolverListAdapter> { on { userHandle } doReturn WORK_USER_HANDLE }
         val pagerAdapter =
             MultiProfilePagerAdapter(
                 { listAdapter: ResolverListAdapter -> listAdapter },
@@ -179,7 +179,7 @@ class MultiProfilePagerAdapterTest {
     @Test
     fun testBottomPaddingDelegate_default() {
         val personalListAdapter =
-            mock<ResolverListAdapter> { whenever(getUserHandle()).thenReturn(PERSONAL_USER_HANDLE) }
+            mock<ResolverListAdapter> { on { userHandle } doReturn PERSONAL_USER_HANDLE }
         val pagerAdapter =
             MultiProfilePagerAdapter(
                 { listAdapter: ResolverListAdapter -> listAdapter },
@@ -204,9 +204,9 @@ class MultiProfilePagerAdapterTest {
                 { Optional.empty() }
             )
         val container =
-            pagerAdapter
-                .getActiveEmptyStateView()
-                .requireViewById<View>(com.android.internal.R.id.resolver_empty_state_container)
+            pagerAdapter.activeEmptyStateView.requireViewById<View>(
+                com.android.internal.R.id.resolver_empty_state_container
+            )
         container.setPadding(1, 2, 3, 4)
         pagerAdapter.setupContainerPadding()
         assertThat(container.paddingLeft).isEqualTo(1)
@@ -218,7 +218,7 @@ class MultiProfilePagerAdapterTest {
     @Test
     fun testBottomPaddingDelegate_override() {
         val personalListAdapter =
-            mock<ResolverListAdapter> { whenever(getUserHandle()).thenReturn(PERSONAL_USER_HANDLE) }
+            mock<ResolverListAdapter> { on { userHandle } doReturn PERSONAL_USER_HANDLE }
         val pagerAdapter =
             MultiProfilePagerAdapter(
                 { listAdapter: ResolverListAdapter -> listAdapter },
@@ -243,9 +243,9 @@ class MultiProfilePagerAdapterTest {
                 { Optional.of(42) }
             )
         val container =
-            pagerAdapter
-                .getActiveEmptyStateView()
-                .requireViewById<View>(com.android.internal.R.id.resolver_empty_state_container)
+            pagerAdapter.activeEmptyStateView.requireViewById<View>(
+                com.android.internal.R.id.resolver_empty_state_container
+            )
         container.setPadding(1, 2, 3, 4)
         pagerAdapter.setupContainerPadding()
         assertThat(container.paddingLeft).isEqualTo(1)
@@ -261,13 +261,13 @@ class MultiProfilePagerAdapterTest {
         // believe `shouldShowEmptyStateScreen` should be implemented in terms of the provider?
         val personalListAdapter =
             mock<ResolverListAdapter> {
-                whenever(getUserHandle()).thenReturn(PERSONAL_USER_HANDLE)
-                whenever(getUnfilteredCount()).thenReturn(1)
+                on { userHandle } doReturn PERSONAL_USER_HANDLE
+                on { unfilteredCount } doReturn 1
             }
         val workListAdapter =
             mock<ResolverListAdapter> {
-                whenever(getUserHandle()).thenReturn(WORK_USER_HANDLE)
-                whenever(getUnfilteredCount()).thenReturn(1)
+                on { userHandle } doReturn WORK_USER_HANDLE
+                on { unfilteredCount } doReturn 1
             }
         val pagerAdapter =
             MultiProfilePagerAdapter(
@@ -304,13 +304,13 @@ class MultiProfilePagerAdapterTest {
         // believe `shouldShowEmptyStateScreen` should be implemented in terms of the provider?
         val personalListAdapter =
             mock<ResolverListAdapter> {
-                whenever(getUserHandle()).thenReturn(PERSONAL_USER_HANDLE)
-                whenever(getUnfilteredCount()).thenReturn(1)
+                on { userHandle } doReturn PERSONAL_USER_HANDLE
+                on { unfilteredCount } doReturn 1
             }
         val workListAdapter =
             mock<ResolverListAdapter> {
-                whenever(getUserHandle()).thenReturn(WORK_USER_HANDLE)
-                whenever(getUnfilteredCount()).thenReturn(1)
+                on { userHandle } doReturn WORK_USER_HANDLE
+                on { unfilteredCount } doReturn 1
             }
         val pagerAdapter =
             MultiProfilePagerAdapter(
