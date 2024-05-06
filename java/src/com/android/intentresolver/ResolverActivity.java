@@ -16,12 +16,7 @@
 
 package com.android.intentresolver;
 
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_PERSONAL;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_WORK;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROSS_PROFILE_BLOCKED_TITLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL;
-import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
 import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
 
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
@@ -94,8 +89,6 @@ import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
 import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
-import com.android.intentresolver.emptystate.DevicePolicyBlockerEmptyState;
-import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.emptystate.NoAppsAvailableEmptyStateProvider;
 import com.android.intentresolver.emptystate.NoCrossProfileEmptyStateProvider;
@@ -184,7 +177,6 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     private Space mFooterSpacer = null;
 
     protected static final String METRICS_CATEGORY_RESOLVER = "intent_resolver";
-    protected static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
 
     /** Tracks if we should ignore future broadcasts telling us the work profile is enabled */
     private final boolean mWorkProfileHasBeenEnabled = false;
@@ -449,42 +441,17 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     }
 
     protected EmptyStateProvider createBlockerEmptyStateProvider() {
-        final boolean shouldShowNoCrossProfileIntentsEmptyState = getUser().equals(getIntentUser());
+        boolean shouldShowNoCrossProfileIntentsEmptyState = getUser().equals(getIntentUser());
 
         if (!shouldShowNoCrossProfileIntentsEmptyState) {
             // Implementation that doesn't show any blockers
             return new EmptyStateProvider() {};
         }
-
-        final EmptyState noWorkToPersonalEmptyState =
-                new DevicePolicyBlockerEmptyState(
-                        /* context= */ this,
-                        /* devicePolicyStringTitleId= */ RESOLVER_CROSS_PROFILE_BLOCKED_TITLE,
-                        /* defaultTitleResource= */ R.string.resolver_cross_profile_blocked,
-                        /* devicePolicyStringSubtitleId= */ RESOLVER_CANT_ACCESS_PERSONAL,
-                        /* defaultSubtitleResource= */
-                        R.string.resolver_cant_access_personal_apps_explanation,
-                        /* devicePolicyEventId= */ RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL,
-                        /* devicePolicyEventCategory= */
-                                ResolverActivity.METRICS_CATEGORY_RESOLVER);
-
-        final EmptyState noPersonalToWorkEmptyState =
-                new DevicePolicyBlockerEmptyState(
-                        /* context= */ this,
-                        /* devicePolicyStringTitleId= */ RESOLVER_CROSS_PROFILE_BLOCKED_TITLE,
-                        /* defaultTitleResource= */ R.string.resolver_cross_profile_blocked,
-                        /* devicePolicyStringSubtitleId= */ RESOLVER_CANT_ACCESS_WORK,
-                        /* defaultSubtitleResource= */
-                        R.string.resolver_cant_access_work_apps_explanation,
-                        /* devicePolicyEventId= */ RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK,
-                        /* devicePolicyEventCategory= */
-                                ResolverActivity.METRICS_CATEGORY_RESOLVER);
-
         return new NoCrossProfileEmptyStateProvider(
                 mProfiles,
-                noWorkToPersonalEmptyState,
-                noPersonalToWorkEmptyState,
-                createCrossProfileIntentsChecker());
+                mDevicePolicyResources,
+                createCrossProfileIntentsChecker(),
+                /* isShare= */ false);
     }
 
     /**

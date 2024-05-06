@@ -25,8 +25,6 @@ import androidx.annotation.IdRes
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import com.android.intentresolver.R
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.android.intentresolver.widget.ActionRow
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -36,10 +34,12 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.anyInt
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 private const val HEADLINE_IMAGES = "Image Headline"
 private const val HEADLINE_VIDEOS = "Video Headline"
@@ -64,9 +64,9 @@ class FilesPlusTextContentPreviewUiTest {
     private val imageLoader = mock<ImageLoader>()
     private val headlineGenerator =
         mock<HeadlineGenerator> {
-            whenever(getImagesHeadline(anyInt())).thenReturn(HEADLINE_IMAGES)
-            whenever(getVideosHeadline(anyInt())).thenReturn(HEADLINE_VIDEOS)
-            whenever(getFilesHeadline(anyInt())).thenReturn(HEADLINE_FILES)
+            on { getImagesHeadline(any()) } doReturn HEADLINE_IMAGES
+            on { getVideosHeadline(any()) } doReturn HEADLINE_VIDEOS
+            on { getFilesHeadline(any()) } doReturn HEADLINE_FILES
         }
     private val testMetadataText: CharSequence = "Test metadata text"
 

@@ -41,14 +41,9 @@ import android.service.chooser.ChooserTarget
 import android.service.chooser.Flags
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.intentresolver.any
-import com.android.intentresolver.argumentCaptor
-import com.android.intentresolver.capture
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate.Absent
 import com.android.intentresolver.inject.FakeChooserServiceFlags
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Correspondence
 import com.google.common.truth.Correspondence.BinaryPredicate
 import com.google.common.truth.Truth.assertThat
@@ -57,8 +52,13 @@ import java.lang.IllegalArgumentException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.capture
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @RunWith(AndroidJUnit4::class)
 class SelectionChangeCallbackImplTest {
@@ -97,25 +97,24 @@ class SelectionChangeCallbackImplTest {
         val extraCaptor = argumentCaptor<Bundle>()
         verify(contentResolver, times(1))
             .call(
-                capture(authorityCaptor),
-                capture(methodCaptor),
-                capture(argCaptor),
-                capture(extraCaptor)
+                authorityCaptor.capture(),
+                methodCaptor.capture(),
+                argCaptor.capture(),
+                extraCaptor.capture()
             )
         assertWithMessage("Wrong additional content provider authority")
-            .that(authorityCaptor.value)
+            .that(authorityCaptor.firstValue)
             .isEqualTo(uri.authority)
         assertWithMessage("Wrong additional content provider #call() method name")
-            .that(methodCaptor.value)
+            .that(methodCaptor.firstValue)
             .isEqualTo(ON_SELECTION_CHANGED)
         assertWithMessage("Wrong additional content provider argument value")
-            .that(argCaptor.value)
+            .that(argCaptor.firstValue)
             .isEqualTo(uri.toString())
-        val extraBundle = extraCaptor.value
+        val extraBundle = extraCaptor.firstValue
         assertWithMessage("Additional content provider #call() should have a non-null extras arg.")
             .that(extraBundle)
             .isNotNull()
-        requireNotNull(extraBundle)
         val argChooserIntent = extraBundle.getParcelable(EXTRA_INTENT, Intent::class.java)
         assertWithMessage("#call() extras arg. should contain Intent#EXTRA_INTENT")
             .that(argChooserIntent)
