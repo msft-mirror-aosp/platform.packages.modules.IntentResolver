@@ -109,6 +109,7 @@ import com.android.intentresolver.emptystate.NoAppsAvailableEmptyStateProvider;
 import com.android.intentresolver.emptystate.NoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.emptystate.WorkProfilePausedEmptyStateProvider;
 import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.icons.Caching;
 import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.inject.Background;
 import com.android.intentresolver.logging.EventLog;
@@ -166,6 +167,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * The Chooser Activity handles intent resolution specifically for sharing intents -
@@ -256,7 +258,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Inject @AppPredictionAvailable public boolean mAppPredictionAvailable;
     @Inject @ImageEditor public Optional<ComponentName> mImageEditor;
     @Inject @NearbyShare public Optional<ComponentName> mNearbyShare;
-    @Inject public TargetDataLoader mTargetDataLoader;
+    protected TargetDataLoader mTargetDataLoader;
+    @Inject public Provider<TargetDataLoader> mTargetDataLoaderProvider;
+    @Inject
+    @Caching
+    public Provider<TargetDataLoader> mCachingTargetDataLoaderProvider;
     @Inject public DevicePolicyResources mDevicePolicyResources;
     @Inject public ProfilePagerResources mProfilePagerResources;
     @Inject public PackageManager mPackageManager;
@@ -330,6 +336,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
+
+        mTargetDataLoader = mChooserServiceFeatureFlags.chooserPayloadToggling()
+                ? mCachingTargetDataLoaderProvider.get()
+                : mTargetDataLoaderProvider.get();
 
         setTheme(R.style.Theme_DeviceDefault_Chooser);
 
@@ -767,6 +777,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
         mChooserMultiProfilePagerAdapter.setCurrentPage(currentPage);
+        for (int i = 0, count = mChooserMultiProfilePagerAdapter.getItemCount(); i < count; i++) {
+            mChooserMultiProfilePagerAdapter.getPageAdapterForIndex(i)
+                    .getListAdapter().setAnimateItems(false);
+        }
         if (mPersonalPackageMonitor != null) {
             mPersonalPackageMonitor.unregister();
         }
@@ -1373,17 +1387,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     static SharedPreferences getPinnedSharedPrefs(Context context) {
         return context.getSharedPreferences(PINNED_SHARED_PREFS_NAME, MODE_PRIVATE);
-    }
-
-    protected ChooserMultiProfilePagerAdapter createMultiProfilePagerAdapter() {
-        return createMultiProfilePagerAdapter(
-                /* context = */ this,
-                mProfilePagerResources,
-                mViewModel.getRequest().getValue(),
-                mProfiles,
-                mProfileAvailability,
-                mRequest.getInitialIntents(),
-                mMaxTargetsPerRow);
     }
 
     private ChooserMultiProfilePagerAdapter createMultiProfilePagerAdapter(

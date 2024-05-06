@@ -171,11 +171,12 @@ public class ResolverWrapperActivity extends ResolverActivity {
         }
 
         @Override
-        public void loadAppTargetIcon(
+        @Nullable
+        public Drawable getOrLoadAppTargetIcon(
                 @NonNull DisplayResolveInfo info,
                 @NonNull UserHandle userHandle,
                 @NonNull Consumer<Drawable> callback) {
-            mTargetDataLoader.loadAppTargetIcon(info, userHandle, callback);
+            return mTargetDataLoader.getOrLoadAppTargetIcon(info, userHandle, callback);
         }
 
         @Override
