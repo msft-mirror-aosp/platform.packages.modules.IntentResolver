@@ -39,8 +39,11 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 @RunWith(AndroidJUnit4::class)
 class ChooserListAdapterTest {
@@ -49,7 +52,7 @@ class ChooserListAdapterTest {
 
     private val packageManager =
         mock<PackageManager> {
-            whenever(resolveActivity(any(), any<ResolveInfoFlags>())).thenReturn(mock())
+            on { resolveActivity(any(), any<ResolveInfoFlags>()) } doReturn (mock())
         }
     private val context = InstrumentationRegistry.getInstrumentation().context
     private val resolverListController = mock<ResolverListController>()
@@ -137,7 +140,7 @@ class ChooserListAdapterTest {
 
         testSubject.onBindView(view, targetInfo, 0)
 
-        verify(mTargetDataLoader, times(1)).loadAppTargetIcon(any(), any(), any())
+        verify(mTargetDataLoader, times(1)).getOrLoadAppTargetIcon(any(), any(), any())
     }
 
     @Test

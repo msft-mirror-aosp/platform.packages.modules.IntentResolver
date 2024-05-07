@@ -25,12 +25,11 @@ import androidx.annotation.IdRes
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import com.android.intentresolver.R
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.takeWhile
@@ -39,9 +38,11 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.anyInt
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 private const val IMAGE_HEADLINE = "Image Headline"
 private const val VIDEO_HEADLINE = "Video Headline"
@@ -49,17 +50,18 @@ private const val FILES_HEADLINE = "Files Headline"
 
 @RunWith(AndroidJUnit4::class)
 class UnifiedContentPreviewUiTest {
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val testScope = TestScope(EmptyCoroutineContext + UnconfinedTestDispatcher())
     private val actionFactory =
         mock<ChooserContentPreviewUi.ActionFactory> {
-            whenever(createCustomActions()).thenReturn(emptyList())
+            on { createCustomActions() } doReturn emptyList()
         }
     private val imageLoader = mock<ImageLoader>()
     private val headlineGenerator =
         mock<HeadlineGenerator> {
-            whenever(getImagesHeadline(anyInt())).thenReturn(IMAGE_HEADLINE)
-            whenever(getVideosHeadline(anyInt())).thenReturn(VIDEO_HEADLINE)
-            whenever(getFilesHeadline(anyInt())).thenReturn(FILES_HEADLINE)
+            on { getImagesHeadline(any()) } doReturn IMAGE_HEADLINE
+            on { getVideosHeadline(any()) } doReturn VIDEO_HEADLINE
+            on { getFilesHeadline(any()) } doReturn FILES_HEADLINE
         }
     private val testMetadataText: CharSequence = "Test metadata text"
 

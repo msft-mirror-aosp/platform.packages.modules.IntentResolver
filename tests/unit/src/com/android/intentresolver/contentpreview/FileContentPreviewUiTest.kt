@@ -23,13 +23,13 @@ import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.R
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.android.intentresolver.widget.ActionRow
 import com.google.common.truth.Truth.assertThat
 import java.util.function.Consumer
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 @RunWith(AndroidJUnit4::class)
 class FileContentPreviewUiTest {
@@ -45,7 +45,7 @@ class FileContentPreviewUiTest {
             override fun getExcludeSharedTextAction(): Consumer<Boolean> = Consumer<Boolean> {}
         }
     private val headlineGenerator =
-        mock<HeadlineGenerator> { whenever(getFilesHeadline(fileCount)).thenReturn(text) }
+        mock<HeadlineGenerator> { on { getFilesHeadline(fileCount) } doReturn text }
 
     private val context
         get() = InstrumentationRegistry.getInstrumentation().context

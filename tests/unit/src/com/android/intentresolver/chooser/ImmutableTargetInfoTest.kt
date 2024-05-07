@@ -27,9 +27,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.ResolverActivity
 import com.android.intentresolver.ResolverDataProvider
 import com.android.intentresolver.createShortcutInfo
-import com.android.intentresolver.mock
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
+import org.mockito.kotlin.mock
 
 class ImmutableTargetInfoTest {
     private val PERSONAL_USER_HANDLE: UserHandle =
@@ -223,8 +223,8 @@ class ImmutableTargetInfoTest {
             ImmutableTargetInfo.newBuilder().setResolvedIntent(originalIntent).build()
         val info = checkNotNull(originalInfo.tryToCloneWithAppliedRefinement(refinementIntent))
 
-        assertThat(info?.baseIntentToSend?.getBooleanExtra("ORIGINAL", false)).isTrue()
-        assertThat(info?.baseIntentToSend?.getBooleanExtra("REFINEMENT", false)).isTrue()
+        assertThat(info.baseIntentToSend?.getBooleanExtra("ORIGINAL", false)).isTrue()
+        assertThat(info.baseIntentToSend?.getBooleanExtra("REFINEMENT", false)).isTrue()
     }
 
     @Test
@@ -248,9 +248,9 @@ class ImmutableTargetInfoTest {
         val info =
             checkNotNull(infoWithReferrerFillIn.tryToCloneWithAppliedRefinement(refinementIntent))
 
-        assertThat(info?.baseIntentToSend?.getPackage()).isEqualTo("original") // Set all along.
-        assertThat(info?.baseIntentToSend?.action).isEqualTo("REFINE_ME") // Refinement wins.
-        assertThat(info?.baseIntentToSend?.type).isEqualTo("test/referrer") // Left for referrer.
+        assertThat(info.baseIntentToSend?.getPackage()).isEqualTo("original") // Set all along.
+        assertThat(info.baseIntentToSend?.action).isEqualTo("REFINE_ME") // Refinement wins.
+        assertThat(info.baseIntentToSend?.type).isEqualTo("test/referrer") // Left for referrer.
     }
 
     @Test
@@ -274,15 +274,15 @@ class ImmutableTargetInfoTest {
         val refined2 = checkNotNull(refined1.tryToCloneWithAppliedRefinement(refinementIntent2))
 
         // Both clones get the same values filled in from the referrer intent.
-        assertThat(refined1?.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
-        assertThat(refined2?.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
+        assertThat(refined1.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
+        assertThat(refined2.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
         // Each clone has the respective value that was set in their own refinement request.
-        assertThat(refined1?.baseIntentToSend?.getStringExtra("TEST1")).isEqualTo("1")
-        assertThat(refined2?.baseIntentToSend?.getStringExtra("TEST2")).isEqualTo("2")
+        assertThat(refined1.baseIntentToSend?.getStringExtra("TEST1")).isEqualTo("1")
+        assertThat(refined2.baseIntentToSend?.getStringExtra("TEST2")).isEqualTo("2")
         // The clones don't have the data from each other's refinements, even though the intent
         // field is empty (thus able to be populated by filling-in).
-        assertThat(refined1?.baseIntentToSend?.getStringExtra("TEST2")).isNull()
-        assertThat(refined2?.baseIntentToSend?.getStringExtra("TEST1")).isNull()
+        assertThat(refined1.baseIntentToSend?.getStringExtra("TEST2")).isNull()
+        assertThat(refined2.baseIntentToSend?.getStringExtra("TEST1")).isNull()
     }
 
     @Test
@@ -308,15 +308,15 @@ class ImmutableTargetInfoTest {
         refinement.putExtra("refinement", true)
 
         val refinedResult = checkNotNull(originalInfo.tryToCloneWithAppliedRefinement(refinement))
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("refinement", false)).isTrue()
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("targetAlternate", false))
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("refinement", false)).isTrue()
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("targetAlternate", false))
             .isTrue()
         // None of the other source intents got merged in (not even the later one that matched):
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("originalIntent", false))
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("originalIntent", false))
             .isFalse()
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("mismatchedAlternate", false))
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("mismatchedAlternate", false))
             .isFalse()
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("extraMatch", false)).isFalse()
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("extraMatch", false)).isFalse()
     }
 
     @Test
@@ -496,7 +496,7 @@ private open class TestActivityStarter : ImmutableTargetInfo.TargetActivityStart
     var lastInvocationTargetInfo: TargetInfo? = null
     var lastInvocationActivity: Activity? = null
     var lastInvocationOptions: Bundle? = null
-    var lastInvocationUserId: Integer? = null
+    var lastInvocationUserId: Int? = null
     var lastInvocationAsCaller = false
 
     override fun startAsCaller(
@@ -509,7 +509,7 @@ private open class TestActivityStarter : ImmutableTargetInfo.TargetActivityStart
         lastInvocationTargetInfo = target
         lastInvocationActivity = activity
         lastInvocationOptions = options
-        lastInvocationUserId = Integer(userId)
+        lastInvocationUserId = userId
         lastInvocationAsCaller = true
         return true
     }
@@ -524,7 +524,7 @@ private open class TestActivityStarter : ImmutableTargetInfo.TargetActivityStart
         lastInvocationTargetInfo = target
         lastInvocationActivity = activity
         lastInvocationOptions = options
-        lastInvocationUserId = Integer(user.identifier)
+        lastInvocationUserId = user.identifier
         lastInvocationAsCaller = false
         return true
     }

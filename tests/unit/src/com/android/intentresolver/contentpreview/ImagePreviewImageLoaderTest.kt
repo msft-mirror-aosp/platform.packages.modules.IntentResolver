@@ -20,10 +20,6 @@ import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Size
-import com.android.intentresolver.any
-import com.android.intentresolver.anyOrNull
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertThat
 import java.util.ArrayDeque
 import java.util.concurrent.CountDownLatch
@@ -52,9 +48,16 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.doAnswer
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ImagePreviewImageLoaderTest {
@@ -63,9 +66,7 @@ class ImagePreviewImageLoaderTest {
     private val uriTwo = Uri.parse("content://org.package.app/image-2.png")
     private val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
     private val contentResolver =
-        mock<ContentResolver> {
-            whenever(loadThumbnail(any(), any(), anyOrNull())).thenReturn(bitmap)
-        }
+        mock<ContentResolver> { on { loadThumbnail(any(), any(), anyOrNull()) } doReturn bitmap }
     private val scheduler = TestCoroutineScheduler()
     private val dispatcher = UnconfinedTestDispatcher(scheduler)
     private val scope = TestScope(dispatcher)
@@ -211,8 +212,8 @@ class ImagePreviewImageLoaderTest {
         scope.runTest {
             val contentResolver =
                 mock<ContentResolver> {
-                    whenever(loadThumbnail(any(), any(), anyOrNull()))
-                        .thenThrow(SecurityException("test"))
+                    on { loadThumbnail(any(), any(), anyOrNull()) } doThrow
+                        SecurityException("test")
                 }
             val acquireCount = AtomicInteger()
             val releaseCount = AtomicInteger()
@@ -298,13 +299,16 @@ class ImagePreviewImageLoaderTest {
             val pendingThumbnailCalls = ArrayDeque<CountDownLatch>()
             val contentResolver =
                 mock<ContentResolver> {
-                    whenever(loadThumbnail(any(), any(), anyOrNull())).thenAnswer {
-                        val latch = CountDownLatch(1)
-                        synchronized(pendingThumbnailCalls) { pendingThumbnailCalls.offer(latch) }
-                        thumbnailCallsCdl.countDown()
-                        assertTrue("Timeout waiting thumbnail calls", latch.await(1, SECONDS))
-                        bitmap
-                    }
+                    on { loadThumbnail(any(), any(), anyOrNull()) } doAnswer
+                        {
+                            val latch = CountDownLatch(1)
+                            synchronized(pendingThumbnailCalls) {
+                                pendingThumbnailCalls.offer(latch)
+                            }
+                            thumbnailCallsCdl.countDown()
+                            assertTrue("Timeout waiting thumbnail calls", latch.await(1, SECONDS))
+                            bitmap
+                        }
                 }
             val name = "LoadImage"
             val maxSimultaneousRequests = 2

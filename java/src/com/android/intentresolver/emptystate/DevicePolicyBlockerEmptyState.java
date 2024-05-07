@@ -17,40 +17,26 @@
 package com.android.intentresolver.emptystate;
 
 import android.app.admin.DevicePolicyEventLogger;
-import android.app.admin.DevicePolicyManager;
-import android.content.Context;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 
 /**
  * Empty state that gets strings from the device policy manager and tracks events into
  * event logger of the device policy events.
  */
 public class DevicePolicyBlockerEmptyState implements EmptyState {
-
-    @NonNull
-    private final Context mContext;
-    private final String mDevicePolicyStringTitleId;
-    @StringRes
-    private final int mDefaultTitleResource;
-    private final String mDevicePolicyStringSubtitleId;
-    @StringRes
-    private final int mDefaultSubtitleResource;
+    private final String mTitle;
+    private final String mSubtitle;
     private final int mEventId;
-    @NonNull
     private final String mEventCategory;
 
-    public DevicePolicyBlockerEmptyState(@NonNull Context context,
-            String devicePolicyStringTitleId, @StringRes int defaultTitleResource,
-            String devicePolicyStringSubtitleId, @StringRes int defaultSubtitleResource,
-            int devicePolicyEventId, @NonNull String devicePolicyEventCategory) {
-        mContext = context;
-        mDevicePolicyStringTitleId = devicePolicyStringTitleId;
-        mDefaultTitleResource = defaultTitleResource;
-        mDevicePolicyStringSubtitleId = devicePolicyStringSubtitleId;
-        mDefaultSubtitleResource = defaultSubtitleResource;
+    public DevicePolicyBlockerEmptyState(
+            String title,
+            String subtitle,
+            int devicePolicyEventId,
+            String devicePolicyEventCategory) {
+        mTitle = title;
+        mSubtitle = subtitle;
         mEventId = devicePolicyEventId;
         mEventCategory = devicePolicyEventCategory;
     }
@@ -58,24 +44,22 @@ public class DevicePolicyBlockerEmptyState implements EmptyState {
     @Nullable
     @Override
     public String getTitle() {
-        return mContext.getSystemService(DevicePolicyManager.class).getResources().getString(
-                mDevicePolicyStringTitleId,
-                () -> mContext.getString(mDefaultTitleResource));
+        return mTitle;
     }
 
     @Nullable
     @Override
     public String getSubtitle() {
-        return mContext.getSystemService(DevicePolicyManager.class).getResources().getString(
-                mDevicePolicyStringSubtitleId,
-                () -> mContext.getString(mDefaultSubtitleResource));
+        return mSubtitle;
     }
 
     @Override
     public void onEmptyStateShown() {
-        DevicePolicyEventLogger.createEvent(mEventId)
-                .setStrings(mEventCategory)
-                .write();
+        if (mEventId != -1) {
+            DevicePolicyEventLogger.createEvent(mEventId)
+                    .setStrings(mEventCategory)
+                    .write();
+        }
     }
 
     @Override

@@ -25,11 +25,11 @@ import java.util.function.Consumer
 /** A target data loader contract. Added to support testing. */
 abstract class TargetDataLoader {
     /** Load an app target icon */
-    abstract fun loadAppTargetIcon(
+    abstract fun getOrLoadAppTargetIcon(
         info: DisplayResolveInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
-    )
+    ): Drawable?
 
     /** Load a shortcut icon */
     abstract fun loadDirectShareIcon(

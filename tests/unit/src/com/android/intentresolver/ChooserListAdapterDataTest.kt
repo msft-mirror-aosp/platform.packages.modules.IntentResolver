@@ -31,29 +31,33 @@ import com.android.intentresolver.util.TestExecutor
 import com.android.internal.logging.InstanceId
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
-import org.mockito.Mockito
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class ChooserListAdapterDataTest {
     private val layoutInflater = mock<LayoutInflater>()
     private val packageManager = mock<PackageManager>()
-    private val userManager = mock<UserManager> { whenever(isManagedProfile).thenReturn(false) }
+    private val userManager = mock<UserManager> { on { isManagedProfile } doReturn false }
     private val resources =
         mock<android.content.res.Resources> {
-            whenever(getInteger(R.integer.config_maxShortcutTargetsPerApp)).thenReturn(2)
+            on { getInteger(R.integer.config_maxShortcutTargetsPerApp) } doReturn 2
         }
     private val context =
         mock<Context> {
-            whenever(getSystemService(Context.LAYOUT_INFLATER_SERVICE)).thenReturn(layoutInflater)
-            whenever(getSystemService(Context.USER_SERVICE)).thenReturn(userManager)
-            whenever(packageManager).thenReturn(this@ChooserListAdapterDataTest.packageManager)
-            whenever(resources).thenReturn(this@ChooserListAdapterDataTest.resources)
+            on { getSystemService(Context.LAYOUT_INFLATER_SERVICE) } doReturn layoutInflater
+            on { getSystemService(Context.USER_SERVICE) } doReturn userManager
+            on { packageManager } doReturn this@ChooserListAdapterDataTest.packageManager
+            on { resources } doReturn this@ChooserListAdapterDataTest.resources
         }
     private val targetIntent = Intent(Intent.ACTION_SEND)
     private val payloadIntents = listOf(targetIntent)
     private val resolverListController =
         mock<ResolverListController> {
-            whenever(filterIneligibleActivities(any(), Mockito.anyBoolean())).thenReturn(null)
-            whenever(filterLowPriority(any(), Mockito.anyBoolean())).thenReturn(null)
+            on { filterIneligibleActivities(any(), any()) } doReturn null
+            on { filterLowPriority(any(), any()) } doReturn null
         }
     private val resolverListCommunicator = FakeResolverListCommunicator()
     private val userHandle = UserHandle.of(UserHandle.USER_CURRENT)

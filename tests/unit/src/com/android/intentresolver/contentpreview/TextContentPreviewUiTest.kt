@@ -24,8 +24,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.R
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.android.intentresolver.widget.ActionRow
 import com.google.common.truth.Truth.assertThat
 import java.util.function.Consumer
@@ -34,6 +32,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 @RunWith(AndroidJUnit4::class)
 class TextContentPreviewUiTest {
@@ -56,8 +56,8 @@ class TextContentPreviewUiTest {
     private val imageLoader = mock<ImageLoader>()
     private val headlineGenerator =
         mock<HeadlineGenerator> {
-            whenever(getTextHeadline(text)).thenReturn(text)
-            whenever(getAlbumHeadline()).thenReturn(albumHeadline)
+            on { getTextHeadline(text) } doReturn text
+            on { getAlbumHeadline() } doReturn albumHeadline
         }
     private val testMetadataText: CharSequence = "Test metadata text"
 
