@@ -53,6 +53,7 @@
             android:maxLines="@integer/text_preview_lines"
             android:ellipsize="end"
             android:linksClickable="false"
+            android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
             android:textAppearance="@style/TextAppearance.ChooserDefault"/>
     </LinearLayout>
 

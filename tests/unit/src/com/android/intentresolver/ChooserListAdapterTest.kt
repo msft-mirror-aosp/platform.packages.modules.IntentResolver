@@ -140,7 +140,7 @@ class ChooserListAdapterTest {
 
         testSubject.onBindView(view, targetInfo, 0)
 
-        verify(mTargetDataLoader, times(1)).loadAppTargetIcon(any(), any(), any())
+        verify(mTargetDataLoader, times(1)).getOrLoadAppTargetIcon(any(), any(), any())
     }
 
     @Test
