@@ -29,6 +29,7 @@ data class ShareouselPreviewViewModel(
     val isSelected: Flow<Boolean>,
     /** Sets whether this preview has been selected by the user. */
     val setSelected: suspend (Boolean) -> Unit,
+    val aspectRatio: Float,
 )
 
 /** Type of the content being previewed. */

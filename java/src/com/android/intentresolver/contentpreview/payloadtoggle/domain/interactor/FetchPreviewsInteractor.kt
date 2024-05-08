@@ -65,6 +65,11 @@ constructor(
                     uri = uri,
                     previewUri = metadata.previewUri,
                     mimeType = metadata.mimeType,
+                    aspectRatio =
+                        metadata.previewUri?.let {
+                            uriMetadataReader.readPreviewSize(it).aspectRatioOrDefault(1f)
+                        }
+                            ?: 1f,
                 )
             }
             .toSet()

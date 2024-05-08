@@ -20,6 +20,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.database.MatrixCursor
 import android.net.Uri
+import android.util.Size
 import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
 import com.android.intentresolver.contentpreview.UriMetadataReader
@@ -53,17 +54,26 @@ class FetchPreviewsInteractorTest {
         cursorStartPosition: Int = cursor.count() / 2,
         pageSize: Int = 16,
         maxLoadedPages: Int = 3,
+        previewSizes: Map<Int, Size> = emptyMap(),
         block: KosmosTestScope.() -> Unit,
     ) {
+        val previewUriToSize = previewSizes.mapKeys { uri(it.key) }
         with(Kosmos()) {
             fakeCursorResolver =
                 FakeCursorResolver(cursorRange = cursor, cursorStartPosition = cursorStartPosition)
             payloadToggleCursorResolver = fakeCursorResolver
             contentUris = initialSelection.map { uri(it) }
             this.focusedItemIndex = focusedItemIndex
-            uriMetadataReader = UriMetadataReader {
-                FileInfo.Builder(it).withPreviewUri(it).withMimeType("image/bitmap").build()
-            }
+            uriMetadataReader =
+                object : UriMetadataReader {
+                    override fun getMetadata(uri: Uri): FileInfo =
+                        FileInfo.Builder(uri)
+                            .withPreviewUri(uri)
+                            .withMimeType("image/bitmap")
+                            .build()
+
+                    override fun readPreviewSize(uri: Uri): Size? = previewUriToSize[uri]
+                }
             this.pageSize = pageSize
             this.maxLoadedPages = maxLoadedPages
             runKosmosTest { block() }
@@ -94,30 +104,32 @@ class FetchPreviewsInteractorTest {
     }
 
     @Test
-    fun setsInitialPreviews() = runTest {
-        backgroundScope.launch { fetchPreviewsInteractor.activate() }
-        runCurrent()
+    fun setsInitialPreviews() =
+        runTest(previewSizes = mapOf(1 to Size(100, 50))) {
+            backgroundScope.launch { fetchPreviewsInteractor.activate() }
+            runCurrent()
 
-        assertThat(cursorPreviewsRepository.previewsModel.value)
-            .isEqualTo(
-                PreviewsModel(
-                    previewModels =
-                        setOf(
-                            PreviewModel(
-                                uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                                mimeType = "image/bitmap",
+            assertThat(cursorPreviewsRepository.previewsModel.value)
+                .isEqualTo(
+                    PreviewsModel(
+                        previewModels =
+                            setOf(
+                                PreviewModel(
+                                    uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                                    mimeType = "image/bitmap",
+                                    aspectRatio = 2f
+                                ),
+                                PreviewModel(
+                                    uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                                    mimeType = "image/bitmap",
+                                ),
                             ),
-                            PreviewModel(
-                                uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                                mimeType = "image/bitmap",
-                            ),
-                        ),
-                    startIdx = 1,
-                    loadMoreLeft = null,
-                    loadMoreRight = null,
+                        startIdx = 1,
+                        loadMoreLeft = null,
+                        loadMoreRight = null,
+                    )
                 )
-            )
-    }
+        }
 
     @Test
     fun lookupCursorFromContentResolver() = runTest {
