@@ -86,6 +86,10 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"لا يمكن فتح هذا المحتوى باستخدام تطبيقات العمل."</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"لا يمكن مشاركة هذا المحتوى مع التطبيقات الشخصية."</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"لا يمكن فتح هذا المحتوى باستخدام التطبيقات الشخصية."</string>
+    <!-- no translation found for resolver_cant_share_with_private_apps_explanation (1781980997411434697) -->
+    <skip />
+    <!-- no translation found for resolver_cant_access_private_apps_explanation (5978609934961648342) -->
+    <skip />
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"تطبيقات العمل متوقفة مؤقتًا."</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"إلغاء الإيقاف المؤقت"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"ما مِن تطبيقات عمل."</string>
