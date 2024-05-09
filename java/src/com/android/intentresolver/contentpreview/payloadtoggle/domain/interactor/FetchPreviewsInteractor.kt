@@ -60,7 +60,12 @@ constructor(
             // Restrict parallelism so as to not overload the metadata reader; anecdotally, too
             // many parallel queries causes failures.
             .mapParallel(parallelism = 4) { uri ->
-                PreviewModel(uri = uri, mimeType = uriMetadataReader.getMetadata(uri).mimeType)
+                val metadata = uriMetadataReader.getMetadata(uri)
+                PreviewModel(
+                    uri = uri,
+                    previewUri = metadata.previewUri,
+                    mimeType = metadata.mimeType,
+                )
             }
             .toSet()
 }

@@ -113,7 +113,7 @@ object ShareouselViewModelModule {
                 keySet.value?.maybeLoad(key)
                 val previewInteractor = interactor.preview(key)
                 ShareouselPreviewViewModel(
-                    bitmap = flow { emit(imageLoader(key.uri)) },
+                    bitmap = flow { emit(key.previewUri?.let { imageLoader(it) }) },
                     contentType = flowOf(ContentType.Image), // TODO: convert from metadata
                     isSelected = previewInteractor.isSelected,
                     setSelected = previewInteractor::setSelected,

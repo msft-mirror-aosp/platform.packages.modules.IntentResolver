@@ -241,10 +241,13 @@ constructor(
         unclaimedRecords: MutableUnclaimedMap,
     ): PreviewModel =
         unclaimedRecords.remove(row.uri)?.second
-            ?: PreviewModel(
-                uri = row.uri,
-                mimeType = uriMetadataReader.getMetadata(row.uri).mimeType,
-            )
+            ?: uriMetadataReader.getMetadata(row.uri).let { metadata ->
+                PreviewModel(
+                    uri = row.uri,
+                    previewUri = metadata.previewUri,
+                    mimeType = metadata.mimeType,
+                )
+            }
 
     private fun <M : MutablePreviewMap> M.putAllUnclaimedRight(unclaimed: UnclaimedMap): M =
         putAllUnclaimedWhere(unclaimed) { it >= focusedItemIdx }
