@@ -21,6 +21,7 @@ import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.CursorResolver
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.PayloadToggle
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.inject.ContentUris
 import com.android.intentresolver.inject.FocusedItemIndex
@@ -39,7 +40,7 @@ constructor(
     @FocusedItemIndex private val focusedItemIdx: Int,
     @ContentUris private val selectedItems: List<@JvmSuppressWildcards Uri>,
     private val uriMetadataReader: UriMetadataReader,
-    @PayloadToggle private val cursorResolver: CursorResolver<@JvmSuppressWildcards Uri?>,
+    @PayloadToggle private val cursorResolver: CursorResolver<@JvmSuppressWildcards CursorRow?>,
 ) {
     suspend fun activate() = coroutineScope {
         val cursor = async { cursorResolver.getCursor() }

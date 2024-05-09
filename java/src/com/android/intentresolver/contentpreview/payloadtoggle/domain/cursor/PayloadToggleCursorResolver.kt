@@ -16,11 +16,14 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor
 
-import android.content.ContentResolver
+import android.content.ContentInterface
 import android.content.Intent
+import android.database.Cursor
 import android.net.Uri
 import android.service.chooser.AdditionalContentContract.Columns.URI
 import androidx.core.os.bundleOf
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
+import com.android.intentresolver.contentpreview.readSize
 import com.android.intentresolver.inject.AdditionalContent
 import com.android.intentresolver.inject.ChooserIntent
 import com.android.intentresolver.util.cursor.CursorView
@@ -37,23 +40,31 @@ import javax.inject.Qualifier
 class PayloadToggleCursorResolver
 @Inject
 constructor(
-    private val contentResolver: ContentResolver,
+    private val contentResolver: ContentInterface,
     @AdditionalContent private val cursorUri: Uri,
     @ChooserIntent private val chooserIntent: Intent,
-) : CursorResolver<Uri?> {
-    override suspend fun getCursor(): CursorView<Uri?>? = withCancellationSignal { signal ->
+) : CursorResolver<CursorRow?> {
+    override suspend fun getCursor(): CursorView<CursorRow?>? = withCancellationSignal { signal ->
         runCatching {
                 contentResolver.query(
                     cursorUri,
-                    arrayOf(URI),
+                    // TODO: uncomment to start using that data
+                    arrayOf(URI /*, WIDTH, HEIGHT*/),
                     bundleOf(Intent.EXTRA_INTENT to chooserIntent),
                     signal,
                 )
             }
             .getOrNull()
-            ?.viewBy {
-                getString(0)?.let(Uri::parse)?.takeIf { it.authority != cursorUri.authority }
+            ?.viewBy { readUri()?.let { uri -> CursorRow(uri, readSize()) } }
+    }
+
+    private fun Cursor.readUri(): Uri? {
+        val uriIdx = columnNames.indexOf(URI)
+        if (uriIdx < 0) return null
+        return runCatching {
+                getString(uriIdx)?.let(Uri::parse)?.takeIf { it.authority != cursorUri.authority }
             }
+            .getOrNull()
     }
 
     @Module
@@ -61,7 +72,7 @@ constructor(
     interface Binding {
         @Binds
         @PayloadToggle
-        fun bind(cursorResolver: PayloadToggleCursorResolver): CursorResolver<Uri?>
+        fun bind(cursorResolver: PayloadToggleCursorResolver): CursorResolver<CursorRow?>
     }
 }
 
