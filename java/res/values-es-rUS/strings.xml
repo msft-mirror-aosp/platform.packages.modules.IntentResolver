@@ -86,6 +86,10 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"No se puede abrir este contenido con apps de trabajo"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"No se pueden usar apps personales para compartir este contenido"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"No se puede abrir este contenido con apps personales"</string>
+    <!-- no translation found for resolver_cant_share_with_private_apps_explanation (1781980997411434697) -->
+    <skip />
+    <!-- no translation found for resolver_cant_access_private_apps_explanation (5978609934961648342) -->
+    <skip />
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Se pausaron las apps de trabajo"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Reanudar"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"El contenido no es compatible con apps de trabajo"</string>

@@ -86,6 +86,10 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"এই সমল কৰ্মস্থানৰ এপৰ জৰিয়তে খুলিব নোৱাৰি"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"এই সমল ব্যক্তিগত এপৰ সৈতে শ্বেয়াৰ কৰিব নোৱাৰি"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"এই সমল ব্যক্তিগত এপৰ জৰিয়তে খুলিব নোৱাৰি"</string>
+    <!-- no translation found for resolver_cant_share_with_private_apps_explanation (1781980997411434697) -->
+    <skip />
+    <!-- no translation found for resolver_cant_access_private_apps_explanation (5978609934961648342) -->
+    <skip />
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"কাম সম্পর্কীয় এপ্‌ পজ কৰা আছে"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"আনপজ কৰক"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"কোনো কৰ্মস্থানৰ এপ্‌ নাই"</string>
