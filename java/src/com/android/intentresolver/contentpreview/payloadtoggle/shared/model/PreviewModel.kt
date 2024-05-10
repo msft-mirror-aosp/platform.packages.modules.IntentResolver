@@ -20,10 +20,10 @@ import android.net.Uri
 
 /** An individual preview presented in Shareousel. */
 data class PreviewModel(
-    /**
-     * Uri for this preview; if this preview is selected, this will be shared with the target app.
-     */
+    /** Uri for this item; if this preview is selected, this will be shared with the target app. */
     val uri: Uri,
+    /** Uri for the preview image. */
+    val previewUri: Uri? = uri,
     /** Mimetype for the data [uri] points to. */
     val mimeType: String?,
 )
