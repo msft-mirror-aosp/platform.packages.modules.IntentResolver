@@ -23,12 +23,10 @@ import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static com.android.intentresolver.ResolverActivity.EXTRA_CALLING_USER;
 import static com.android.intentresolver.ResolverActivity.EXTRA_SELECTED_PROFILE;
 
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.ActivityThread;
 import android.app.AppGlobals;
 import android.app.admin.DevicePolicyManager;
-import android.compat.annotation.UnsupportedAppUsage;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -38,7 +36,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.UserInfo;
 import android.metrics.LogMaker;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.os.UserHandle;
@@ -46,6 +43,8 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Slog;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.logging.MetricsLogger;
@@ -65,7 +64,6 @@ import java.util.concurrent.Executors;
  * be passed in and out of a managed profile.
  */
 public class IntentForwarderActivity extends Activity  {
-    @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.R, trackingBug = 170729553)
     public static String TAG = "IntentForwarderActivity";
 
     public static String FORWARD_INTENT_TO_PARENT
@@ -165,13 +163,13 @@ public class IntentForwarderActivity extends Activity  {
     private String getForwardToPersonalMessage() {
         return getSystemService(DevicePolicyManager.class).getResources().getString(
                 FORWARD_INTENT_TO_PERSONAL,
-                () -> getString(com.android.internal.R.string.forward_intent_to_owner));
+                () -> getString(R.string.forward_intent_to_owner));
     }
 
     private String getForwardToWorkMessage() {
         return getSystemService(DevicePolicyManager.class).getResources().getString(
                 FORWARD_INTENT_TO_WORK,
-                () -> getString(com.android.internal.R.string.forward_intent_to_work));
+                () -> getString(R.string.forward_intent_to_work));
     }
 
     private boolean isIntentForwarderResolveInfo(ResolveInfo resolveInfo) {
@@ -312,7 +310,7 @@ public class IntentForwarderActivity extends Activity  {
      * Check whether the intent can be forwarded to target user. Return the intent used for
      * forwarding if it can be forwarded, {@code null} otherwise.
      */
-    static Intent canForward(Intent incomingIntent, int sourceUserId, int targetUserId,
+    public static Intent canForward(Intent incomingIntent, int sourceUserId, int targetUserId,
             IPackageManager packageManager, ContentResolver contentResolver)  {
         Intent forwardIntent = new Intent(incomingIntent);
         forwardIntent.addFlags(

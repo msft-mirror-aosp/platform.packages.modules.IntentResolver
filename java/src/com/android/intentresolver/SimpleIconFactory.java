@@ -21,9 +21,6 @@ import static android.graphics.Paint.DITHER_FLAG;
 import static android.graphics.Paint.FILTER_BITMAP_FLAG;
 import static android.graphics.drawable.AdaptiveIconDrawable.getExtraInsetFraction;
 
-import android.annotation.AttrRes;
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -50,6 +47,12 @@ import android.util.AttributeSet;
 import android.util.Pools.SynchronizedPool;
 import android.util.TypedValue;
 
+import androidx.annotation.AttrRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.android.internal.annotations.VisibleForTesting;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import java.nio.ByteBuffer;
@@ -67,6 +70,7 @@ public class SimpleIconFactory {
 
     private static final SynchronizedPool<SimpleIconFactory> sPool =
             new SynchronizedPool<>(Runtime.getRuntime().availableProcessors());
+    private static boolean sPoolEnabled = true;
 
     private static final int DEFAULT_WRAPPER_BACKGROUND = Color.WHITE;
     private static final float BLUR_FACTOR = 1.5f / 48;
@@ -90,7 +94,7 @@ public class SimpleIconFactory {
      */
     @Deprecated
     public static SimpleIconFactory obtain(Context ctx) {
-        SimpleIconFactory instance = sPool.acquire();
+        SimpleIconFactory instance = sPoolEnabled ? sPool.acquire() : null;
         if (instance == null) {
             final ActivityManager am = (ActivityManager) ctx.getSystemService(ACTIVITY_SERVICE);
             final int iconDpi = (am == null) ? 0 : am.getLauncherLargeIconDensity();
@@ -102,6 +106,17 @@ public class SimpleIconFactory {
         }
 
         return instance;
+    }
+
+    /**
+     * Enables or disables SimpleIconFactory objects pooling. It is enabled in production, you
+     * could use this method in tests and disable the pooling to make the icon rendering more
+     * deterministic because some sizing parameters will not be cached. Please ensure that you
+     * reset this value back after finishing the test.
+     */
+    @VisibleForTesting
+    public static void setPoolEnabled(boolean poolEnabled) {
+        sPoolEnabled = poolEnabled;
     }
 
     private static int getAttrDimFromContext(Context ctx, @AttrRes int attrId, String errorMsg) {
@@ -705,10 +720,18 @@ public class SimpleIconFactory {
         }
 
         @Override
-        public void inflate(Resources r, XmlPullParser parser, AttributeSet attrs) { }
+        public void inflate(
+                @NonNull Resources r,
+                @NonNull XmlPullParser parser,
+                @NonNull AttributeSet attrs) {
+        }
 
         @Override
-        public void inflate(Resources r, XmlPullParser parser, AttributeSet attrs, Theme theme) { }
+        public void inflate(
+                @NonNull Resources r,
+                @NonNull XmlPullParser parser,
+                @NonNull AttributeSet attrs, Theme theme) {
+        }
 
         /**
          * Sets the scale associated with this drawable

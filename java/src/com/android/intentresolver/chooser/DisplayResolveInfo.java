@@ -16,23 +16,17 @@
 
 package com.android.intentresolver.chooser;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ResolveInfo;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.os.UserHandle;
 
-import com.android.intentresolver.ResolverActivity;
-import com.android.intentresolver.ResolverListAdapter.ResolveInfoPresentationGetter;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,63 +35,99 @@ import java.util.List;
  * A TargetInfo plus additional information needed to render it (such as icon and label) and
  * resolve it to an activity.
  */
-public class DisplayResolveInfo implements TargetInfo, Parcelable {
+public class DisplayResolveInfo implements TargetInfo {
     private final ResolveInfo mResolveInfo;
-    private CharSequence mDisplayLabel;
-    private Drawable mDisplayIcon;
-    private CharSequence mExtendedInfo;
+    private volatile CharSequence mDisplayLabel;
+    private volatile CharSequence mExtendedInfo;
     private final Intent mResolvedIntent;
     private final List<Intent> mSourceIntents = new ArrayList<>();
-    private boolean mIsSuspended;
-    private ResolveInfoPresentationGetter mResolveInfoPresentationGetter;
+    private final boolean mIsSuspended;
     private boolean mPinned = false;
+    private final IconHolder mDisplayIconHolder = new SettableIconHolder();
 
-    public DisplayResolveInfo(Intent originalIntent, ResolveInfo pri, Intent pOrigIntent,
-            ResolveInfoPresentationGetter resolveInfoPresentationGetter) {
-        this(originalIntent, pri, null /*mDisplayLabel*/, null /*mExtendedInfo*/, pOrigIntent,
-                resolveInfoPresentationGetter);
+    /** Create a new {@code DisplayResolveInfo} instance. */
+    public static DisplayResolveInfo newDisplayResolveInfo(
+            Intent originalIntent,
+            ResolveInfo resolveInfo,
+            @NonNull Intent resolvedIntent) {
+        return newDisplayResolveInfo(
+                originalIntent,
+                resolveInfo,
+                /* displayLabel=*/ null,
+                /* extendedInfo=*/ null,
+                resolvedIntent);
     }
 
-    public DisplayResolveInfo(Intent originalIntent, ResolveInfo pri, CharSequence pLabel,
-            CharSequence pInfo, @NonNull Intent resolvedIntent,
-            @Nullable ResolveInfoPresentationGetter resolveInfoPresentationGetter) {
+    /** Create a new {@code DisplayResolveInfo} instance. */
+    public static DisplayResolveInfo newDisplayResolveInfo(
+            Intent originalIntent,
+            ResolveInfo resolveInfo,
+            CharSequence displayLabel,
+            CharSequence extendedInfo,
+            @NonNull Intent resolvedIntent) {
+        return new DisplayResolveInfo(
+                originalIntent,
+                resolveInfo,
+                displayLabel,
+                extendedInfo,
+                resolvedIntent);
+    }
+
+    private DisplayResolveInfo(
+            Intent originalIntent,
+            ResolveInfo resolveInfo,
+            CharSequence displayLabel,
+            CharSequence extendedInfo,
+            @NonNull Intent resolvedIntent) {
         mSourceIntents.add(originalIntent);
-        mResolveInfo = pri;
-        mDisplayLabel = pLabel;
-        mExtendedInfo = pInfo;
-        mResolveInfoPresentationGetter = resolveInfoPresentationGetter;
+        mResolveInfo = resolveInfo;
+        mDisplayLabel = displayLabel;
+        mExtendedInfo = extendedInfo;
 
-        final Intent intent = new Intent(resolvedIntent);
-        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT
-                | Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP);
         final ActivityInfo ai = mResolveInfo.activityInfo;
-        intent.setComponent(new ComponentName(ai.applicationInfo.packageName, ai.name));
-
         mIsSuspended = (ai.applicationInfo.flags & ApplicationInfo.FLAG_SUSPENDED) != 0;
 
-        mResolvedIntent = intent;
+        mResolvedIntent = createResolvedIntent(resolvedIntent, ai);
     }
 
-    private DisplayResolveInfo(DisplayResolveInfo other, Intent fillInIntent, int flags,
-            ResolveInfoPresentationGetter resolveInfoPresentationGetter) {
+    private DisplayResolveInfo(
+            DisplayResolveInfo other,
+            @Nullable Intent baseIntentToSend) {
         mSourceIntents.addAll(other.getAllSourceIntents());
         mResolveInfo = other.mResolveInfo;
+        mIsSuspended = other.mIsSuspended;
         mDisplayLabel = other.mDisplayLabel;
-        mDisplayIcon = other.mDisplayIcon;
         mExtendedInfo = other.mExtendedInfo;
-        mResolvedIntent = new Intent(other.mResolvedIntent);
-        mResolvedIntent.fillIn(fillInIntent, flags);
-        mResolveInfoPresentationGetter = resolveInfoPresentationGetter;
+
+        mResolvedIntent = createResolvedIntent(
+                baseIntentToSend == null ? other.mResolvedIntent : baseIntentToSend,
+                mResolveInfo.activityInfo);
+
+        mDisplayIconHolder.setDisplayIcon(other.mDisplayIconHolder.getDisplayIcon());
     }
 
-    DisplayResolveInfo(DisplayResolveInfo other) {
+    protected DisplayResolveInfo(DisplayResolveInfo other) {
         mSourceIntents.addAll(other.getAllSourceIntents());
         mResolveInfo = other.mResolveInfo;
+        mIsSuspended = other.mIsSuspended;
         mDisplayLabel = other.mDisplayLabel;
-        mDisplayIcon = other.mDisplayIcon;
         mExtendedInfo = other.mExtendedInfo;
         mResolvedIntent = other.mResolvedIntent;
-        mResolveInfoPresentationGetter = other.mResolveInfoPresentationGetter;
+
+        mDisplayIconHolder.setDisplayIcon(other.mDisplayIconHolder.getDisplayIcon());
+    }
+
+    private static Intent createResolvedIntent(Intent resolvedIntent, ActivityInfo ai) {
+        final Intent result = new Intent(resolvedIntent);
+        result.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT
+                | Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP);
+        result.setComponent(new ComponentName(ai.applicationInfo.packageName, ai.name));
+        return result;
+    }
+
+    @Override
+    public final boolean isDisplayResolveInfo() {
+        return true;
     }
 
     public ResolveInfo getResolveInfo() {
@@ -105,10 +135,6 @@ public class DisplayResolveInfo implements TargetInfo, Parcelable {
     }
 
     public CharSequence getDisplayLabel() {
-        if (mDisplayLabel == null && mResolveInfoPresentationGetter != null) {
-            mDisplayLabel = mResolveInfoPresentationGetter.getLabel();
-            mExtendedInfo = mResolveInfoPresentationGetter.getSubLabel();
-        }
         return mDisplayLabel;
     }
 
@@ -124,13 +150,27 @@ public class DisplayResolveInfo implements TargetInfo, Parcelable {
         mExtendedInfo = extendedInfo;
     }
 
-    public Drawable getDisplayIcon(Context context) {
-        return mDisplayIcon;
+    @Override
+    public IconHolder getDisplayIconHolder() {
+        return mDisplayIconHolder;
     }
 
     @Override
-    public TargetInfo cloneFilledIn(Intent fillInIntent, int flags) {
-        return new DisplayResolveInfo(this, fillInIntent, flags, mResolveInfoPresentationGetter);
+    @Nullable
+    public DisplayResolveInfo tryToCloneWithAppliedRefinement(Intent proposedRefinement) {
+        Intent matchingBase =
+                getAllSourceIntents()
+                        .stream()
+                        .filter(i -> i.filterEquals(proposedRefinement))
+                        .findFirst()
+                        .orElse(null);
+        if (matchingBase == null) {
+            return null;
+        }
+
+        return new DisplayResolveInfo(
+                this,
+                TargetInfo.mergeRefinementIntoMatchingBaseIntent(matchingBase, proposedRefinement));
     }
 
     @Override
@@ -138,16 +178,13 @@ public class DisplayResolveInfo implements TargetInfo, Parcelable {
         return mSourceIntents;
     }
 
+    @Override
+    public ArrayList<DisplayResolveInfo> getAllDisplayTargets() {
+        return new ArrayList<>(List.of(this));
+    }
+
     public void addAlternateSourceIntent(Intent alt) {
         mSourceIntents.add(alt);
-    }
-
-    public void setDisplayIcon(Drawable icon) {
-        mDisplayIcon = icon;
-    }
-
-    public boolean hasDisplayIcon() {
-        return mDisplayIcon != null;
     }
 
     public CharSequence getExtendedInfo() {
@@ -165,23 +202,28 @@ public class DisplayResolveInfo implements TargetInfo, Parcelable {
     }
 
     @Override
-    public boolean start(Activity activity, Bundle options) {
-        activity.startActivity(mResolvedIntent, options);
-        return true;
-    }
-
-    @Override
-    public boolean startAsCaller(ResolverActivity activity, Bundle options, int userId) {
-        prepareIntentForCrossProfileLaunch(mResolvedIntent, userId);
+    public boolean startAsCaller(Activity activity, Bundle options, int userId) {
+        TargetInfo.prepareIntentForCrossProfileLaunch(mResolvedIntent, userId);
         activity.startActivityAsCaller(mResolvedIntent, options, false, userId);
         return true;
     }
 
     @Override
     public boolean startAsUser(Activity activity, Bundle options, UserHandle user) {
-        prepareIntentForCrossProfileLaunch(mResolvedIntent, user.getIdentifier());
+        TargetInfo.prepareIntentForCrossProfileLaunch(mResolvedIntent, user.getIdentifier());
+        // TODO: is this equivalent to `startActivityAsCaller` with `ignoreTargetSecurity=true`? If
+        // so, we can consolidate on the one API method to show that this flag is the only
+        // distinction between `startAsCaller` and `startAsUser`. We can even bake that flag into
+        // the `TargetActivityStarter` upfront since it just reflects our "safe forwarding mode" --
+        // which is constant for the duration of our lifecycle, leaving clients no other
+        // responsibilities in this logic.
         activity.startActivityAsUser(mResolvedIntent, options, user);
         return false;
+    }
+
+    @Override
+    public Intent getTargetIntent() {
+        return mResolvedIntent;
     }
 
     public boolean isSuspended() {
@@ -195,49 +237,5 @@ public class DisplayResolveInfo implements TargetInfo, Parcelable {
 
     public void setPinned(boolean pinned) {
         mPinned = pinned;
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeCharSequence(mDisplayLabel);
-        dest.writeCharSequence(mExtendedInfo);
-        dest.writeParcelable(mResolvedIntent, 0);
-        dest.writeTypedList(mSourceIntents);
-        dest.writeBoolean(mIsSuspended);
-        dest.writeBoolean(mPinned);
-        dest.writeParcelable(mResolveInfo, 0);
-    }
-
-    public static final Parcelable.Creator<DisplayResolveInfo> CREATOR =
-            new Parcelable.Creator<DisplayResolveInfo>() {
-        public DisplayResolveInfo createFromParcel(Parcel in) {
-            return new DisplayResolveInfo(in);
-        }
-
-        public DisplayResolveInfo[] newArray(int size) {
-            return new DisplayResolveInfo[size];
-        }
-    };
-
-    private static void prepareIntentForCrossProfileLaunch(Intent intent, int targetUserId) {
-        final int currentUserId = UserHandle.myUserId();
-        if (targetUserId != currentUserId) {
-            intent.fixUris(currentUserId);
-        }
-    }
-
-    private DisplayResolveInfo(Parcel in) {
-        mDisplayLabel = in.readCharSequence();
-        mExtendedInfo = in.readCharSequence();
-        mResolvedIntent = in.readParcelable(null /* ClassLoader */, android.content.Intent.class);
-        in.readTypedList(mSourceIntents, Intent.CREATOR);
-        mIsSuspended = in.readBoolean();
-        mPinned = in.readBoolean();
-        mResolveInfo = in.readParcelable(null /* ClassLoader */, android.content.pm.ResolveInfo.class);
     }
 }

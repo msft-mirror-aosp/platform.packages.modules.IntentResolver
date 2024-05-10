@@ -17,31 +17,47 @@
 package com.android.intentresolver.chooser;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.UserHandle;
 
-import com.android.intentresolver.ResolverActivity;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Represents a "stack" of chooser targets for various activities within the same component.
  */
 public class MultiDisplayResolveInfo extends DisplayResolveInfo {
 
-    ArrayList<DisplayResolveInfo> mTargetInfos = new ArrayList<>();
-    // We'll use this DRI for basic presentation info - eg icon, name.
-    final DisplayResolveInfo mBaseInfo;
+    final ArrayList<DisplayResolveInfo> mTargetInfos;
+
     // Index of selected target
     private int mSelected = -1;
 
     /**
-     * @param firstInfo A representative DRI to use for the main icon, title, etc for this Info.
+     * @param targetInfos A list of targets in this stack. The first item is treated as the
+     * "representative" that provides the main icon, title, etc.
      */
-    public MultiDisplayResolveInfo(String packageName, DisplayResolveInfo firstInfo) {
-        super(firstInfo);
-        mBaseInfo = firstInfo;
-        mTargetInfos.add(firstInfo);
+    public static MultiDisplayResolveInfo newMultiDisplayResolveInfo(
+            List<DisplayResolveInfo> targetInfos) {
+        return new MultiDisplayResolveInfo(targetInfos);
+    }
+
+    /**
+     * @param targetInfos A list of targets in this stack. The first item is treated as the
+     * "representative" that provides the main icon, title, etc.
+     */
+    private MultiDisplayResolveInfo(List<DisplayResolveInfo> targetInfos) {
+        super(targetInfos.get(0));
+        mTargetInfos = new ArrayList<>(targetInfos);
+    }
+
+    @Override
+    public final boolean isMultiDisplayResolveInfo() {
+        return true;
     }
 
     @Override
@@ -51,16 +67,13 @@ public class MultiDisplayResolveInfo extends DisplayResolveInfo {
     }
 
     /**
-     * Add another DisplayResolveInfo to the list included for this target.
+     * List of all {@link DisplayResolveInfo}s included in this target.
+     * TODO: provide as a generic {@code List<DisplayResolveInfo>} once
+     *  {@link com.android.intentresolver.ChooserActivity} stops requiring the signature to match
+     *  that of the other "lists" it builds up.
      */
-    public void addTarget(DisplayResolveInfo target) {
-        mTargetInfos.add(target);
-    }
-
-    /**
-     * List of all DisplayResolveInfos included in this target.
-     */
-    public ArrayList<DisplayResolveInfo> getTargets() {
+    @Override
+    public ArrayList<DisplayResolveInfo> getAllDisplayTargets() {
         return mTargetInfos;
     }
 
@@ -83,12 +96,27 @@ public class MultiDisplayResolveInfo extends DisplayResolveInfo {
     }
 
     @Override
-    public boolean start(Activity activity, Bundle options) {
-        return mTargetInfos.get(mSelected).start(activity, options);
+    @Nullable
+    public MultiDisplayResolveInfo tryToCloneWithAppliedRefinement(Intent proposedRefinement) {
+        final int size = mTargetInfos.size();
+        ArrayList<DisplayResolveInfo> targetInfos = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            DisplayResolveInfo target = mTargetInfos.get(i);
+            DisplayResolveInfo targetClone = (i == mSelected)
+                    ? target.tryToCloneWithAppliedRefinement(proposedRefinement)
+                    : new DisplayResolveInfo(target);
+            if (targetClone == null) {
+                return null;
+            }
+            targetInfos.add(targetClone);
+        }
+        MultiDisplayResolveInfo clone = new MultiDisplayResolveInfo(targetInfos);
+        clone.mSelected = mSelected;
+        return clone;
     }
 
     @Override
-    public boolean startAsCaller(ResolverActivity activity, Bundle options, int userId) {
+    public boolean startAsCaller(Activity activity, Bundle options, int userId) {
         return mTargetInfos.get(mSelected).startAsCaller(activity, options, userId);
     }
 
@@ -97,4 +125,15 @@ public class MultiDisplayResolveInfo extends DisplayResolveInfo {
         return mTargetInfos.get(mSelected).startAsUser(activity, options, user);
     }
 
+    @Override
+    public Intent getTargetIntent() {
+        return mTargetInfos.get(mSelected).getTargetIntent();
+    }
+
+    @Override
+    public List<Intent> getAllSourceIntents() {
+        return hasSelected()
+                ? mTargetInfos.get(mSelected).getAllSourceIntents()
+                : Collections.emptyList();
+    }
 }

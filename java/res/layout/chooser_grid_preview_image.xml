@@ -16,78 +16,32 @@
 * limitations under the License.
 */
 -->
-<!-- Layout Option: Supporting up to 3 images for preview -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground">
-  <RelativeLayout
-      android:id="@androidprv:id/content_preview_image_area"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_gravity="center_horizontal"
-      android:paddingBottom="@dimen/chooser_view_spacing"
-      android:background="?android:attr/colorBackground">
+    android:importantForAccessibility="no"
+    android:background="?androidprv:attr/materialColorSurfaceContainer">
 
-    <view class="com.android.intentresolver.ChooserActivity$RoundedRectImageView"
-          android:id="@androidprv:id/content_preview_image_1_large"
-          android:layout_width="120dp"
-          android:layout_height="104dp"
-          android:layout_alignParentTop="true"
-          android:adjustViewBounds="true"
-          android:gravity="center"
-          android:scaleType="centerCrop"/>
+    <ViewStub
+        android:id="@+id/chooser_headline_row_stub"
+        android:layout="@layout/chooser_headline_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/chooser_edge_margin_normal"
+        android:layout_marginBottom="@dimen/chooser_view_spacing" />
 
-    <view class="com.android.intentresolver.ChooserActivity$RoundedRectImageView"
-          android:id="@androidprv:id/content_preview_image_2_large"
-          android:visibility="gone"
-          android:layout_width="120dp"
-          android:layout_height="104dp"
-          android:layout_alignParentTop="true"
-          android:layout_toRightOf="@androidprv:id/content_preview_image_1_large"
-          android:layout_marginLeft="10dp"
-          android:adjustViewBounds="true"
-          android:gravity="center"
-          android:scaleType="centerCrop"/>
+    <com.android.intentresolver.widget.ScrollableImagePreviewView
+        android:id="@+id/scrollable_image_preview"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/chooser_preview_image_height_tall"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="8dp"
+        app:itemInnerSpacing="3dp"
+        app:itemOuterSpacing="@dimen/chooser_edge_margin_normal"/>
 
-    <view class="com.android.intentresolver.ChooserActivity$RoundedRectImageView"
-          android:id="@androidprv:id/content_preview_image_2_small"
-          android:visibility="gone"
-          android:layout_width="120dp"
-          android:layout_height="65dp"
-          android:layout_alignParentTop="true"
-          android:layout_toRightOf="@androidprv:id/content_preview_image_1_large"
-          android:layout_marginLeft="10dp"
-          android:adjustViewBounds="true"
-          android:gravity="center"
-          android:scaleType="centerCrop"/>
-
-    <view class="com.android.intentresolver.ChooserActivity$RoundedRectImageView"
-          android:id="@androidprv:id/content_preview_image_3_small"
-          android:visibility="gone"
-          android:layout_width="120dp"
-          android:layout_height="65dp"
-          android:layout_below="@androidprv:id/content_preview_image_2_small"
-          android:layout_toRightOf="@androidprv:id/content_preview_image_1_large"
-          android:layout_marginLeft="10dp"
-          android:layout_marginTop="10dp"
-          android:adjustViewBounds="true"
-          android:gravity="center"
-          android:scaleType="centerCrop"/>
-
-  </RelativeLayout>
-
-  <include
-      android:id="@androidprv:id/chooser_action_row"
-      layout="@layout/chooser_action_row"
-      android:layout_width="@dimen/chooser_preview_width"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="@dimen/chooser_view_spacing"
-      android:layout_gravity="center"
-  />
-
+    <include layout="@layout/chooser_action_row"/>
 </LinearLayout>
-

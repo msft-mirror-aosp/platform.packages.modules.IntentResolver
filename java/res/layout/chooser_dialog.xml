@@ -18,6 +18,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
+    android:id="@+id/chooser_dialog_content"
     android:background="@drawable/chooser_dialog_background"
     android:orientation="vertical"
     android:paddingBottom="8dp"
@@ -50,9 +51,9 @@
 
     </LinearLayout>
 
-    <com.android.internal.widget.RecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        androidprv:layoutManager="com.android.internal.widget.LinearLayoutManager"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:id="@androidprv:id/listContainer"
         android:overScrollMode="never"
         android:layout_width="match_parent"
