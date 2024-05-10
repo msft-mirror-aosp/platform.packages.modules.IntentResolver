@@ -21,6 +21,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 import android.net.Uri
 import android.service.chooser.AdditionalContentContract.CursorExtraKeys.POSITION
 import com.android.intentresolver.contentpreview.UriMetadataReader
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.LoadDirection
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.LoadedWindow
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.expandWindowLeft
@@ -64,7 +65,7 @@ constructor(
     }
 
     /** Start reading data from [uriCursor], and listen for requests to load more. */
-    suspend fun launch(uriCursor: CursorView<Uri?>, initialPreviews: Iterable<PreviewModel>) {
+    suspend fun launch(uriCursor: CursorView<CursorRow?>, initialPreviews: Iterable<PreviewModel>) {
         // Unclaimed values from the initial selection set. Entries will be removed as the cursor is
         // read, and any still present are inserted at the start / end of the cursor when it is
         // reached by the user.
@@ -73,7 +74,7 @@ constructor(
                 .asSequence()
                 .mapIndexed { i, m -> Pair(m.uri, Pair(i, m)) }
                 .toMap(ConcurrentHashMap())
-        val pagedCursor: PagedCursor<Uri?> = uriCursor.paged(pageSize)
+        val pagedCursor: PagedCursor<CursorRow?> = uriCursor.paged(pageSize)
         val startPosition = uriCursor.extras?.getInt(POSITION, 0) ?: 0
         val state = readInitialState(pagedCursor, startPosition, unclaimedRecords)
         processLoadRequests(state, pagedCursor, unclaimedRecords)
@@ -82,7 +83,7 @@ constructor(
     /** Loop forever, processing any loading requests from the UI and updating local cache. */
     private suspend fun processLoadRequests(
         initialState: CursorWindow,
-        pagedCursor: PagedCursor<Uri?>,
+        pagedCursor: PagedCursor<CursorRow?>,
         unclaimedRecords: MutableUnclaimedMap,
     ) {
         var state = initialState
@@ -108,7 +109,7 @@ constructor(
      */
     private suspend fun Flow<LoadDirection?>.handleOneLoadRequest(
         state: CursorWindow,
-        pagedCursor: PagedCursor<Uri?>,
+        pagedCursor: PagedCursor<CursorRow?>,
         unclaimedRecords: MutableUnclaimedMap,
     ): CursorWindow =
         mapLatest { loadDirection ->
@@ -127,7 +128,7 @@ constructor(
      * [startPosition].
      */
     private suspend fun readInitialState(
-        cursor: PagedCursor<Uri?>,
+        cursor: PagedCursor<CursorRow?>,
         startPosition: Int,
         unclaimedRecords: MutableUnclaimedMap,
     ): CursorWindow {
@@ -138,13 +139,13 @@ constructor(
             if (!hasMoreLeft) {
                 // First read the initial page; this might claim some unclaimed Uris
                 val page =
-                    cursor.getPageUris(startPageIdx)?.toPage(mutableMapOf(), unclaimedRecords)
+                    cursor.getPageRows(startPageIdx)?.toPage(mutableMapOf(), unclaimedRecords)
                 // Now that unclaimed Uris are up-to-date, add them first.
                 putAllUnclaimedLeft(unclaimedRecords)
                 // Then add the loaded page
                 page?.let(::putAll)
             } else {
-                cursor.getPageUris(startPageIdx)?.toPage(this, unclaimedRecords)
+                cursor.getPageRows(startPageIdx)?.toPage(this, unclaimedRecords)
             }
             // Finally, add the remainder of the unclaimed Uris.
             if (!hasMoreRight) {
@@ -162,7 +163,7 @@ constructor(
     }
 
     private suspend fun CursorWindow.loadMoreRight(
-        cursor: PagedCursor<Uri?>,
+        cursor: PagedCursor<CursorRow?>,
         unclaimedRecords: MutableUnclaimedMap,
     ): CursorWindow {
         val pageNum = lastLoadedPageNum + 1
@@ -181,7 +182,7 @@ constructor(
     }
 
     private suspend fun CursorWindow.loadMoreLeft(
-        cursor: PagedCursor<Uri?>,
+        cursor: PagedCursor<CursorRow?>,
         unclaimedRecords: MutableUnclaimedMap,
     ): CursorWindow {
         val pageNum = firstLoadedPageNum - 1
@@ -207,7 +208,7 @@ constructor(
 
     private suspend fun readPage(
         state: CursorWindow,
-        pagedCursor: PagedCursor<Uri?>,
+        pagedCursor: PagedCursor<CursorRow?>,
         pageNum: Int,
         unclaimedRecords: MutableUnclaimedMap,
     ): PreviewMap =
@@ -216,30 +217,33 @@ constructor(
 
     private suspend fun <M : MutablePreviewMap> M.readAndPutPage(
         state: CursorWindow,
-        pagedCursor: PagedCursor<Uri?>,
+        pagedCursor: PagedCursor<CursorRow?>,
         pageNum: Int,
         unclaimedRecords: MutableUnclaimedMap,
     ): M =
         pagedCursor
-            .getPageUris(pageNum) // TODO: what do we do if the load fails?
-            ?.filter { it !in state.merged }
+            .getPageRows(pageNum) // TODO: what do we do if the load fails?
+            ?.filter { it.uri !in state.merged }
             ?.toPage(this, unclaimedRecords)
             ?: this
 
-    private suspend fun <M : MutablePreviewMap> Sequence<Uri>.toPage(
+    private suspend fun <M : MutablePreviewMap> Sequence<CursorRow>.toPage(
         destination: M,
         unclaimedRecords: MutableUnclaimedMap,
     ): M =
         // Restrict parallelism so as to not overload the metadata reader; anecdotally, too
         // many parallel queries causes failures.
-        mapParallel(parallelism = 4) { uri -> createPreviewModel(uri, unclaimedRecords) }
+        mapParallel(parallelism = 4) { row -> createPreviewModel(row, unclaimedRecords) }
             .associateByTo(destination) { it.uri }
 
-    private fun createPreviewModel(uri: Uri, unclaimedRecords: MutableUnclaimedMap): PreviewModel =
-        unclaimedRecords.remove(uri)?.second
+    private fun createPreviewModel(
+        row: CursorRow,
+        unclaimedRecords: MutableUnclaimedMap,
+    ): PreviewModel =
+        unclaimedRecords.remove(row.uri)?.second
             ?: PreviewModel(
-                uri = uri,
-                mimeType = uriMetadataReader.getMetadata(uri).mimeType,
+                uri = row.uri,
+                mimeType = uriMetadataReader.getMetadata(row.uri).mimeType,
             )
 
     private fun <M : MutablePreviewMap> M.putAllUnclaimedRight(unclaimed: UnclaimedMap): M =
@@ -275,7 +279,7 @@ private fun <M : MutablePreviewMap> M.putAllUnclaimedWhere(
         .map { it.key to it.value.second }
         .toMap(this)
 
-private fun PagedCursor<Uri?>.getPageUris(pageNum: Int): Sequence<Uri>? =
+private fun PagedCursor<CursorRow?>.getPageRows(pageNum: Int): Sequence<CursorRow>? =
     get(pageNum)?.filterNotNull()
 
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class PageSize

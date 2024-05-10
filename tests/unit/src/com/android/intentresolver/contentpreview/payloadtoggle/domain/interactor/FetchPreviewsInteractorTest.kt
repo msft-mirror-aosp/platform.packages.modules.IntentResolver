@@ -26,6 +26,7 @@ import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.CursorResolver
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.payloadToggleCursorResolver
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.contentpreview.uriMetadataReader
@@ -74,12 +75,12 @@ class FetchPreviewsInteractorTest {
     private class FakeCursorResolver(
         private val cursorRange: Iterable<Int>,
         private val cursorStartPosition: Int,
-    ) : CursorResolver<Uri?> {
+    ) : CursorResolver<CursorRow?> {
         private val mutex = Mutex(locked = true)
 
         fun complete() = mutex.unlock()
 
-        override suspend fun getCursor(): CursorView<Uri?> =
+        override suspend fun getCursor(): CursorView<CursorRow?> =
             mutex.withLock {
                 MatrixCursor(arrayOf("uri"))
                     .apply {
@@ -88,7 +89,7 @@ class FetchPreviewsInteractorTest {
                             newRow().add("uri", uri(i).toString())
                         }
                     }
-                    .viewBy { getString(0)?.let(Uri::parse) }
+                    .viewBy { getString(0)?.let(Uri::parse)?.let { CursorRow(it, null) } }
             }
     }
 

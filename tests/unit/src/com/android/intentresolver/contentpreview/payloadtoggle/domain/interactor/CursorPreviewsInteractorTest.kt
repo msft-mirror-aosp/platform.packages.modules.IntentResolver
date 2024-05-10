@@ -24,9 +24,11 @@ import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
 import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.uriMetadataReader
 import com.android.intentresolver.util.KosmosTestScope
+import com.android.intentresolver.util.cursor.CursorView
 import com.android.intentresolver.util.cursor.viewBy
 import com.android.intentresolver.util.runTest
 import com.android.systemui.kosmos.Kosmos
@@ -70,7 +72,7 @@ class CursorPreviewsInteractorTest {
         private val cursorRange: Iterable<Int>,
         private val cursorStartPosition: Int,
     ) {
-        val cursor =
+        val cursor: CursorView<CursorRow?> =
             MatrixCursor(arrayOf("uri"))
                 .apply {
                     extras = bundleOf("position" to cursorStartPosition)
@@ -78,7 +80,7 @@ class CursorPreviewsInteractorTest {
                         newRow().add("uri", uri(i).toString())
                     }
                 }
-                .viewBy { getString(0)?.let(Uri::parse) }
+                .viewBy { getString(0)?.let { uriStr -> CursorRow(Uri.parse(uriStr), null) } }
         val initialPreviews: List<PreviewModel> =
             initialSelectionRange.map { i -> PreviewModel(uri = uri(i), mimeType = "image/bitmap") }
 
