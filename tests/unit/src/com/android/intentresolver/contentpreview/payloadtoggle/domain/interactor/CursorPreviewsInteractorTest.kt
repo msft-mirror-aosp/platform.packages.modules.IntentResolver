@@ -24,9 +24,11 @@ import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
 import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.uriMetadataReader
 import com.android.intentresolver.util.KosmosTestScope
+import com.android.intentresolver.util.cursor.CursorView
 import com.android.intentresolver.util.cursor.viewBy
 import com.android.intentresolver.util.runTest
 import com.android.systemui.kosmos.Kosmos
@@ -51,7 +53,7 @@ class CursorPreviewsInteractorTest {
             this.pageSize = pageSize
             this.maxLoadedPages = maxLoadedPages
             uriMetadataReader = UriMetadataReader {
-                FileInfo.Builder(it).withMimeType("image/bitmap").build()
+                FileInfo.Builder(it).withPreviewUri(it).withMimeType("image/bitmap").build()
             }
             runTest {
                 block(
@@ -70,7 +72,7 @@ class CursorPreviewsInteractorTest {
         private val cursorRange: Iterable<Int>,
         private val cursorStartPosition: Int,
     ) {
-        val cursor =
+        val cursor: CursorView<CursorRow?> =
             MatrixCursor(arrayOf("uri"))
                 .apply {
                     extras = bundleOf("position" to cursorStartPosition)
@@ -78,7 +80,7 @@ class CursorPreviewsInteractorTest {
                         newRow().add("uri", uri(i).toString())
                     }
                 }
-                .viewBy { getString(0)?.let(Uri::parse) }
+                .viewBy { getString(0)?.let { uriStr -> CursorRow(Uri.parse(uriStr), null) } }
         val initialPreviews: List<PreviewModel> =
             initialSelectionRange.map { i -> PreviewModel(uri = uri(i), mimeType = "image/bitmap") }
 
@@ -98,10 +100,22 @@ class CursorPreviewsInteractorTest {
         assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreRight).isNull()
         assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels)
             .containsExactly(
-                PreviewModel(Uri.fromParts("scheme0", "ssp0", "fragment0"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme1", "ssp1", "fragment1"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme3", "ssp3", "fragment3"), "image/bitmap"),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme0", "ssp0", "fragment0"),
+                    mimeType = "image/bitmap"
+                ),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                    mimeType = "image/bitmap"
+                ),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                    mimeType = "image/bitmap"
+                ),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme3", "ssp3", "fragment3"),
+                    mimeType = "image/bitmap"
+                ),
             )
             .inOrder()
     }

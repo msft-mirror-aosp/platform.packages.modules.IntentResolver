@@ -16,13 +16,13 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor
 
-import android.net.Uri
 import com.android.intentresolver.contentResolver
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.inject.additionalContentUri
 import com.android.intentresolver.inject.chooserIntent
 import com.android.systemui.kosmos.Kosmos
 
-var Kosmos.payloadToggleCursorResolver: CursorResolver<Uri?> by
+var Kosmos.payloadToggleCursorResolver: CursorResolver<CursorRow?> by
     Kosmos.Fixture { payloadToggleCursorResolverImpl }
 val Kosmos.payloadToggleCursorResolverImpl
     get() =

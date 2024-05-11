@@ -26,6 +26,7 @@ import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.CursorResolver
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.payloadToggleCursorResolver
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.contentpreview.uriMetadataReader
@@ -61,7 +62,7 @@ class FetchPreviewsInteractorTest {
             contentUris = initialSelection.map { uri(it) }
             this.focusedItemIndex = focusedItemIndex
             uriMetadataReader = UriMetadataReader {
-                FileInfo.Builder(it).withMimeType("image/bitmap").build()
+                FileInfo.Builder(it).withPreviewUri(it).withMimeType("image/bitmap").build()
             }
             this.pageSize = pageSize
             this.maxLoadedPages = maxLoadedPages
@@ -74,12 +75,12 @@ class FetchPreviewsInteractorTest {
     private class FakeCursorResolver(
         private val cursorRange: Iterable<Int>,
         private val cursorStartPosition: Int,
-    ) : CursorResolver<Uri?> {
+    ) : CursorResolver<CursorRow?> {
         private val mutex = Mutex(locked = true)
 
         fun complete() = mutex.unlock()
 
-        override suspend fun getCursor(): CursorView<Uri?> =
+        override suspend fun getCursor(): CursorView<CursorRow?> =
             mutex.withLock {
                 MatrixCursor(arrayOf("uri"))
                     .apply {
@@ -88,7 +89,7 @@ class FetchPreviewsInteractorTest {
                             newRow().add("uri", uri(i).toString())
                         }
                     }
-                    .viewBy { getString(0)?.let(Uri::parse) }
+                    .viewBy { getString(0)?.let(Uri::parse)?.let { CursorRow(it, null) } }
             }
     }
 
@@ -103,12 +104,12 @@ class FetchPreviewsInteractorTest {
                     previewModels =
                         setOf(
                             PreviewModel(
-                                Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                                "image/bitmap",
+                                uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                                mimeType = "image/bitmap",
                             ),
                             PreviewModel(
-                                Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                                "image/bitmap",
+                                uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                                mimeType = "image/bitmap",
                             ),
                         ),
                     startIdx = 1,
@@ -131,10 +132,22 @@ class FetchPreviewsInteractorTest {
             assertThat(previewsModel.value!!.loadMoreRight).isNull()
             assertThat(previewsModel.value!!.previewModels)
                 .containsExactly(
-                    PreviewModel(Uri.fromParts("scheme0", "ssp0", "fragment0"), "image/bitmap"),
-                    PreviewModel(Uri.fromParts("scheme1", "ssp1", "fragment1"), "image/bitmap"),
-                    PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), "image/bitmap"),
-                    PreviewModel(Uri.fromParts("scheme3", "ssp3", "fragment3"), "image/bitmap"),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme0", "ssp0", "fragment0"),
+                        mimeType = "image/bitmap"
+                    ),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                        mimeType = "image/bitmap"
+                    ),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                        mimeType = "image/bitmap"
+                    ),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme3", "ssp3", "fragment3"),
+                        mimeType = "image/bitmap"
+                    ),
                 )
                 .inOrder()
         }
