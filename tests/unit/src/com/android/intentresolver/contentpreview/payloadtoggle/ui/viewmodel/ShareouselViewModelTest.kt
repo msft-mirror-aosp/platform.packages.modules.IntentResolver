@@ -79,12 +79,12 @@ class ShareouselViewModelTest {
         previewSelectionsRepository.selections.value =
             setOf(
                 PreviewModel(
-                    Uri.fromParts("scheme", "ssp", "fragment"),
-                    null,
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = null,
                 ),
                 PreviewModel(
-                    Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                    null,
+                    uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                    mimeType = null,
                 )
             )
         runCurrent()
@@ -114,12 +114,12 @@ class ShareouselViewModelTest {
                     previewModels =
                         setOf(
                             PreviewModel(
-                                Uri.fromParts("scheme", "ssp", "fragment"),
-                                null,
+                                uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                                mimeType = null,
                             ),
                             PreviewModel(
-                                Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                                null,
+                                uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                                mimeType = null,
                             )
                         ),
                     startIdx = 1,
@@ -141,7 +141,10 @@ class ShareouselViewModelTest {
 
             val previewVm =
                 shareouselViewModel.preview(
-                    PreviewModel(Uri.fromParts("scheme1", "ssp1", "fragment1"), null)
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                        mimeType = null
+                    )
                 )
 
             assertWithMessage("preview bitmap is null").that(previewVm.bitmap.first()).isNotNull()
@@ -205,7 +208,7 @@ class ShareouselViewModelTest {
         this.pendingIntentSender = pendingIntentSender
         this.targetIntentModifier = targetIntentModifier
         previewSelectionsRepository.selections.value =
-            setOf(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null))
+            setOf(PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null))
         payloadToggleImageLoader =
             FakeImageLoader(
                 initialBitmaps =

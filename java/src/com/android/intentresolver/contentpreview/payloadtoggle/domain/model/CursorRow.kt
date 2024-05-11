@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The Android Open Source Project
+ * Copyright 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.contentpreview.payloadtoggle.shared.model
+package com.android.intentresolver.contentpreview.payloadtoggle.domain.model
 
 import android.net.Uri
+import android.util.Size
 
-/** An individual preview presented in Shareousel. */
-data class PreviewModel(
-    /** Uri for this item; if this preview is selected, this will be shared with the target app. */
-    val uri: Uri,
-    /** Uri for the preview image. */
-    val previewUri: Uri? = uri,
-    /** Mimetype for the data [uri] points to. */
-    val mimeType: String?,
-)
+/** Represents additional content cursor row */
+data class CursorRow(val uri: Uri, val previewSize: Size?)

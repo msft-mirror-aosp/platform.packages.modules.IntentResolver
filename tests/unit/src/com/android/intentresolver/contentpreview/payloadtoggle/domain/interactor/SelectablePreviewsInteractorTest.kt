@@ -41,12 +41,12 @@ class SelectablePreviewsInteractorTest {
                 previewModels =
                     setOf(
                         PreviewModel(
-                            Uri.fromParts("scheme", "ssp", "fragment"),
-                            "image/bitmap",
+                            uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                            mimeType = "image/bitmap",
                         ),
                         PreviewModel(
-                            Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                            "image/bitmap",
+                            uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                            mimeType = "image/bitmap",
                         ),
                     ),
                 startIdx = 0,
@@ -55,7 +55,7 @@ class SelectablePreviewsInteractorTest {
             )
         previewSelectionsRepository.selections.value =
             setOf(
-                PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
+                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
             )
         targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
         val underTest = selectablePreviewsInteractor
@@ -64,8 +64,14 @@ class SelectablePreviewsInteractorTest {
         assertThat(keySet.value).isNotNull()
         assertThat(keySet.value!!.previewModels)
             .containsExactly(
-                PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), "image/bitmap"),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = "image/bitmap"
+                ),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                    mimeType = "image/bitmap"
+                ),
             )
             .inOrder()
         assertThat(keySet.value!!.startIdx).isEqualTo(0)
@@ -73,11 +79,15 @@ class SelectablePreviewsInteractorTest {
         assertThat(keySet.value!!.loadMoreRight).isNull()
 
         val firstModel =
-            underTest.preview(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null))
+            underTest.preview(
+                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
+            )
         assertThat(firstModel.isSelected.first()).isTrue()
 
         val secondModel =
-            underTest.preview(PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), null))
+            underTest.preview(
+                PreviewModel(uri = Uri.fromParts("scheme2", "ssp2", "fragment2"), mimeType = null)
+            )
         assertThat(secondModel.isSelected.first()).isFalse()
     }
 
@@ -85,14 +95,16 @@ class SelectablePreviewsInteractorTest {
     fun keySet_reflectsRepositoryUpdate() = runKosmosTest {
         previewSelectionsRepository.selections.value =
             setOf(
-                PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
+                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
             )
         targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
         val underTest = selectablePreviewsInteractor
 
         val previews = underTest.previews.stateIn(backgroundScope)
         val firstModel =
-            underTest.preview(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null))
+            underTest.preview(
+                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
+            )
 
         assertThat(previews.value).isNull()
         assertThat(firstModel.isSelected.first()).isTrue()
@@ -104,12 +116,12 @@ class SelectablePreviewsInteractorTest {
                 previewModels =
                     setOf(
                         PreviewModel(
-                            Uri.fromParts("scheme", "ssp", "fragment"),
-                            "image/bitmap",
+                            uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                            mimeType = "image/bitmap",
                         ),
                         PreviewModel(
-                            Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                            "image/bitmap",
+                            uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                            mimeType = "image/bitmap",
                         ),
                     ),
                 startIdx = 5,
@@ -122,8 +134,14 @@ class SelectablePreviewsInteractorTest {
         assertThat(previews.value).isNotNull()
         assertThat(previews.value!!.previewModels)
             .containsExactly(
-                PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), "image/bitmap"),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = "image/bitmap"
+                ),
+                PreviewModel(
+                    uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                    mimeType = "image/bitmap"
+                ),
             )
             .inOrder()
         assertThat(previews.value!!.startIdx).isEqualTo(5)
