@@ -86,10 +86,8 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Dette indhold kan ikke åbnes med arbejdsapps"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Dette indhold kan ikke deles med personlige apps"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Dette indhold kan ikke åbnes med personlige apps"</string>
-    <!-- no translation found for resolver_cant_share_with_private_apps_explanation (1781980997411434697) -->
-    <skip />
-    <!-- no translation found for resolver_cant_access_private_apps_explanation (5978609934961648342) -->
-    <skip />
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Dette indhold kan ikke deles med private apps"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Dette indhold kan ikke åbnes med private apps"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Dine arbejdsapps er sat på pause"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Genoptag"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Der er ingen arbejdsapps"</string>
