@@ -32,7 +32,7 @@ java_library {
         "hamcrest",
         "IntentResolver-core",
         "kosmos",
-        "mockito-kotlin2",
+        "mockito-kotlin-nodeps",
         "mockito-target-minus-junit4",
         "truth",
     ],
