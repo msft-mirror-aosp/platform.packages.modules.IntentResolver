@@ -242,10 +242,14 @@ constructor(
     ): PreviewModel =
         unclaimedRecords.remove(row.uri)?.second
             ?: uriMetadataReader.getMetadata(row.uri).let { metadata ->
+                val size =
+                    row.previewSize
+                        ?: metadata.previewUri?.let { uriMetadataReader.readPreviewSize(it) }
                 PreviewModel(
                     uri = row.uri,
                     previewUri = metadata.previewUri,
                     mimeType = metadata.mimeType,
+                    aspectRatio = size.aspectRatioOrDefault(1f),
                 )
             }
 
