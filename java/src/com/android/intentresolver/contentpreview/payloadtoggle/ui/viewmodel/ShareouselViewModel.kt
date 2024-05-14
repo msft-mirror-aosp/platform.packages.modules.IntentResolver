@@ -117,6 +117,7 @@ object ShareouselViewModelModule {
                     contentType = flowOf(ContentType.Image), // TODO: convert from metadata
                     isSelected = previewInteractor.isSelected,
                     setSelected = previewInteractor::setSelected,
+                    aspectRatio = key.aspectRatio,
                 )
             },
         )

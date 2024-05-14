@@ -20,6 +20,8 @@ import android.content.ContentInterface
 import android.media.MediaMetadata
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.provider.MediaStore.MediaColumns
+import android.util.Size
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -29,6 +31,7 @@ import javax.inject.Inject
 
 fun interface UriMetadataReader {
     fun getMetadata(uri: Uri): FileInfo
+    fun readPreviewSize(uri: Uri): Size? = null
 }
 
 class UriMetadataReaderImpl
@@ -56,6 +59,8 @@ constructor(
         return builder.build()
     }
 
+    override fun readPreviewSize(uri: Uri): Size? = contentResolver.readPreviewSize(uri)
+
     private fun ContentInterface.supportsImageType(uri: Uri): Boolean =
         getStreamTypesSafe(uri).firstOrNull { typeClassifier.isImageType(it) } != null
 
@@ -69,6 +74,15 @@ constructor(
         querySafe(uri, arrayOf(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI))?.use { cursor ->
             if (cursor.moveToFirst()) {
                 cursor.readPreviewUri()
+            } else {
+                null
+            }
+        }
+
+    private fun ContentInterface.readPreviewSize(uri: Uri): Size? =
+        querySafe(uri, arrayOf(MediaColumns.WIDTH, MediaColumns.HEIGHT))?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.readSize()
             } else {
                 null
             }
