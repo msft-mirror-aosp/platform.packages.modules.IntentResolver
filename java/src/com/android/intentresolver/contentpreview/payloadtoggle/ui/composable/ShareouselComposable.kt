@@ -115,11 +115,9 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
     val scope = rememberCoroutineScope()
     ShareouselCard(
         image = {
+            // TODO: max ratio is actually equal to the viewport ratio
+            val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
             bitmap?.let { bitmap ->
-                val aspectRatio =
-                    (bitmap.width.toFloat() / bitmap.height.toFloat())
-                        // TODO: max ratio is actually equal to the viewport ratio
-                        .coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = null,
@@ -129,7 +127,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
             }
                 ?: run {
                     // TODO: look at ScrollableImagePreviewView.setLoading()
-                    Box(modifier = Modifier.fillMaxHeight().aspectRatio(2f / 5f))
+                    Box(modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio))
                 }
         },
         contentType = contentType,
