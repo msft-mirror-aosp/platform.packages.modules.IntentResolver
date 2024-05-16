@@ -33,6 +33,10 @@ interface ImageLoaderModule {
     @ActivityRetainedScoped
     fun imageLoader(previewImageLoader: ImagePreviewImageLoader): ImageLoader
 
+    @Binds
+    @ActivityRetainedScoped
+    fun thumbnailLoader(thumbnailLoader: ThumbnailLoaderImpl): ThumbnailLoader
+
     companion object {
         @Provides
         @ThumbnailSize
@@ -40,5 +44,7 @@ interface ImageLoaderModule {
             resources.getDimensionPixelSize(R.dimen.chooser_preview_image_max_dimen)
 
         @Provides @PreviewCacheSize fun cacheSize() = 16
+
+        @Provides @PreviewMaxConcurrency fun maxConcurrency() = 4
     }
 }
