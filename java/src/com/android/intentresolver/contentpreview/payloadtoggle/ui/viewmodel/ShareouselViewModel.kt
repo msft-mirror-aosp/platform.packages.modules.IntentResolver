@@ -55,7 +55,7 @@ data class ShareouselViewModel(
     /** List of action chips presented underneath Shareousel. */
     val actions: Flow<List<ActionChipViewModel>>,
     /** Creates a [ShareouselPreviewViewModel] for a [PreviewModel] present in [previews]. */
-    val preview: (key: PreviewModel) -> ShareouselPreviewViewModel,
+    val preview: (index: Int, key: PreviewModel) -> ShareouselPreviewViewModel,
 )
 
 @Module
@@ -112,8 +112,8 @@ interface ShareouselViewModelModule {
                             }
                         }
                     },
-                preview = { key ->
-                    keySet.value?.maybeLoad(key)
+                preview = { index, key ->
+                    keySet.value?.maybeLoad(index)
                     val previewInteractor = interactor.preview(key)
                     val contentType =
                         when {
@@ -134,9 +134,9 @@ interface ShareouselViewModelModule {
     }
 }
 
-private fun PreviewsModel.maybeLoad(key: PreviewModel) {
-    when (key) {
-        previewModels.firstOrNull() -> loadMoreLeft?.invoke()
-        previewModels.lastOrNull() -> loadMoreRight?.invoke()
+private fun PreviewsModel.maybeLoad(index: Int) {
+    when (index) {
+        previewModels.indices.firstOrNull() -> loadMoreLeft?.invoke()
+        previewModels.indices.lastOrNull() -> loadMoreRight?.invoke()
     }
 }

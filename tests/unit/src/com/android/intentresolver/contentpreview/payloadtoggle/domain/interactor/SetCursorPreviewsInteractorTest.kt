@@ -34,8 +34,8 @@ class SetCursorPreviewsInteractorTest {
     fun setPreviews_noAdditionalData() = runKosmosTest {
         val loadState =
             setCursorPreviewsInteractor.setPreviews(
-                previewsByKey =
-                    setOf(
+                previews =
+                    listOf(
                         PreviewModel(
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = null,
@@ -69,8 +69,8 @@ class SetCursorPreviewsInteractorTest {
         val loadState =
             setCursorPreviewsInteractor
                 .setPreviews(
-                    previewsByKey =
-                        setOf(
+                    previews =
+                        listOf(
                             PreviewModel(
                                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                                 mimeType = null,

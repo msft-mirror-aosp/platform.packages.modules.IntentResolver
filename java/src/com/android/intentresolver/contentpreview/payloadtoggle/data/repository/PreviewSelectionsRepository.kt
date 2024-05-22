@@ -24,5 +24,5 @@ import kotlinx.coroutines.flow.MutableStateFlow
 /** Stores set of selected previews. */
 @ViewModelScoped
 class PreviewSelectionsRepository @Inject constructor() {
-    val selections = MutableStateFlow(emptySet<PreviewModel>())
+    val selections = MutableStateFlow(emptyList<PreviewModel>())
 }

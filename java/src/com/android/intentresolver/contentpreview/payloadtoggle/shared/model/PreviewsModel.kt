@@ -19,7 +19,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.shared.model
 /** A dataset of previews for Shareousel. */
 data class PreviewsModel(
     /** All available [PreviewModel]s. */
-    val previewModels: Set<PreviewModel>,
+    val previewModels: List<PreviewModel>,
     /** Index into [previewModels] that should be initially displayed to the user. */
     val startIdx: Int,
     /**
