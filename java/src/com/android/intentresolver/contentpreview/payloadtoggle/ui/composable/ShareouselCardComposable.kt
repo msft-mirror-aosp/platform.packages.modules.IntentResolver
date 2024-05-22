@@ -58,7 +58,7 @@ fun ShareouselCard(
 private fun AnimationIcon(modifier: Modifier = Modifier) {
     Icon(
         painterResource(id = R.drawable.ic_play_circle_filled_24px),
-        "animating",
+        contentDescription = null, // Video attribute described at a higher level.
         tint = Color.White,
         modifier = Modifier.size(20.dp).then(modifier)
     )
@@ -71,7 +71,7 @@ private fun SelectionIcon(selected: Boolean, modifier: Modifier = Modifier) {
         Icon(
             painter = painterResource(id = R.drawable.checkbox),
             tint = Color.White,
-            contentDescription = "selected",
+            contentDescription = null,
             modifier =
                 Modifier.shadow(
                         elevation = 50.dp,
