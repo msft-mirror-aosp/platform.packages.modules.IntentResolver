@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.LocalContentColor
@@ -98,6 +99,7 @@ private fun PreviewCarousel(
         modifier =
             Modifier.fillMaxWidth()
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
+                .systemGestureExclusion()
     ) {
         items(previews.previewModels.toList(), key = { it.uri }) { model ->
             ShareouselCard(viewModel.preview(model))
