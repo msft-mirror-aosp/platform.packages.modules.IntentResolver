@@ -17,14 +17,7 @@
 package com.android.intentresolver;
 
 import static android.app.VoiceInteractor.PickOptionRequest.Option;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_PERSONAL;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_WORK;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_PERSONAL;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_WORK;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROSS_PROFILE_BLOCKED_TITLE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL;
-import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
 import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
 
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
@@ -111,13 +104,12 @@ import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
 import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
-import com.android.intentresolver.emptystate.DevicePolicyBlockerEmptyState;
-import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.emptystate.NoAppsAvailableEmptyStateProvider;
 import com.android.intentresolver.emptystate.NoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.emptystate.WorkProfilePausedEmptyStateProvider;
 import com.android.intentresolver.grid.ChooserGridAdapter;
+import com.android.intentresolver.icons.Caching;
 import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.inject.Background;
 import com.android.intentresolver.logging.EventLog;
@@ -175,6 +167,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * The Chooser Activity handles intent resolution specifically for sharing intents -
@@ -213,7 +206,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final String TAB_TAG_WORK = "work";
 
     private static final String LAST_SHOWN_TAB_KEY = "last_shown_tab_key";
-    protected static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
+    public static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
 
     private int mLayoutId;
     private UserHandle mHeaderCreatorUser;
@@ -265,7 +258,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Inject @AppPredictionAvailable public boolean mAppPredictionAvailable;
     @Inject @ImageEditor public Optional<ComponentName> mImageEditor;
     @Inject @NearbyShare public Optional<ComponentName> mNearbyShare;
-    @Inject public TargetDataLoader mTargetDataLoader;
+    protected TargetDataLoader mTargetDataLoader;
+    @Inject public Provider<TargetDataLoader> mTargetDataLoaderProvider;
+    @Inject
+    @Caching
+    public Provider<TargetDataLoader> mCachingTargetDataLoaderProvider;
     @Inject public DevicePolicyResources mDevicePolicyResources;
     @Inject public ProfilePagerResources mProfilePagerResources;
     @Inject public PackageManager mPackageManager;
@@ -339,6 +336,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
+
+        mTargetDataLoader = mChooserServiceFeatureFlags.chooserPayloadToggling()
+                ? mCachingTargetDataLoaderProvider.get()
+                : mTargetDataLoaderProvider.get();
 
         setTheme(R.style.Theme_DeviceDefault_Chooser);
 
@@ -416,6 +417,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected final void onRestart() {
         super.onRestart();
+        if (mFeatureFlags.fixPrivateSpaceLockedOnRestart()) {
+            if (mChooserMultiProfilePagerAdapter.hasPageForProfile(Profile.Type.PRIVATE.ordinal())
+                    && !mProfileAvailability.isAvailable(mProfiles.getPrivateProfile())) {
+                Log.d(TAG, "Exiting due to unavailable profile");
+                finish();
+                return;
+            }
+        }
+
         if (!mRegistered) {
             mPersonalPackageMonitor.register(
                     this,
@@ -776,6 +786,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
         mChooserMultiProfilePagerAdapter.setCurrentPage(currentPage);
+        for (int i = 0, count = mChooserMultiProfilePagerAdapter.getItemCount(); i < count; i++) {
+            mChooserMultiProfilePagerAdapter.getPageAdapterForIndex(i)
+                    .getListAdapter().setAnimateItems(false);
+        }
         if (mPersonalPackageMonitor != null) {
             mPersonalPackageMonitor.unregister();
         }
@@ -1384,17 +1398,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return context.getSharedPreferences(PINNED_SHARED_PREFS_NAME, MODE_PRIVATE);
     }
 
-    protected ChooserMultiProfilePagerAdapter createMultiProfilePagerAdapter() {
-        return createMultiProfilePagerAdapter(
-                /* context = */ this,
-                mProfilePagerResources,
-                mViewModel.getRequest().getValue(),
-                mProfiles,
-                mProfileAvailability,
-                mRequest.getInitialIntents(),
-                mMaxTargetsPerRow);
-    }
-
     private ChooserMultiProfilePagerAdapter createMultiProfilePagerAdapter(
             Context context,
             ProfilePagerResources profilePagerResources,
@@ -1450,39 +1453,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     protected EmptyStateProvider createBlockerEmptyStateProvider() {
-        final boolean isSendAction = mRequest.isSendActionTarget();
-
-        final EmptyState noWorkToPersonalEmptyState =
-                new DevicePolicyBlockerEmptyState(
-                        /* context= */ this,
-                        /* devicePolicyStringTitleId= */ RESOLVER_CROSS_PROFILE_BLOCKED_TITLE,
-                        /* defaultTitleResource= */ R.string.resolver_cross_profile_blocked,
-                        /* devicePolicyStringSubtitleId= */
-                        isSendAction ? RESOLVER_CANT_SHARE_WITH_PERSONAL : RESOLVER_CANT_ACCESS_PERSONAL,
-                        /* defaultSubtitleResource= */
-                        isSendAction ? R.string.resolver_cant_share_with_personal_apps_explanation
-                                : R.string.resolver_cant_access_personal_apps_explanation,
-                        /* devicePolicyEventId= */ RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL,
-                        /* devicePolicyEventCategory= */ ResolverActivity.METRICS_CATEGORY_CHOOSER);
-
-        final EmptyState noPersonalToWorkEmptyState =
-                new DevicePolicyBlockerEmptyState(
-                        /* context= */ this,
-                        /* devicePolicyStringTitleId= */ RESOLVER_CROSS_PROFILE_BLOCKED_TITLE,
-                        /* defaultTitleResource= */ R.string.resolver_cross_profile_blocked,
-                        /* devicePolicyStringSubtitleId= */
-                        isSendAction ? RESOLVER_CANT_SHARE_WITH_WORK : RESOLVER_CANT_ACCESS_WORK,
-                        /* defaultSubtitleResource= */
-                        isSendAction ? R.string.resolver_cant_share_with_work_apps_explanation
-                                : R.string.resolver_cant_access_work_apps_explanation,
-                        /* devicePolicyEventId= */ RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK,
-                        /* devicePolicyEventCategory= */ ResolverActivity.METRICS_CATEGORY_CHOOSER);
-
         return new NoCrossProfileEmptyStateProvider(
                 mProfiles,
-                noWorkToPersonalEmptyState,
-                noPersonalToWorkEmptyState,
-                createCrossProfileIntentsChecker());
+                mDevicePolicyResources,
+                createCrossProfileIntentsChecker(),
+                mRequest.isSendActionTarget());
     }
 
     private int findSelectedProfile() {
@@ -2637,7 +2612,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
         mSystemWindowInsets = insets.getInsets(WindowInsets.Type.systemBars());
-        if (mFeatureFlags.fixEmptyStatePadding() || mProfiles.getWorkProfilePresent()) {
+        if (mFeatureFlags.fixEmptyStatePaddingBug() || mProfiles.getWorkProfilePresent()) {
             mChooserMultiProfilePagerAdapter
                     .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
         }

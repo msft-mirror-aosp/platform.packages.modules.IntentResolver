@@ -27,13 +27,15 @@ import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_WORK_PROFIL
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_WORK_TAB
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_WORK_TAB_ACCESSIBILITY
 import android.content.res.Resources
+import androidx.annotation.OpenForTesting
 import com.android.intentresolver.R
 import com.android.intentresolver.inject.ApplicationOwned
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OpenForTesting
 @Singleton
-class DevicePolicyResources
+open class DevicePolicyResources
 @Inject
 constructor(
     @ApplicationOwned private val resources: Resources,
@@ -102,7 +104,7 @@ constructor(
         )
     }
 
-    val crossProfileBlocked by lazy {
+    open val crossProfileBlocked by lazy {
         requireNotNull(
             policyResources.getString(RESOLVER_CROSS_PROFILE_BLOCKED_TITLE) {
                 resources.getString(R.string.resolver_cross_profile_blocked)
@@ -110,19 +112,27 @@ constructor(
         )
     }
 
-    fun toPersonalBlockedByPolicyMessage(sendAction: Boolean): String {
-        return if (sendAction) {
+    open fun toPersonalBlockedByPolicyMessage(share: Boolean): String {
+        return if (share) {
             resources.getString(R.string.resolver_cant_share_with_personal_apps_explanation)
         } else {
             resources.getString(R.string.resolver_cant_access_personal_apps_explanation)
         }
     }
 
-    fun toWorkBlockedByPolicyMessage(sendAction: Boolean): String {
-        return if (sendAction) {
+    open fun toWorkBlockedByPolicyMessage(share: Boolean): String {
+        return if (share) {
             resources.getString(R.string.resolver_cant_share_with_work_apps_explanation)
         } else {
             resources.getString(R.string.resolver_cant_access_work_apps_explanation)
+        }
+    }
+
+    open fun toPrivateBlockedByPolicyMessage(share: Boolean): String {
+        return if (share) {
+            resources.getString(R.string.resolver_cant_share_with_private_apps_explanation)
+        } else {
+            resources.getString(R.string.resolver_cant_access_private_apps_explanation)
         }
     }
 

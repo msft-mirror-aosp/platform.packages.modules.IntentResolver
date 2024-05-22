@@ -86,6 +86,8 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Questi contenuti non possono essere aperti con app di lavoro"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Questi contenuti non possono essere condivisi con app personali"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Questi contenuti non possono essere aperti con app personali"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Questi contenuti non possono essere condivisi con app private"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Questi contenuti non possono essere aperti con app private"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Le app di lavoro sono in pausa"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Riattiva"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Nessuna app di lavoro"</string>

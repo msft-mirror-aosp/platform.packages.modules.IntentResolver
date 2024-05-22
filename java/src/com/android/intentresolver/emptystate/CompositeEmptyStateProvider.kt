@@ -13,34 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.intentresolver.emptystate;
+package com.android.intentresolver.emptystate
 
-import android.annotation.Nullable;
-
-import com.android.intentresolver.ResolverListAdapter;
+import com.android.intentresolver.ResolverListAdapter
 
 /**
  * Empty state provider that combines multiple providers. Providers earlier in the list have
  * priority, that is if there is a provider that returns non-null empty state then all further
  * providers will be ignored.
  */
-public class CompositeEmptyStateProvider implements EmptyStateProvider {
+class CompositeEmptyStateProvider(
+    private vararg val providers: EmptyStateProvider,
+) : EmptyStateProvider {
 
-    private final EmptyStateProvider[] mProviders;
-
-    public CompositeEmptyStateProvider(EmptyStateProvider... providers) {
-        mProviders = providers;
-    }
-
-    @Nullable
-    @Override
-    public EmptyState getEmptyState(ResolverListAdapter resolverListAdapter) {
-        for (EmptyStateProvider provider : mProviders) {
-            EmptyState emptyState = provider.getEmptyState(resolverListAdapter);
-            if (emptyState != null) {
-                return emptyState;
-            }
-        }
-        return null;
+    override fun getEmptyState(resolverListAdapter: ResolverListAdapter): EmptyState? {
+        return providers.firstNotNullOfOrNull { it.getEmptyState(resolverListAdapter) }
     }
 }

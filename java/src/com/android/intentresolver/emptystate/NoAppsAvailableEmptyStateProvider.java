@@ -70,13 +70,4 @@ public class NoAppsAvailableEmptyStateProvider implements EmptyStateProvider {
             );
         }
     }
-
-
-    public static class DefaultEmptyState implements EmptyState {
-        @Override
-        public boolean useDefaultEmptyView() {
-            return true;
-        }
-    }
-
 }

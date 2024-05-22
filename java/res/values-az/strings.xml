@@ -86,6 +86,8 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Bu kontenti iş tətbiqləri ilə açmaq mümkün deyil"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Bu kontenti şəxsi tətbiqlər ilə paylaşmaq mümkün deyil"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Bu kontenti şəxsi tətbiqlər ilə açmaq mümkün deyil"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Bu kontenti şəxsi tətbiqlərlə paylaşmaq mümkün deyil"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Bu kontenti şəxsi tətbiqlərlə açmaq mümkün deyil"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"İş tətbiqləri durdurulub"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Pauzanı bitirin"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"İş tətbiqi yoxdur"</string>

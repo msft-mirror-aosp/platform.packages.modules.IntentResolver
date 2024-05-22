@@ -153,6 +153,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 }
             };
 
+    private boolean mAnimateItems = true;
+
     public ChooserListAdapter(
             Context context,
             List<Intent> payloadIntents,
@@ -308,6 +310,10 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
+    public void setAnimateItems(boolean animateItems) {
+        mAnimateItems = animateItems;
+    }
+
     @Override
     public void handlePackagesChanged() {
         if (mPackageChangeCallback != null) {
@@ -371,16 +377,13 @@ public class ChooserListAdapter extends ResolverListAdapter {
         final CharSequence displayLabel = Objects.requireNonNullElse(info.getDisplayLabel(), "");
         final CharSequence extendedInfo = Objects.requireNonNullElse(info.getExtendedInfo(), "");
         holder.bindLabel(displayLabel, extendedInfo);
-        if (!TextUtils.isEmpty(displayLabel)) {
+        if (mAnimateItems && !TextUtils.isEmpty(displayLabel)) {
             mAnimationTracker.animateLabel(holder.text, info);
         }
-        if (!TextUtils.isEmpty(extendedInfo) && holder.text2.getVisibility() == View.VISIBLE) {
+        if (mAnimateItems
+                && !TextUtils.isEmpty(extendedInfo)
+                && holder.text2.getVisibility() == View.VISIBLE) {
             mAnimationTracker.animateLabel(holder.text2, info);
-        }
-
-        holder.bindIcon(info);
-        if (info.hasDisplayIcon()) {
-            mAnimationTracker.animateIcon(holder.icon, info);
         }
 
         if (info.isSelectableTargetInfo()) {
@@ -416,6 +419,11 @@ public class ChooserListAdapter extends ResolverListAdapter {
             if (!dri.hasDisplayLabel()) {
                 loadLabel(dri);
             }
+        }
+
+        holder.bindIcon(info);
+        if (mAnimateItems && info.hasDisplayIcon()) {
+            mAnimationTracker.animateIcon(holder.icon, info);
         }
 
         if (info.isPlaceHolderTargetInfo()) {

@@ -86,6 +86,8 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Te vsebine ni mogoče odpreti z delovnimi aplikacijami."</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Te vsebine ni mogoče deliti z osebnimi aplikacijami."</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Te vsebine ni mogoče odpreti z osebnimi aplikacijami."</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Te vsebine ni mogoče deliti z zasebnimi aplikacijami"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Te vsebine ni mogoče odpreti z zasebnimi aplikacijami"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Delovne aplikacije so začasno zaustavljene"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Znova aktiviraj"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Nobena delovna aplikacija ni na voljo"</string>

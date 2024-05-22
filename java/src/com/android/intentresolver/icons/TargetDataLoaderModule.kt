@@ -35,4 +35,10 @@ object TargetDataLoaderModule {
         @ActivityContext context: Context,
         @ActivityOwned lifecycle: Lifecycle,
     ): TargetDataLoader = DefaultTargetDataLoader(context, lifecycle, isAudioCaptureDevice = false)
+
+    @Provides
+    @ActivityScoped
+    @Caching
+    fun cachingTargetDataLoader(targetDataLoader: TargetDataLoader): TargetDataLoader =
+        CachingTargetDataLoader(targetDataLoader)
 }

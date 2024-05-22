@@ -47,7 +47,7 @@ class ProfileAvailability(
 
     /** Query current profile availability. An unavailable profile is one which is not active. */
     @MainThread
-    fun isAvailable(profile: Profile): Boolean {
+    fun isAvailable(profile: Profile?): Boolean {
         return runBlocking(background) {
             userInteractor.availability.map { it[profile] == true }.first()
         }

@@ -86,6 +86,8 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Este contido non pode abrirse con aplicacións do traballo"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Este contido non pode compartirse con aplicacións persoais"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Este contido non pode abrirse con aplicacións persoais"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Este contido non se pode compartir con aplicacións privadas"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Este contido non se pode abrir con aplicacións privadas"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"As aplicacións do traballo están en pausa"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Reactivar"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Non hai ningunha aplicación do traballo compatible"</string>

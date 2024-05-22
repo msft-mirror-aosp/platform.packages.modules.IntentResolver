@@ -86,6 +86,8 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"આ કન્ટેન્ટ ઑફિસ માટેની ઍપ વડે ખોલી શકાતું નથી"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"આ કન્ટેન્ટ વ્યક્તિગત ઍપ સાથે શેર કરી શકાતું નથી"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"આ કન્ટેન્ટ વ્યક્તિગત ઍપ વડે ખોલી શકાતું નથી"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"આ કન્ટેન્ટ ખાનગી ઍપ સાથે શેર કરી શકાતું નથી"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"આ કન્ટેન્ટ ખાનગી ઍપ વડે ખોલી શકાતું નથી"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"ઑફિસ માટેની ઍપ થોભાવવામાં આવી છે"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ફરી ચાલુ કરો"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"કોઈ ઑફિસ માટેની ઍપ સપોર્ટ કરતી નથી"</string>

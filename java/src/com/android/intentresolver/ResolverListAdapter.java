@@ -739,26 +739,31 @@ public class ResolverListAdapter extends BaseAdapter {
                 holder.bindLabel("", "");
                 loadLabel(dri);
             }
-            holder.bindIcon(info);
             if (!dri.hasDisplayIcon()) {
                 loadIcon(dri);
             }
+            holder.bindIcon(info);
         }
     }
 
     protected final void loadIcon(DisplayResolveInfo info) {
         if (mRequestedIcons.add(info)) {
-            mTargetDataLoader.loadAppTargetIcon(
+            Drawable icon = mTargetDataLoader.getOrLoadAppTargetIcon(
                     info,
                     getUserHandle(),
-                    (drawable) -> onIconLoaded(info, drawable));
+                    (drawable) -> {
+                        onIconLoaded(info, drawable);
+                        notifyDataSetChanged();
+                    });
+            if (icon != null) {
+                onIconLoaded(info, icon);
+            }
         }
     }
 
     private void onIconLoaded(DisplayResolveInfo displayResolveInfo, Drawable drawable) {
         if (!displayResolveInfo.hasDisplayIcon()) {
             displayResolveInfo.getDisplayIconHolder().setDisplayIcon(drawable);
-            notifyDataSetChanged();
         }
     }
 
@@ -822,7 +827,7 @@ public class ResolverListAdapter extends BaseAdapter {
     public void loadFilteredItemIconTaskAsync(@NonNull ImageView iconView) {
         final DisplayResolveInfo iconInfo = getFilteredItem();
         if (iconInfo != null) {
-            mTargetDataLoader.loadAppTargetIcon(
+            mTargetDataLoader.getOrLoadAppTargetIcon(
                     iconInfo, getUserHandle(), iconView::setImageDrawable);
         }
     }
