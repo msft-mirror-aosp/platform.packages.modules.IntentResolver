@@ -18,7 +18,6 @@ package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +33,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.AssistChip
@@ -50,6 +50,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.R
@@ -115,6 +118,12 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
         viewModel.contentType.collectAsStateWithLifecycle(initialValue = ContentType.Image)
     val borderColor = MaterialTheme.colorScheme.primary
     val scope = rememberCoroutineScope()
+    val contentDescription =
+        when (contentType) {
+            ContentType.Image -> stringResource(R.string.selectable_image)
+            ContentType.Video -> stringResource(R.string.selectable_video)
+            else -> stringResource(R.string.selectable_item)
+        }
     ShareouselCard(
         image = {
             // TODO: max ratio is actually equal to the viewport ratio
@@ -142,8 +151,12 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
                         shape = RoundedCornerShape(size = 12.dp),
                     )
                 }
+                .semantics { this.contentDescription = contentDescription }
                 .clip(RoundedCornerShape(size = 12.dp))
-                .clickable { scope.launch { viewModel.setSelected(!selected) } },
+                .toggleable(
+                    value = selected,
+                    onValueChange = { scope.launch { viewModel.setSelected(it) } },
+                )
     )
 }
 
