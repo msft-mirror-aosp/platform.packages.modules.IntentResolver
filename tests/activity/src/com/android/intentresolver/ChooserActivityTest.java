@@ -117,8 +117,12 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
+import com.android.intentresolver.contentpreview.FakeThumbnailLoader;
 import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.contentpreview.ImageLoaderModule;
+import com.android.intentresolver.contentpreview.PreviewCacheSize;
+import com.android.intentresolver.contentpreview.PreviewMaxConcurrency;
+import com.android.intentresolver.contentpreview.ThumbnailLoader;
 import com.android.intentresolver.data.repository.FakeUserRepository;
 import com.android.intentresolver.data.repository.UserRepository;
 import com.android.intentresolver.data.repository.UserRepositoryModule;
@@ -266,6 +270,17 @@ public class ChooserActivityTest {
 
     @BindValue
     final ImageLoader mImageLoader = mFakeImageLoader;
+
+    @BindValue
+    @PreviewCacheSize
+    int mPreviewCacheSize = 16;
+
+    @BindValue
+    @PreviewMaxConcurrency
+    int mPreviewMaxConcurrency = 4;
+
+    @BindValue
+    ThumbnailLoader mThumbnailLoader = new FakeThumbnailLoader();
 
     @Before
     public void setUp() {

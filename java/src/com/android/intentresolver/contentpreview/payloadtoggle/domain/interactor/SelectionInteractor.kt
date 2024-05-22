@@ -44,7 +44,9 @@ constructor(
     }
 
     fun unselect(model: PreviewModel) {
-        updateChooserRequest(selectionsRepo.selections.updateAndGet { it - model })
+        if (selectionsRepo.selections.value.size > 1) {
+            updateChooserRequest(selectionsRepo.selections.updateAndGet { it - model })
+        }
     }
 
     private fun updateChooserRequest(selections: Set<PreviewModel>) {
