@@ -33,7 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.android.intentresolver.R
-import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ContentType
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 
 @Composable
 fun ShareouselCard(
