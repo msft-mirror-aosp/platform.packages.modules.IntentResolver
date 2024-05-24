@@ -58,7 +58,7 @@ fun ShareouselCard(
 private fun AnimationIcon(modifier: Modifier = Modifier) {
     Icon(
         painterResource(id = R.drawable.ic_play_circle_filled_24px),
-        "animating",
+        contentDescription = null, // Video attribute described at a higher level.
         tint = Color.White,
         modifier = Modifier.size(20.dp).then(modifier)
     )
@@ -70,8 +70,8 @@ private fun SelectionIcon(selected: Boolean, modifier: Modifier = Modifier) {
         val bgColor = MaterialTheme.colorScheme.primary
         Icon(
             painter = painterResource(id = R.drawable.checkbox),
-            tint = Color.White,
-            contentDescription = "selected",
+            tint = MaterialTheme.colorScheme.onPrimary,
+            contentDescription = null,
             modifier =
                 Modifier.shadow(
                         elevation = 50.dp,
@@ -92,10 +92,14 @@ private fun SelectionIcon(selected: Boolean, modifier: Modifier = Modifier) {
                         spotColor = Color(0x40000000),
                         ambientColor = Color(0x40000000),
                     )
-                    .border(width = 2.dp, color = Color(0xFFFFFFFF), shape = CircleShape)
+                    .border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape
+                    )
                     .clip(CircleShape)
                     .size(20.dp)
-                    .background(color = Color(0x7DC4C4C4))
+                    .background(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f))
                     .then(modifier)
         )
     }
