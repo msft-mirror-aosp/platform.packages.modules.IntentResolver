@@ -18,6 +18,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.content.Intent
 import android.net.Uri
+import com.android.intentresolver.contentpreview.mimetypeClassifier
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.util.runKosmosTest
@@ -35,7 +36,8 @@ class SelectionInteractorTest {
             SelectionInteractor(
                 previewSelectionsRepository,
                 { Intent() },
-                updateTargetIntentInteractor
+                updateTargetIntentInteractor,
+                mimetypeClassifier,
             )
 
         assertThat(underTest.selections.value).isEqualTo(setOf(initialPreview))
@@ -57,7 +59,8 @@ class SelectionInteractorTest {
             SelectionInteractor(
                 previewSelectionsRepository,
                 { Intent() },
-                updateTargetIntentInteractor
+                updateTargetIntentInteractor,
+                mimetypeClassifier
             )
 
         underTest.unselect(first)
