@@ -56,8 +56,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.R
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
-import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselPreviewViewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 import kotlinx.coroutines.launch
@@ -114,12 +114,10 @@ private fun PreviewCarousel(
 private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
     val bitmap by viewModel.bitmap.collectAsStateWithLifecycle(initialValue = null)
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
-    val contentType by
-        viewModel.contentType.collectAsStateWithLifecycle(initialValue = ContentType.Image)
     val borderColor = MaterialTheme.colorScheme.primary
     val scope = rememberCoroutineScope()
     val contentDescription =
-        when (contentType) {
+        when (viewModel.contentType) {
             ContentType.Image -> stringResource(R.string.selectable_image)
             ContentType.Video -> stringResource(R.string.selectable_video)
             else -> stringResource(R.string.selectable_item)
@@ -141,7 +139,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
                     Box(modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio))
                 }
         },
-        contentType = contentType,
+        contentType = viewModel.contentType,
         selected = selected,
         modifier =
             Modifier.thenIf(selected) {
