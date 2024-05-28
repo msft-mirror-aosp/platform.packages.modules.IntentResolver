@@ -80,7 +80,7 @@ class ShareouselViewModelTest {
     fun headline_images() = runTest {
         assertThat(shareouselViewModel.headline.first()).isEqualTo("FILES: 1")
         previewSelectionsRepository.selections.value =
-            setOf(
+            listOf(
                 PreviewModel(
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = "image/png",
@@ -97,7 +97,7 @@ class ShareouselViewModelTest {
     @Test
     fun headline_videos() = runTest {
         previewSelectionsRepository.selections.value =
-            setOf(
+            listOf(
                 PreviewModel(
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = "video/mpeg",
@@ -114,7 +114,7 @@ class ShareouselViewModelTest {
     @Test
     fun headline_mixed() = runTest {
         previewSelectionsRepository.selections.value =
-            setOf(
+            listOf(
                 PreviewModel(
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = "image/jpeg",
@@ -149,7 +149,7 @@ class ShareouselViewModelTest {
             cursorPreviewsRepository.previewsModel.value =
                 PreviewsModel(
                     previewModels =
-                        setOf(
+                        listOf(
                             PreviewModel(
                                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                                 mimeType = "image/png",
@@ -177,7 +177,8 @@ class ShareouselViewModelTest {
                 .inOrder()
 
             val previewVm =
-                shareouselViewModel.preview(
+                shareouselViewModel.preview.invoke(
+                    /* index = */ 1,
                     PreviewModel(
                         uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                         mimeType = "video/mpeg"
@@ -246,7 +247,7 @@ class ShareouselViewModelTest {
         this.pendingIntentSender = pendingIntentSender
         this.targetIntentModifier = targetIntentModifier
         previewSelectionsRepository.selections.value =
-            setOf(PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null))
+            listOf(PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null))
         payloadToggleImageLoader =
             FakeImageLoader(
                 initialBitmaps =

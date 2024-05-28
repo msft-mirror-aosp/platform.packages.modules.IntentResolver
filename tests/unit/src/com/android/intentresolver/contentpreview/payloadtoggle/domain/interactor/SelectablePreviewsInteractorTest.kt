@@ -39,7 +39,7 @@ class SelectablePreviewsInteractorTest {
         cursorPreviewsRepository.previewsModel.value =
             PreviewsModel(
                 previewModels =
-                    setOf(
+                    listOf(
                         PreviewModel(
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = "image/bitmap",
@@ -54,7 +54,7 @@ class SelectablePreviewsInteractorTest {
                 loadMoreRight = null,
             )
         previewSelectionsRepository.selections.value =
-            setOf(
+            listOf(
                 PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
             )
         targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
@@ -94,7 +94,7 @@ class SelectablePreviewsInteractorTest {
     @Test
     fun keySet_reflectsRepositoryUpdate() = runKosmosTest {
         previewSelectionsRepository.selections.value =
-            setOf(
+            listOf(
                 PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
             )
         targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
@@ -114,7 +114,7 @@ class SelectablePreviewsInteractorTest {
         cursorPreviewsRepository.previewsModel.value =
             PreviewsModel(
                 previewModels =
-                    setOf(
+                    listOf(
                         PreviewModel(
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = "image/bitmap",
@@ -128,7 +128,7 @@ class SelectablePreviewsInteractorTest {
                 loadMoreLeft = null,
                 loadMoreRight = { loadRequested = true },
             )
-        previewSelectionsRepository.selections.value = emptySet()
+        previewSelectionsRepository.selections.value = emptyList()
         runCurrent()
 
         assertThat(previews.value).isNotNull()

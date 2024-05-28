@@ -29,9 +29,9 @@ import kotlinx.coroutines.flow.asStateFlow
 class SetCursorPreviewsInteractor
 @Inject
 constructor(private val previewsRepo: CursorPreviewsRepository) {
-    /** Stores new [previewsByKey], and returns a flow of load requests triggered by Shareousel. */
+    /** Stores new [previews], and returns a flow of load requests triggered by Shareousel. */
     fun setPreviews(
-        previewsByKey: Set<PreviewModel>,
+        previews: List<PreviewModel>,
         startIndex: Int,
         hasMoreLeft: Boolean,
         hasMoreRight: Boolean,
@@ -39,7 +39,7 @@ constructor(private val previewsRepo: CursorPreviewsRepository) {
         val loadingState = MutableStateFlow<LoadDirection?>(null)
         previewsRepo.previewsModel.value =
             PreviewsModel(
-                previewModels = previewsByKey,
+                previewModels = previews,
                 startIdx = startIndex,
                 loadMoreLeft =
                     if (hasMoreLeft) {

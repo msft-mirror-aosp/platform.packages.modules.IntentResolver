@@ -64,7 +64,7 @@ class SelectablePreviewInteractorTest {
         assertThat(underTest.isSelected.first()).isFalse()
 
         previewSelectionsRepository.selections.value =
-            setOf(
+            listOf(
                 PreviewModel(
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = "image/bitmap"

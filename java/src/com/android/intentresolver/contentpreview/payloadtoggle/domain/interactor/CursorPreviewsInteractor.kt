@@ -94,7 +94,7 @@ constructor(
         val startPageNum = state.firstLoadedPageNum
         while ((state.hasMoreLeft || state.hasMoreRight) && state.numLoadedPages < maxLoadedPages) {
             interactor.setPreviews(
-                previewsByKey = state.merged.values.toSet(),
+                previews = state.merged.values.toList(),
                 startIndex = startPageNum,
                 hasMoreLeft = state.hasMoreLeft,
                 hasMoreRight = state.hasMoreRight,
@@ -126,7 +126,7 @@ constructor(
             // those.
             val loadingState: Flow<LoadDirection?> =
                 interactor.setPreviews(
-                    previewsByKey = state.merged.values.toSet(),
+                    previews = state.merged.values.toList(),
                     startIndex = 0, // TODO: actually track this as the window changes?
                     hasMoreLeft = state.hasMoreLeft,
                     hasMoreRight = state.hasMoreRight,

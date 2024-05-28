@@ -35,8 +35,8 @@ constructor(
     private val updateTargetIntentInteractor: UpdateTargetIntentInteractor,
     private val mimeTypeClassifier: MimeTypeClassifier,
 ) {
-    /** Set of selected previews. */
-    val selections: StateFlow<Set<PreviewModel>>
+    /** List of selected previews. */
+    val selections: StateFlow<List<PreviewModel>>
         get() = selectionsRepo.selections
 
     /** Amount of selected previews. */
@@ -54,13 +54,13 @@ constructor(
         }
     }
 
-    private fun updateChooserRequest(selections: Set<PreviewModel>) {
+    private fun updateChooserRequest(selections: List<PreviewModel>) {
         val intent = targetIntentModifier.intentFromSelection(selections)
         updateTargetIntentInteractor.updateTargetIntent(intent)
     }
 
     private fun aggregateContentType(
-        items: Set<PreviewModel>,
+        items: List<PreviewModel>,
     ): ContentType {
         if (items.isEmpty()) {
             return ContentType.Other
