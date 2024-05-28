@@ -113,7 +113,7 @@ class FetchPreviewsInteractorTest {
                 .isEqualTo(
                     PreviewsModel(
                         previewModels =
-                            setOf(
+                            listOf(
                                 PreviewModel(
                                     uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                                     mimeType = "image/bitmap",

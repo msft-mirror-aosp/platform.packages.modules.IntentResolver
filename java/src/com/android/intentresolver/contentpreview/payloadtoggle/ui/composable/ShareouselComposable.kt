@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
@@ -104,8 +103,8 @@ private fun PreviewCarousel(
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
                 .systemGestureExclusion()
     ) {
-        items(previews.previewModels.toList(), key = { it.uri }) { model ->
-            ShareouselCard(viewModel.preview(model))
+        itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
+            ShareouselCard(viewModel.preview(index, model))
         }
     }
 }
