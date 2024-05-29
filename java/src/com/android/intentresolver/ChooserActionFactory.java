@@ -16,6 +16,8 @@
 
 package com.android.intentresolver;
 
+import static com.android.intentresolver.widget.ViewExtensionsKt.isFullyVisible;
+
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
@@ -129,7 +131,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             ActionActivityStarter activityStarter,
             @Nullable ShareResultSender shareResultSender,
             Consumer</* @Nullable */ Integer> finishCallback,
-            ClipboardManager clipboardManager) {
+            ClipboardManager clipboardManager,
+            FeatureFlags featureFlags) {
         this(
                 context,
                 makeCopyButtonRunnable(
@@ -145,7 +148,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                                 imageEditor),
                         firstVisibleImageQuery,
                         activityStarter,
-                        log),
+                        log,
+                        featureFlags.fixPartialImageEditTransition()),
                 chooserActions,
                 onUpdateSharedTextIsExcluded,
                 log,
@@ -333,7 +337,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             @Nullable TargetInfo editSharingTarget,
             Callable</* @Nullable */ View> firstVisibleImageQuery,
             ActionActivityStarter activityStarter,
-            EventLog log) {
+            EventLog log,
+            boolean requireFullVisibility) {
         if (editSharingTarget == null) return null;
         return () -> {
             // Log share completion via edit.
@@ -344,7 +349,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                 firstImageView = firstVisibleImageQuery.call();
             } catch (Exception e) { /* ignore */ }
             // Action bar is user-independent; always start as primary.
-            if (firstImageView == null) {
+            if (firstImageView == null
+                    || (requireFullVisibility && !isFullyVisible(firstImageView))) {
                 activityStarter.safelyStartActivityAsPersonalProfileUser(editSharingTarget);
             } else {
                 activityStarter.safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(

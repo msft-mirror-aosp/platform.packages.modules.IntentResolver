@@ -2198,7 +2198,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 },
                 mShareResultSender,
                 this::finishWithStatus,
-                mClipboardManager);
+                mClipboardManager,
+                mFeatureFlags);
     }
 
     private Supplier<ActionRow.Action> createModifyShareActionFactory() {
