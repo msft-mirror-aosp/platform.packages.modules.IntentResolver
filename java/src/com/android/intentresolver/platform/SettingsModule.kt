@@ -16,26 +16,18 @@
 
 package com.android.intentresolver.platform
 
-import android.provider.Settings.SettingNotFoundException
+import dagger.Binds
+import dagger.Module
+import dagger.Reusable
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 
-/**
- * A component which provides access to values from [android.provider.Settings.Secure].
- *
- * All methods return nullable types instead of throwing [SettingNotFoundException] which yields
- * cleaner, more idiomatic Kotlin code:
- *
- * // apply a default: val foo = settings.getInt(FOO) ?: DEFAULT_FOO
- *
- * // assert if missing: val required = settings.getInt(REQUIRED_VALUE) ?: error("required value
- * missing")
- */
-interface SecureSettings {
+@Module
+@InstallIn(SingletonComponent::class)
+interface SettingsModule {
+    @Binds @Reusable fun globalSettings(settings: SettingsImpl.Global): GlobalSettings
 
-    fun getString(name: String): String?
+    @Binds @Reusable fun secureSettings(settings: SettingsImpl.Secure): SecureSettings
 
-    fun getInt(name: String): Int?
-
-    fun getLong(name: String): Long?
-
-    fun getFloat(name: String): Float?
+    @Binds @Reusable fun systemSettings(settings: SettingsImpl.System): SystemSettings
 }

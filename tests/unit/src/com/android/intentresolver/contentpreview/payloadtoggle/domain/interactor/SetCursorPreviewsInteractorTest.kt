@@ -44,6 +44,8 @@ class SetCursorPreviewsInteractorTest {
                 startIndex = 100,
                 hasMoreLeft = false,
                 hasMoreRight = false,
+                leftTriggerIndex = 0,
+                rightTriggerIndex = 0,
             )
 
         assertThat(loadState.first()).isNull()
@@ -79,6 +81,8 @@ class SetCursorPreviewsInteractorTest {
                     startIndex = 100,
                     hasMoreLeft = true,
                     hasMoreRight = true,
+                    leftTriggerIndex = 0,
+                    rightTriggerIndex = 0,
                 )
                 .stateIn(backgroundScope)
 
