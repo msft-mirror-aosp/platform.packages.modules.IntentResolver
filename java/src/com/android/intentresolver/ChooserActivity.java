@@ -22,6 +22,7 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
+import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
@@ -1079,7 +1080,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
         try {
             if (cti.startAsCaller(this, options, user.getIdentifier())) {
-                maybeSendShareResult(cti);
+                // Prevent sending a second chooser result when starting the edit action intent.
+                if (!cti.getTargetIntent().hasExtra(EDIT_SOURCE)) {
+                    maybeSendShareResult(cti);
+                }
                 maybeLogCrossProfileTargetLaunch(cti, user);
             }
         } catch (RuntimeException e) {

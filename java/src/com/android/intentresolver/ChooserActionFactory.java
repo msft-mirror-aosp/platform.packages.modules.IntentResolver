@@ -88,7 +88,9 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
 
     // Boolean extra used to inform the editor that it may want to customize the editing experience
     // for the sharesheet editing flow.
-    private static final String EDIT_SOURCE = "edit_source";
+    // Note: EDIT_SOURCE is also used as a signal to avoid sending a 'Component Selected'
+    // ShareResult for this intent when sent via ChooserActivity#safelyStartActivityAsUser
+    static final String EDIT_SOURCE = "edit_source";
     private static final String EDIT_SOURCE_SHARESHEET = "sharesheet";
 
     private static final String CHIP_LABEL_METADATA_KEY = "android.service.chooser.chip_label";
