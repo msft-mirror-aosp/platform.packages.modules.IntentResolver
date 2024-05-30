@@ -257,6 +257,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             clipboardManager.setPrimaryClipAsPackage(clipData, referrerPackageName);
 
             log.logActionSelected(EventLog.SELECTION_TYPE_COPY);
+            Log.d(TAG, "finish due to copy clicked");
             finishCallback.accept(Activity.RESULT_OK);
         };
     }
@@ -395,6 +396,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                     if (shareResultSender != null) {
                         shareResultSender.onActionSelected(ShareAction.APPLICATION_DEFINED);
                     }
+                    Log.d(TAG, "finish due to custom action clicked");
                     finishCallback.accept(Activity.RESULT_OK);
                 }
         );
