@@ -43,6 +43,8 @@ import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Qualifier
+import kotlin.math.max
+import kotlin.math.min
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
@@ -93,11 +95,14 @@ constructor(
         var state = initialState
         val startPageNum = state.firstLoadedPageNum
         while ((state.hasMoreLeft || state.hasMoreRight) && state.numLoadedPages < maxLoadedPages) {
+            val (leftTriggerIndex, rightTriggerIndex) = state.triggerIndices()
             interactor.setPreviews(
                 previews = state.merged.values.toList(),
                 startIndex = startPageNum,
                 hasMoreLeft = state.hasMoreLeft,
                 hasMoreRight = state.hasMoreRight,
+                leftTriggerIndex = leftTriggerIndex,
+                rightTriggerIndex = rightTriggerIndex,
             )
             val loadedLeft = startPageNum - state.firstLoadedPageNum
             val loadedRight = state.lastLoadedPageNum - startPageNum
@@ -120,6 +125,8 @@ constructor(
     ) {
         var state = initialState
         while (true) {
+            val (leftTriggerIndex, rightTriggerIndex) = state.triggerIndices()
+
             // Design note: in order to prevent load requests from the UI when it was displaying a
             // previously-published dataset being accidentally associated with a recently-published
             // one, we generate a new Flow of load requests for each dataset and only listen to
@@ -130,6 +137,8 @@ constructor(
                     startIndex = 0, // TODO: actually track this as the window changes?
                     hasMoreLeft = state.hasMoreLeft,
                     hasMoreRight = state.hasMoreRight,
+                    leftTriggerIndex = leftTriggerIndex,
+                    rightTriggerIndex = rightTriggerIndex,
                 )
             state = loadingState.handleOneLoadRequest(state, pagedCursor, unclaimedRecords)
         }
@@ -236,6 +245,13 @@ constructor(
         } else {
             shiftWindowLeft(newPage, hasMoreLeft)
         }
+    }
+
+    private fun CursorWindow.triggerIndices(): Pair<Int, Int> {
+        val totalIndices = numLoadedPages * pageSize
+        val midIndex = totalIndices / 2
+        val halfPage = pageSize / 2
+        return max(midIndex - halfPage, 0) to min(midIndex + halfPage, totalIndices - 1)
     }
 
     private suspend fun readPage(
