@@ -44,18 +44,20 @@ constructor(
 ) {
     suspend fun activate() = coroutineScope {
         val cursor = async { cursorResolver.getCursor() }
-        val initialPreviewMap: Set<PreviewModel> = getInitialPreviews()
+        val initialPreviewMap = getInitialPreviews()
         selectionRepository.selections.value = initialPreviewMap
         setCursorPreviews.setPreviews(
-            previewsByKey = initialPreviewMap,
+            previews = initialPreviewMap,
             startIndex = focusedItemIdx,
             hasMoreLeft = false,
             hasMoreRight = false,
+            leftTriggerIndex = initialPreviewMap.indices.first(),
+            rightTriggerIndex = initialPreviewMap.indices.last(),
         )
         cursorInteractor.launch(cursor.await() ?: return@coroutineScope, initialPreviewMap)
     }
 
-    private suspend fun getInitialPreviews(): Set<PreviewModel> =
+    private suspend fun getInitialPreviews(): List<PreviewModel> =
         selectedItems
             // Restrict parallelism so as to not overload the metadata reader; anecdotally, too
             // many parallel queries causes failures.
@@ -72,5 +74,4 @@ constructor(
                             ?: 1f,
                 )
             }
-            .toSet()
 }

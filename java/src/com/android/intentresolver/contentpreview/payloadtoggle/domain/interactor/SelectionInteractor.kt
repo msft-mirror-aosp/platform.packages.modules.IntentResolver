@@ -16,8 +16,10 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import com.android.intentresolver.contentpreview.MimeTypeClassifier
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -31,13 +33,16 @@ constructor(
     private val selectionsRepo: PreviewSelectionsRepository,
     private val targetIntentModifier: TargetIntentModifier<PreviewModel>,
     private val updateTargetIntentInteractor: UpdateTargetIntentInteractor,
+    private val mimeTypeClassifier: MimeTypeClassifier,
 ) {
-    /** Set of selected previews. */
-    val selections: StateFlow<Set<PreviewModel>>
+    /** List of selected previews. */
+    val selections: StateFlow<List<PreviewModel>>
         get() = selectionsRepo.selections
 
     /** Amount of selected previews. */
     val amountSelected: Flow<Int> = selectionsRepo.selections.map { it.size }
+
+    val aggregateContentType: Flow<ContentType> = selections.map { aggregateContentType(it) }
 
     fun select(model: PreviewModel) {
         updateChooserRequest(selectionsRepo.selections.updateAndGet { it + model })
@@ -49,8 +54,33 @@ constructor(
         }
     }
 
-    private fun updateChooserRequest(selections: Set<PreviewModel>) {
+    private fun updateChooserRequest(selections: List<PreviewModel>) {
         val intent = targetIntentModifier.intentFromSelection(selections)
         updateTargetIntentInteractor.updateTargetIntent(intent)
+    }
+
+    private fun aggregateContentType(
+        items: List<PreviewModel>,
+    ): ContentType {
+        if (items.isEmpty()) {
+            return ContentType.Other
+        }
+
+        var allImages = true
+        var allVideos = true
+        for (item in items) {
+            allImages = allImages && mimeTypeClassifier.isImageType(item.mimeType)
+            allVideos = allVideos && mimeTypeClassifier.isVideoType(item.mimeType)
+
+            if (!allImages && !allVideos) {
+                break
+            }
+        }
+
+        return when {
+            allImages -> ContentType.Image
+            allVideos -> ContentType.Video
+            else -> ContentType.Other
+        }
     }
 }

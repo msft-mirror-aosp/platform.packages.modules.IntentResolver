@@ -18,11 +18,13 @@ package com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel
 import com.android.intentresolver.contentpreview.CachingImagePreviewImageLoader
 import com.android.intentresolver.contentpreview.HeadlineGenerator
 import com.android.intentresolver.contentpreview.ImageLoader
+import com.android.intentresolver.contentpreview.MimeTypeClassifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.PayloadToggle
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.ChooserRequestInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.CustomActionsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectablePreviewsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectionInteractor
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.inject.ViewModelOwned
@@ -35,9 +37,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.zip
 
 /** A dynamic carousel of selectable previews within share sheet. */
 data class ShareouselViewModel(
@@ -53,7 +55,7 @@ data class ShareouselViewModel(
     /** List of action chips presented underneath Shareousel. */
     val actions: Flow<List<ActionChipViewModel>>,
     /** Creates a [ShareouselPreviewViewModel] for a [PreviewModel] present in [previews]. */
-    val preview: (key: PreviewModel) -> ShareouselPreviewViewModel,
+    val preview: (key: PreviewModel, index: Int?) -> ShareouselPreviewViewModel,
 )
 
 @Module
@@ -71,6 +73,7 @@ interface ShareouselViewModelModule {
             headlineGenerator: HeadlineGenerator,
             selectionInteractor: SelectionInteractor,
             chooserRequestInteractor: ChooserRequestInteractor,
+            mimeTypeClassifier: MimeTypeClassifier,
             // TODO: remove if possible
             @ViewModelOwned scope: CoroutineScope,
         ): ShareouselViewModel {
@@ -82,8 +85,9 @@ interface ShareouselViewModelModule {
                 )
             return ShareouselViewModel(
                 headline =
-                    selectionInteractor.amountSelected.map { numItems ->
-                        val contentType = ContentType.Image // TODO: convert from metadata
+                    selectionInteractor.aggregateContentType.zip(
+                        selectionInteractor.amountSelected
+                    ) { contentType, numItems ->
                         when (contentType) {
                             ContentType.Other -> headlineGenerator.getFilesHeadline(numItems)
                             ContentType.Image -> headlineGenerator.getImagesHeadline(numItems)
@@ -108,12 +112,18 @@ interface ShareouselViewModelModule {
                             }
                         }
                     },
-                preview = { key ->
-                    keySet.value?.maybeLoad(key)
+                preview = { key, index ->
+                    keySet.value?.maybeLoad(index)
                     val previewInteractor = interactor.preview(key)
+                    val contentType =
+                        when {
+                            mimeTypeClassifier.isImageType(key.mimeType) -> ContentType.Image
+                            mimeTypeClassifier.isVideoType(key.mimeType) -> ContentType.Video
+                            else -> ContentType.Other
+                        }
                     ShareouselPreviewViewModel(
                         bitmap = flow { emit(key.previewUri?.let { imageLoader(it) }) },
-                        contentType = flowOf(ContentType.Image), // TODO: convert from metadata
+                        contentType = contentType,
                         isSelected = previewInteractor.isSelected,
                         setSelected = previewInteractor::setSelected,
                         aspectRatio = key.aspectRatio,
@@ -124,9 +134,10 @@ interface ShareouselViewModelModule {
     }
 }
 
-private fun PreviewsModel.maybeLoad(key: PreviewModel) {
-    when (key) {
-        previewModels.firstOrNull() -> loadMoreLeft?.invoke()
-        previewModels.lastOrNull() -> loadMoreRight?.invoke()
+private fun PreviewsModel.maybeLoad(index: Int?) {
+    when {
+        index == null -> {}
+        index <= leftTriggerIndex -> loadMoreLeft?.invoke()
+        index >= rightTriggerIndex -> loadMoreRight?.invoke()
     }
 }

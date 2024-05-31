@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver
+package com.android.intentresolver.contentpreview.payloadtoggle.shared
 
-import android.content.ContentResolver
-import android.provider.Settings
-
-/** A proxy class for secure settings, for easier testing. */
-open class SecureSettings {
-    open fun getString(resolver: ContentResolver, name: String): String? {
-        return Settings.Secure.getString(resolver, name)
-    }
+/** Type of the content being previewed. */
+enum class ContentType {
+    Image,
+    Video,
+    Other
 }

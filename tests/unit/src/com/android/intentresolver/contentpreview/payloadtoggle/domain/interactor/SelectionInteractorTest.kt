@@ -18,6 +18,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.content.Intent
 import android.net.Uri
+import com.android.intentresolver.contentpreview.mimetypeClassifier
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.util.runKosmosTest
@@ -29,21 +30,22 @@ class SelectionInteractorTest {
     fun singleSelection_removalPrevented() = runKosmosTest {
         val initialPreview =
             PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
-        previewSelectionsRepository.selections.value = setOf(initialPreview)
+        previewSelectionsRepository.selections.value = listOf(initialPreview)
 
         val underTest =
             SelectionInteractor(
                 previewSelectionsRepository,
                 { Intent() },
-                updateTargetIntentInteractor
+                updateTargetIntentInteractor,
+                mimetypeClassifier,
             )
 
-        assertThat(underTest.selections.value).isEqualTo(setOf(initialPreview))
+        assertThat(underTest.selections.value).containsExactly(initialPreview)
 
         // Shouldn't do anything!
         underTest.unselect(initialPreview)
 
-        assertThat(underTest.selections.value).isEqualTo(setOf(initialPreview))
+        assertThat(underTest.selections.value).containsExactly(initialPreview)
     }
 
     @Test
@@ -51,17 +53,18 @@ class SelectionInteractorTest {
         val first = PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
         val second =
             PreviewModel(uri = Uri.fromParts("scheme2", "ssp2", "fragment2"), mimeType = null)
-        previewSelectionsRepository.selections.value = setOf(first, second)
+        previewSelectionsRepository.selections.value = listOf(first, second)
 
         val underTest =
             SelectionInteractor(
                 previewSelectionsRepository,
                 { Intent() },
-                updateTargetIntentInteractor
+                updateTargetIntentInteractor,
+                mimetypeClassifier
             )
 
         underTest.unselect(first)
 
-        assertThat(underTest.selections.value).isEqualTo(setOf(second))
+        assertThat(underTest.selections.value).containsExactly(second)
     }
 }

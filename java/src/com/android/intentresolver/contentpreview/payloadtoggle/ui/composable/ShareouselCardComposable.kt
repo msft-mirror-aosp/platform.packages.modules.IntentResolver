@@ -33,7 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.android.intentresolver.R
-import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ContentType
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 
 @Composable
 fun ShareouselCard(
@@ -47,18 +47,28 @@ fun ShareouselCard(
         val topButtonPadding = 12.dp
         Box(modifier = Modifier.padding(topButtonPadding).matchParentSize()) {
             SelectionIcon(selected, modifier = Modifier.align(Alignment.TopStart))
-            if (contentType == ContentType.Video) {
-                AnimationIcon(modifier = Modifier.align(Alignment.TopEnd))
+            when (contentType) {
+                ContentType.Video ->
+                    TypeIcon(
+                        R.drawable.ic_play_circle_filled_24px,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+                ContentType.Other ->
+                    TypeIcon(
+                        R.drawable.chooser_file_generic,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+                ContentType.Image -> Unit // No additional icon needed.
             }
         }
     }
 }
 
 @Composable
-private fun AnimationIcon(modifier: Modifier = Modifier) {
+private fun TypeIcon(drawableResource: Int, modifier: Modifier = Modifier) {
     Icon(
-        painterResource(id = R.drawable.ic_play_circle_filled_24px),
-        contentDescription = null, // Video attribute described at a higher level.
+        painterResource(id = drawableResource),
+        contentDescription = null, // Type attribute described at a higher level.
         tint = Color.White,
         modifier = Modifier.size(20.dp).then(modifier)
     )
