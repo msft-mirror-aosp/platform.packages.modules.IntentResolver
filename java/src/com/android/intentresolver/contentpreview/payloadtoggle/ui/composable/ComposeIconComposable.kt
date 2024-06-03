@@ -22,6 +22,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -31,11 +32,16 @@ import com.android.intentresolver.icon.ComposeIcon
 import com.android.intentresolver.icon.ResourceIcon
 
 @Composable
-fun Image(icon: ComposeIcon, modifier: Modifier = Modifier) {
+fun Image(icon: ComposeIcon, modifier: Modifier = Modifier, colorFilter: ColorFilter? = null) {
     when (icon) {
-        is AdaptiveIcon -> Image(icon.wrapped, modifier)
+        is AdaptiveIcon -> Image(icon.wrapped, modifier, colorFilter = colorFilter)
         is BitmapIcon ->
-            Image(icon.bitmap.asImageBitmap(), contentDescription = null, modifier = modifier)
+            Image(
+                icon.bitmap.asImageBitmap(),
+                contentDescription = null,
+                modifier = modifier,
+                colorFilter = colorFilter
+            )
         is ResourceIcon -> {
             val localContext = LocalContext.current
             val wrappedContext: Context =
@@ -43,7 +49,12 @@ fun Image(icon: ComposeIcon, modifier: Modifier = Modifier) {
                     override fun getResources(): Resources = icon.res
                 }
             CompositionLocalProvider(LocalContext provides wrappedContext) {
-                Image(painterResource(icon.resId), contentDescription = null, modifier = modifier)
+                Image(
+                    painterResource(icon.resId),
+                    contentDescription = null,
+                    modifier = modifier,
+                    colorFilter = colorFilter
+                )
             }
         }
     }

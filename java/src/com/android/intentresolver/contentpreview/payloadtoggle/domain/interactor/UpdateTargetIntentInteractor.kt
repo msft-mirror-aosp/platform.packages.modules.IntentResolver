@@ -14,62 +14,24 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
-import com.android.intentresolver.contentpreview.payloadtoggle.data.model.SelectionRecordType
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ChooserParamsUpdateRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.TargetIntentRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.CustomAction
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.PendingIntentSender
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.toCustomActionModel
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.update.SelectionChangeCallback
-import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
+import android.content.Intent
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
 import javax.inject.Inject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
 
-/** Updates [TargetIntentRepository] in reaction to user selection changes. */
 class UpdateTargetIntentInteractor
 @Inject
 constructor(
-    private val intentRepository: TargetIntentRepository,
-    private val chooserParamsUpdateRepository: ChooserParamsUpdateRepository,
-    @CustomAction private val pendingIntentSender: PendingIntentSender,
-    private val selectionCallback: SelectionChangeCallback,
-    private val selectionRepo: PreviewSelectionsRepository,
-    private val targetIntentModifier: TargetIntentModifier<PreviewModel>,
+    private val repository: PendingSelectionCallbackRepository,
+    private val chooserRequestInteractor: UpdateChooserRequestInteractor,
 ) {
-    /** Listen for events and update state. */
-    suspend fun launch(): Unit = coroutineScope {
-        launch {
-            intentRepository.targetIntent
-                .filter { !it.isInitial }
-                .mapLatest { record -> selectionCallback.onSelectionChanged(record.intent) }
-                .filterNotNull()
-                .collect { updates ->
-                    val actions = updates.customActions ?: emptyList()
-                    intentRepository.customActions.value =
-                        actions.map { it.toCustomActionModel(pendingIntentSender) }
-                    chooserParamsUpdateRepository.setUpdates(updates)
-                }
-        }
-        launch {
-            selectionRepo.selections
-                .filter { it.type == SelectionRecordType.Updated }
-                .collectLatest {
-                    intentRepository.updateTargetIntent(
-                        targetIntentModifier.onSelectionChanged(it.selection)
-                    )
-                }
-        }
+    /**
+     * Updates the target intent for the chooser. This will kick off an asynchronous IPC with the
+     * sharing application, so that it can react to the new intent.
+     */
+    fun updateTargetIntent(targetIntent: Intent) {
+        repository.pendingTargetIntent.value = targetIntent
+        chooserRequestInteractor.setTargetIntent(targetIntent)
     }
 }

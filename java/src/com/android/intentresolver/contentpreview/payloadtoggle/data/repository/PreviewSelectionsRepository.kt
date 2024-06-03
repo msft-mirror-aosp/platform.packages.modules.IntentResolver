@@ -16,52 +16,13 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.data.repository
 
-import android.util.Log
-import com.android.intentresolver.contentpreview.payloadtoggle.data.model.SelectionRecord
-import com.android.intentresolver.contentpreview.payloadtoggle.data.model.SelectionRecordType.Initial
-import com.android.intentresolver.contentpreview.payloadtoggle.data.model.SelectionRecordType.Uninitialized
-import com.android.intentresolver.contentpreview.payloadtoggle.data.model.SelectionRecordType.Updated
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import dagger.hilt.android.scopes.ViewModelScoped
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-
-private const val TAG = "PreviewSelectionsRep"
 
 /** Stores set of selected previews. */
 @ViewModelScoped
 class PreviewSelectionsRepository @Inject constructor() {
-    private val _selections = MutableStateFlow(SelectionRecord(Uninitialized, emptySet()))
-
-    /** Selected previews data */
-    val selections: StateFlow<SelectionRecord> = _selections.asStateFlow()
-
-    fun setSelection(selection: Set<PreviewModel>) {
-        _selections.value = SelectionRecord(Initial, selection)
-    }
-
-    fun select(item: PreviewModel) {
-        _selections.update { record ->
-            if (record.type == Uninitialized) {
-                Log.w(TAG, "Changing selection before it is initialized")
-                record
-            } else {
-                SelectionRecord(Updated, record.selection + item)
-            }
-        }
-    }
-
-    fun unselect(item: PreviewModel) {
-        _selections.update { record ->
-            if (record.type == Uninitialized) {
-                Log.w(TAG, "Changing selection before it is initialized")
-                record
-            } else {
-                SelectionRecord(Updated, record.selection - item)
-            }
-        }
-    }
+    val selections = MutableStateFlow(emptyList<PreviewModel>())
 }

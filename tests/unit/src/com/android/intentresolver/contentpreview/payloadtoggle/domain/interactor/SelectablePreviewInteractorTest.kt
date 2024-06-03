@@ -18,90 +18,91 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import android.content.Intent
 import android.net.Uri
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.CursorPreviewsRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.pendingSelectionCallbackRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
-import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
+import com.android.intentresolver.data.repository.chooserRequestRepository
+import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class SelectablePreviewInteractorTest {
 
     @Test
-    fun reflectPreviewRepo_initState() = runTest {
-        val repo =
-            CursorPreviewsRepository().apply {
-                previewsModel.value =
-                    PreviewsModel(
-                        previewModels =
-                            setOf(
-                                PreviewModel(
-                                    Uri.fromParts("scheme", "ssp", "fragment"),
-                                    "image/bitmap",
-                                ),
-                                PreviewModel(
-                                    Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                                    "image/bitmap",
-                                ),
-                            ),
-                        startIdx = 0,
-                        loadMoreLeft = null,
-                        loadMoreRight = null,
-                    )
-            }
-        val selectionRepo = PreviewSelectionsRepository()
+    fun reflectPreviewRepo_initState() = runKosmosTest {
+        targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
         val underTest =
             SelectablePreviewInteractor(
-                key = PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), null),
-                selectionRepo = selectionRepo,
+                key =
+                    PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
+                selectionInteractor = selectionInteractor,
             )
-        selectionRepo.setSelection(emptySet())
-        testScheduler.runCurrent()
+        runCurrent()
 
         assertThat(underTest.isSelected.first()).isFalse()
     }
 
     @Test
-    fun reflectPreviewRepo_updatedState() = runTest {
-        val repo = CursorPreviewsRepository()
-        val selectionRepository = PreviewSelectionsRepository()
+    fun reflectPreviewRepo_updatedState() = runKosmosTest {
+        targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
         val underTest =
             SelectablePreviewInteractor(
-                key = PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), "image/bitmap"),
-                selectionRepo = selectionRepository,
+                key =
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                        mimeType = "image/bitmap"
+                    ),
+                selectionInteractor = selectionInteractor,
             )
-        selectionRepository.setSelection(emptySet())
 
         assertThat(underTest.isSelected.first()).isFalse()
 
-        repo.previewsModel.value =
-            PreviewsModel(
-                previewModels =
-                    setOf(
-                        PreviewModel(
-                            Uri.fromParts("scheme", "ssp", "fragment"),
-                            "image/bitmap",
-                        ),
-                        PreviewModel(
-                            Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                            "image/bitmap",
-                        ),
-                    ),
-                startIdx = 0,
-                loadMoreLeft = null,
-                loadMoreRight = null,
+        previewSelectionsRepository.selections.value =
+            listOf(
+                PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = "image/bitmap"
+                )
             )
-
-        selectionRepository.setSelection(
-            setOf(PreviewModel(Uri.fromParts("scheme", "ssp", "fragment"), "image/bitmap"))
-        )
         runCurrent()
 
         assertThat(underTest.isSelected.first()).isTrue()
+    }
+
+    @Test
+    fun setSelected_updatesChooserRequestRepo() = runKosmosTest {
+        val modifiedIntent = Intent()
+        targetIntentModifier = TargetIntentModifier { modifiedIntent }
+        val underTest =
+            SelectablePreviewInteractor(
+                key =
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                        mimeType = "image/bitmap"
+                    ),
+                selectionInteractor = selectionInteractor,
+            )
+
+        underTest.setSelected(true)
+        runCurrent()
+
+        assertThat(previewSelectionsRepository.selections.value)
+            .containsExactly(
+                PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = "image/bitmap"
+                )
+            )
+
+        assertThat(chooserRequestRepository.chooserRequest.value.targetIntent)
+            .isSameInstanceAs(modifiedIntent)
+        assertThat(pendingSelectionCallbackRepository.pendingTargetIntent.value)
+            .isSameInstanceAs(modifiedIntent)
     }
 }

@@ -19,7 +19,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.shared.model
 /** A dataset of previews for Shareousel. */
 data class PreviewsModel(
     /** All available [PreviewModel]s. */
-    val previewModels: Set<PreviewModel>,
+    val previewModels: List<PreviewModel>,
     /** Index into [previewModels] that should be initially displayed to the user. */
     val startIdx: Int,
     /**
@@ -32,4 +32,14 @@ data class PreviewsModel(
      * indicates that there is no more data to load in that direction.
      */
     val loadMoreRight: (() -> Unit)?,
+    /**
+     * Index into [previewModels] where any attempted access less than or equal to it should trigger
+     * a window shift left.
+     */
+    val leftTriggerIndex: Int,
+    /**
+     * Index into [previewModels] where any attempted access greater than or equal to it should
+     * trigger a window shift right.
+     */
+    val rightTriggerIndex: Int,
 )

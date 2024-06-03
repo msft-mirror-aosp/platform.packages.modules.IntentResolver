@@ -16,6 +16,8 @@
 
 package com.android.intentresolver;
 
+import static com.android.intentresolver.widget.ViewExtensionsKt.isFullyVisible;
+
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
@@ -39,6 +41,8 @@ import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.logging.EventLog;
+import com.android.intentresolver.ui.ShareResultSender;
+import com.android.intentresolver.ui.model.ShareAction;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.internal.annotations.VisibleForTesting;
 
@@ -46,6 +50,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -53,8 +58,11 @@ import java.util.function.Consumer;
  * Implementation of {@link ChooserContentPreviewUi.ActionFactory} specialized to the application
  * requirements of Sharesheet / {@link ChooserActivity}.
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public final class ChooserActionFactory implements ChooserContentPreviewUi.ActionFactory {
-    /** Delegate interface to launch activities when the actions are selected. */
+    /**
+     * Delegate interface to launch activities when the actions are selected.
+     */
     public interface ActionActivityStarter {
         /**
          * Request an activity launch for the provided target. Implementations may choose to exit
@@ -82,7 +90,9 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
 
     // Boolean extra used to inform the editor that it may want to customize the editing experience
     // for the sharesheet editing flow.
-    private static final String EDIT_SOURCE = "edit_source";
+    // Note: EDIT_SOURCE is also used as a signal to avoid sending a 'Component Selected'
+    // ShareResult for this intent when sent via ChooserActivity#safelyStartActivityAsUser
+    static final String EDIT_SOURCE = "edit_source";
     private static final String EDIT_SOURCE_SHARESHEET = "sharesheet";
 
     private static final String CHIP_LABEL_METADATA_KEY = "android.service.chooser.chip_label";
@@ -92,19 +102,17 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
 
     private final Context mContext;
 
-    @Nullable
-    private final Runnable mCopyButtonRunnable;
-    private final Runnable mEditButtonRunnable;
+    @Nullable private Runnable mCopyButtonRunnable;
+    @Nullable private Runnable mEditButtonRunnable;
     private final ImmutableList<ChooserAction> mCustomActions;
-    private final @Nullable ChooserAction mModifyShareAction;
     private final Consumer<Boolean> mExcludeSharedTextAction;
+    @Nullable private final ShareResultSender mShareResultSender;
     private final Consumer</* @Nullable */ Integer> mFinishCallback;
     private final EventLog mLog;
 
     /**
      * @param context
-     * @param chooserRequest data about the invocation of the current Sharesheet session.
-     * device to implement the supported action types.
+     * @param imageEditor an explicit Activity to launch for editing images
      * @param onUpdateSharedTextIsExcluded a delegate to be invoked when the "exclude shared text"
      * setting is updated. The argument is whether the shared text is to be excluded.
      * @param firstVisibleImageQuery a delegate that provides a reference to the first visible image
@@ -115,54 +123,76 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
      */
     public ChooserActionFactory(
             Context context,
-            ChooserRequestParameters chooserRequest,
-            ChooserIntegratedDeviceComponents integratedDeviceComponents,
+            Intent targetIntent,
+            String referrerPackageName,
+            List<ChooserAction> chooserActions,
+            Optional<ComponentName> imageEditor,
             EventLog log,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
             Callable</* @Nullable */ View> firstVisibleImageQuery,
             ActionActivityStarter activityStarter,
-            Consumer</* @Nullable */ Integer> finishCallback) {
+            @Nullable ShareResultSender shareResultSender,
+            Consumer</* @Nullable */ Integer> finishCallback,
+            ClipboardManager clipboardManager,
+            FeatureFlags featureFlags) {
         this(
                 context,
                 makeCopyButtonRunnable(
-                        context,
-                        chooserRequest.getTargetIntent(),
-                        chooserRequest.getReferrerPackageName(),
+                        clipboardManager,
+                        targetIntent,
+                        referrerPackageName,
                         finishCallback,
                         log),
                 makeEditButtonRunnable(
                         getEditSharingTarget(
                                 context,
-                                chooserRequest.getTargetIntent(),
-                                integratedDeviceComponents),
+                                targetIntent,
+                                imageEditor),
                         firstVisibleImageQuery,
                         activityStarter,
-                        log),
-                chooserRequest.getChooserActions(),
-                chooserRequest.getModifyShareAction(),
+                        log,
+                        featureFlags.fixPartialImageEditTransition()),
+                chooserActions,
                 onUpdateSharedTextIsExcluded,
                 log,
+                shareResultSender,
                 finishCallback);
+
     }
 
     @VisibleForTesting
     ChooserActionFactory(
             Context context,
             @Nullable Runnable copyButtonRunnable,
-            Runnable editButtonRunnable,
+            @Nullable Runnable editButtonRunnable,
             List<ChooserAction> customActions,
-            @Nullable ChooserAction modifyShareAction,
             Consumer<Boolean> onUpdateSharedTextIsExcluded,
             EventLog log,
+            @Nullable ShareResultSender shareResultSender,
             Consumer</* @Nullable */ Integer> finishCallback) {
         mContext = context;
         mCopyButtonRunnable = copyButtonRunnable;
         mEditButtonRunnable = editButtonRunnable;
         mCustomActions = ImmutableList.copyOf(customActions);
-        mModifyShareAction = modifyShareAction;
         mExcludeSharedTextAction = onUpdateSharedTextIsExcluded;
         mLog = log;
+        mShareResultSender = shareResultSender;
         mFinishCallback = finishCallback;
+
+        if (mShareResultSender != null) {
+            if (mEditButtonRunnable != null) {
+                mEditButtonRunnable = () -> {
+                    mShareResultSender.onActionSelected(ShareAction.SYSTEM_EDIT);
+                    editButtonRunnable.run();
+                };
+            }
+            if (mCopyButtonRunnable != null) {
+                mCopyButtonRunnable = () -> {
+                    mShareResultSender.onActionSelected(ShareAction.SYSTEM_COPY);
+                    copyButtonRunnable.run();
+                };
+            }
+        }
     }
 
     @Override
@@ -186,31 +216,14 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             ActionRow.Action actionRow = createCustomAction(
                     mContext,
                     mCustomActions.get(i),
-                    mFinishCallback,
-                    () -> {
-                        mLog.logCustomActionSelected(position);
-                    }
-            );
+                    () -> logCustomAction(position),
+                    mShareResultSender,
+                    mFinishCallback);
             if (actionRow != null) {
                 actions.add(actionRow);
             }
         }
         return actions;
-    }
-
-    /**
-     * Provides a share modification action, if any.
-     */
-    @Override
-    @Nullable
-    public ActionRow.Action getModifyShareAction() {
-        return createCustomAction(
-                mContext,
-                mModifyShareAction,
-                mFinishCallback,
-                () -> {
-                    mLog.logActionSelected(EventLog.SELECTION_TYPE_MODIFY_SHARE);
-                });
     }
 
     /**
@@ -229,7 +242,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
 
     @Nullable
     private static Runnable makeCopyButtonRunnable(
-            Context context,
+            ClipboardManager clipboardManager,
             Intent targetIntent,
             String referrerPackageName,
             Consumer<Integer> finishCallback,
@@ -245,11 +258,10 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             return null;
         }
         return () -> {
-            ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(
-                    Context.CLIPBOARD_SERVICE);
             clipboardManager.setPrimaryClipAsPackage(clipData, referrerPackageName);
 
             log.logActionSelected(EventLog.SELECTION_TYPE_COPY);
+            Log.d(TAG, "finish due to copy clicked");
             finishCallback.accept(Activity.RESULT_OK);
         };
     }
@@ -278,18 +290,18 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return clipData;
     }
 
+    @Nullable
     private static TargetInfo getEditSharingTarget(
             Context context,
             Intent originalIntent,
-            ChooserIntegratedDeviceComponents integratedComponents) {
-        final ComponentName editorComponent = integratedComponents.getEditSharingComponent();
+            Optional<ComponentName> imageEditor) {
 
         final Intent resolveIntent = new Intent(originalIntent);
         // Retain only URI permission grant flags if present. Other flags may prevent the scene
         // transition animation from running (i.e FLAG_ACTIVITY_NO_ANIMATION,
         // FLAG_ACTIVITY_NEW_TASK, FLAG_ACTIVITY_NEW_DOCUMENT) but also not needed.
         resolveIntent.setFlags(originalIntent.getFlags() & URI_PERMISSION_INTENT_FLAGS);
-        resolveIntent.setComponent(editorComponent);
+        imageEditor.ifPresent(resolveIntent::setComponent);
         resolveIntent.setAction(Intent.ACTION_EDIT);
         resolveIntent.putExtra(EDIT_SOURCE, EDIT_SOURCE_SHARESHEET);
         String originalAction = originalIntent.getAction();
@@ -308,7 +320,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         final ResolveInfo ri = context.getPackageManager().resolveActivity(
                 resolveIntent, PackageManager.GET_META_DATA);
         if (ri == null || ri.activityInfo == null) {
-            Log.e(TAG, "Device-specified editor (" + editorComponent + ") not available");
+            Log.e(TAG, "Device-specified editor (" + imageEditor + ") not available");
             return null;
         }
 
@@ -323,11 +335,14 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
         return dri;
     }
 
+    @Nullable
     private static Runnable makeEditButtonRunnable(
-            TargetInfo editSharingTarget,
+            @Nullable TargetInfo editSharingTarget,
             Callable</* @Nullable */ View> firstVisibleImageQuery,
             ActionActivityStarter activityStarter,
-            EventLog log) {
+            EventLog log,
+            boolean requireFullVisibility) {
+        if (editSharingTarget == null) return null;
         return () -> {
             // Log share completion via edit.
             log.logActionSelected(EventLog.SELECTION_TYPE_EDIT);
@@ -337,7 +352,8 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                 firstImageView = firstVisibleImageQuery.call();
             } catch (Exception e) { /* ignore */ }
             // Action bar is user-independent; always start as primary.
-            if (firstImageView == null) {
+            if (firstImageView == null
+                    || (requireFullVisibility && !isFullyVisible(firstImageView))) {
                 activityStarter.safelyStartActivityAsPersonalProfileUser(editSharingTarget);
             } else {
                 activityStarter.safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(
@@ -347,12 +363,13 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
     }
 
     @Nullable
-    private static ActionRow.Action createCustomAction(
+    static ActionRow.Action createCustomAction(
             Context context,
-            ChooserAction action,
-            Consumer<Integer> finishCallback,
-            Runnable loggingRunnable) {
-        if (action == null || action.getAction() == null) {
+            @Nullable ChooserAction action,
+            Runnable loggingRunnable,
+            ShareResultSender shareResultSender,
+            Consumer</* @Nullable */ Integer> finishCallback) {
+        if (action == null) {
             return null;
         }
         Drawable icon = action.getIcon().loadDrawable(context);
@@ -382,8 +399,16 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                     if (loggingRunnable != null) {
                         loggingRunnable.run();
                     }
+                    if (shareResultSender != null) {
+                        shareResultSender.onActionSelected(ShareAction.APPLICATION_DEFINED);
+                    }
+                    Log.d(TAG, "finish due to custom action clicked");
                     finishCallback.accept(Activity.RESULT_OK);
                 }
         );
+    }
+
+    void logCustomAction(int position) {
+        mLog.logCustomActionSelected(position);
     }
 }

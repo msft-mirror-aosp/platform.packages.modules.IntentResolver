@@ -30,8 +30,8 @@ import androidx.annotation.Nullable;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.SelectableTargetInfo;
 import com.android.intentresolver.chooser.TargetInfo;
-import com.android.intentresolver.v2.ui.AppShortcutLimit;
-import com.android.intentresolver.v2.ui.EnforceShortcutLimit;
+import com.android.intentresolver.ui.AppShortcutLimit;
+import com.android.intentresolver.ui.EnforceShortcutLimit;
 
 import java.util.Collections;
 import java.util.Comparator;

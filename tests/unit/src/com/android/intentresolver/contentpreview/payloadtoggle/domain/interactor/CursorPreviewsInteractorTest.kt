@@ -20,17 +20,25 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.database.MatrixCursor
 import android.net.Uri
+import android.provider.MediaStore.MediaColumns.HEIGHT
+import android.provider.MediaStore.MediaColumns.WIDTH
+import android.util.Size
 import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.CursorPreviewsRepository
+import com.android.intentresolver.contentpreview.UriMetadataReader
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
+import com.android.intentresolver.contentpreview.readSize
+import com.android.intentresolver.contentpreview.uriMetadataReader
+import com.android.intentresolver.util.KosmosTestScope
+import com.android.intentresolver.util.cursor.CursorView
 import com.android.intentresolver.util.cursor.viewBy
+import com.android.intentresolver.util.runTest
+import com.android.systemui.kosmos.Kosmos
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class CursorPreviewsInteractorTest {
@@ -42,70 +50,104 @@ class CursorPreviewsInteractorTest {
         cursorStartPosition: Int = cursor.count() / 2,
         pageSize: Int = 16,
         maxLoadedPages: Int = 3,
-        block: TestScope.(TestDeps) -> Unit,
-    ): Unit = runTest {
-        block(
-            TestDeps(
-                initialSelection,
-                focusedItemIndex,
-                cursor,
-                cursorStartPosition,
-                pageSize,
-                maxLoadedPages,
-            )
-        )
+        cursorSizes: Map<Int, Size> = emptyMap(),
+        metadatSizes: Map<Int, Size> = emptyMap(),
+        block: KosmosTestScope.(TestDeps) -> Unit,
+    ) {
+        val metadataUriToSize = metadatSizes.mapKeys { uri(it.key) }
+        with(Kosmos()) {
+            this.focusedItemIndex = focusedItemIndex
+            this.pageSize = pageSize
+            this.maxLoadedPages = maxLoadedPages
+            uriMetadataReader =
+                object : UriMetadataReader {
+                    override fun getMetadata(uri: Uri): FileInfo =
+                        FileInfo.Builder(uri)
+                            .withPreviewUri(uri)
+                            .withMimeType("image/bitmap")
+                            .build()
+
+                    override fun readPreviewSize(uri: Uri): Size? = metadataUriToSize[uri]
+                }
+            runTest {
+                block(
+                    TestDeps(
+                        initialSelection,
+                        cursor,
+                        cursorStartPosition,
+                        cursorSizes,
+                    )
+                )
+            }
+        }
     }
 
     private class TestDeps(
         initialSelectionRange: Iterable<Int>,
-        focusedItemIndex: Int,
         private val cursorRange: Iterable<Int>,
         private val cursorStartPosition: Int,
-        pageSize: Int,
-        maxLoadedPages: Int,
+        private val cursorSizes: Map<Int, Size>,
     ) {
-        val cursor =
-            MatrixCursor(arrayOf("uri"))
+        val cursor: CursorView<CursorRow?> =
+            MatrixCursor(arrayOf("uri", WIDTH, HEIGHT))
                 .apply {
                     extras = bundleOf("position" to cursorStartPosition)
                     for (i in cursorRange) {
-                        newRow().add("uri", uri(i).toString())
+                        val size = cursorSizes[i]
+                        addRow(
+                            arrayOf(
+                                uri(i).toString(),
+                                size?.width?.toString(),
+                                size?.height?.toString(),
+                            )
+                        )
                     }
                 }
-                .viewBy { getString(0)?.let(Uri::parse) }
-        val previewsRepo = CursorPreviewsRepository()
-        val underTest =
-            CursorPreviewsInteractor(
-                interactor = SetCursorPreviewsInteractor(previewsRepo = previewsRepo),
-                focusedItemIdx = focusedItemIndex,
-                uriMetadataReader = { FileInfo.Builder(it).withMimeType("image/bitmap").build() },
-                pageSize = pageSize,
-                maxLoadedPages = maxLoadedPages,
-            )
+                .viewBy { getString(0)?.let { uriStr -> CursorRow(Uri.parse(uriStr), readSize()) } }
         val initialPreviews: List<PreviewModel> =
             initialSelectionRange.map { i -> PreviewModel(uri = uri(i), mimeType = "image/bitmap") }
-
-        private fun uri(index: Int) = Uri.fromParts("scheme$index", "ssp$index", "fragment$index")
     }
 
     @Test
-    fun initialCursorLoad() = runTestWithDeps { deps ->
-        backgroundScope.launch { deps.underTest.launch(deps.cursor, deps.initialPreviews) }
-        runCurrent()
+    fun initialCursorLoad() =
+        runTestWithDeps(
+            cursor = (0 until 10),
+            cursorStartPosition = 2,
+            cursorSizes = mapOf(0 to (200 x 100)),
+            metadatSizes = mapOf(0 to (300 x 100), 3 to (400 x 100)),
+            pageSize = 2,
+            maxLoadedPages = 3,
+        ) { deps ->
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
+            }
+            runCurrent()
 
-        assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-        assertThat(deps.previewsRepo.previewsModel.value!!.startIdx).isEqualTo(0)
-        assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreLeft).isNull()
-        assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreRight).isNull()
-        assertThat(deps.previewsRepo.previewsModel.value!!.previewModels)
-            .containsExactly(
-                PreviewModel(Uri.fromParts("scheme0", "ssp0", "fragment0"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme1", "ssp1", "fragment1"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme2", "ssp2", "fragment2"), "image/bitmap"),
-                PreviewModel(Uri.fromParts("scheme3", "ssp3", "fragment3"), "image/bitmap"),
-            )
-            .inOrder()
-    }
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            with(cursorPreviewsRepository.previewsModel.value!!) {
+                assertThat(previewModels)
+                    .containsExactlyElementsIn(
+                        List(6) {
+                            PreviewModel(
+                                uri = Uri.fromParts("scheme$it", "ssp$it", "fragment$it"),
+                                mimeType = "image/bitmap",
+                                aspectRatio =
+                                    when (it) {
+                                        0 -> 2f
+                                        3 -> 4f
+                                        else -> 1f
+                                    }
+                            )
+                        }
+                    )
+                    .inOrder()
+                assertThat(startIdx).isEqualTo(0)
+                assertThat(loadMoreLeft).isNull()
+                assertThat(loadMoreRight).isNotNull()
+                assertThat(leftTriggerIndex).isEqualTo(2)
+                assertThat(rightTriggerIndex).isEqualTo(4)
+            }
+        }
 
     @Test
     fun loadMoreLeft_evictRight() =
@@ -115,58 +157,29 @@ class CursorPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 1,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch(deps.cursor, deps.initialPreviews) }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
+            }
             runCurrent()
 
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(16)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels).hasSize(16)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.first().uri)
                 .isEqualTo(Uri.fromParts("scheme16", "ssp16", "fragment16"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme31", "ssp31", "fragment31"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreLeft).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreLeft).isNotNull()
 
-            deps.previewsRepo.previewsModel.value!!.loadMoreLeft!!.invoke()
+            cursorPreviewsRepository.previewsModel.value!!.loadMoreLeft!!.invoke()
             runCurrent()
 
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(16)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels).hasSize(16)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.first().uri)
                 .isEqualTo(Uri.fromParts("scheme0", "ssp0", "fragment0"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme15", "ssp15", "fragment15"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreLeft).isNull()
-        }
-
-    @Test
-    fun loadMoreLeft_keepRight() =
-        runTestWithDeps(
-            initialSelection = listOf(24),
-            cursor = (0 until 48),
-            pageSize = 16,
-            maxLoadedPages = 2,
-        ) { deps ->
-            backgroundScope.launch { deps.underTest.launch(deps.cursor, deps.initialPreviews) }
-            runCurrent()
-
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(16)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
-                .isEqualTo(Uri.fromParts("scheme16", "ssp16", "fragment16"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
-                .isEqualTo(Uri.fromParts("scheme31", "ssp31", "fragment31"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreLeft).isNotNull()
-
-            deps.previewsRepo.previewsModel.value!!.loadMoreLeft!!.invoke()
-            runCurrent()
-
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(32)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
-                .isEqualTo(Uri.fromParts("scheme0", "ssp0", "fragment0"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
-                .isEqualTo(Uri.fromParts("scheme31", "ssp31", "fragment31"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreLeft).isNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreLeft).isNull()
         }
 
     @Test
@@ -177,55 +190,27 @@ class CursorPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 1,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch(deps.cursor, deps.initialPreviews) }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
+            }
             runCurrent()
 
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(16)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels).hasSize(16)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.first().uri)
                 .isEqualTo(Uri.fromParts("scheme16", "ssp16", "fragment16"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme31", "ssp31", "fragment31"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreRight).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreRight).isNotNull()
 
-            deps.previewsRepo.previewsModel.value!!.loadMoreRight!!.invoke()
+            cursorPreviewsRepository.previewsModel.value!!.loadMoreRight!!.invoke()
             runCurrent()
 
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(16)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels).hasSize(16)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.first().uri)
                 .isEqualTo(Uri.fromParts("scheme32", "ssp32", "fragment32"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
-                .isEqualTo(Uri.fromParts("scheme47", "ssp47", "fragment47"))
-        }
-
-    @Test
-    fun loadMoreRight_keepLeft() =
-        runTestWithDeps(
-            initialSelection = listOf(24),
-            cursor = (0 until 48),
-            pageSize = 16,
-            maxLoadedPages = 2,
-        ) { deps ->
-            backgroundScope.launch { deps.underTest.launch(deps.cursor, deps.initialPreviews) }
-            runCurrent()
-
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(16)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
-                .isEqualTo(Uri.fromParts("scheme16", "ssp16", "fragment16"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
-                .isEqualTo(Uri.fromParts("scheme31", "ssp31", "fragment31"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreRight).isNotNull()
-
-            deps.previewsRepo.previewsModel.value!!.loadMoreRight!!.invoke()
-            runCurrent()
-
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(32)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
-                .isEqualTo(Uri.fromParts("scheme16", "ssp16", "fragment16"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme47", "ssp47", "fragment47"))
         }
 
@@ -237,16 +222,18 @@ class CursorPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch(deps.cursor, deps.initialPreviews) }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
+            }
             runCurrent()
 
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(2)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels).hasSize(2)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.first().uri)
                 .isEqualTo(Uri.fromParts("scheme24", "ssp24", "fragment24"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme50", "ssp50", "fragment50"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreRight).isNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreRight).isNull()
         }
 
     @Test
@@ -257,15 +244,21 @@ class CursorPreviewsInteractorTest {
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
-            backgroundScope.launch { deps.underTest.launch(deps.cursor, deps.initialPreviews) }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
+            }
             runCurrent()
 
-            assertThat(deps.previewsRepo.previewsModel.value).isNotNull()
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels).hasSize(2)
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.first().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels).hasSize(2)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.first().uri)
                 .isEqualTo(Uri.fromParts("scheme0", "ssp0", "fragment0"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.previewModels.last().uri)
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme24", "ssp24", "fragment24"))
-            assertThat(deps.previewsRepo.previewsModel.value!!.loadMoreLeft).isNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreLeft).isNull()
         }
 }
+
+private fun uri(index: Int) = Uri.fromParts("scheme$index", "ssp$index", "fragment$index")
+
+private infix fun Int.x(height: Int) = Size(this, height)

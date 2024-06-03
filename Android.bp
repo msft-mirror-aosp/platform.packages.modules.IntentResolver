@@ -34,6 +34,7 @@ java_defaults {
         strict_updatability_linting: false,
         extra_check_modules: ["SystemUILintChecker"],
         warning_checks: ["MissingApacheLicenseDetector"],
+        baseline_filename: "lint-baseline.xml",
     },
 }
 
@@ -70,10 +71,10 @@ android_library {
         "androidx.lifecycle_lifecycle-runtime-compose",
     ],
     javacflags: [
-            "-Adagger.fastInit=enabled",
-            "-Adagger.explicitBindingConflictsWithInject=ERROR",
-            "-Adagger.strictMultibindingValidation=enabled",
-    ]
+        "-Adagger.fastInit=enabled",
+        "-Adagger.explicitBindingConflictsWithInject=ERROR",
+        "-Adagger.strictMultibindingValidation=enabled",
+    ],
 }
 
 java_defaults {

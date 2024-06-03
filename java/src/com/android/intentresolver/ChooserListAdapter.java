@@ -48,6 +48,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
+import com.android.intentresolver.chooser.DisplayResolveInfoAzInfoComparator;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.NotSelectableTargetInfo;
 import com.android.intentresolver.chooser.SelectableTargetInfo;
@@ -151,6 +152,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                     }
                 }
             };
+
+    private boolean mAnimateItems = true;
 
     public ChooserListAdapter(
             Context context,
@@ -307,6 +310,10 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
+    public void setAnimateItems(boolean animateItems) {
+        mAnimateItems = animateItems;
+    }
+
     @Override
     public void handlePackagesChanged() {
         if (mPackageChangeCallback != null) {
@@ -346,9 +353,16 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 false);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        notifyDataSetChanged();
+    }
+
     @VisibleForTesting
     @Override
     public void onBindView(View view, TargetInfo info, int position) {
+        view.setEnabled(!isDestroyed());
         final ViewHolder holder = (ViewHolder) view.getTag();
 
         resetViewHolder(holder);
@@ -363,16 +377,13 @@ public class ChooserListAdapter extends ResolverListAdapter {
         final CharSequence displayLabel = Objects.requireNonNullElse(info.getDisplayLabel(), "");
         final CharSequence extendedInfo = Objects.requireNonNullElse(info.getExtendedInfo(), "");
         holder.bindLabel(displayLabel, extendedInfo);
-        if (!TextUtils.isEmpty(displayLabel)) {
+        if (mAnimateItems && !TextUtils.isEmpty(displayLabel)) {
             mAnimationTracker.animateLabel(holder.text, info);
         }
-        if (!TextUtils.isEmpty(extendedInfo) && holder.text2.getVisibility() == View.VISIBLE) {
+        if (mAnimateItems
+                && !TextUtils.isEmpty(extendedInfo)
+                && holder.text2.getVisibility() == View.VISIBLE) {
             mAnimationTracker.animateLabel(holder.text2, info);
-        }
-
-        holder.bindIcon(info);
-        if (info.hasDisplayIcon()) {
-            mAnimationTracker.animateIcon(holder.icon, info);
         }
 
         if (info.isSelectableTargetInfo()) {
@@ -408,6 +419,11 @@ public class ChooserListAdapter extends ResolverListAdapter {
             if (!dri.hasDisplayLabel()) {
                 loadLabel(dri);
             }
+        }
+
+        holder.bindIcon(info);
+        if (mAnimateItems && info.hasDisplayIcon()) {
+            mAnimationTracker.animateIcon(holder.icon, info);
         }
 
         if (info.isPlaceHolderTargetInfo()) {
@@ -463,23 +479,39 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     private void loadDirectShareIcon(SelectableTargetInfo info) {
         if (mRequestedIcons.add(info)) {
-            mTargetDataLoader.loadDirectShareIcon(
+            Drawable icon = mTargetDataLoader.getOrLoadDirectShareIcon(
                     info,
                     getUserHandle(),
-                    (drawable) -> onDirectShareIconLoaded(info, drawable));
+                    (drawable) -> onDirectShareIconLoaded(info, drawable, true));
+            if (icon != null) {
+                onDirectShareIconLoaded(info, icon, false);
+            }
         }
     }
 
-    private void onDirectShareIconLoaded(SelectableTargetInfo mTargetInfo, Drawable icon) {
+    private void onDirectShareIconLoaded(
+            SelectableTargetInfo mTargetInfo, @Nullable Drawable icon, boolean notify) {
         if (icon != null && !mTargetInfo.hasDisplayIcon()) {
             mTargetInfo.getDisplayIconHolder().setDisplayIcon(icon);
-            notifyDataSetChanged();
+            if (notify) {
+                notifyDataSetChanged();
+            }
         }
     }
 
+    /**
+     * Group application targets
+     */
     public void updateAlphabeticalList() {
-        final ChooserActivity.AzInfoComparator comparator =
-                new ChooserActivity.AzInfoComparator(mContext);
+        updateAlphabeticalList(() -> {});
+    }
+
+    /**
+     * Group application targets
+     */
+    public void updateAlphabeticalList(Runnable onCompleted) {
+        final DisplayResolveInfoAzInfoComparator
+                comparator = new DisplayResolveInfoAzInfoComparator(mContext);
         final List<DisplayResolveInfo> allTargets = new ArrayList<>();
         allTargets.addAll(getTargetsInCurrentDisplayList());
         allTargets.addAll(mCallerTargets);
@@ -522,6 +554,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 mSortedList.clear();
                 mSortedList.addAll(newList);
                 notifyDataSetChanged();
+                onCompleted.run();
             }
 
             private void loadMissingLabels(List<DisplayResolveInfo> targets) {
@@ -711,7 +744,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
     public void addServiceResults(
             @Nullable DisplayResolveInfo origTarget,
             List<ChooserTarget> targets,
-            @ChooserActivity.ShareTargetType int targetType,
+            int targetType,
             Map<ChooserTarget, ShortcutInfo> directShareToShortcutInfos,
             Map<ChooserTarget, AppTarget> directShareToAppTargets) {
         // Avoid inserting any potentially late results.
@@ -748,7 +781,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
      */
     public float getBaseScore(
             DisplayResolveInfo target,
-            @ChooserActivity.ShareTargetType int targetType) {
+            int targetType) {
         if (target == null) {
             return CALLER_TARGET_SCORE_BOOST;
         }

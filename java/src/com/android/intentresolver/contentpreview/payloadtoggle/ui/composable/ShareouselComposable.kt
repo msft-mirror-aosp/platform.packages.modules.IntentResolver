@@ -18,7 +18,6 @@ package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,31 +28,40 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.R
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
-import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselPreviewViewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
+import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 @Composable
@@ -64,6 +72,7 @@ fun Shareousel(viewModel: ShareouselViewModel) {
     } else {
         Spacer(
             Modifier.height(dimensionResource(R.dimen.chooser_preview_image_height_tall) + 64.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
         )
     }
 }
@@ -76,7 +85,6 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
                 .padding(vertical = 16.dp),
     ) {
         PreviewCarousel(keySet, viewModel)
-        Spacer(Modifier.height(16.dp))
         ActionCarousel(viewModel)
     }
 }
@@ -96,9 +104,27 @@ private fun PreviewCarousel(
         modifier =
             Modifier.fillMaxWidth()
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
+                .systemGestureExclusion()
     ) {
-        items(previews.previewModels.toList(), key = { it.uri }) { model ->
-            ShareouselCard(viewModel.preview(model))
+        itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
+
+            // Index if this is the element in the center of the viewing area, otherwise null
+            val previewIndex by remember {
+                derivedStateOf {
+                    carouselState.layoutInfo.visibleItemsInfo
+                        .firstOrNull { it.index == index }
+                        ?.let {
+                            val viewportCenter = carouselState.layoutInfo.viewportEndOffset / 2
+                            val halfPreviewWidth = it.size / 2
+                            val previewCenter = it.offset + halfPreviewWidth
+                            val previewDistanceToViewportCenter =
+                                abs(previewCenter - viewportCenter)
+                            if (previewDistanceToViewportCenter <= halfPreviewWidth) index else null
+                        }
+                }
+            }
+
+            ShareouselCard(viewModel.preview(model, previewIndex))
         }
     }
 }
@@ -107,17 +133,19 @@ private fun PreviewCarousel(
 private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
     val bitmap by viewModel.bitmap.collectAsStateWithLifecycle(initialValue = null)
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
-    val contentType by
-        viewModel.contentType.collectAsStateWithLifecycle(initialValue = ContentType.Image)
     val borderColor = MaterialTheme.colorScheme.primary
     val scope = rememberCoroutineScope()
+    val contentDescription =
+        when (viewModel.contentType) {
+            ContentType.Image -> stringResource(R.string.selectable_image)
+            ContentType.Video -> stringResource(R.string.selectable_video)
+            else -> stringResource(R.string.selectable_item)
+        }
     ShareouselCard(
         image = {
+            // TODO: max ratio is actually equal to the viewport ratio
+            val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
             bitmap?.let { bitmap ->
-                val aspectRatio =
-                    (bitmap.width.toFloat() / bitmap.height.toFloat())
-                        // TODO: max ratio is actually equal to the viewport ratio
-                        .coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = null,
@@ -127,15 +155,10 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
             }
                 ?: run {
                     // TODO: look at ScrollableImagePreviewView.setLoading()
-                    Box(
-                        modifier =
-                            Modifier.fillMaxHeight()
-                                .aspectRatio(2f / 5f)
-                                .border(1.dp, Color.Red, RectangleShape)
-                    )
+                    Box(modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio))
                 }
         },
-        contentType = contentType,
+        contentType = viewModel.contentType,
         selected = selected,
         modifier =
             Modifier.thenIf(selected) {
@@ -145,24 +168,43 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
                         shape = RoundedCornerShape(size = 12.dp),
                     )
                 }
+                .semantics { this.contentDescription = contentDescription }
                 .clip(RoundedCornerShape(size = 12.dp))
-                .clickable { scope.launch { viewModel.setSelected(!selected) } },
+                .toggleable(
+                    value = selected,
+                    onValueChange = { scope.launch { viewModel.setSelected(it) } },
+                )
     )
 }
 
 @Composable
 private fun ActionCarousel(viewModel: ShareouselViewModel) {
     val actions by viewModel.actions.collectAsStateWithLifecycle(initialValue = emptyList())
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.height(32.dp),
-    ) {
-        itemsIndexed(actions) { idx, actionViewModel ->
-            ShareouselAction(
-                label = actionViewModel.label,
-                onClick = { actionViewModel.onClicked() },
-            ) {
-                actionViewModel.icon?.let { Image(icon = it, modifier = Modifier.size(16.dp)) }
+    if (actions.isNotEmpty()) {
+        Spacer(Modifier.height(16.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.height(32.dp),
+        ) {
+            itemsIndexed(actions) { idx, actionViewModel ->
+                if (idx == 0) {
+                    Spacer(Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal)))
+                }
+                ShareouselAction(
+                    label = actionViewModel.label,
+                    onClick = { actionViewModel.onClicked() },
+                ) {
+                    actionViewModel.icon?.let {
+                        Image(
+                            icon = it,
+                            modifier = Modifier.size(16.dp),
+                            colorFilter = ColorFilter.tint(LocalContentColor.current)
+                        )
+                    }
+                }
+                if (idx == actions.size - 1) {
+                    Spacer(Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal)))
+                }
             }
         }
     }
@@ -179,7 +221,15 @@ private fun ShareouselAction(
         onClick = onClick,
         label = { Text(label) },
         leadingIcon = leadingIcon,
-        modifier = modifier
+        border = null,
+        shape = RoundedCornerShape(1000.dp), // pill shape.
+        colors =
+            AssistChipDefaults.assistChipColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                labelColor = MaterialTheme.colorScheme.onSurface,
+                leadingIconContentColor = MaterialTheme.colorScheme.onSurface
+            ),
+        modifier = modifier,
     )
 }
 

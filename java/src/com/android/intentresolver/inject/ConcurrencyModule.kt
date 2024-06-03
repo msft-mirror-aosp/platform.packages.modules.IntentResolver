@@ -16,6 +16,10 @@
 
 package com.android.intentresolver.inject
 
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Looper
+import android.os.Process
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,6 +29,10 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+
+// thread
+private const val BROADCAST_SLOW_DISPATCH_THRESHOLD = 1000L
+private const val BROADCAST_SLOW_DELIVERY_THRESHOLD = 1000L
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -40,4 +48,25 @@ object ConcurrencyModule {
         CoroutineScope(SupervisorJob() + mainDispatcher)
 
     @Provides @Background fun backgroundDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Provides
+    @Singleton
+    @Broadcast
+    fun provideBroadcastLooper(): Looper {
+        val thread = HandlerThread("BroadcastReceiver", Process.THREAD_PRIORITY_BACKGROUND)
+        thread.start()
+        thread.looper.setSlowLogThresholdMs(
+            BROADCAST_SLOW_DISPATCH_THRESHOLD,
+            BROADCAST_SLOW_DELIVERY_THRESHOLD
+        )
+        return thread.looper
+    }
+
+    /** Provide a BroadcastReceiver Executor (for sending and receiving broadcasts). */
+    @Provides
+    @Singleton
+    @Broadcast
+    fun provideBroadcastHandler(@Broadcast looper: Looper): Handler {
+        return Handler(looper)
+    }
 }

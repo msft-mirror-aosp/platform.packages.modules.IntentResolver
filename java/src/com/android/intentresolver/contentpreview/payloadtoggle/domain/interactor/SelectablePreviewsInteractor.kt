@@ -17,7 +17,6 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.CursorPreviewsRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import javax.inject.Inject
@@ -27,7 +26,7 @@ class SelectablePreviewsInteractor
 @Inject
 constructor(
     private val previewsRepo: CursorPreviewsRepository,
-    private val selectionRepo: PreviewSelectionsRepository,
+    private val selectionInteractor: SelectionInteractor,
 ) {
     /** Keys of previews available for display in Shareousel. */
     val previews: Flow<PreviewsModel?>
@@ -37,6 +36,5 @@ constructor(
      * Returns a [SelectablePreviewInteractor] that can be used to interact with the individual
      * preview associated with [key].
      */
-    fun preview(key: PreviewModel) =
-        SelectablePreviewInteractor(key = key, selectionRepo = selectionRepo)
+    fun preview(key: PreviewModel) = SelectablePreviewInteractor(key, selectionInteractor)
 }

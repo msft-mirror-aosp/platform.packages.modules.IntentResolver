@@ -1,0 +1,2425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.4.0-alpha08" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha08">
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                    getMainLooper(),"
+        errorLine2="                    ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="421"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                        getMainLooper(),"
+        errorLine2="                        ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="431"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                    getMainLooper(),"
+        errorLine2="                    ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="517"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                        getMainLooper(),"
+        errorLine2="                        ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="526"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                getMainLooper(),"
+        errorLine2="                ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="722"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                    getMainLooper(),"
+        errorLine2="                    ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="733"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                getMainThreadHandler())) {"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1684"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="            getMainThreadHandler().post(() -> {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="2199"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                context.getMainExecutor(),"
+        errorLine2="                        ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="192"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                }, getApplicationContext().getMainExecutor());"
+        errorLine2="                                           ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/IntentForwarderActivity.java"
+            line="161"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                    getMainLooper(),"
+        errorLine2="                    ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="297"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                        getMainLooper(),"
+        errorLine2="                        ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="307"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                getMainLooper(),"
+        errorLine2="                ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="374"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                    getMainLooper(),"
+        errorLine2="                    ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="383"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NonInjectedMainThread"
+        message="Replace with injected `@Main Executor`."
+        errorLine1="                runnable -> context.getMainThreadHandler().post(runnable));"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverListAdapter.java"
+            line="127"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="WrongCommentType"
+        message="This block comment looks like it was intended to be a javadoc comment"
+        errorLine1="     * {@link MultiProfilePagerAdapter.OnProfileSelectedListener}. The only apparent distinctions"
+        errorLine2="       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="821"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="CleanArchitectureDependencyViolation"
+        message="The ui layer may not depend on the data layer."
+        errorLine1="import com.android.intentresolver.data.model.ANDROID_APP_SCHEME"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ui/model/ActivityModel.kt"
+            line="23"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="CleanArchitectureDependencyViolation"
+        message="The ui layer may not depend on the data layer."
+        errorLine1="import com.android.intentresolver.data.model.ChooserRequest"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ui/viewmodel/ChooserRequestReader.kt"
+            line="45"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="CleanArchitectureDependencyViolation"
+        message="The ui layer may not depend on the data layer."
+        errorLine1="import com.android.intentresolver.data.model.ChooserRequest"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ui/viewmodel/ChooserViewModel.kt"
+            line="25"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="CleanArchitectureDependencyViolation"
+        message="The ui layer may not depend on the data layer."
+        errorLine1="import com.android.intentresolver.data.repository.ChooserRequestRepository"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ui/viewmodel/ChooserViewModel.kt"
+            line="26"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="CleanArchitectureDependencyViolation"
+        message="The ui layer may not depend on the data layer."
+        errorLine1="import com.android.intentresolver.data.repository.DevicePolicyResources"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ui/ProfilePagerResources.kt"
+            line="21"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="CleanArchitectureDependencyViolation"
+        message="The domain layer may not depend on the ui layer."
+        errorLine1="import com.android.intentresolver.ui.viewmodel.readAlternateIntents"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/contentpreview/payloadtoggle/domain/update/SelectionChangeCallback.kt"
+            line="40"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="CleanArchitectureDependencyViolation"
+        message="The domain layer may not depend on the ui layer."
+        errorLine1="import com.android.intentresolver.ui.viewmodel.readChooserActions"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/contentpreview/payloadtoggle/domain/update/SelectionChangeCallback.kt"
+            line="41"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="                    (UsageStatsManager) userContext.getSystemService(Context.USAGE_STATS_SERVICE));"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/model/AbstractResolverComparator.java"
+            line="136"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            .getSystemService(AppPredictionManager::class.java)"
+        errorLine2="             ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/shortcuts/AppPredictorFactory.kt"
+            line="66"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="                        (UserManager) context.getSystemService(Context.USER_SERVICE);"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="289"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="        getContext().getSystemService(LauncherApps.class).pinShortcuts("
+        errorLine2="                     ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserTargetActionsDialogFragment.java"
+            line="226"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="        List&lt;ShortcutManager.ShareShortcutInfo> targets = contextAsUser.getSystemService("
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserTargetActionsDialogFragment.java"
+            line="233"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="                .getSystemService(ACTIVITY_SERVICE);"
+        errorLine2="                 ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserTargetActionsDialogFragment.java"
+            line="279"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            context.getSystemService(ActivityManager::class.java)?.launcherLargeIconDensity"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/icons/DefaultTargetDataLoader.kt"
+            line="47"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="        return getSystemService(DevicePolicyManager.class).getResources().getString("
+        errorLine2="               ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/IntentForwarderActivity.java"
+            line="165"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="        return getSystemService(DevicePolicyManager.class).getResources().getString("
+        errorLine2="               ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/IntentForwarderActivity.java"
+            line="171"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            return getSystemService(UserManager.class);"
+        errorLine2="                   ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/IntentForwarderActivity.java"
+            line="402"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            LauncherApps launcherApps = context.getSystemService(LauncherApps.class);"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/icons/LoadDirectShareIconTask.java"
+            line="100"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            return mContext.getSystemService(DevicePolicyManager.class).getResources().getString("
+        errorLine2="                            ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/emptystate/NoCrossProfileEmptyStateProvider.java"
+            line="127"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            return mContext.getSystemService(DevicePolicyManager.class).getResources().getString("
+        errorLine2="                            ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/emptystate/NoCrossProfileEmptyStateProvider.java"
+            line="135"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="                            (UserManager) mContext.getSystemService(Context.USER_SERVICE);"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverListAdapter.java"
+            line="503"
+            column="52"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="    private val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/shortcuts/ShortcutLoader.kt"
+            line="77"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            selectedProfileContext.getSystemService(Context.SHORTCUT_SERVICE) as ShortcutManager?"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/shortcuts/ShortcutLoader.kt"
+            line="209"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="            final ActivityManager am = (ActivityManager) ctx.getSystemService(ACTIVITY_SERVICE);"
+        errorLine2="                                                             ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/SimpleIconFactory.java"
+            line="98"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="        return requireNotNull(context.getSystemService(serviceType.java))"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/data/repository/UserScopedService.kt"
+            line="65"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="NonInjectedService"
+        message="Use `@Inject` to get system-level service handles instead of `Context.getSystemService()`"
+        errorLine1="        String title = mContext.getSystemService(DevicePolicyManager.class)"
+        errorLine2="                                ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/emptystate/WorkProfilePausedEmptyStateProvider.java"
+            line="83"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="StaticSettingsProvider"
+        message="`@Inject` a GlobalSettings instead"
+        errorLine1="        return Settings.Global.getInt(getContentResolver(),"
+        errorLine2="                               ~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/IntentForwarderActivity.java"
+            line="280"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="StaticSettingsProvider"
+        message="`@Inject` a SecureSettings instead"
+        errorLine1="        return Settings.Secure.getString(resolver, name)"
+        errorLine2="                               ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/platform/PlatformSecureSettings.kt"
+            line="32"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="StaticSettingsProvider"
+        message="`@Inject` a SecureSettings instead"
+        errorLine1="        return runCatching { Settings.Secure.getInt(resolver, name) }.getOrNull()"
+        errorLine2="                                             ~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/platform/PlatformSecureSettings.kt"
+            line="36"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="StaticSettingsProvider"
+        message="`@Inject` a SecureSettings instead"
+        errorLine1="        return runCatching { Settings.Secure.getLong(resolver, name) }.getOrNull()"
+        errorLine2="                                             ~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/platform/PlatformSecureSettings.kt"
+            line="40"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="StaticSettingsProvider"
+        message="`@Inject` a SecureSettings instead"
+        errorLine1="        return runCatching { Settings.Secure.getFloat(resolver, name) }.getOrNull()"
+        errorLine2="                                             ~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/platform/PlatformSecureSettings.kt"
+            line="44"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="StaticSettingsProvider"
+        message="`@Inject` a SecureSettings instead"
+        errorLine1="        return Settings.Secure.getString(resolver, name)"
+        errorLine2="                               ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/SecureSettings.kt"
+            line="25"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="CanvasSize"
+        message="Calling `Canvas.getWidth()` is usually wrong; you should be calling `getWidth()` instead"
+        errorLine1="            int xPos = canvas.getWidth() / 2;"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/RoundedRectImageView.java"
+            line="134"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="CanvasSize"
+        message="Calling `Canvas.getHeight()` is usually wrong; you should be calling `getHeight()` instead"
+        errorLine1="            int yPos = (int) ((canvas.getHeight() / 2.0f)"
+        errorLine2="                               ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/RoundedRectImageView.java"
+            line="135"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="CustomViewStyleable"
+        message="By convention, the declare-styleable (`ResolverDrawerLayout_LayoutParams`) for a layout parameter class (`LayoutParams`) is expected to be the surrounding class (`ResolverDrawerLayout`) plus &quot;`_Layout`&quot;, e.g. `ResolverDrawerLayout_Layout`. (Various editor features rely on this convention.)"
+        errorLine1="                    R.styleable.ResolverDrawerLayout_LayoutParams);"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/ResolverDrawerLayout.java"
+            line="1222"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="InconsistentLayout"
+        message="The id &quot;edit&quot; in layout &quot;image_preview_image_item&quot; is missing from the following layout configurations: layout (present in layout-h480dp)"
+        errorLine1="        android:id=&quot;@+id/edit&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout-h480dp/image_preview_image_item.xml"
+            line="58"
+            column="9"
+            message="Occurrence in layout-h480dp"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained vertically: at runtime it will jump to the top unless you add a vertical constraint"
+        errorLine1="    &lt;TextView"
+        errorLine2="     ~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_headline_row.xml"
+            line="27"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingConstraints"
+        message="This view is not constrained horizontally: at runtime it will jump to the left unless you add a horizontal constraint"
+        errorLine1="    &lt;com.android.intentresolver.widget.RoundedRectImageView"
+        errorLine2="     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout-h480dp/image_preview_image_item.xml"
+            line="24"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="                    R.layout.resolver_different_item_header, null, false);"
+        errorLine2="                                                             ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1197"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="                ? (ViewGroup) inflater.inflate(R.layout.chooser_list_per_profile_wrap, null, false)"
+        errorLine2="                                                                                       ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/profiles/ChooserMultiProfilePagerAdapter.java"
+            line="123"
+            column="88"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="                : (ViewGroup) inflater.inflate(R.layout.chooser_list_per_profile, null, false);"
+        errorLine2="                                                                                  ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/profiles/ChooserMultiProfilePagerAdapter.java"
+            line="124"
+            column="83"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="                    R.layout.resolver_different_item_header, null, false);"
+        errorLine2="                                                             ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="853"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="                                R.layout.resolver_list_per_profile, null, false),"
+        errorLine2="                                                                    ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/profiles/ResolverMultiProfilePagerAdapter.java"
+            line="80"
+            column="69"/>
+    </issue>
+
+    <issue
+        id="ManifestOrder"
+        message="`&lt;uses-sdk>` tag appears after `&lt;application>` tag"
+        errorLine1="    &lt;uses-sdk android:minSdkVersion=&quot;VanillaIceCream&quot; android:targetSdkVersion=&quot;16&quot;/>"
+        errorLine2="     ~~~~~~~~">
+        <location
+            file="./out/soong/.intermediates/packages/modules/IntentResolver/IntentResolver-core/android_common/e18b8e8d84cb9f664aa09a397b08c165/manifest_fixer/AndroidManifest.xml"
+            line="22"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="MissingInflatedId"
+        message="`@layout/chooser_dialog` does not contain a declaration with id `title`"
+        errorLine1="        TextView title = v.findViewById(com.android.internal.R.id.title);"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserTargetActionsDialogFragment.java"
+            line="133"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="MissingInflatedId"
+        message="`@layout/chooser_dialog` does not contain a declaration with id `icon`"
+        errorLine1="        ImageView icon = v.findViewById(com.android.internal.R.id.icon);"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserTargetActionsDialogFragment.java"
+            line="134"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="MissingInflatedId"
+        message="`@layout/chooser_dialog` does not contain a declaration with id `listContainer`"
+        errorLine1="        RecyclerView rv = v.findViewById(com.android.internal.R.id.listContainer);"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserTargetActionsDialogFragment.java"
+            line="135"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="437"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                    mChooserMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()"
+        errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="559"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        int count = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();"
+        errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="761"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (mChooserMultiProfilePagerAdapter.getActiveListAdapter().getOtherProfile() != null) {"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="766"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        final TargetInfo target = mChooserMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="771"
+            column="68"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mChooserMultiProfilePagerAdapter.getActiveListAdapter().getFilteredPosition() >= 0;"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="900"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                                    .getActiveListAdapter().getFilteredItem()))"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="909"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        int count = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getCount();"
+        errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1133"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            TargetInfo target = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getItem(i);"
+        errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1136"
+            column="66"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (mChooserMultiProfilePagerAdapter.getActiveListAdapter() == null) {"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1155"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mChooserMultiProfilePagerAdapter.getActiveListAdapter();"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1206"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        int count = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();"
+        errorLine2="                                                     ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1217"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1483"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults("
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1623"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mChooserMultiProfilePagerAdapter.getActiveListAdapter();"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1699"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        TargetInfo target = mChooserMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1724"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                        mChooserMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1731"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mChooserMultiProfilePagerAdapter.getActiveListAdapter();"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1801"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                        mChooserMultiProfilePagerAdapter.getActiveListAdapter();"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1838"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mChooserMultiProfilePagerAdapter.getCurrentUserHandle());"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1886"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mChooserMultiProfilePagerAdapter.getCurrentUserHandle());"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1914"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                                .getActiveListAdapter()"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="1981"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (mChooserMultiProfilePagerAdapter.getCurrentUserHandle().equals("
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="2041"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (listProfileUserHandle.equals(mChooserMultiProfilePagerAdapter.getCurrentUserHandle())) {"
+        errorLine2="                                                                          ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="2288"
+            column="75"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (mChooserMultiProfilePagerAdapter.getActiveListAdapter() == adapter) {"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserActivity.java"
+            line="2351"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="                final ViewHolder vh = (ViewHolder) v.getTag();"
+        errorLine2="                      ~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ChooserGridAdapter.java"
+            line="414"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="                final ViewHolder vh = (ViewHolder) v.getTag();"
+        errorLine2="                                       ~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ChooserGridAdapter.java"
+            line="414"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                vh.text.setLines(2);"
+        errorLine2="                   ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ChooserGridAdapter.java"
+            line="415"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                vh.text.setHorizontallyScrolling(false);"
+        errorLine2="                   ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ChooserGridAdapter.java"
+            line="416"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                vh.text2.setVisibility(View.GONE);"
+        errorLine2="                   ~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ChooserGridAdapter.java"
+            line="417"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="    private void resetViewHolder(ViewHolder holder) {"
+        errorLine2="                                 ~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="432"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.reset();"
+        errorLine2="               ~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="433"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.itemView.setBackground(holder.defaultItemViewBackground);"
+        errorLine2="               ~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="434"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.itemView.setBackground(holder.defaultItemViewBackground);"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="434"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            ((BadgeTextView) holder.text).setBadgeDrawable(null);"
+        errorLine2="                                    ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="437"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.text.setBackground(null);"
+        errorLine2="               ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="439"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.text.setPaddingRelative(0, 0, 0, 0);"
+        errorLine2="               ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="440"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="    private void updateContentDescription(ViewHolder holder, String description) {"
+        errorLine2="                                          ~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="443"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.itemView.setContentDescription(description);"
+        errorLine2="               ~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="444"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="    private void bindPlaceholder(ViewHolder holder) {"
+        errorLine2="                                 ~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="447"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.itemView.setBackground(null);"
+        errorLine2="               ~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="448"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="    private void bindGroupIndicator(ViewHolder holder, Drawable indicator) {"
+        errorLine2="                                    ~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="451"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            ((BadgeTextView) holder.text).setBadgeDrawable(indicator);"
+        errorLine2="                                    ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="453"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            holder.text.setPaddingRelative(0, 0, /*end = */indicator.getIntrinsicWidth(), 0);"
+        errorLine2="                   ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="455"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            holder.text.setBackground(indicator);"
+        errorLine2="                   ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="456"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="    private void bindPinnedIndicator(ViewHolder holder, Drawable indicator) {"
+        errorLine2="                                     ~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="460"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.text.setPaddingRelative(/*start = */indicator.getIntrinsicWidth(), 0, 0, 0);"
+        errorLine2="               ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="461"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        holder.text.setBackground(indicator);"
+        errorLine2="               ~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="462"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            getPageAdapterForIndex(i).setAzLabelVisibility(!isCollapsed);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/profiles/ChooserMultiProfilePagerAdapter.java"
+            line="115"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        getActiveListAdapter().notifyDataSetChanged();"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/profiles/ChooserMultiProfilePagerAdapter.java"
+            line="135"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            getPageAdapterForIndex(i).setFooterHeight(height);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/profiles/ChooserMultiProfilePagerAdapter.java"
+            line="150"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            ChooserGridAdapter adapter = getPageAdapterForIndex(i);"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/profiles/ChooserMultiProfilePagerAdapter.java"
+            line="157"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                /* instance_id = 3 */ mInstanceId.getId(),"
+        errorLine2="                                                  ~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/logging/EventLogImpl.java"
+            line="96"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                /* instance_id = 3 */ mInstanceId.getId(),"
+        errorLine2="                                                  ~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/logging/EventLogImpl.java"
+            line="118"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                /* instance_id = 3 */ mInstanceId.getId(),"
+        errorLine2="                                                  ~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/logging/EventLogImpl.java"
+            line="142"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                /* instance_id = 3 */ mInstanceId.getId(),"
+        errorLine2="                                                  ~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/logging/EventLogImpl.java"
+            line="200"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This class should only be accessed from tests or within private scope"
+        errorLine1="    private final ResolverListAdapter.ViewHolder mWrappedViewHolder;"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ItemViewHolder.java"
+            line="36"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        mWrappedViewHolder = new ResolverListAdapter.ViewHolder(itemView);"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ItemViewHolder.java"
+            line="46"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        mMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="313"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                &amp;&amp; mMultiProfilePagerAdapter.getActiveListAdapter() != null) {"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="323"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            mMultiProfilePagerAdapter.getActiveListAdapter().onDestroy();"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="324"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        MetricsLogger.action(this, mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()"
+        errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="415"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        mMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="540"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        ResolverListAdapter currentListAdapter = mMultiProfilePagerAdapter.getActiveListAdapter();"
+        errorLine2="                                                                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="560"
+            column="76"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        ResolveInfo ri = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="572"
+            column="52"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        TargetInfo target = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="582"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                    mMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="596"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                &amp;&amp; mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredResolveList()"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="627"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                final int N = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="713"
+            column="57"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                        mMultiProfilePagerAdapter.getActiveListAdapter().getOtherProfile() != null;"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="720"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                    ResolveInfo r = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="729"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                    set[N] = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="737"
+            column="56"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                    final int otherProfileMatch = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="739"
+            column="77"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                        mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="761"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                                .mResolverListController.setLastChosen(intent, filter, bestMatch);"
+        errorLine2="                                                         ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="762"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mMultiProfilePagerAdapter.getActiveListAdapter();"
+        errorLine2="                                          ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="868"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        int count = mMultiProfilePagerAdapter.getActiveListAdapter().getCount();"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1143"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            TargetInfo target = mMultiProfilePagerAdapter.getActiveListAdapter().getItem(i);"
+        errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1146"
+            column="59"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mMultiProfilePagerAdapter.getActiveListAdapter().getFilteredPosition() >= 0;"
+        errorLine2="                                          ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1172"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                                        .getActiveListAdapter().getFilteredItem()))"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1181"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (!mMultiProfilePagerAdapter.getCurrentUserHandle().equals(getUser())) {"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1217"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            ri = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1233"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        startActivityAsUser(in, mMultiProfilePagerAdapter.getCurrentUserHandle());"
+        errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1326"
+            column="59"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (mMultiProfilePagerAdapter.getActiveListAdapter() == null) {"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1334"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                        new ResolverListAdapter.ViewHolder(icon).bindIcon(otherProfileResolveInfo);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1399"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                        new ResolverListAdapter.ViewHolder(icon).bindIcon(otherProfileResolveInfo);"
+        errorLine2="                                                                 ~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1399"
+            column="66"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        int count = mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1472"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        int count = mMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1534"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        if (mMultiProfilePagerAdapter.getActiveListAdapter().getOtherProfile() != null) {"
+        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1539"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        final TargetInfo target = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1544"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        ResolverListAdapter activeListAdapter = mMultiProfilePagerAdapter.getActiveListAdapter();"
+        errorLine2="                                                                          ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1687"
+            column="75"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        int filteredPosition = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1754"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            if (mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                          ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1795"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            ResolveInfo ri = mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1828"
+            column="56"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                final TargetInfo ti = ra.mMultiProfilePagerAdapter.getActiveListAdapter()"
+        errorLine2="                                                                   ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverActivity.java"
+            line="1896"
+            column="68"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        return mResolverListController.getScore(target);"
+        errorLine2="                                       ~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverListAdapter.java"
+            line="212"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="            mResolverListController.addResolveListDedupe(currentResolveList,"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverListAdapter.java"
+            line="329"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mResolverListController.filterIneligibleActivities(currentResolveList, true);"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverListAdapter.java"
+            line="362"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="        return mResolverListController.filterLowPriority("
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverListAdapter.java"
+            line="384"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="VisibleForTests"
+        message="This method should only be accessed from tests or within private scope"
+        errorLine1="                mLastChosen = mResolverListController.getLastChosen();"
+        errorLine2="                                                      ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ResolverListAdapter.java"
+            line="410"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="SupportAnnotationUsage"
+        message="This annotation does not apply for type java.lang.Object; expected int"
+        errorLine1="    @ContentPreviewType"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/contentpreview/PreviewDataProvider.kt"
+            line="230"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ExpiredTargetSdkVersion"
+        message="Google Play requires that apps target API level 33 or higher."
+        errorLine1="    &lt;uses-sdk android:minSdkVersion=&quot;VanillaIceCream&quot; android:targetSdkVersion=&quot;16&quot;/>"
+        errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="./out/soong/.intermediates/packages/modules/IntentResolver/IntentResolver-core/android_common/e18b8e8d84cb9f664aa09a397b08c165/manifest_fixer/AndroidManifest.xml"
+            line="22"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="BindServiceOnMainThread"
+        message="This method should be annotated with `@WorkerThread` because it calls unbindService"
+        errorLine1="            mContext.unbindService(mConnection);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/model/ResolverRankerServiceResolverComparator.java"
+            line="308"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="BindServiceOnMainThread"
+        message="This method should be annotated with `@WorkerThread` because it calls bindServiceAsUser"
+        errorLine1="        context.bindServiceAsUser(intent, mConnection, Context.BIND_AUTO_CREATE, UserHandle.SYSTEM);"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/model/ResolverRankerServiceResolverComparator.java"
+            line="333"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="                notifyDataSetChanged();"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ChooserGridAdapter.java"
+            line="139"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="                notifyDataSetChanged();"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/grid/ChooserGridAdapter.java"
+            line="145"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="            notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/ScrollableActionRow.kt"
+            line="94"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NotifyDataSetChanged"
+        message="It will always be more efficient to use more specific change events if you can. Rely on `notifyDataSetChanged` as a last resort."
+        errorLine1="            notifyDataSetChanged()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/ScrollableImagePreviewView.kt"
+            line="316"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="RegisterReceiverViaContext"
+        message="Register `BroadcastReceiver` using `BroadcastDispatcher` instead of `Context`"
+        errorLine1="        context.registerReceiverAsUser("
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/data/BroadcastSubscriber.kt"
+            line="63"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RegisterReceiverViaContext"
+        message="Register `BroadcastReceiver` using `BroadcastDispatcher` instead of `Context`"
+        errorLine1="        context.registerReceiverAsUser("
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/WorkProfileAvailabilityManager.java"
+            line="74"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="SharedFlowCreation"
+        message="`MutableSharedFlow()` creates a new shared flow, which has poor performance characteristics"
+        errorLine1="        MutableSharedFlow&lt;FileInfo>(replay = records.size).apply {"
+        errorLine2="        ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/contentpreview/PreviewDataProvider.kt"
+            line="91"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SharedFlowCreation"
+        message="`MutableSharedFlow()` creates a new shared flow, which has poor performance characteristics"
+        errorLine1="            val reportFlow = MutableSharedFlow&lt;Any>(replay = 2)"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/ScrollableImagePreviewView.kt"
+            line="660"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="SharedFlowCreation"
+        message="`MutableSharedFlow()` creates a new shared flow, which has poor performance characteristics"
+        errorLine1="        MutableSharedFlow&lt;Array&lt;DisplayResolveInfo>?>("
+        errorLine2="        ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/shortcuts/ShortcutLoader.kt"
+            line="82"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SharedFlowCreation"
+        message="`MutableSharedFlow()` creates a new shared flow, which has poor performance characteristics"
+        errorLine1="        MutableSharedFlow&lt;ShortcutData?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/shortcuts/ShortcutLoader.kt"
+            line="87"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SlowUserIdQuery"
+        message="Use `UserTracker.getUserId()` instead of `ActivityManager.getCurrentUser()`"
+        errorLine1="        userHandle == UserHandle.of(ActivityManager.getCurrentUser()),"
+        errorLine2="                                                    ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/shortcuts/ShortcutLoader.kt"
+            line="104"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="SlowUserInfoQuery"
+        message="Use `UserTracker.getUserInfo()` instead of `UserManager.getUserInfo()`"
+        errorLine1="            val originUserInfo = userManager.getUserInfo(contentUserHint)"
+        errorLine2="                                             ~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/IntentForwarding.kt"
+            line="51"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="SlowUserInfoQuery"
+        message="Use `UserTracker.getUserInfo()` instead of `UserManager.getUserInfo()`"
+        errorLine1="            withContext(backgroundDispatcher) { userManager.getUserInfo(user.identifier) }"
+        errorLine2="                                                            ~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/data/repository/UserRepository.kt"
+            line="267"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="SoftwareBitmap"
+        message="Replace software bitmap with `Config.HARDWARE`"
+        errorLine1="        mBitmap = Bitmap.createBitmap(mMaxSize, mMaxSize, Bitmap.Config.ALPHA_8);"
+        errorLine2="                                                                        ~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/SimpleIconFactory.java"
+            line="172"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="SoftwareBitmap"
+        message="Replace software bitmap with `Config.HARDWARE`"
+        errorLine1="                bitmap.getHeight(), Bitmap.Config.ARGB_8888);"
+        errorLine2="                                                  ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/SimpleIconFactory.java"
+            line="297"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="SoftwareBitmap"
+        message="Replace software bitmap with `Config.HARDWARE`"
+        errorLine1="        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);"
+        errorLine2="                                                                      ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/SimpleIconFactory.java"
+            line="343"
+            column="71"/>
+    </issue>
+
+    <issue
+        id="ObsoleteLayoutParam"
+        message="Invalid layout param in a `LinearLayout`: `layout_alignParentTop`"
+        errorLine1="                android:layout_alignParentTop=&quot;true&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_scrollable_preview.xml"
+            line="99"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ObsoleteLayoutParam"
+        message="Invalid layout param in a `LinearLayout`: `layout_centerHorizontal`"
+        errorLine1="                android:layout_centerHorizontal=&quot;true&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_scrollable_preview.xml"
+            line="100"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="This field leaks a context object"
+        errorLine1="    protected final Context mContext;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/icons/BaseLoadIconTask.java"
+            line="29"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="This `AsyncTask` class should be static or leaks might occur (anonymous android.os.AsyncTask)"
+        errorLine1="        new AsyncTask&lt;Void, Void, List&lt;DisplayResolveInfo>>() {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/ChooserListAdapter.java"
+            line="488"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="This field leaks a context object"
+        errorLine1="    private final Context mContext;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/icons/LoadLabelTask.java"
+            line="32"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseCompoundDrawables"
+        message="This tag and its children can be replaced by one `&lt;TextView/>` and a compound drawable"
+        errorLine1="    &lt;LinearLayout"
+        errorLine2="     ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_dialog.xml"
+            line="29"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_file.xml"
+            line="27"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_files_text.xml"
+            line="26"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_image.xml"
+            line="27"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_text.xml"
+            line="28"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="RedundantNamespace"
+        message="This namespace declaration is redundant"
+        errorLine1="        &lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/drawable/chooser_direct_share_icon_placeholder.xml"
+            line="20"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RedundantNamespace"
+        message="This namespace declaration is redundant"
+        errorLine1="                xmlns:aapt=&quot;http://schemas.android.com/aapt&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/drawable/chooser_direct_share_icon_placeholder.xml"
+            line="21"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RedundantNamespace"
+        message="This namespace declaration is redundant"
+        errorLine1="    &lt;LinearLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolve_list_item.xml"
+            line="40"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="RedundantNamespace"
+        message="This namespace declaration is redundant"
+        errorLine1="        xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolver_list_per_profile.xml"
+            line="23"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedNamespace"
+        message="Unused namespace declaration xmlns:android; already declared on the root element"
+        errorLine1="    &lt;LinearLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolve_list_item.xml"
+            line="40"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="UnusedNamespace"
+        message="Unused namespace declaration xmlns:android; already declared on the root element"
+        errorLine1="        xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolver_list_per_profile.xml"
+            line="23"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;whichApplication&quot; msgid=&quot;2309561338625872614&quot;>&quot;... በመጠቀም ድርጊቱን አጠናቅ&quot;&lt;/string>"
+        errorLine2="                                                                ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/values-am/strings.xml"
+            line="19"
+            column="65"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;whichApplication&quot; msgid=&quot;2309561338625872614&quot;>&quot;Wykonaj czynność przez...&quot;&lt;/string>"
+        errorLine2="                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/values-pl/strings.xml"
+            line="19"
+            column="65"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;whichViewApplication&quot; msgid=&quot;7660051361612888119&quot;>&quot;...ဖြင့် ဖွင့်မည်&quot;&lt;/string>"
+        errorLine2="                                                                    ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/values-my/strings.xml"
+            line="22"
+            column="69"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;whichEditApplication&quot; msgid=&quot;5097563012157950614&quot;>&quot;...နှင့် တည်းဖြတ်ရန်&quot;&lt;/string>"
+        errorLine2="                                                                    ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/values-my/strings.xml"
+            line="30"
+            column="69"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;whichSendToApplication&quot; msgid=&quot;2724450540348806267&quot;>&quot;Sūtīšana, izmantojot...&quot;&lt;/string>"
+        errorLine2="                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/values-lv/strings.xml"
+            line="36"
+            column="71"/>
+    </issue>
+
+    <issue
+        id="ClickableViewAccessibility"
+        message="Custom view `ResolverDrawerLayout` overrides `onTouchEvent` but not `performClick`"
+        errorLine1="    public boolean onTouchEvent(MotionEvent ev) {"
+        errorLine2="                   ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/ResolverDrawerLayout.java"
+            line="403"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView android:id=&quot;@android:id/icon&quot;"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_dialog.xml"
+            line="37"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="    &lt;ImageView android:id=&quot;@android:id/icon&quot;"
+        errorLine2="     ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_dialog_item.xml"
+            line="30"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="    &lt;ImageView android:id=&quot;@android:id/icon&quot;"
+        errorLine2="     ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_item.xml"
+            line="32"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_file.xml"
+            line="47"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="      &lt;ImageView"
+        errorLine2="       ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_text.xml"
+            line="112"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/image_preview_image_item.xml"
+            line="43"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout-h480dp/image_preview_image_item.xml"
+            line="46"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout-h480dp/image_preview_image_item.xml"
+            line="68"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/miniresolver.xml"
+            line="39"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="    &lt;ImageView android:id=&quot;@android:id/icon&quot;"
+        errorLine2="     ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolve_grid_item.xml"
+            line="32"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="    &lt;ImageView android:id=&quot;@android:id/icon&quot;"
+        errorLine2="     ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolve_list_item.xml"
+            line="30"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="            &lt;ImageView"
+        errorLine2="             ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolver_list_with_default.xml"
+            line="44"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="                &lt;ImageView"
+        errorLine2="                 ~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/resolver_list_with_default.xml"
+            line="79"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;App name&quot;, should use `@string` resource"
+        errorLine1="                  android:text=&quot;App name&quot;"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/chooser_dialog.xml"
+            line="46"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="RelativeOverlap"
+        message="`@androidprv:id/button_open` can overlap `@androidprv:id/use_same_profile_browser` if @string/activity_resolver_use_once, @string/whichViewApplicationLabel grow due to localized text expansion"
+        errorLine1="            &lt;Button"
+        errorLine2="             ~~~~~~">
+        <location
+            file="packages/modules/IntentResolver/java/res/layout/miniresolver.xml"
+            line="100"
+            column="14"/>
+    </issue>
+
+</issues>

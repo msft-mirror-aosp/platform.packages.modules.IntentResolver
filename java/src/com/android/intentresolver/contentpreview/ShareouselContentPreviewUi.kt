@@ -30,15 +30,14 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.intentresolver.R
-import com.android.intentresolver.contentpreview.ChooserContentPreviewUi.ActionFactory
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.composable.Shareousel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
-import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel
+import com.android.intentresolver.ui.viewmodel.ChooserViewModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class ShareouselContentPreviewUi(
-    private val actionFactory: ActionFactory,
-) : ContentPreviewUi() {
+class ShareouselContentPreviewUi : ContentPreviewUi() {
 
     override fun getType(): Int = ContentPreviewType.CONTENT_PREVIEW_IMAGE
 
@@ -46,24 +45,17 @@ class ShareouselContentPreviewUi(
         resources: Resources,
         layoutInflater: LayoutInflater,
         parent: ViewGroup,
-        headlineViewParent: View?,
-    ): ViewGroup =
-        displayInternal(parent, headlineViewParent).also { layout ->
-            displayModifyShareAction(headlineViewParent ?: layout, actionFactory)
-        }
+        headlineViewParent: View,
+    ): ViewGroup = displayInternal(parent, headlineViewParent)
 
-    private fun displayInternal(parent: ViewGroup, headlineViewParent: View?): ViewGroup {
-        if (headlineViewParent != null) {
-            inflateHeadline(headlineViewParent)
-        }
+    private fun displayInternal(parent: ViewGroup, headlineViewParent: View): ViewGroup {
+        inflateHeadline(headlineViewParent)
         return ComposeView(parent.context).apply {
             setContent {
                 val vm: ChooserViewModel = viewModel()
                 val viewModel: ShareouselViewModel = vm.shareouselViewModel
 
-                headlineViewParent?.let {
-                    LaunchedEffect(viewModel) { bindHeadline(viewModel, headlineViewParent) }
-                }
+                LaunchedEffect(viewModel) { bindHeader(viewModel, headlineViewParent) }
 
                 MaterialTheme(
                     colorScheme =
@@ -79,11 +71,31 @@ class ShareouselContentPreviewUi(
         }
     }
 
+    private suspend fun bindHeader(viewModel: ShareouselViewModel, headlineViewParent: View) {
+        coroutineScope {
+            launch { bindHeadline(viewModel, headlineViewParent) }
+            launch { bindMetadataText(viewModel, headlineViewParent) }
+        }
+    }
+
     private suspend fun bindHeadline(viewModel: ShareouselViewModel, headlineViewParent: View) {
         viewModel.headline.collect { headline ->
             headlineViewParent.findViewById<TextView>(R.id.headline)?.apply {
                 if (headline.isNotBlank()) {
                     text = headline
+                    visibility = View.VISIBLE
+                } else {
+                    visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    private suspend fun bindMetadataText(viewModel: ShareouselViewModel, headlineViewParent: View) {
+        viewModel.metadataText.collect { metadata ->
+            headlineViewParent.findViewById<TextView>(R.id.metadata)?.apply {
+                if (metadata?.isNotBlank() == true) {
+                    text = metadata
                     visibility = View.VISIBLE
                 } else {
                     visibility = View.GONE

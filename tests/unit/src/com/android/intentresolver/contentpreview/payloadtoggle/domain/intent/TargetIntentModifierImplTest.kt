@@ -32,14 +32,14 @@ class TargetIntentModifierImplTest {
 
         val u1 = createUri(1)
         val u2 = createUri(2)
-        testSubject.onSelectionChanged(listOf(u1, u2)).let { intent ->
+        testSubject.intentFromSelection(listOf(u1, u2)).let { intent ->
             assertThat(intent.action).isEqualTo(ACTION_SEND_MULTIPLE)
             assertThat(intent.getParcelableArrayListExtra(EXTRA_STREAM, Uri::class.java))
                 .containsExactly(u1, u2)
                 .inOrder()
         }
 
-        testSubject.onSelectionChanged(listOf(u1)).let { intent ->
+        testSubject.intentFromSelection(listOf(u1)).let { intent ->
             assertThat(intent.action).isEqualTo(ACTION_SEND)
             assertThat(intent.getParcelableExtra(EXTRA_STREAM, Uri::class.java)).isEqualTo(u1)
         }
@@ -52,20 +52,22 @@ class TargetIntentModifierImplTest {
 
         val u1 = createUri(1)
         val u2 = createUri(2)
-        testSubject.onSelectionChanged(listOf(u1 to "image/png", u2 to "image/png")).let { intent ->
+        testSubject.intentFromSelection(listOf(u1 to "image/png", u2 to "image/png")).let { intent
+            ->
             assertThat(intent.type).isEqualTo("image/png")
         }
 
-        testSubject.onSelectionChanged(listOf(u1 to "image/png", u2 to "image/jpg")).let { intent ->
+        testSubject.intentFromSelection(listOf(u1 to "image/png", u2 to "image/jpg")).let { intent
+            ->
             assertThat(intent.type).isEqualTo("image/*")
         }
 
-        testSubject.onSelectionChanged(listOf(u1 to "image/png", u2 to "video/mpeg")).let { intent
+        testSubject.intentFromSelection(listOf(u1 to "image/png", u2 to "video/mpeg")).let { intent
             ->
             assertThat(intent.type).isEqualTo("*/*")
         }
 
-        testSubject.onSelectionChanged(listOf(u1 to "image/png", u2 to null)).let { intent ->
+        testSubject.intentFromSelection(listOf(u1 to "image/png", u2 to null)).let { intent ->
             assertThat(intent.type).isEqualTo("*/*")
         }
     }

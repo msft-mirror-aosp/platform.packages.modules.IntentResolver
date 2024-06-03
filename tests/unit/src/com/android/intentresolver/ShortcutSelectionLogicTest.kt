@@ -22,13 +22,15 @@ import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.os.UserHandle
 import android.service.chooser.ChooserTarget
-import com.android.intentresolver.chooser.DisplayResolveInfo
-import com.android.intentresolver.chooser.TargetInfo
 import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.intentresolver.chooser.DisplayResolveInfo
+import com.android.intentresolver.chooser.TargetInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 private const val PACKAGE_A = "package.a"
 private const val PACKAGE_B = "package.b"
@@ -36,39 +38,43 @@ private const val CLASS_NAME = "./MainActivity"
 
 @SmallTest
 class ShortcutSelectionLogicTest {
-    private val PERSONAL_USER_HANDLE: UserHandle = InstrumentationRegistry
-            .getInstrumentation().getTargetContext().getUser()
+    private val PERSONAL_USER_HANDLE: UserHandle =
+        InstrumentationRegistry.getInstrumentation().getTargetContext().getUser()
 
-    private val packageTargets = HashMap<String, Array<ChooserTarget>>().apply {
-        arrayOf(PACKAGE_A, PACKAGE_B).forEach { pkg ->
-            // shortcuts in reverse priority order
-            val targets = Array(3) { i ->
-                createChooserTarget(
-                    "Shortcut $i",
-                    (i + 1).toFloat() / 10f,
-                    ComponentName(pkg, CLASS_NAME),
-                    pkg.shortcutId(i),
-                )
+    private val packageTargets =
+        HashMap<String, Array<ChooserTarget>>().apply {
+            arrayOf(PACKAGE_A, PACKAGE_B).forEach { pkg ->
+                // shortcuts in reverse priority order
+                val targets =
+                    Array(3) { i ->
+                        createChooserTarget(
+                            "Shortcut $i",
+                            (i + 1).toFloat() / 10f,
+                            ComponentName(pkg, CLASS_NAME),
+                            pkg.shortcutId(i),
+                        )
+                    }
+                this[pkg] = targets
             }
-            this[pkg] = targets
         }
-    }
 
-    private val baseDisplayInfo = DisplayResolveInfo.newDisplayResolveInfo(
+    private val baseDisplayInfo =
+        DisplayResolveInfo.newDisplayResolveInfo(
             Intent(),
             ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE),
             "label",
             "extended info",
             Intent()
-    )
+        )
 
-    private val otherBaseDisplayInfo = DisplayResolveInfo.newDisplayResolveInfo(
+    private val otherBaseDisplayInfo =
+        DisplayResolveInfo.newDisplayResolveInfo(
             Intent(),
             ResolverDataProvider.createResolveInfo(4, 0, PERSONAL_USER_HANDLE),
             "label 2",
             "extended info 2",
             Intent()
-    )
+        )
 
     private operator fun Map<String, Array<ChooserTarget>>.get(pkg: String, idx: Int) =
         this[pkg]?.get(idx) ?: error("missing package $pkg")
@@ -78,24 +84,26 @@ class ShortcutSelectionLogicTest {
         val serviceResults = ArrayList<TargetInfo>()
         val sc1 = packageTargets[PACKAGE_A, 0]
         val sc2 = packageTargets[PACKAGE_A, 1]
-        val testSubject = ShortcutSelectionLogic(
-            /* maxShortcutTargetsPerApp = */ 1,
-            /* applySharingAppLimits = */ false
-        )
+        val testSubject =
+            ShortcutSelectionLogic(
+                /* maxShortcutTargetsPerApp = */ 1,
+                /* applySharingAppLimits = */ false
+            )
 
-        val isUpdated = testSubject.addServiceResults(
-            /* origTarget = */ baseDisplayInfo,
-            /* origTargetScore = */ 0.1f,
-            /* targets = */ listOf(sc1, sc2),
-            /* isShortcutResult = */ true,
-            /* directShareToShortcutInfos = */ emptyMap(),
-            /* directShareToAppTargets = */ emptyMap(),
-            /* userContext = */ mock(),
-            /* targetIntent = */ mock(),
-            /* refererFillInIntent = */ mock(),
-            /* maxRankedTargets = */ 4,
-            /* serviceTargets = */ serviceResults
-        )
+        val isUpdated =
+            testSubject.addServiceResults(
+                /* origTarget = */ baseDisplayInfo,
+                /* origTargetScore = */ 0.1f,
+                /* targets = */ listOf(sc1, sc2),
+                /* isShortcutResult = */ true,
+                /* directShareToShortcutInfos = */ emptyMap(),
+                /* directShareToAppTargets = */ emptyMap(),
+                /* userContext = */ mock(),
+                /* targetIntent = */ mock(),
+                /* refererFillInIntent = */ mock(),
+                /* maxRankedTargets = */ 4,
+                /* serviceTargets = */ serviceResults
+            )
 
         assertTrue("Updates are expected", isUpdated)
         assertShortcutsInOrder(
@@ -110,24 +118,26 @@ class ShortcutSelectionLogicTest {
         val serviceResults = ArrayList<TargetInfo>()
         val sc1 = packageTargets[PACKAGE_A, 0]
         val sc2 = packageTargets[PACKAGE_A, 1]
-        val testSubject = ShortcutSelectionLogic(
-            /* maxShortcutTargetsPerApp = */ 1,
-            /* applySharingAppLimits = */ true
-        )
+        val testSubject =
+            ShortcutSelectionLogic(
+                /* maxShortcutTargetsPerApp = */ 1,
+                /* applySharingAppLimits = */ true
+            )
 
-        val isUpdated = testSubject.addServiceResults(
-            /* origTarget = */ baseDisplayInfo,
-            /* origTargetScore = */ 0.1f,
-            /* targets = */ listOf(sc1, sc2),
-            /* isShortcutResult = */ true,
-            /* directShareToShortcutInfos = */ emptyMap(),
-            /* directShareToAppTargets = */ emptyMap(),
-            /* userContext = */ mock(),
-            /* targetIntent = */ mock(),
-            /* refererFillInIntent = */ mock(),
-            /* maxRankedTargets = */ 4,
-            /* serviceTargets = */ serviceResults
-        )
+        val isUpdated =
+            testSubject.addServiceResults(
+                /* origTarget = */ baseDisplayInfo,
+                /* origTargetScore = */ 0.1f,
+                /* targets = */ listOf(sc1, sc2),
+                /* isShortcutResult = */ true,
+                /* directShareToShortcutInfos = */ emptyMap(),
+                /* directShareToAppTargets = */ emptyMap(),
+                /* userContext = */ mock(),
+                /* targetIntent = */ mock(),
+                /* refererFillInIntent = */ mock(),
+                /* maxRankedTargets = */ 4,
+                /* serviceTargets = */ serviceResults
+            )
 
         assertTrue("Updates are expected", isUpdated)
         assertShortcutsInOrder(
@@ -142,24 +152,26 @@ class ShortcutSelectionLogicTest {
         val serviceResults = ArrayList<TargetInfo>()
         val sc1 = packageTargets[PACKAGE_A, 0]
         val sc2 = packageTargets[PACKAGE_A, 1]
-        val testSubject = ShortcutSelectionLogic(
-            /* maxShortcutTargetsPerApp = */ 1,
-            /* applySharingAppLimits = */ false
-        )
+        val testSubject =
+            ShortcutSelectionLogic(
+                /* maxShortcutTargetsPerApp = */ 1,
+                /* applySharingAppLimits = */ false
+            )
 
-        val isUpdated = testSubject.addServiceResults(
-            /* origTarget = */ baseDisplayInfo,
-            /* origTargetScore = */ 0.1f,
-            /* targets = */ listOf(sc1, sc2),
-            /* isShortcutResult = */ true,
-            /* directShareToShortcutInfos = */ emptyMap(),
-            /* directShareToAppTargets = */ emptyMap(),
-            /* userContext = */ mock(),
-            /* targetIntent = */ mock(),
-            /* refererFillInIntent = */ mock(),
-            /* maxRankedTargets = */ 1,
-            /* serviceTargets = */ serviceResults
-        )
+        val isUpdated =
+            testSubject.addServiceResults(
+                /* origTarget = */ baseDisplayInfo,
+                /* origTargetScore = */ 0.1f,
+                /* targets = */ listOf(sc1, sc2),
+                /* isShortcutResult = */ true,
+                /* directShareToShortcutInfos = */ emptyMap(),
+                /* directShareToAppTargets = */ emptyMap(),
+                /* userContext = */ mock(),
+                /* targetIntent = */ mock(),
+                /* refererFillInIntent = */ mock(),
+                /* maxRankedTargets = */ 1,
+                /* serviceTargets = */ serviceResults
+            )
 
         assertTrue("Updates are expected", isUpdated)
         assertShortcutsInOrder(
@@ -176,10 +188,11 @@ class ShortcutSelectionLogicTest {
         val pkgAsc2 = packageTargets[PACKAGE_A, 1]
         val pkgBsc1 = packageTargets[PACKAGE_B, 0]
         val pkgBsc2 = packageTargets[PACKAGE_B, 1]
-        val testSubject = ShortcutSelectionLogic(
-            /* maxShortcutTargetsPerApp = */ 1,
-            /* applySharingAppLimits = */ true
-        )
+        val testSubject =
+            ShortcutSelectionLogic(
+                /* maxShortcutTargetsPerApp = */ 1,
+                /* applySharingAppLimits = */ true
+            )
 
         testSubject.addServiceResults(
             /* origTarget = */ baseDisplayInfo,
@@ -220,30 +233,31 @@ class ShortcutSelectionLogicTest {
         val serviceResults = ArrayList<TargetInfo>()
         val sc1 = packageTargets[PACKAGE_A, 0]
         val sc2 = packageTargets[PACKAGE_A, 1]
-        val testSubject = ShortcutSelectionLogic(
-            /* maxShortcutTargetsPerApp = */ 1,
-            /* applySharingAppLimits = */ false
-        )
+        val testSubject =
+            ShortcutSelectionLogic(
+                /* maxShortcutTargetsPerApp = */ 1,
+                /* applySharingAppLimits = */ false
+            )
 
-        val isUpdated = testSubject.addServiceResults(
-            /* origTarget = */ baseDisplayInfo,
-            /* origTargetScore = */ 0.1f,
-            /* targets = */ listOf(sc1, sc2),
-            /* isShortcutResult = */ true,
-            /* directShareToShortcutInfos = */ mapOf(
-                sc1 to createShortcutInfo(
-                    PACKAGE_A.shortcutId(1),
-                    sc1.componentName, 1).apply {
-                        addFlags(ShortcutInfo.FLAG_PINNED)
-                    }
-            ),
-            /* directShareToAppTargets = */ emptyMap(),
-            /* userContext = */ mock(),
-            /* targetIntent = */ mock(),
-            /* refererFillInIntent = */ mock(),
-            /* maxRankedTargets = */ 4,
-            /* serviceTargets = */ serviceResults
-        )
+        val isUpdated =
+            testSubject.addServiceResults(
+                /* origTarget = */ baseDisplayInfo,
+                /* origTargetScore = */ 0.1f,
+                /* targets = */ listOf(sc1, sc2),
+                /* isShortcutResult = */ true,
+                /* directShareToShortcutInfos = */ mapOf(
+                    sc1 to
+                        createShortcutInfo(PACKAGE_A.shortcutId(1), sc1.componentName, 1).apply {
+                            addFlags(ShortcutInfo.FLAG_PINNED)
+                        }
+                ),
+                /* directShareToAppTargets = */ emptyMap(),
+                /* userContext = */ mock(),
+                /* targetIntent = */ mock(),
+                /* refererFillInIntent = */ mock(),
+                /* maxRankedTargets = */ 4,
+                /* serviceTargets = */ serviceResults
+            )
 
         assertTrue("Updates are expected", isUpdated)
         assertShortcutsInOrder(
@@ -259,13 +273,12 @@ class ShortcutSelectionLogicTest {
         val sc1 = packageTargets[PACKAGE_A, 0]
         val sc2 = packageTargets[PACKAGE_A, 1]
         val sc3 = packageTargets[PACKAGE_A, 2]
-        val testSubject = ShortcutSelectionLogic(
-            /* maxShortcutTargetsPerApp = */ 1,
-            /* applySharingAppLimits = */ true
-        )
-        val context = mock<Context> {
-            whenever(packageManager).thenReturn(mock())
-        }
+        val testSubject =
+            ShortcutSelectionLogic(
+                /* maxShortcutTargetsPerApp = */ 1,
+                /* applySharingAppLimits = */ true
+            )
+        val context = mock<Context> { on { packageManager } doReturn (mock()) }
 
         testSubject.addServiceResults(
             /* origTarget = */ baseDisplayInfo,
@@ -291,7 +304,9 @@ class ShortcutSelectionLogicTest {
     // TODO: consider renaming. Not all `ChooserTarget`s are "shortcuts" and many of our test cases
     // add results with `isShortcutResult = false` and `directShareToShortcutInfos = emptyMap()`.
     private fun assertShortcutsInOrder(
-        expected: List<ChooserTarget>, actual: List<TargetInfo>, msg: String? = ""
+        expected: List<ChooserTarget>,
+        actual: List<TargetInfo>,
+        msg: String? = ""
     ) {
         assertEquals(msg, expected.size, actual.size)
         for (i in expected.indices) {

@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"Enregistrer l\'image avec"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"Enregistrer l\'image avec <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"Enregistrer l\'image"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"Utiliser une application différente"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"Utiliser une appli différente"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"Sélectionner une action"</string>
     <string name="noApplications" msgid="1139487441772284671">"Aucune application ne peut effectuer cette action."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Vous utilisez cette application en dehors de votre profil professionnel"</string>
@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Impossible d\'ouvrir ce contenu avec des applications professionnelles"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Impossible de partager ce contenu avec des applications personnelles"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Impossible d\'ouvrir ce contenu avec des applications personnelles"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Impossible de partager ce contenu avec des applis privées"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Impossible d\'ouvrir ce contenu avec des applis privées"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Les applications professionnelles sont interrompues"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Réactiver"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Aucune application professionnelle"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Aucune application personnelle"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Aucune appli privée"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Ouvrir <xliff:g id="APP">%s</xliff:g> dans votre profil personnel?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Ouvrir <xliff:g id="APP">%s</xliff:g> dans votre profil professionnel?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Utiliser le navigateur du profil personnel"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Exclure le lien"</string>
     <string name="include_link" msgid="827855767220339802">"Inclure le lien"</string>
     <string name="pinned" msgid="7623664001331394139">"Épinglée"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Image sélectionnable"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Vidéo sélectionnable"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Élément sélectionnable"</string>
 </resources>
