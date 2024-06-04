@@ -35,6 +35,8 @@ constructor(private val previewsRepo: CursorPreviewsRepository) {
         startIndex: Int,
         hasMoreLeft: Boolean,
         hasMoreRight: Boolean,
+        leftTriggerIndex: Int,
+        rightTriggerIndex: Int
     ): Flow<LoadDirection?> {
         val loadingState = MutableStateFlow<LoadDirection?>(null)
         previewsRepo.previewsModel.value =
@@ -53,6 +55,8 @@ constructor(private val previewsRepo: CursorPreviewsRepository) {
                     } else {
                         null
                     },
+                leftTriggerIndex = leftTriggerIndex,
+                rightTriggerIndex = rightTriggerIndex,
             )
         return loadingState.asStateFlow()
     }
