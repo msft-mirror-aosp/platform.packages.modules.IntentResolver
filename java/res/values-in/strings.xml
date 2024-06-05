@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"Jepret gambar dengan"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"Ambil gambar dengan <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"Jepret gambar"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"Gunakan aplikasi yang berbeda"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"Gunakan aplikasi lain"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"Pilih tindakan"</string>
     <string name="noApplications" msgid="1139487441772284671">"Tidak ada apl yang dapat melakukan tindakan ini."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Anda menggunakan aplikasi ini di luar profil kerja"</string>
@@ -55,7 +55,7 @@
     <string name="screenshot_edit" msgid="3857183660047569146">"Edit"</string>
     <string name="other_files" msgid="4501185823517473875">"{count,plural, =1{+ # file}other{+ # file}}"</string>
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{+ # file lainnya}other{+ # file lainnya}}"</string>
-    <string name="sharing_text" msgid="8137537443603304062">"Berbagi teks"</string>
+    <string name="sharing_text" msgid="8137537443603304062">"Teks yang akan dibagikan"</string>
     <string name="sharing_link" msgid="2307694372813942916">"Berbagi link"</string>
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Berbagi gambar}other{Berbagi # gambar}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Membagikan video}other{Membagikan # video}}"</string>
