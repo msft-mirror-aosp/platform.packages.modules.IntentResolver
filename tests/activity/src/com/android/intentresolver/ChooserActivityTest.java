@@ -91,6 +91,7 @@ import android.os.UserHandle;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.service.chooser.ChooserAction;
 import android.service.chooser.ChooserTarget;
 import android.text.Spannable;
@@ -134,6 +135,7 @@ import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.logging.FakeEventLog;
 import com.android.intentresolver.platform.AppPredictionAvailable;
 import com.android.intentresolver.platform.AppPredictionModule;
+import com.android.intentresolver.platform.GlobalSettings;
 import com.android.intentresolver.platform.ImageEditor;
 import com.android.intentresolver.platform.ImageEditorModule;
 import com.android.intentresolver.shared.model.User;
@@ -236,6 +238,9 @@ public class ChooserActivityTest {
     @Inject
     @ApplicationContext
     Context mContext;
+
+    @Inject
+    GlobalSettings mGlobalSettings;
 
     /** An arbitrary pre-installed activity that handles this type of intent. */
     @BindValue
@@ -2767,6 +2772,16 @@ public class ChooserActivityTest {
         waitForIdle();
 
         assertThat(activity.getCurrentUserHandle(), is(PERSONAL_USER_HANDLE));
+    }
+
+    @Test
+    public void chooserDisabledWhileDeviceFrpLocked() {
+        mGlobalSettings.putBoolean(Settings.Global.SECURE_FRP_MODE, true);
+        Intent viewIntent = createSendTextIntent();
+        ChooserWrapperActivity activity = mActivityRule.launchActivity(
+                Intent.createChooser(viewIntent, "chooser test"));
+        waitForIdle();
+        assertTrue(activity.isFinishing());
     }
 
     private Intent createChooserIntent(Intent intent, Intent[] initialIntents) {

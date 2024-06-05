@@ -127,6 +127,8 @@ class FetchPreviewsInteractorTest {
                         startIdx = 1,
                         loadMoreLeft = null,
                         loadMoreRight = null,
+                        leftTriggerIndex = 0,
+                        rightTriggerIndex = 1,
                     )
                 )
         }

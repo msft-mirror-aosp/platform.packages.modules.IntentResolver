@@ -51,6 +51,8 @@ constructor(
             startIndex = focusedItemIdx,
             hasMoreLeft = false,
             hasMoreRight = false,
+            leftTriggerIndex = initialPreviewMap.indices.first(),
+            rightTriggerIndex = initialPreviewMap.indices.last(),
         )
         cursorInteractor.launch(cursor.await() ?: return@coroutineScope, initialPreviewMap)
     }

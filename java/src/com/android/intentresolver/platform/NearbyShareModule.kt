@@ -41,7 +41,7 @@ object NearbyShareModule {
     fun nearbyShareComponent(@ApplicationOwned resources: Resources, settings: SecureSettings) =
         Optional.ofNullable(
             ComponentName.unflattenFromString(
-                settings.getString(NEARBY_SHARING_COMPONENT)?.ifEmpty { null }
+                settings.getStringOrNull(NEARBY_SHARING_COMPONENT)?.ifEmpty { null }
                     ?: resources.getString(R.string.config_defaultNearbySharingComponent),
             )
         )
