@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{ចែករំលែកវីដេអូជាមួយតំណ}other{ចែករំលែក # វីដេអូជាមួយតំណ}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{ចែករំលែកឯកសារជាមួយអក្សរ}other{ចែករំលែក # ឯកសារជាមួយអក្សរ}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{ចែករំលែកឯកសារជាមួយតំណ}other{ចែករំលែកឯកសារ # ជាមួយតំណ}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"កំពុងចែករំលែកអាល់ប៊ុម"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{រូបភាព​តែប៉ុណ្ណោះ}other{រូបភាពតែប៉ុណ្ណោះ}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{​វីដេអូតែប៉ុណ្ណោះ}other{វីដេអូតែប៉ុណ្ណោះ}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{ឯកសារតែប៉ុណ្ណោះ}other{ឯកសារតែប៉ុណ្ណោះ}}"</string>
@@ -76,17 +77,22 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"កម្មវិធីនេះ​មិនទាន់បាន​ទទួលសិទ្ធិ​ថតសំឡេង​នៅឡើយទេ ប៉ុន្តែអាច​ថតសំឡេង​តាមរយៈ​ឧបករណ៍ USB នេះបាន។"</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"ផ្ទាល់ខ្លួន"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"ការងារ"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"ឯកជន"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"ទិដ្ឋភាពផ្ទាល់ខ្លួន"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"ទិដ្ឋភាព​ការងារ"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"ទិដ្ឋភាពឯកជន"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"បានទប់ស្កាត់ដោយ​អ្នកគ្រប់គ្រង​ផ្នែកព័ត៌មានវិទ្យា​របស់អ្នក"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"ខ្លឹមសារនេះ​មិនអាចចែករំលែក​តាមរយៈ​កម្មវិធី​ការងារ​បានទេ"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ខ្លឹមសារនេះ​មិនអាចបើក​តាមរយៈ​កម្មវិធី​ការងារ​បានទេ"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"មិនអាចចែករំលែកខ្លឹមសារនេះ​ជាមួយ​កម្មវិធី​ផ្ទាល់ខ្លួន​បានទេ"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ខ្លឹមសារនេះ​មិនអាចបើក​តាមរយៈ​កម្មវិធី​ផ្ទាល់ខ្លួន​បានទេ"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"មិនអាចចែករំលែកខ្លឹមសារនេះជាមួយកម្មវិធីឯកជនបានទេ"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"មិនអាចបើកខ្លឹមសារនេះដោយប្រើកម្មវិធីឯកជនបានទេ"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"កម្មវិធី​ការងារ​ត្រូវបានផ្អាក"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ឈប់ផ្អាក"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"គ្មាន​កម្មវិធី​ការងារ​ទេ"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"គ្មាន​កម្មវិធី​ផ្ទាល់ខ្លួន​ទេ"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"គ្មានកម្មវិធីឯកជនទេ"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"បើក <xliff:g id="APP">%s</xliff:g> នៅក្នុងកម្រង​ព័ត៌មាន​ផ្ទាល់​ខ្លួនរបស់អ្នកឬ?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"បើក <xliff:g id="APP">%s</xliff:g> នៅក្នុងកម្រងព័ត៌មានការងាររបស់អ្នកឬ?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ប្រើ​កម្មវិធីរុករក​តាមអ៊ីនធឺណិត​ផ្ទាល់ខ្លួន"</string>
@@ -95,4 +101,8 @@
     <string name="include_text" msgid="642280283268536140">"រួមបញ្ចូលអក្សរ"</string>
     <string name="exclude_link" msgid="1332778255031992228">"មិនរួមបញ្ចូលតំណ"</string>
     <string name="include_link" msgid="827855767220339802">"រួមបញ្ចូល​តំណ"</string>
+    <string name="pinned" msgid="7623664001331394139">"បាន​ខ្ទាស់"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"រូបភាពដែល​អាចជ្រើសរើសបាន"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"វីដេអូដែល​អាចជ្រើសរើសបាន"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"ធាតុដែល​អាចជ្រើសរើសបាន"</string>
 </resources>

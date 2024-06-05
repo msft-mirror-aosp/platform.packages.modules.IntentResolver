@@ -26,10 +26,10 @@ internal val RecyclerView.areAllChildrenVisible: Boolean
         val first = getChildAt(0)
         val last = getChildAt(count - 1)
         val itemCount = adapter?.itemCount ?: 0
-        return getChildAdapterPosition(first) == 0
-                && getChildAdapterPosition(last) == itemCount - 1
-                && isFullyVisible(first)
-                && isFullyVisible(last)
+        return getChildAdapterPosition(first) == 0 &&
+            getChildAdapterPosition(last) == itemCount - 1 &&
+            isFullyVisible(first) &&
+            isFullyVisible(last)
     }
 
 private fun RecyclerView.isFullyVisible(view: View): Boolean =

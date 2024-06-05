@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{Deel tans video met skakel}other{Deel tans # video’s met skakel}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{Deel tans lêer met teks}other{Deel tans # lêers met teks}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{Deel tans lêer met skakel}other{Deel tans # lêers met skakel}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"Deel tans album"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Net prent}other{Net prente}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Net video}other{Net video’s}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Net lêer}other{Net lêers}}"</string>
@@ -76,17 +77,22 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Opneemtoestemming is nie aan hierdie program verleen nie, maar dit kan oudio deur hierdie USB-toestel opneem."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Persoonlik"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Werk"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Privaat"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Persoonlike aansig"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Werkaansig"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Privaat aansig"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Deur jou IT-admin geblokkeer"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Hierdie inhoud kan nie met werkprogramme gedeel word nie"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Hierdie inhoud kan nie met werkprogramme oopgemaak word nie"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Hierdie inhoud kan nie met persoonlike apps gedeel word nie"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Hierdie inhoud kan nie met persoonlike programme oopgemaak word nie"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Hierdie inhoud kan nie met privaat apps gedeel word nie"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Hierdie inhoud kan nie met privaat apps oopgemaak word nie"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Werkapps word onderbreek"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Hervat"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Geen werkprogramme nie"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Geen persoonlike programme nie"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Geen private apps nie"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Maak <xliff:g id="APP">%s</xliff:g> in jou persoonlike profiel oop?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Maak <xliff:g id="APP">%s</xliff:g> in jou werkprofiel oop?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Gebruik persoonlike blaaier"</string>
@@ -95,4 +101,8 @@
     <string name="include_text" msgid="642280283268536140">"Sluit teks in"</string>
     <string name="exclude_link" msgid="1332778255031992228">"Sluit skakel uit"</string>
     <string name="include_link" msgid="827855767220339802">"Sluit skakel in"</string>
+    <string name="pinned" msgid="7623664001331394139">"Vasgespeld"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Kiesbare prent"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Kiesbare video"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Kiesbare item"</string>
 </resources>

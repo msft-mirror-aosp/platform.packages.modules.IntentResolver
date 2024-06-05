@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"Сними слика со"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"Снимање слика со <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"Сними слика"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"Користи различна апликација"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"Употреби друга апликација"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"Избирање дејство"</string>
     <string name="noApplications" msgid="1139487441772284671">"Нема апликации што можат да го извршат ова дејство."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Ја користите апликацијата надвор од работниот профил"</string>
@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{Се споделува видео со линк}one{Се споделуваат # видео со линк}other{Се споделуваat # видеa со линк}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{Се споделува датотека со SMS}one{Се споделуваат # датотека со SMS}other{Се споделуваат # датотеки со SMS}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{Се споделува датотека со линк}one{Се споделуваат # датотека со линк}other{Се споделуваат # датотеки со линк}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"Споделување албум"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Само слика}one{Само слики}other{Само слики}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Само видео}one{Само видеа}other{Само видеа}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Само датотека}one{Само датотеки}other{Само датотеки}}"</string>
@@ -76,17 +77,22 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"На апликацијава не ѝ е доделена дозвола за снимање, но може да снима аудио преку овој USB-уред."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Лични"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"За работа"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Приватно"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Личен приказ"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Работен приказ"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Приватен приказ"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Блокирано од IT-администраторот"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Овие содржини не може да се споделуваат со работни апликации"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Овие содржини не може да се отвораат со работни апликации"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Овие содржини не може да се споделуваат со лични апликации"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Овие содржини не може да се отвораат со лични апликации"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Овие содржини не може да се споделуваат со приватни апликации"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Овие содржини не може да се отвораат со лични апликации"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Работните апликации се паузирани"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Прекини ја паузата"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Нема работни апликации"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Нема лични апликации"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Нема приватни апликации"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Да се отвори <xliff:g id="APP">%s</xliff:g> во личниот профил?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Да се отвори <xliff:g id="APP">%s</xliff:g> во работниот профил?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Користи личен прелистувач"</string>
@@ -95,4 +101,8 @@
     <string name="include_text" msgid="642280283268536140">"Опфати текст"</string>
     <string name="exclude_link" msgid="1332778255031992228">"Исклучи линк"</string>
     <string name="include_link" msgid="827855767220339802">"Вклучи линк"</string>
+    <string name="pinned" msgid="7623664001331394139">"Закачено"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Слика што може да се избере"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Видео што може да се избере"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Ставка што може да се избере"</string>
 </resources>

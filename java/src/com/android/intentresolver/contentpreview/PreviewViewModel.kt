@@ -17,44 +17,64 @@
 package com.android.intentresolver.contentpreview
 
 import android.app.Application
+import android.content.ContentResolver
+import android.content.Intent
+import android.net.Uri
 import androidx.annotation.MainThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.android.intentresolver.ChooserRequestParameters
 import com.android.intentresolver.R
+import com.android.intentresolver.inject.Background
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.plus
 
-/** A trivial view model to keep a [PreviewDataProvider] instance over a configuration change */
-class PreviewViewModel(private val application: Application) : BasePreviewViewModel() {
-    private var previewDataProvider: PreviewDataProvider? = null
-    private var imageLoader: ImagePreviewImageLoader? = null
+/** A view model for the preview logic */
+class PreviewViewModel(
+    private val contentResolver: ContentResolver,
+    // TODO: inject ImageLoader instead
+    private val thumbnailSize: Int,
+    @Background private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+) : BasePreviewViewModel() {
+    private var targetIntent: Intent? = null
+    private var additionalContentUri: Uri? = null
+    private var isPayloadTogglingEnabled = false
 
-    @MainThread
-    override fun createOrReuseProvider(
-        chooserRequest: ChooserRequestParameters
-    ): PreviewDataProvider =
-        previewDataProvider
-            ?: PreviewDataProvider(chooserRequest.targetIntent, application.contentResolver).also {
-                previewDataProvider = it
-            }
+    override val previewDataProvider by lazy {
+        val targetIntent = requireNotNull(this.targetIntent) { "Not initialized" }
+        PreviewDataProvider(
+            viewModelScope + dispatcher,
+            targetIntent,
+            additionalContentUri,
+            contentResolver,
+            isPayloadTogglingEnabled,
+        )
+    }
 
+    override val imageLoader by lazy {
+        ImagePreviewImageLoader(
+            viewModelScope + dispatcher,
+            thumbnailSize,
+            contentResolver,
+            cacheSize = 16
+        )
+    }
+
+    // TODO: make the view model injectable and inject these dependencies instead
     @MainThread
-    override fun createOrReuseImageLoader(): ImageLoader =
-        imageLoader
-            ?: ImagePreviewImageLoader(
-                    viewModelScope + Dispatchers.IO,
-                    thumbnailSize =
-                        application.resources.getDimensionPixelSize(
-                            R.dimen.chooser_preview_image_max_dimen
-                        ),
-                    application.contentResolver,
-                    cacheSize = 16
-                )
-                .also { imageLoader = it }
+    override fun init(
+        targetIntent: Intent,
+        additionalContentUri: Uri?,
+        isPayloadTogglingEnabled: Boolean,
+    ) {
+        if (this.targetIntent != null) return
+        this.targetIntent = targetIntent
+        this.additionalContentUri = additionalContentUri
+        this.isPayloadTogglingEnabled = isPayloadTogglingEnabled
+    }
 
     companion object {
         val Factory: ViewModelProvider.Factory =
@@ -63,7 +83,16 @@ class PreviewViewModel(private val application: Application) : BasePreviewViewMo
                 override fun <T : ViewModel> create(
                     modelClass: Class<T>,
                     extras: CreationExtras
-                ): T = PreviewViewModel(checkNotNull(extras[APPLICATION_KEY])) as T
+                ): T {
+                    val application: Application = checkNotNull(extras[APPLICATION_KEY])
+                    return PreviewViewModel(
+                        application.contentResolver,
+                        application.resources.getDimensionPixelSize(
+                            R.dimen.chooser_preview_image_max_dimen
+                        )
+                    )
+                        as T
+                }
             }
     }
 }

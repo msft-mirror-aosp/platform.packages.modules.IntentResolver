@@ -16,7 +16,6 @@
 
 package com.android.intentresolver;
 
-import android.annotation.Nullable;
 import android.app.prediction.AppTarget;
 import android.content.Context;
 import android.content.Intent;
@@ -26,16 +25,24 @@ import android.content.pm.ShortcutInfo;
 import android.service.chooser.ChooserTarget;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.SelectableTargetInfo;
 import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.ui.AppShortcutLimit;
+import com.android.intentresolver.ui.EnforceShortcutLimit;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-class ShortcutSelectionLogic {
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+@Singleton
+public class ShortcutSelectionLogic {
     private static final String TAG = "ShortcutSelectionLogic";
     private static final boolean DEBUG = false;
     private static final float PINNED_SHORTCUT_TARGET_SCORE_BOOST = 1000.f;
@@ -48,9 +55,10 @@ class ShortcutSelectionLogic {
     private final Comparator<ChooserTarget> mBaseTargetComparator =
             (lhs, rhs) -> Float.compare(rhs.getScore(), lhs.getScore());
 
-    ShortcutSelectionLogic(
-            int maxShortcutTargetsPerApp,
-            boolean applySharingAppLimits) {
+    @Inject
+    public ShortcutSelectionLogic(
+            @AppShortcutLimit int maxShortcutTargetsPerApp,
+            @EnforceShortcutLimit boolean applySharingAppLimits) {
         mMaxShortcutTargetsPerApp = maxShortcutTargetsPerApp;
         mApplySharingAppLimits = applySharingAppLimits;
     }
@@ -77,7 +85,7 @@ class ShortcutSelectionLogic {
                     + targets.size()
                     + " targets");
         }
-        if (targets.size() == 0) {
+        if (targets.isEmpty()) {
             return false;
         }
         Collections.sort(targets, mBaseTargetComparator);

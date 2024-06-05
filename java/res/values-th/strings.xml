@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{กำลังแชร์วิดีโอพร้อมลิงก์}other{กำลังแชร์วิดีโอ # รายการพร้อมลิงก์}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{กำลังแชร์ไฟล์พร้อมข้อความ}other{กำลังแชร์ไฟล์ # รายการพร้อมข้อความ}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{กำลังแชร์ไฟล์พร้อมลิงก์}other{กำลังแชร์ไฟล์ # รายการพร้อมลิงก์}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"กำลังแชร์อัลบั้ม"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{รูปภาพเท่านั้น}other{รูปภาพเท่านั้น}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{วิดีโอเท่านั้น}other{วิดีโอเท่านั้น}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{ไฟล์เท่านั้น}other{ไฟล์เท่านั้น}}"</string>
@@ -76,17 +77,22 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"แอปนี้ไม่ได้รับอนุญาตให้บันทึกเสียงแต่อาจเก็บเสียงผ่านอุปกรณ์ USB นี้ได้"</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"ส่วนตัว"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"งาน"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"ส่วนตัว"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"มุมมองส่วนตัว"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"ดูงาน"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"มุมมองส่วนตัว"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"ผู้ดูแลระบบไอทีบล็อกไว้"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"แชร์เนื้อหานี้โดยใช้แอปงานไม่ได้"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"เปิดเนื้อหานี้โดยใช้แอปงานไม่ได้"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"แชร์เนื้อหานี้โดยใช้แอปส่วนตัวไม่ได้"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"เปิดเนื้อหานี้โดยใช้แอปส่วนตัวไม่ได้"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"แชร์เนื้อหานี้โดยใช้แอปส่วนตัวไม่ได้"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"เปิดเนื้อหานี้โดยใช้แอปส่วนตัวไม่ได้"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"แอปงานหยุดชั่วคราว"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ยกเลิกการหยุดชั่วคราว"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"ไม่มีแอปงาน"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"ไม่มีแอปส่วนตัว"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"ไม่มีแอปส่วนตัว"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"เปิด <xliff:g id="APP">%s</xliff:g> ในโปรไฟล์ส่วนตัวไหม"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"เปิด <xliff:g id="APP">%s</xliff:g> ในโปรไฟล์งานไหม"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ใช้เบราว์เซอร์ส่วนตัว"</string>
@@ -95,4 +101,8 @@
     <string name="include_text" msgid="642280283268536140">"รวมข้อความ"</string>
     <string name="exclude_link" msgid="1332778255031992228">"ไม่รวมลิงก์"</string>
     <string name="include_link" msgid="827855767220339802">"รวมลิงก์"</string>
+    <string name="pinned" msgid="7623664001331394139">"ปักหมุดไว้"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"รูปภาพที่เลือกได้"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"วิดีโอที่เลือกได้"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"รายการที่เลือกได้"</string>
 </resources>

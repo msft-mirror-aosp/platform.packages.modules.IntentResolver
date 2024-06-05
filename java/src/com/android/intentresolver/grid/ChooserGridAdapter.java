@@ -32,12 +32,14 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.Space;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.intentresolver.ChooserListAdapter;
+import com.android.intentresolver.FeatureFlags;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverListAdapter.ViewHolder;
-import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.android.collect.Lists;
 
@@ -47,7 +49,6 @@ import com.google.android.collect.Lists;
  * row level by this adapter but not on the item level. Individual targets within the row are
  * handled by {@link ChooserListAdapter}
  */
-@VisibleForTesting
 public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     /**
@@ -65,15 +66,6 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
      * out of `ChooserGridAdapter` altogether.
      */
     public interface ChooserActivityDelegate {
-        /** @return whether we're showing a tabbed (multi-profile) UI. */
-        boolean shouldShowTabs();
-
-        /**
-         * @return a content preview {@link View} that's appropriate for the caller's share
-         * content, constructed for display in the provided {@code parent} group.
-         */
-        View buildContentPreview(ViewGroup parent);
-
         /** Notify the client that the item with the selected {@code itemIndex} was selected. */
         void onTargetSelected(int itemIndex);
 
@@ -82,19 +74,10 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
          * long-pressed.
          */
         void onTargetLongPressed(int itemIndex);
-
-        /**
-         * Notify the client that the provided {@code View} should be configured as the new
-         * "profile view" button. Callers should attach their own click listeners to implement
-         * behaviors on this view.
-         */
-        void updateProfileViewButton(View newButtonFromProfileRow);
     }
 
     private static final int VIEW_TYPE_DIRECT_SHARE = 0;
     private static final int VIEW_TYPE_NORMAL = 1;
-    private static final int VIEW_TYPE_CONTENT_PREVIEW = 2;
-    private static final int VIEW_TYPE_PROFILE = 3;
     private static final int VIEW_TYPE_AZ_LABEL = 4;
     private static final int VIEW_TYPE_CALLER_AND_RANK = 5;
     private static final int VIEW_TYPE_FOOTER = 6;
@@ -107,6 +90,9 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
     private final boolean mShouldShowContentPreview;
     private final int mChooserWidthPixels;
     private final int mChooserRowTextOptionTranslatePixelSize;
+    private final FeatureFlags mFeatureFlags;
+    @Nullable
+    private RecyclerView mRecyclerView;
 
     private int mChooserTargetWidth = 0;
 
@@ -119,7 +105,8 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
             ChooserActivityDelegate chooserActivityDelegate,
             ChooserListAdapter wrappedAdapter,
             boolean shouldShowContentPreview,
-            int maxTargetsPerRow) {
+            int maxTargetsPerRow,
+            FeatureFlags featureFlags) {
         super();
 
         mChooserActivityDelegate = chooserActivityDelegate;
@@ -133,6 +120,7 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
         mChooserWidthPixels = context.getResources().getDimensionPixelSize(R.dimen.chooser_width);
         mChooserRowTextOptionTranslatePixelSize = context.getResources().getDimensionPixelSize(
                 R.dimen.chooser_row_text_option_translate);
+        mFeatureFlags = featureFlags;
 
         wrappedAdapter.registerDataSetObserver(new DataSetObserver() {
             @Override
@@ -149,8 +137,25 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
         });
     }
 
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        mRecyclerView = recyclerView;
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        mRecyclerView = null;
+    }
+
     public void setFooterHeight(int height) {
-        mFooterHeight = height;
+        if (mFooterHeight != height) {
+            mFooterHeight = height;
+            if (mFeatureFlags.fixTargetListFooter()) {
+                // we always have at least one view, the footer, see getItemCount() and
+                // getFooterRowCount()
+                notifyItemChanged(getItemCount() - 1);
+            }
+        }
     }
 
     /**
@@ -164,8 +169,10 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
             return false;
         }
 
-        // Limit width to the maximum width of the chooser activity
-        width = Math.min(mChooserWidthPixels, width);
+        // Limit width to the maximum width of the chooser activity, if the maximum width is set
+        if (mChooserWidthPixels >= 0) {
+            width = Math.min(mChooserWidthPixels, width);
+        }
 
         int newWidth = width / mMaxTargetsPerRow;
         if (newWidth != mChooserTargetWidth) {
@@ -178,44 +185,13 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
 
     public int getRowCount() {
         return (int) (
-                getSystemRowCount()
-                        + getProfileRowCount()
-                        + getServiceTargetRowCount()
+                getServiceTargetRowCount()
                         + getCallerAndRankedTargetRowCount()
                         + getAzLabelRowCount()
                         + Math.ceil(
                         (float) mChooserListAdapter.getAlphaTargetCount()
                                 / mMaxTargetsPerRow)
             );
-    }
-
-    /**
-     * Whether the "system" row of targets is displayed.
-     * This area includes the content preview (if present) and action row.
-     */
-    public int getSystemRowCount() {
-        // For the tabbed case we show the sticky content preview above the tabs,
-        // please refer to shouldShowStickyContentPreview
-        if (mChooserActivityDelegate.shouldShowTabs()) {
-            return 0;
-        }
-
-        if (!mShouldShowContentPreview) {
-            return 0;
-        }
-
-        if (mChooserListAdapter == null || mChooserListAdapter.getCount() == 0) {
-            return 0;
-        }
-
-        return 1;
-    }
-
-    public int getProfileRowCount() {
-        if (mChooserActivityDelegate.shouldShowTabs()) {
-            return 0;
-        }
-        return mChooserListAdapter.getOtherProfile() == null ? 0 : 1;
     }
 
     public int getFooterRowCount() {
@@ -248,38 +224,23 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
             return -1;
         }
 
-        return getSystemRowCount()
-                + getProfileRowCount()
-                + getServiceTargetRowCount()
+        return getServiceTargetRowCount()
                 + getCallerAndRankedTargetRowCount();
     }
 
     @Override
     public int getItemCount() {
-        return getSystemRowCount()
-                + getProfileRowCount()
-                + getServiceTargetRowCount()
+        return getServiceTargetRowCount()
                 + getCallerAndRankedTargetRowCount()
                 + getAzLabelRowCount()
                 + mChooserListAdapter.getAlphaTargetCount()
                 + getFooterRowCount();
     }
 
+    @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         switch (viewType) {
-            case VIEW_TYPE_CONTENT_PREVIEW:
-                return new ItemViewHolder(
-                        mChooserActivityDelegate.buildContentPreview(parent),
-                        viewType,
-                        null,
-                        null);
-            case VIEW_TYPE_PROFILE:
-                return new ItemViewHolder(
-                        createProfileView(parent),
-                        viewType,
-                        null,
-                        null);
             case VIEW_TYPE_AZ_LABEL:
                 return new ItemViewHolder(
                         createAzLabelView(parent),
@@ -302,7 +263,7 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
                 return new FooterViewHolder(sp, viewType);
             default:
                 // Since we catch all possible viewTypes above, no chance this is being called.
-                return null;
+                throw new IllegalStateException("unmatched view type");
         }
     }
 
@@ -316,6 +277,15 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
         mAzLabelVisibility = isVisible;
         int azRowPos = getAzLabelRowPosition();
         if (azRowPos >= 0) {
+            if (mRecyclerView != null) {
+                for (int i = 0, size = mRecyclerView.getChildCount(); i < size; i++) {
+                    View child = mRecyclerView.getChildAt(i);
+                    if (mRecyclerView.getChildAdapterPosition(child) == azRowPos) {
+                        child.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+                    }
+                }
+                return;
+            }
             notifyItemChanged(azRowPos);
         }
     }
@@ -341,13 +311,8 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
 
     @Override
     public int getItemViewType(int position) {
-        int count;
-
-        int countSum = (count = getSystemRowCount());
-        if (count > 0 && position < countSum) return VIEW_TYPE_CONTENT_PREVIEW;
-
-        countSum += (count = getProfileRowCount());
-        if (count > 0 && position < countSum) return VIEW_TYPE_PROFILE;
+        int count = 0;
+        int countSum = count;
 
         countSum += (count = getServiceTargetRowCount());
         if (count > 0 && position < countSum) return VIEW_TYPE_DIRECT_SHARE;
@@ -365,12 +330,6 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
 
     public int getTargetType(int position) {
         return mChooserListAdapter.getPositionTargetType(getListPosition(position));
-    }
-
-    private View createProfileView(ViewGroup parent) {
-        View profileRow = mLayoutInflater.inflate(R.layout.chooser_profile_row, parent, false);
-        mChooserActivityDelegate.updateProfileViewButton(profileRow);
-        return profileRow;
     }
 
     private View createAzLabelView(ViewGroup parent) {
@@ -550,8 +509,6 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
     }
 
     int getListPosition(int position) {
-        position -= getSystemRowCount() + getProfileRowCount();
-
         final int serviceCount = mChooserListAdapter.getServiceTargetCount();
         final int serviceRows = (int) Math.ceil((float) serviceCount / mMaxTargetsPerRow);
         if (position < serviceRows) {

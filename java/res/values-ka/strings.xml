@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{ვიდეო ზიარდება ბმულით}other{# ვიდეო ზიარდება ბმულით}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{ფაილი ზიარდება ტექსტით}other{# ფაილი ზიარდება ტექსტით}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{ფაილი ზიარდება ბმულით}other{# ფაილი ზიარდება ბმულით}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"გაზიარებული ალბომი"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{მხოლოდ სურათი}other{მხოლოდ სურათები}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{მხოლოდ ვიდეო}other{მხოლოდ ვიდეოები}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{მხოლოდ ფაილი}other{მხოლოდ ფაილები}}"</string>
@@ -76,17 +77,22 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"ამ აპს არ აქვს მინიჭებული ჩაწერის ნებართვა, მაგრამ შეუძლია ჩაიწეროს აუდიო ამ USB მოწყობილობის მეშვეობით."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"პირადი"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"სამსახური"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"კერძო"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"პირადი ხედი"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"სამსახურის ხედი"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"პირადი სივრცე"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"დაბლოკილია თქვენი IT-ადმინისტრატორის მიერ"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"ამ კონტენტის სამსახურის აპებისთვის გაზიარება შეუძლებელია"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ამ კონტენტის სამსახურის აპებით გახსნა შეუძლებელია"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"ამ კონტენტის პირადი აპებისთვის გაზიარება შეუძლებელია"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ამ კონტენტის პირადი აპებით გახსნა შეუძლებელია"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"ამ კონტენტის პირადი აპებისთვის გაზიარება შეუძლებელია"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"ამ კონტენტის პირადი აპებით გახსნა შეუძლებელია"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"სამსახურის აპები დაპაუზებულია"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"პაუზის გაუქმება"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"სამსახურის აპები არ არის"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"პირადი აპები არ არის"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"არსებული პირადი აპებით მხარდაჭერილი არ არის"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"გსურთ <xliff:g id="APP">%s</xliff:g>-ის გახსნა თქვენს პირად პროფილში?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"გსურთ <xliff:g id="APP">%s</xliff:g>-ის გახსნა თქვენს სამსახურის პროფილში?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"პირადი ბრაუზერის გამოყენება"</string>
@@ -95,4 +101,8 @@
     <string name="include_text" msgid="642280283268536140">"ტექსტის ჩასმა"</string>
     <string name="exclude_link" msgid="1332778255031992228">"ბმულის ამოღება"</string>
     <string name="include_link" msgid="827855767220339802">"ბმულის დართვა"</string>
+    <string name="pinned" msgid="7623664001331394139">"ჩამაგრებული"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"არჩევადი სურათი"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"არჩევადი ვიდეო"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"არჩევადი ერთეული"</string>
 </resources>

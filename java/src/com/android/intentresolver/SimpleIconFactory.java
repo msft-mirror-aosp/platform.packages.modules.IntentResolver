@@ -21,9 +21,6 @@ import static android.graphics.Paint.DITHER_FLAG;
 import static android.graphics.Paint.FILTER_BITMAP_FLAG;
 import static android.graphics.drawable.AdaptiveIconDrawable.getExtraInsetFraction;
 
-import android.annotation.AttrRes;
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -50,13 +47,16 @@ import android.util.AttributeSet;
 import android.util.Pools.SynchronizedPool;
 import android.util.TypedValue;
 
+import androidx.annotation.AttrRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.internal.annotations.VisibleForTesting;
 
 import org.xmlpull.v1.XmlPullParser;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
-
 
 /**
  * @deprecated Use the Launcher3 Iconloaderlib at packages/apps/Launcher3/iconloaderlib. This class
@@ -719,10 +719,18 @@ public class SimpleIconFactory {
         }
 
         @Override
-        public void inflate(Resources r, XmlPullParser parser, AttributeSet attrs) { }
+        public void inflate(
+                @NonNull Resources r,
+                @NonNull XmlPullParser parser,
+                @NonNull AttributeSet attrs) {
+        }
 
         @Override
-        public void inflate(Resources r, XmlPullParser parser, AttributeSet attrs, Theme theme) { }
+        public void inflate(
+                @NonNull Resources r,
+                @NonNull XmlPullParser parser,
+                @NonNull AttributeSet attrs, Theme theme) {
+        }
 
         /**
          * Sets the scale associated with this drawable

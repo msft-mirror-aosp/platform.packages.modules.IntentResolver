@@ -16,16 +16,20 @@
 
 package com.android.intentresolver.contentpreview
 
+import android.content.Intent
+import android.net.Uri
 import androidx.annotation.MainThread
 import androidx.lifecycle.ViewModel
-import com.android.intentresolver.ChooserRequestParameters
 
 /** A contract for the preview view model. Added for testing. */
 abstract class BasePreviewViewModel : ViewModel() {
-    @MainThread
-    abstract fun createOrReuseProvider(
-        chooserRequest: ChooserRequestParameters
-    ): PreviewDataProvider
+    @get:MainThread abstract val previewDataProvider: PreviewDataProvider
+    @get:MainThread abstract val imageLoader: ImageLoader
 
-    @MainThread abstract fun createOrReuseImageLoader(): ImageLoader
+    @MainThread
+    abstract fun init(
+        targetIntent: Intent,
+        additionalContentUri: Uri?,
+        isPayloadTogglingEnabled: Boolean,
+    )
 }

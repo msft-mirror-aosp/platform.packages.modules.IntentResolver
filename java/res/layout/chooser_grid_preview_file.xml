@@ -26,8 +26,6 @@
     android:orientation="vertical"
     android:background="?androidprv:attr/materialColorSurfaceContainer">
 
-    <include layout="@layout/chooser_headline_row"/>
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

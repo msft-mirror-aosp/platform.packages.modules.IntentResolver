@@ -16,10 +16,8 @@
 
 package com.android.intentresolver.icons
 
-import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
 import android.os.UserHandle
-import com.android.intentresolver.TargetPresentationGetter
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
 import java.util.function.Consumer
@@ -27,24 +25,22 @@ import java.util.function.Consumer
 /** A target data loader contract. Added to support testing. */
 abstract class TargetDataLoader {
     /** Load an app target icon */
-    abstract fun loadAppTargetIcon(
+    abstract fun getOrLoadAppTargetIcon(
         info: DisplayResolveInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
-    )
+    ): Drawable?
 
     /** Load a shortcut icon */
-    abstract fun loadDirectShareIcon(
+    abstract fun getOrLoadDirectShareIcon(
         info: SelectableTargetInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
-    )
+    ): Drawable?
 
     /** Load target label */
-    abstract fun loadLabel(info: DisplayResolveInfo, callback: Consumer<Array<CharSequence?>>)
+    abstract fun loadLabel(info: DisplayResolveInfo, callback: Consumer<LabelInfo>)
 
-    /** Create a presentation getter to be used with a [DisplayResolveInfo] */
-    // TODO: get rid of DisplayResolveInfo's dependency on the presentation getter and remove this
-    //  method.
-    abstract fun createPresentationGetter(info: ResolveInfo): TargetPresentationGetter
+    /** Loads DisplayResolveInfo's display label synchronously, if needed */
+    abstract fun getOrLoadLabel(info: DisplayResolveInfo)
 }

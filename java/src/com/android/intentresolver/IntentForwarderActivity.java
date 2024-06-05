@@ -20,10 +20,9 @@ import static android.app.admin.DevicePolicyResources.Strings.Core.FORWARD_INTEN
 import static android.app.admin.DevicePolicyResources.Strings.Core.FORWARD_INTENT_TO_WORK;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
-import static com.android.intentresolver.ResolverActivity.EXTRA_CALLING_USER;
-import static com.android.intentresolver.ResolverActivity.EXTRA_SELECTED_PROFILE;
+import static com.android.intentresolver.ui.viewmodel.ResolverRequestReaderKt.EXTRA_CALLING_USER;
+import static com.android.intentresolver.ui.viewmodel.ResolverRequestReaderKt.EXTRA_SELECTED_PROFILE;
 
-import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.ActivityThread;
 import android.app.AppGlobals;
@@ -45,6 +44,9 @@ import android.provider.Settings;
 import android.util.Slog;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+
+import com.android.intentresolver.profiles.MultiProfilePagerAdapter;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
@@ -253,9 +255,9 @@ public class IntentForwarderActivity extends Activity  {
 
     private int findSelectedProfile(String className) {
         if (className.equals(FORWARD_INTENT_TO_PARENT)) {
-            return ChooserActivity.PROFILE_PERSONAL;
+            return MultiProfilePagerAdapter.PROFILE_PERSONAL;
         } else if (className.equals(FORWARD_INTENT_TO_MANAGED_PROFILE)) {
-            return ChooserActivity.PROFILE_WORK;
+            return MultiProfilePagerAdapter.PROFILE_WORK;
         }
         return -1;
     }
@@ -309,7 +311,7 @@ public class IntentForwarderActivity extends Activity  {
      * Check whether the intent can be forwarded to target user. Return the intent used for
      * forwarding if it can be forwarded, {@code null} otherwise.
      */
-    static Intent canForward(Intent incomingIntent, int sourceUserId, int targetUserId,
+    public static Intent canForward(Intent incomingIntent, int sourceUserId, int targetUserId,
             IPackageManager packageManager, ContentResolver contentResolver)  {
         Intent forwardIntent = new Intent(incomingIntent);
         forwardIntent.addFlags(

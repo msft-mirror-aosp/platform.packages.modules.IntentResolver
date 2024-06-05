@@ -18,7 +18,6 @@ package com.android.intentresolver.contentpreview
 
 import android.content.ContentInterface
 import android.content.Intent
-import android.database.Cursor
 import android.media.MediaMetadata
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -29,23 +28,26 @@ import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.OpenForTesting
 import androidx.annotation.VisibleForTesting
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.coroutineScope
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_FILE
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE
+import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT
 import com.android.intentresolver.measurements.runTracing
 import com.android.intentresolver.util.ownedByCurrentUser
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -68,29 +70,50 @@ private const val TIMEOUT_MS = 1_000L
  */
 @OpenForTesting
 open class PreviewDataProvider
-@VisibleForTesting
+@JvmOverloads
 constructor(
+    private val scope: CoroutineScope,
     private val targetIntent: Intent,
+    private val additionalContentUri: Uri?,
     private val contentResolver: ContentInterface,
-    private val typeClassifier: MimeTypeClassifier,
-    private val dispatcher: CoroutineDispatcher,
+    // TODO: replace with the ChooserServiceFlags ref when PreviewViewModel dependencies are sorted
+    // out
+    private val isPayloadTogglingEnabled: Boolean,
+    private val typeClassifier: MimeTypeClassifier = DefaultMimeTypeClassifier,
 ) {
-    constructor(
-        targetIntent: Intent,
-        contentResolver: ContentInterface,
-    ) : this(
-        targetIntent,
-        contentResolver,
-        DefaultMimeTypeClassifier,
-        Dispatchers.IO,
-    )
 
     private val records = targetIntent.contentUris.map { UriRecord(it) }
+
+    private val fileInfoSharedFlow: SharedFlow<FileInfo> by lazy {
+        // Alternatively, we could just use [shareIn()] on a [flow] -- and it would be, arguably,
+        //  cleaner -- but we'd lost the ability to trace the traverse as [runTracing] does not
+        //  generally work over suspend function invocations.
+        MutableSharedFlow<FileInfo>(replay = records.size).apply {
+            scope.launch {
+                runTracing("image-preview-metadata") {
+                    for (record in records) {
+                        tryEmit(FileInfo.Builder(record.uri).readFromRecord(record).build())
+                    }
+                }
+            }
+        }
+    }
 
     /** returns number of shared URIs, see [Intent.EXTRA_STREAM] */
     @get:OpenForTesting
     open val uriCount: Int
         get() = records.size
+
+    val uris: List<Uri>
+        get() = records.map { it.uri }
+
+    /**
+     * Returns a [Flow] of [FileInfo], for each shared URI in order, with [FileInfo.mimeType] and
+     * [FileInfo.previewUri] set (a data projection tailored for the image preview UI).
+     */
+    @get:OpenForTesting
+    open val imagePreviewFileInfoFlow: Flow<FileInfo>
+        get() = fileInfoSharedFlow.take(records.size)
 
     /**
      * Preview type to use. The type is determined asynchronously with a timeout; the fall-back
@@ -106,14 +129,41 @@ constructor(
              * IMAGE, FILE, TEXT. */
             if (!targetIntent.isSend || records.isEmpty()) {
                 CONTENT_PREVIEW_TEXT
+            } else if (isPayloadTogglingEnabled && shouldShowPayloadSelection()) {
+                // TODO: replace with the proper flags injection
+                CONTENT_PREVIEW_PAYLOAD_SELECTION
             } else {
-                runBlocking(dispatcher) {
-                    withTimeoutOrNull(TIMEOUT_MS) {
-                        loadPreviewType()
-                    } ?: CONTENT_PREVIEW_FILE
+                try {
+                    runBlocking(scope.coroutineContext) {
+                        withTimeoutOrNull(TIMEOUT_MS) { scope.async { loadPreviewType() }.await() }
+                            ?: CONTENT_PREVIEW_FILE
+                    }
+                } catch (e: CancellationException) {
+                    Log.w(
+                        ContentPreviewUi.TAG,
+                        "An attempt to read preview type from a cancelled scope",
+                        e
+                    )
+                    CONTENT_PREVIEW_FILE
                 }
             }
         }
+    }
+
+    private fun shouldShowPayloadSelection(): Boolean {
+        val extraContentUri = additionalContentUri ?: return false
+        return runCatching {
+                val authority = extraContentUri.authority
+                records.firstOrNull { authority == it.uri.authority } == null
+            }
+            .onFailure {
+                Log.w(
+                    ContentPreviewUi.TAG,
+                    "Failed to check URI authorities; no payload toggling",
+                    it
+                )
+            }
+            .getOrDefault(false)
     }
 
     /**
@@ -123,46 +173,24 @@ constructor(
     open val firstFileInfo: FileInfo? by lazy {
         runTracing("first-uri-metadata") {
             records.firstOrNull()?.let { record ->
-                runBlocking(dispatcher) {
-                    val builder = FileInfo.Builder(record.uri)
-                    withTimeoutOrNull(TIMEOUT_MS) {
-                        builder.readFromRecord(record)
+                val builder = FileInfo.Builder(record.uri)
+                try {
+                    runBlocking(scope.coroutineContext) {
+                        withTimeoutOrNull(TIMEOUT_MS) {
+                            scope.async { builder.readFromRecord(record) }.await()
+                        }
                     }
-                    builder.build()
-                }
-            }
-        }
-    }
-
-    /**
-     * Returns a collection of [FileInfo], for each shared URI in order, with [FileInfo.mimeType]
-     * and [FileInfo.previewUri] set (a data projection tailored for the image preview UI).
-     */
-    @OpenForTesting
-    open fun getFileMetadataForImagePreview(
-        callerLifecycle: Lifecycle,
-        callback: Consumer<List<FileInfo>>,
-    ) {
-        callerLifecycle.coroutineScope.launch {
-            val result = withContext(dispatcher) {
-                getFileMetadataForImagePreview()
-            }
-            callback.accept(result)
-        }
-    }
-
-    private fun getFileMetadataForImagePreview(): List<FileInfo> =
-        runTracing("image-preview-metadata") {
-            ArrayList<FileInfo>(records.size).also { result ->
-                for (record in records) {
-                    result.add(
-                        FileInfo.Builder(record.uri)
-                            .readFromRecord(record)
-                            .build()
+                } catch (e: CancellationException) {
+                    Log.w(
+                        ContentPreviewUi.TAG,
+                        "An attempt to read first file info from a cancelled scope",
+                        e
                     )
                 }
+                builder.build()
             }
         }
+    }
 
     private fun FileInfo.Builder.readFromRecord(record: UriRecord): FileInfo.Builder {
         withMimeType(record.mimeType)
@@ -181,14 +209,12 @@ constructor(
      * is not provided, derived from the URI.
      */
     @Throws(IndexOutOfBoundsException::class)
-    fun getFirstFileName(callerLifecycle: Lifecycle, callback: Consumer<String>) {
+    fun getFirstFileName(callerScope: CoroutineScope, callback: Consumer<String>) {
         if (records.isEmpty()) {
             throw IndexOutOfBoundsException("There are no shared URIs")
         }
-        callerLifecycle.coroutineScope.launch {
-            val result = withContext(dispatcher) {
-                getFirstFileName()
-            }
+        callerScope.launch {
+            val result = scope.async { getFirstFileName() }.await()
             callback.accept(result)
         }
     }
@@ -237,8 +263,7 @@ constructor(
                 }
                 resultDeferred.complete(CONTENT_PREVIEW_FILE)
             }
-            resultDeferred.await()
-                .also { job.cancel() }
+            resultDeferred.await().also { job.cancel() }
         }
     }
 
@@ -251,8 +276,7 @@ constructor(
         val isImageType: Boolean
             get() = typeClassifier.isImageType(mimeType)
         val supportsImageType: Boolean by lazy {
-            contentResolver.getStreamTypesSafe(uri)
-                ?.firstOrNull(typeClassifier::isImageType) != null
+            contentResolver.getStreamTypesSafe(uri).firstOrNull(typeClassifier::isImageType) != null
         }
         val supportsThumbnail: Boolean
             get() = query.supportsThumbnail
@@ -263,45 +287,47 @@ constructor(
 
         private val query by lazy { readQueryResult() }
 
-        private fun readQueryResult(): QueryResult {
-            val cursor = contentResolver.querySafe(uri)
-                ?.takeIf { it.moveToFirst() }
-                ?: return QueryResult()
+        private fun readQueryResult(): QueryResult =
+            // TODO: rewrite using methods from UiMetadataHelpers.kt
+            contentResolver.querySafe(uri, METADATA_COLUMNS)?.use { cursor ->
+                if (!cursor.moveToFirst()) return@use null
 
-            var flagColIdx = -1
-            var displayIconUriColIdx = -1
-            var nameColIndex = -1
-            var titleColIndex = -1
-            // TODO: double-check why Cursor#getColumnInded didn't work
-            cursor.columnNames.forEachIndexed { i, columnName ->
-                when (columnName) {
-                    DocumentsContract.Document.COLUMN_FLAGS -> flagColIdx = i
-                    MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI -> displayIconUriColIdx = i
-                    OpenableColumns.DISPLAY_NAME -> nameColIndex = i
-                    Downloads.Impl.COLUMN_TITLE -> titleColIndex = i
-                }
-            }
-
-            val supportsThumbnail =
-                flagColIdx >= 0 && ((cursor.getInt(flagColIdx) and FLAG_SUPPORTS_THUMBNAIL) != 0)
-
-            var title = ""
-            if (nameColIndex >= 0) {
-                title = cursor.getString(nameColIndex) ?: ""
-            }
-            if (TextUtils.isEmpty(title) && titleColIndex >= 0) {
-                title = cursor.getString(titleColIndex) ?: ""
-            }
-
-            val iconUri =
-                if (displayIconUriColIdx >= 0) {
-                    cursor.getString(displayIconUriColIdx)?.let(Uri::parse)
-                } else {
-                    null
+                var flagColIdx = -1
+                var displayIconUriColIdx = -1
+                var nameColIndex = -1
+                var titleColIndex = -1
+                // TODO: double-check why Cursor#getColumnInded didn't work
+                cursor.columnNames.forEachIndexed { i, columnName ->
+                    when (columnName) {
+                        DocumentsContract.Document.COLUMN_FLAGS -> flagColIdx = i
+                        MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI -> displayIconUriColIdx = i
+                        OpenableColumns.DISPLAY_NAME -> nameColIndex = i
+                        Downloads.Impl.COLUMN_TITLE -> titleColIndex = i
+                    }
                 }
 
-            return QueryResult(supportsThumbnail, title, iconUri)
-        }
+                val supportsThumbnail =
+                    flagColIdx >= 0 &&
+                        ((cursor.getInt(flagColIdx) and FLAG_SUPPORTS_THUMBNAIL) != 0)
+
+                var title = ""
+                if (nameColIndex >= 0) {
+                    title = cursor.getString(nameColIndex) ?: ""
+                }
+                if (TextUtils.isEmpty(title) && titleColIndex >= 0) {
+                    title = cursor.getString(titleColIndex) ?: ""
+                }
+
+                val iconUri =
+                    if (displayIconUriColIdx >= 0) {
+                        cursor.getString(displayIconUriColIdx)?.let(Uri::parse)
+                    } else {
+                        null
+                    }
+
+                QueryResult(supportsThumbnail, title, iconUri)
+            }
+                ?: QueryResult()
     }
 
     private class QueryResult(
@@ -343,52 +369,4 @@ private fun getFileName(uri: Uri): String {
     } else {
         fileName.substring(index + 1)
     }
-}
-
-private fun ContentInterface.getTypeSafe(uri: Uri): String? =
-    runTracing("getType") {
-        try {
-            getType(uri)
-        } catch (e: SecurityException) {
-            logProviderPermissionWarning(uri, "mime type")
-            null
-        } catch (t: Throwable) {
-            Log.e(ContentPreviewUi.TAG, "Failed to read metadata, uri: $uri", t)
-            null
-        }
-    }
-
-private fun ContentInterface.getStreamTypesSafe(uri: Uri): Array<String>? =
-    runTracing("getStreamTypes") {
-        try {
-            getStreamTypes(uri, "*/*")
-        } catch (e: SecurityException) {
-            logProviderPermissionWarning(uri, "stream types")
-            null
-        } catch (t: Throwable) {
-            Log.e(ContentPreviewUi.TAG, "Failed to read stream types, uri: $uri", t)
-            null
-        }
-    }
-
-private fun ContentInterface.querySafe(uri: Uri): Cursor? =
-    runTracing("query") {
-        try {
-            query(uri, METADATA_COLUMNS, null, null)
-        } catch (e: SecurityException) {
-            logProviderPermissionWarning(uri, "metadata")
-            null
-        } catch (t: Throwable) {
-            Log.e(ContentPreviewUi.TAG, "Failed to read metadata, uri: $uri", t)
-            null
-        }
-    }
-
-private fun logProviderPermissionWarning(uri: Uri, dataName: String) {
-    // The ContentResolver already logs the exception. Log something more informative.
-    Log.w(
-        ContentPreviewUi.TAG,
-        "Could not read $uri $dataName. If a preview is desired, call Intent#setClipData() to" +
-            " ensure that the sharesheet is given permission."
-    )
 }

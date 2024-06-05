@@ -16,11 +16,11 @@
 
 package com.android.intentresolver.model;
 
-import android.annotation.Nullable;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.BadParcelableException;
@@ -30,12 +30,14 @@ import android.os.Message;
 import android.os.UserHandle;
 import android.util.Log;
 
-import com.android.intentresolver.ChooserActivityLogger;
+import androidx.annotation.Nullable;
+
 import com.android.intentresolver.ResolvedComponentInfo;
 import com.android.intentresolver.ResolverActivity;
+import com.android.intentresolver.ResolverListController;
 import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.logging.EventLog;
 
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -72,9 +74,10 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
     private static final int WATCHDOG_TIMEOUT_MILLIS = 500;
 
     private final Comparator<ResolveInfo> mAzComparator;
-    private ChooserActivityLogger mChooserActivityLogger;
+    private EventLog mEventLog;
 
     protected final Handler mHandler = new Handler(Looper.getMainLooper()) {
+        @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case RANKER_SERVICE_RESULT:
@@ -94,8 +97,8 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
                     }
                     mHandler.removeMessages(RANKER_SERVICE_RESULT);
                     afterCompute();
-                    if (mChooserActivityLogger != null) {
-                        mChooserActivityLogger.logSharesheetAppShareRankingTimeout();
+                    if (mEventLog != null) {
+                        mEventLog.logSharesheetAppShareRankingTimeout();
                     }
                     break;
 
@@ -132,7 +135,7 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
                     user,
                     (UsageStatsManager) userContext.getSystemService(Context.USAGE_STATS_SERVICE));
         }
-        mAzComparator = new AzInfoComparator(launchedFromContext);
+        mAzComparator = new ResolveInfoAzInfoComparator(launchedFromContext);
         mPromoteToFirst = promoteToFirst;
     }
 
@@ -161,12 +164,12 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
         mAfterCompute = afterCompute;
     }
 
-    void setChooserActivityLogger(ChooserActivityLogger chooserActivityLogger) {
-        mChooserActivityLogger = chooserActivityLogger;
+    void setEventLog(EventLog eventLog) {
+        mEventLog = eventLog;
     }
 
-    ChooserActivityLogger getChooserActivityLogger() {
-        return mChooserActivityLogger;
+    EventLog getEventLog() {
+        return mEventLog;
     }
 
     protected final void afterCompute() {
@@ -200,8 +203,8 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
         }
 
         if (mHttp) {
-            final boolean lhsSpecific = ResolverActivity.isSpecificUriMatch(lhs.match);
-            final boolean rhsSpecific = ResolverActivity.isSpecificUriMatch(rhs.match);
+            final boolean lhsSpecific = isSpecificUriMatch(lhs.match);
+            final boolean rhsSpecific = isSpecificUriMatch(rhs.match);
             if (lhsSpecific != rhsSpecific) {
                 return lhsSpecific ? -1 : 1;
             }
@@ -223,13 +226,20 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
         return compare(lhs, rhs);
     }
 
+    /** Determine whether a given match result is considered "specific" in our application. */
+    public static final boolean isSpecificUriMatch(int match) {
+        match = (match & IntentFilter.MATCH_CATEGORY_MASK);
+        return match >= IntentFilter.MATCH_CATEGORY_HOST
+                && match <= IntentFilter.MATCH_CATEGORY_PATH;
+    }
+
     /**
      * Delegated to when used as a {@link Comparator<ResolvedComponentInfo>} if there is not a
      * special case. The {@link ResolveInfo ResolveInfos} are the first {@link ResolveInfo} in
      * {@link ResolvedComponentInfo#getResolveInfoAt(int)} from the parameters of {@link
      * #compare(ResolvedComponentInfo, ResolvedComponentInfo)}
      */
-    abstract int compare(ResolveInfo lhs, ResolveInfo rhs);
+    public abstract int compare(ResolveInfo lhs, ResolveInfo rhs);
 
     /**
      * Computes features for each target. This will be called before calls to {@link
@@ -245,7 +255,7 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
     }
 
     /** Implementation of compute called after {@link #beforeCompute()}. */
-    abstract void doCompute(List<ResolvedComponentInfo> targets);
+    public abstract void doCompute(List<ResolvedComponentInfo> targets);
 
     /**
      * Returns the score that was calculated for the corresponding {@link ResolvedComponentInfo}
@@ -254,12 +264,12 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
     public abstract float getScore(TargetInfo targetInfo);
 
     /** Handles result message sent to mHandler. */
-    abstract void handleResultMessage(Message message);
+    public abstract void handleResultMessage(Message message);
 
     /**
      * Reports to UsageStats what was chosen.
      */
-    public final void updateChooserCounts(String packageName, UserHandle user, String action) {
+    public void updateChooserCounts(String packageName, UserHandle user, String action) {
         if (mUsmMap.containsKey(user)) {
             mUsmMap.get(user).reportChooserSelection(
                     packageName,
@@ -301,26 +311,6 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
         mHandler.removeMessages(RANKER_RESULT_TIMEOUT);
         afterCompute();
         mAfterCompute = null;
-    }
-
-    /**
-     * Sort intents alphabetically based on package name.
-     */
-    class AzInfoComparator implements Comparator<ResolveInfo> {
-        Collator mCollator;
-        AzInfoComparator(Context context) {
-            mCollator = Collator.getInstance(context.getResources().getConfiguration().locale);
-        }
-
-        @Override
-        public int compare(ResolveInfo lhsp, ResolveInfo rhsp) {
-            if (lhsp == null) {
-                return -1;
-            } else if (rhsp == null) {
-                return 1;
-            }
-            return mCollator.compare(lhsp.activityInfo.packageName, rhsp.activityInfo.packageName);
-        }
     }
 
 }

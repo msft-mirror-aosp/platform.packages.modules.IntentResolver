@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{Сілтемесі бар бейне жіберу}other{Сілтемесі бар # бейне жіберу}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{Мәтіні бар файл жіберу}other{Мәтіні бар # файл жіберу}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{Сілтемесі бар файл жіберу}other{Сілтемесі бар # файл жіберу}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"Альбомды бөлісу"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Тек сурет}other{Тек суреттер}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Тек бейне}other{Тек бейнелер}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Тек файл}other{Тек файлдар}}"</string>
@@ -76,17 +77,22 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Қолданбаға жазу рұқсаты берілмеді, бірақ ол осы USB құрылғысы арқылы дыбыс жаза алады."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Жеке"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Жұмыс"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Құпия"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Жеке көру"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Жұмыс деректерін көру"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Құпия көрініс"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Әкімшіңіз бөгеген"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Бұл контентті жұмыс қолданбаларымен бөлісу мүмкін емес."</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Бұл контентті жұмыс қолданбаларымен ашу мүмкін емес."</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Бұл контентті жеке қолданбалармен бөлісу мүмкін емес."</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Бұл контентті жеке қолданбалармен ашу мүмкін емес."</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Бұл контентті жеке қолданбалармен бөлісу мүмкін емес."</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Бұл контентті жеке қолданбалармен ашу мүмкін емес."</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Жұмыс қолданбалары кідіртілген."</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Қайта қосу"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Жұмыс қолданбалары жоқ."</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Жеке қолданбалар жоқ."</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Жеке қолданбалар жоқ."</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> қолданбасын жеке профиліңізде ашу керек пе?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> қолданбасын жұмыс профиліңізде ашу керек пе?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Жеке браузерді пайдалану"</string>
@@ -95,4 +101,8 @@
     <string name="include_text" msgid="642280283268536140">"Мәтін қосу"</string>
     <string name="exclude_link" msgid="1332778255031992228">"Сілтемені шығару"</string>
     <string name="include_link" msgid="827855767220339802">"Сілтеме қосу"</string>
+    <string name="pinned" msgid="7623664001331394139">"Бекітілген"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Таңдауға болатын сурет"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Таңдауға болатын бейне"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Таңдауға болатын элемент"</string>
 </resources>

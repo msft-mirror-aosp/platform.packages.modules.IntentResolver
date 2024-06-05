@@ -17,7 +17,6 @@
 
 package com.android.intentresolver.model;
 
-import android.annotation.Nullable;
 import android.app.usage.UsageStats;
 import android.content.ComponentName;
 import android.content.Context;
@@ -29,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.metrics.LogMaker;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
@@ -39,14 +39,17 @@ import android.service.resolver.ResolverRankerService;
 import android.service.resolver.ResolverTarget;
 import android.util.Log;
 
-import com.android.intentresolver.ChooserActivityLogger;
+import androidx.annotation.Nullable;
+
 import com.android.intentresolver.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.logging.EventLog;
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import com.google.android.collect.Lists;
 
+import java.lang.ref.WeakReference;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -101,10 +104,10 @@ public class ResolverRankerServiceResolverComparator extends AbstractResolverCom
      *                        the userSpace provided by context.
      */
     public ResolverRankerServiceResolverComparator(Context launchedFromContext, Intent intent,
-            String referrerPackage, Runnable afterCompute,
-            ChooserActivityLogger chooserActivityLogger, UserHandle targetUserSpace,
-            ComponentName promoteToFirst) {
-        this(launchedFromContext, intent, referrerPackage, afterCompute, chooserActivityLogger,
+                                                   String referrerPackage, Runnable afterCompute,
+                                                   EventLog eventLog, UserHandle targetUserSpace,
+                                                   ComponentName promoteToFirst) {
+        this(launchedFromContext, intent, referrerPackage, afterCompute, eventLog,
                 Lists.newArrayList(targetUserSpace), promoteToFirst);
     }
 
@@ -117,9 +120,8 @@ public class ResolverRankerServiceResolverComparator extends AbstractResolverCom
      *                            different from the userSpace provided by context.
      */
     public ResolverRankerServiceResolverComparator(Context launchedFromContext, Intent intent,
-            String referrerPackage, Runnable afterCompute,
-            ChooserActivityLogger chooserActivityLogger, List<UserHandle> targetUserSpaceList,
-            @Nullable ComponentName promoteToFirst) {
+            String referrerPackage, Runnable afterCompute, EventLog eventLog,
+            List<UserHandle> targetUserSpaceList, @Nullable ComponentName promoteToFirst) {
         super(launchedFromContext, intent, targetUserSpaceList, promoteToFirst);
         mCollator = Collator.getInstance(
                 launchedFromContext.getResources().getConfiguration().locale);
@@ -139,7 +141,7 @@ public class ResolverRankerServiceResolverComparator extends AbstractResolverCom
         mAction = intent.getAction();
         mRankerServiceName = new ComponentName(mContext, this.getClass());
         setCallBack(afterCompute);
-        setChooserActivityLogger(chooserActivityLogger);
+        setEventLog(eventLog);
 
         mComparatorModel = buildUpdatedModel();
     }
@@ -392,20 +394,7 @@ public class ResolverRankerServiceResolverComparator extends AbstractResolverCom
         }
 
         public final IResolverRankerResult resolverRankerResult =
-                new IResolverRankerResult.Stub() {
-            @Override
-            public void sendResult(List<ResolverTarget> targets) throws RemoteException {
-                if (DEBUG) {
-                    Log.d(TAG, "Sending Result back to Resolver: " + targets);
-                }
-                synchronized (mLock) {
-                    final Message msg = Message.obtain();
-                    msg.what = RANKER_SERVICE_RESULT;
-                    msg.obj = targets;
-                    mHandler.sendMessage(msg);
-                }
-            }
-        };
+                new ResolverRankerResultCallback(mLock, mHandler);
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -433,6 +422,32 @@ public class ResolverRankerServiceResolverComparator extends AbstractResolverCom
             synchronized (mLock) {
                 mRanker = null;
                 mComparatorModel = buildUpdatedModel();
+            }
+        }
+    }
+
+    private static class ResolverRankerResultCallback extends IResolverRankerResult.Stub {
+        private final Object mLock;
+        private final WeakReference<Handler> mHandlerRef;
+
+        private ResolverRankerResultCallback(Object lock, Handler handler) {
+            mLock = lock;
+            mHandlerRef = new WeakReference<>(handler);
+        }
+
+        @Override
+        public void sendResult(List<ResolverTarget> targets) throws RemoteException {
+            if (DEBUG) {
+                Log.d(TAG, "Sending Result back to Resolver: " + targets);
+            }
+            synchronized (mLock) {
+                final Message msg = Message.obtain();
+                msg.what = RANKER_SERVICE_RESULT;
+                msg.obj = targets;
+                Handler handler = mHandlerRef.get();
+                if (handler != null) {
+                    handler.sendMessage(msg);
+                }
             }
         }
     }
