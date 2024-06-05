@@ -16,6 +16,7 @@
 
 package com.android.intentresolver.widget
 
+import android.graphics.Rect
 import android.util.Log
 import android.view.View
 import androidx.core.view.OneShotPreDrawListener
@@ -41,4 +42,10 @@ internal suspend fun View.waitForPreDraw(): Unit = suspendCancellableCoroutine {
             }
         )
     continuation.invokeOnCancellation { callback.removeListener() }
+}
+
+internal fun View.isFullyVisible(): Boolean {
+    val rect = Rect()
+    val isVisible = getLocalVisibleRect(rect)
+    return isVisible && rect.width() == width && rect.height() == height
 }
