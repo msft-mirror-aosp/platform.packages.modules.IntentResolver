@@ -24,6 +24,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.CustomActionsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectablePreviewsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectionInteractor
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
@@ -122,7 +123,13 @@ interface ShareouselViewModelModule {
                             else -> ContentType.Other
                         }
                     ShareouselPreviewViewModel(
-                        bitmap = flow { emit(key.previewUri?.let { imageLoader(it) }) },
+                        bitmapLoadState =
+                            flow {
+                                emit(
+                                    key.previewUri?.let { ValueUpdate.Value(imageLoader(it)) }
+                                        ?: ValueUpdate.Absent
+                                )
+                            },
                         contentType = contentType,
                         isSelected = previewInteractor.isSelected,
                         setSelected = previewInteractor::setSelected,

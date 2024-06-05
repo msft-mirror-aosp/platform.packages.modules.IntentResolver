@@ -40,25 +40,28 @@ fun ShareouselCard(
     image: @Composable () -> Unit,
     contentType: ContentType,
     selected: Boolean,
+    loadComplete: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier) {
         image()
-        val topButtonPadding = 12.dp
-        Box(modifier = Modifier.padding(topButtonPadding).matchParentSize()) {
-            SelectionIcon(selected, modifier = Modifier.align(Alignment.TopStart))
-            when (contentType) {
-                ContentType.Video ->
-                    TypeIcon(
-                        R.drawable.ic_play_circle_filled_24px,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    )
-                ContentType.Other ->
-                    TypeIcon(
-                        R.drawable.chooser_file_generic,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    )
-                ContentType.Image -> Unit // No additional icon needed.
+        if (loadComplete) {
+            val topButtonPadding = 12.dp
+            Box(modifier = Modifier.padding(topButtonPadding).matchParentSize()) {
+                SelectionIcon(selected, modifier = Modifier.align(Alignment.TopStart))
+                when (contentType) {
+                    ContentType.Video ->
+                        TypeIcon(
+                            R.drawable.ic_play_circle_filled_24px,
+                            modifier = Modifier.align(Alignment.TopEnd)
+                        )
+                    ContentType.Other ->
+                        TypeIcon(
+                            R.drawable.chooser_file_generic,
+                            modifier = Modifier.align(Alignment.TopEnd)
+                        )
+                    ContentType.Image -> Unit // No additional icon needed.
+                }
             }
         }
     }

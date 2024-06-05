@@ -57,6 +57,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.R
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselPreviewViewModel
@@ -131,7 +133,8 @@ private fun PreviewCarousel(
 
 @Composable
 private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
-    val bitmap by viewModel.bitmap.collectAsStateWithLifecycle(initialValue = null)
+    val bitmapLoadState by
+        viewModel.bitmapLoadState.collectAsStateWithLifecycle(initialValue = ValueUpdate.Absent)
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
     val borderColor = MaterialTheme.colorScheme.primary
     val scope = rememberCoroutineScope()
@@ -141,11 +144,13 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
             ContentType.Video -> stringResource(R.string.selectable_video)
             else -> stringResource(R.string.selectable_item)
         }
+    //  Image load is complete (but may have failed)
+    val loadComplete = bitmapLoadState is ValueUpdate.Value
     ShareouselCard(
         image = {
             // TODO: max ratio is actually equal to the viewport ratio
             val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
-            bitmap?.let { bitmap ->
+            bitmapLoadState.getOrDefault(null)?.let { bitmap ->
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = null,
@@ -164,9 +169,10 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
                 }
         },
         contentType = viewModel.contentType,
+        loadComplete = loadComplete,
         selected = selected,
         modifier =
-            Modifier.thenIf(selected) {
+            Modifier.thenIf(selected && loadComplete) {
                     Modifier.border(
                         width = 4.dp,
                         color = borderColor,

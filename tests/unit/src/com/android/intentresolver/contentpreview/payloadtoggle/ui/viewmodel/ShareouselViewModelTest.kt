@@ -40,6 +40,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.payloadToggleImageLoader
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.selectablePreviewsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.selectionInteractor
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
@@ -187,7 +188,9 @@ class ShareouselViewModelTest {
                     /* index = */ 1,
                 )
 
-            assertWithMessage("preview bitmap is null").that(previewVm.bitmap.first()).isNotNull()
+            assertWithMessage("preview bitmap is null")
+                .that((previewVm.bitmapLoadState.first() as ValueUpdate.Value).value)
+                .isNotNull()
             assertThat(previewVm.isSelected.first()).isFalse()
             assertThat(previewVm.contentType).isEqualTo(ContentType.Video)
 
@@ -196,6 +199,44 @@ class ShareouselViewModelTest {
             assertThat(previewSelectionsRepository.selections.value)
                 .comparingElementsUsingTransform("has uri of") { model: PreviewModel -> model.uri }
                 .contains(Uri.fromParts("scheme1", "ssp1", "fragment1"))
+        }
+
+    @Test
+    fun previews_wontLoad() =
+        runTest(targetIntentModifier = { Intent() }) {
+            cursorPreviewsRepository.previewsModel.value =
+                PreviewsModel(
+                    previewModels =
+                        listOf(
+                            PreviewModel(
+                                uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                                mimeType = "image/png",
+                            ),
+                            PreviewModel(
+                                uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                                mimeType = "video/mpeg",
+                            )
+                        ),
+                    startIdx = 1,
+                    loadMoreLeft = null,
+                    loadMoreRight = null,
+                    leftTriggerIndex = 0,
+                    rightTriggerIndex = 1,
+                )
+            runCurrent()
+
+            val previewVm =
+                shareouselViewModel.preview.invoke(
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                        mimeType = "video/mpeg"
+                    ),
+                    /* index = */ 1,
+                )
+
+            assertWithMessage("preview bitmap is not null")
+                .that((previewVm.bitmapLoadState.first() as ValueUpdate.Value).value)
+                .isNull()
         }
 
     @Test
