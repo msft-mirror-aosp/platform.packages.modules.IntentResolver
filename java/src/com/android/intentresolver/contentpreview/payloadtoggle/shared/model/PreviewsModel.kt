@@ -32,4 +32,14 @@ data class PreviewsModel(
      * indicates that there is no more data to load in that direction.
      */
     val loadMoreRight: (() -> Unit)?,
+    /**
+     * Index into [previewModels] where any attempted access less than or equal to it should trigger
+     * a window shift left.
+     */
+    val leftTriggerIndex: Int,
+    /**
+     * Index into [previewModels] where any attempted access greater than or equal to it should
+     * trigger a window shift right.
+     */
+    val rightTriggerIndex: Int,
 )
