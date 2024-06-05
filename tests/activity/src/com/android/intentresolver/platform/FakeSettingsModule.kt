@@ -16,15 +16,18 @@
 
 package com.android.intentresolver.platform
 
-import dagger.Binds
 import dagger.Module
-import dagger.Reusable
-import dagger.hilt.InstallIn
+import dagger.Provides
 import dagger.hilt.components.SingletonComponent
+import dagger.hilt.testing.TestInstallIn
+import javax.inject.Singleton
 
 @Module
-@InstallIn(SingletonComponent::class)
-interface SecureSettingsModule {
+@TestInstallIn(components = [SingletonComponent::class], replaces = [SettingsModule::class])
+object FakeSettingsModule {
+    @Provides @Singleton fun secureSettings(): SecureSettings = FakeSettings()
 
-    @Binds @Reusable fun secureSettings(settings: PlatformSecureSettings): SecureSettings
+    @Provides @Singleton fun systemSettings(): SystemSettings = FakeSettings()
+
+    @Provides @Singleton fun globalSettings(): GlobalSettings = FakeSettings()
 }

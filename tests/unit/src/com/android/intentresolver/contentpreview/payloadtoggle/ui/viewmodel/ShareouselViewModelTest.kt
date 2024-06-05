@@ -162,6 +162,8 @@ class ShareouselViewModelTest {
                     startIdx = 1,
                     loadMoreLeft = null,
                     loadMoreRight = null,
+                    leftTriggerIndex = 0,
+                    rightTriggerIndex = 1,
                 )
             runCurrent()
 
@@ -178,11 +180,11 @@ class ShareouselViewModelTest {
 
             val previewVm =
                 shareouselViewModel.preview.invoke(
-                    /* index = */ 1,
                     PreviewModel(
                         uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                         mimeType = "video/mpeg"
-                    )
+                    ),
+                    /* index = */ 1,
                 )
 
             assertWithMessage("preview bitmap is null").that(previewVm.bitmap.first()).isNotNull()
