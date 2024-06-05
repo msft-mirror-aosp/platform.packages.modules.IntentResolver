@@ -186,7 +186,10 @@ class ShareouselViewModelTest {
                         mimeType = "video/mpeg"
                     ),
                     /* index = */ 1,
+                    viewModelScope,
                 )
+
+            runCurrent()
 
             assertWithMessage("preview bitmap is null")
                 .that((previewVm.bitmapLoadState.first() as ValueUpdate.Value).value)
@@ -232,7 +235,10 @@ class ShareouselViewModelTest {
                         mimeType = "video/mpeg"
                     ),
                     /* index = */ 1,
+                    viewModelScope,
                 )
+
+            runCurrent()
 
             assertWithMessage("preview bitmap is not null")
                 .that((previewVm.bitmapLoadState.first() as ValueUpdate.Value).value)

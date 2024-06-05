@@ -56,7 +56,8 @@ data class ShareouselViewModel(
     /** List of action chips presented underneath Shareousel. */
     val actions: Flow<List<ActionChipViewModel>>,
     /** Creates a [ShareouselPreviewViewModel] for a [PreviewModel] present in [previews]. */
-    val preview: (key: PreviewModel, index: Int?) -> ShareouselPreviewViewModel,
+    val preview:
+        (key: PreviewModel, index: Int?, scope: CoroutineScope) -> ShareouselPreviewViewModel,
 )
 
 @Module
@@ -113,7 +114,7 @@ interface ShareouselViewModelModule {
                             }
                         }
                     },
-                preview = { key, index ->
+                preview = { key, index, previewScope ->
                     keySet.value?.maybeLoad(index)
                     val previewInteractor = interactor.preview(key)
                     val contentType =
@@ -122,14 +123,19 @@ interface ShareouselViewModelModule {
                             mimeTypeClassifier.isVideoType(key.mimeType) -> ContentType.Video
                             else -> ContentType.Other
                         }
+                    val initialBitmapValue =
+                        key.previewUri?.let {
+                            imageLoader.getCachedBitmap(it)?.let { ValueUpdate.Value(it) }
+                        } ?: ValueUpdate.Absent
                     ShareouselPreviewViewModel(
                         bitmapLoadState =
                             flow {
-                                emit(
-                                    key.previewUri?.let { ValueUpdate.Value(imageLoader(it)) }
-                                        ?: ValueUpdate.Absent
-                                )
-                            },
+                                    emit(
+                                        key.previewUri?.let { ValueUpdate.Value(imageLoader(it)) }
+                                            ?: ValueUpdate.Absent
+                                    )
+                                }
+                                .stateIn(previewScope, SharingStarted.Eagerly, initialBitmapValue),
                         contentType = contentType,
                         isSelected = previewInteractor.isSelected,
                         setSelected = previewInteractor::setSelected,
