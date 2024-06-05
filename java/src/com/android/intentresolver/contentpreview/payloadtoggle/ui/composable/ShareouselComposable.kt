@@ -155,7 +155,12 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
             }
                 ?: run {
                     // TODO: look at ScrollableImagePreviewView.setLoading()
-                    Box(modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio))
+                    Box(
+                        modifier =
+                            Modifier.fillMaxHeight()
+                                .aspectRatio(aspectRatio)
+                                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                    )
                 }
         },
         contentType = viewModel.contentType,
