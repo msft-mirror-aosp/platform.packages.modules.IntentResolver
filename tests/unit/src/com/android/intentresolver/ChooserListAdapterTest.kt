@@ -101,7 +101,7 @@ class ChooserListAdapterTest {
         val targetInfo = createSelectableTargetInfo()
         testSubject.onBindView(view, targetInfo, 0)
 
-        verify(mTargetDataLoader, times(1)).loadDirectShareIcon(any(), any(), any())
+        verify(mTargetDataLoader, times(1)).getOrLoadDirectShareIcon(any(), any(), any())
     }
 
     @Test
@@ -117,7 +117,7 @@ class ChooserListAdapterTest {
 
         testSubject.onBindView(view, targetInfo, 0)
 
-        verify(mTargetDataLoader, times(1)).loadDirectShareIcon(any(), any(), any())
+        verify(mTargetDataLoader, times(1)).getOrLoadDirectShareIcon(any(), any(), any())
     }
 
     @Test
