@@ -180,11 +180,12 @@ public class ResolverWrapperActivity extends ResolverActivity {
         }
 
         @Override
-        public void loadDirectShareIcon(
+        @Nullable
+        public Drawable getOrLoadDirectShareIcon(
                 @NonNull SelectableTargetInfo info,
                 @NonNull UserHandle userHandle,
                 @NonNull Consumer<Drawable> callback) {
-            mTargetDataLoader.loadDirectShareIcon(info, userHandle, callback);
+            return mTargetDataLoader.getOrLoadDirectShareIcon(info, userHandle, callback);
         }
 
         @Override
