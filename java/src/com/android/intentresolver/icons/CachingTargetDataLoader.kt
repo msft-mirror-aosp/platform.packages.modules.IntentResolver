@@ -28,7 +28,7 @@ import javax.inject.Qualifier
 
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.BINARY) annotation class Caching
 
-private typealias IconCache = LruCache<ComponentName, Drawable>
+private typealias IconCache = LruCache<String, Drawable>
 
 class CachingTargetDataLoader(
     private val targetDataLoader: TargetDataLoader,
@@ -49,18 +49,27 @@ class CachingTargetDataLoader(
             }
     }
 
-    override fun loadDirectShareIcon(
+    override fun getOrLoadDirectShareIcon(
         info: SelectableTargetInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>
-    ) = targetDataLoader.loadDirectShareIcon(info, userHandle, callback)
+    ): Drawable? {
+        val cacheKey = info.toCacheKey()
+        return cacheKey?.let { getCachedAppIcon(it, userHandle) }
+            ?: targetDataLoader.getOrLoadDirectShareIcon(info, userHandle) { drawable ->
+                if (cacheKey != null) {
+                    getProfileIconCache(userHandle).put(cacheKey, drawable)
+                }
+                callback.accept(drawable)
+            }
+    }
 
     override fun loadLabel(info: DisplayResolveInfo, callback: Consumer<LabelInfo>) =
         targetDataLoader.loadLabel(info, callback)
 
     override fun getOrLoadLabel(info: DisplayResolveInfo) = targetDataLoader.getOrLoadLabel(info)
 
-    private fun getCachedAppIcon(component: ComponentName, userHandle: UserHandle): Drawable? =
+    private fun getCachedAppIcon(component: String, userHandle: UserHandle): Drawable? =
         getProfileIconCache(userHandle)[component]
 
     private fun getProfileIconCache(userHandle: UserHandle): IconCache =
@@ -70,7 +79,20 @@ class CachingTargetDataLoader(
 
     private fun DisplayResolveInfo.toCacheKey() =
         ComponentName(
-            resolveInfo.activityInfo.packageName,
-            resolveInfo.activityInfo.name,
-        )
+                resolveInfo.activityInfo.packageName,
+                resolveInfo.activityInfo.name,
+            )
+            .flattenToString()
+
+    private fun SelectableTargetInfo.toCacheKey(): String? =
+        if (chooserTargetIcon != null) {
+            // do not cache icons for caller-provided targets
+            null
+        } else {
+            buildString {
+                append(chooserTargetComponentName?.flattenToString() ?: "")
+                append("|")
+                append(directShareShortcutInfo?.id ?: "")
+            }
+        }
 }
