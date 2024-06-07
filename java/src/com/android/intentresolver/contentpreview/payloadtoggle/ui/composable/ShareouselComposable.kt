@@ -15,6 +15,7 @@
  */
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,6 +58,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.R
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselPreviewViewModel
@@ -124,14 +127,14 @@ private fun PreviewCarousel(
                 }
             }
 
-            ShareouselCard(viewModel.preview(model, previewIndex))
+            ShareouselCard(viewModel.preview(model, previewIndex, rememberCoroutineScope()))
         }
     }
 }
 
 @Composable
 private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
-    val bitmap by viewModel.bitmap.collectAsStateWithLifecycle(initialValue = null)
+    val bitmapLoadState by viewModel.bitmapLoadState.collectAsStateWithLifecycle()
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
     val borderColor = MaterialTheme.colorScheme.primary
     val scope = rememberCoroutineScope()
@@ -141,44 +144,56 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
             ContentType.Video -> stringResource(R.string.selectable_video)
             else -> stringResource(R.string.selectable_item)
         }
-    ShareouselCard(
-        image = {
-            // TODO: max ratio is actually equal to the viewport ratio
-            val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
-            bitmap?.let { bitmap ->
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.aspectRatio(aspectRatio),
-                )
-            }
-                ?: run {
-                    // TODO: look at ScrollableImagePreviewView.setLoading()
-                    Box(
-                        modifier =
-                            Modifier.fillMaxHeight()
-                                .aspectRatio(aspectRatio)
-                                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
-                    )
-                }
-        },
-        contentType = viewModel.contentType,
-        selected = selected,
+    Crossfade(
+        targetState = bitmapLoadState,
         modifier =
-            Modifier.thenIf(selected) {
-                    Modifier.border(
-                        width = 4.dp,
-                        color = borderColor,
-                        shape = RoundedCornerShape(size = 12.dp),
-                    )
-                }
-                .semantics { this.contentDescription = contentDescription }
+            Modifier.semantics { this.contentDescription = contentDescription }
                 .clip(RoundedCornerShape(size = 12.dp))
                 .toggleable(
                     value = selected,
                     onValueChange = { scope.launch { viewModel.setSelected(it) } },
                 )
+    ) { state ->
+        // TODO: max ratio is actually equal to the viewport ratio
+        val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
+        if (state is ValueUpdate.Value) {
+            state.getOrDefault(null).let { bitmap ->
+                ShareouselCard(
+                    image = {
+                        bitmap?.let {
+                            Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.aspectRatio(aspectRatio),
+                            )
+                        } ?: PlaceholderBox(aspectRatio)
+                    },
+                    contentType = viewModel.contentType,
+                    selected = selected,
+                    modifier =
+                        Modifier.thenIf(selected) {
+                            Modifier.border(
+                                width = 4.dp,
+                                color = borderColor,
+                                shape = RoundedCornerShape(size = 12.dp),
+                            )
+                        }
+                )
+            }
+        } else {
+            PlaceholderBox(aspectRatio)
+        }
+    }
+}
+
+@Composable
+private fun PlaceholderBox(aspectRatio: Float) {
+    Box(
+        modifier =
+            Modifier.fillMaxHeight()
+                .aspectRatio(aspectRatio)
+                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
     )
 }
 
