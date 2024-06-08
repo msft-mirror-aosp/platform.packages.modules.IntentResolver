@@ -35,7 +35,7 @@
         app:layout_constrainedWidth="true"
         style="@style/TextAppearance.ChooserDefault"
         android:fontFamily="@androidprv:string/config_headlineFontFamily"
-        android:textSize="18sp"
+        android:textSize="@dimen/chooser_headline_text_size"
         />
 
     <TextView
