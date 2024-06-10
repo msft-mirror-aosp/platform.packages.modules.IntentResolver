@@ -18,6 +18,7 @@ package com.android.intentresolver
 
 import android.app.Activity
 import android.os.UserHandle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
@@ -30,6 +31,7 @@ import com.android.intentresolver.annotation.JavaInterop
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
 import com.android.intentresolver.data.model.ChooserRequest
+import com.android.intentresolver.platform.GlobalSettings
 import com.android.intentresolver.ui.viewmodel.ChooserViewModel
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.Valid
@@ -84,6 +86,7 @@ constructor(
     hostActivity: Activity,
     private val activityResultRepo: ActivityResultRepository,
     private val pendingSelectionCallbackRepo: PendingSelectionCallbackRepository,
+    private val globalSettings: GlobalSettings,
 ) : DefaultLifecycleObserver {
     // This is guaranteed by Hilt, since only a ComponentActivity is injectable.
     private val activity: ComponentActivity = hostActivity as ComponentActivity
@@ -120,6 +123,12 @@ constructor(
         val callerUid: Int = viewModel.activityModel.launchedFromUid
         if (callerUid < 0 || UserHandle.isIsolated(callerUid)) {
             Log.e(TAG, "Can't start a chooser from uid $callerUid")
+            activity.finish()
+            return
+        }
+
+        if (globalSettings.getBooleanOrNull(Settings.Global.SECURE_FRP_MODE) == true) {
+            Log.e(TAG, "Sharing disabled due to active FRP lock.")
             activity.finish()
             return
         }
