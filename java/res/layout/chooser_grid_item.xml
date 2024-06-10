@@ -51,14 +51,14 @@
               android:layout_height="wrap_content"
               android:textAppearance="?android:attr/textAppearanceSmall"
               android:textColor="?androidprv:attr/materialColorOnSurface"
-              android:textSize="12sp"
+              android:textSize="@dimen/chooser_grid_target_name_text_size"
               android:maxLines="1"
               android:ellipsize="end" />
 
     <!-- Activity name if set, gone for Direct Share targets -->
     <TextView android:id="@android:id/text2"
               android:textAppearance="?android:attr/textAppearanceSmall"
-              android:textSize="12sp"
+              android:textSize="@dimen/chooser_grid_activity_name_text_size"
               android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
