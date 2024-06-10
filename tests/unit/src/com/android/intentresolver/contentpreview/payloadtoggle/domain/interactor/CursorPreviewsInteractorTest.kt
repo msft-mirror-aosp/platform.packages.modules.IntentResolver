@@ -144,6 +144,8 @@ class CursorPreviewsInteractorTest {
                 assertThat(startIdx).isEqualTo(0)
                 assertThat(loadMoreLeft).isNull()
                 assertThat(loadMoreRight).isNotNull()
+                assertThat(leftTriggerIndex).isEqualTo(2)
+                assertThat(rightTriggerIndex).isEqualTo(4)
             }
         }
 

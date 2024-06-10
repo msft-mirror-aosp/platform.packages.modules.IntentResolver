@@ -52,6 +52,8 @@ class SelectablePreviewsInteractorTest {
                 startIdx = 0,
                 loadMoreLeft = null,
                 loadMoreRight = null,
+                leftTriggerIndex = 0,
+                rightTriggerIndex = 1,
             )
         previewSelectionsRepository.selections.value =
             listOf(
@@ -127,6 +129,8 @@ class SelectablePreviewsInteractorTest {
                 startIdx = 5,
                 loadMoreLeft = null,
                 loadMoreRight = { loadRequested = true },
+                leftTriggerIndex = 0,
+                rightTriggerIndex = 1,
             )
         previewSelectionsRepository.selections.value = emptyList()
         runCurrent()

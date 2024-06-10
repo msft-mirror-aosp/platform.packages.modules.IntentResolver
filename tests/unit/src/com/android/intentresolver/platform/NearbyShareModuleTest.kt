@@ -49,7 +49,7 @@ class NearbyShareModuleTest {
 
     @Test
     fun valueIsAbsent_whenUnset() {
-        val secureSettings = fakeSecureSettings {}
+        val secureSettings: SecureSettings = fakeSettings {}
         val resources =
             context.fakeResources { addOverride(R.string.config_defaultNearbySharingComponent, "") }
 
@@ -59,7 +59,7 @@ class NearbyShareModuleTest {
 
     @Test
     fun defaultValue_readFromResources() {
-        val secureSettings = fakeSecureSettings {}
+        val secureSettings: SecureSettings = fakeSettings {}
         val resources =
             context.fakeResources {
                 addOverride(
@@ -76,7 +76,7 @@ class NearbyShareModuleTest {
 
     @Test
     fun secureSettings_overridesDefault() {
-        val secureSettings = fakeSecureSettings {
+        val secureSettings: SecureSettings = fakeSettings {
             putString(Settings.Secure.NEARBY_SHARING_COMPONENT, "com.example/.BComponent")
         }
         val resources =
