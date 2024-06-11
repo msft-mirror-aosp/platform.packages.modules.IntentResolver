@@ -99,7 +99,7 @@ android_app {
         enabled: true,
         optimize: true,
         shrink: true,
-        shrink_resources: true,
+        optimized_shrink_resources: true,
         proguard_flags_files: ["proguard.flags"],
     },
     visibility: ["//visibility:public"],
