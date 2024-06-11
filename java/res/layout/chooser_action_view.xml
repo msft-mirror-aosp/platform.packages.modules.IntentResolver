@@ -28,4 +28,4 @@
     android:gravity="center"
     android:maxLines="1"
     android:textColor="?androidprv:attr/materialColorOnSurface"
-    android:textSize="12sp" />
+    android:textSize="@dimen/chooser_action_view_text_size" />
