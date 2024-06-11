@@ -479,17 +479,23 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     private void loadDirectShareIcon(SelectableTargetInfo info) {
         if (mRequestedIcons.add(info)) {
-            mTargetDataLoader.loadDirectShareIcon(
+            Drawable icon = mTargetDataLoader.getOrLoadDirectShareIcon(
                     info,
                     getUserHandle(),
-                    (drawable) -> onDirectShareIconLoaded(info, drawable));
+                    (drawable) -> onDirectShareIconLoaded(info, drawable, true));
+            if (icon != null) {
+                onDirectShareIconLoaded(info, icon, false);
+            }
         }
     }
 
-    private void onDirectShareIconLoaded(SelectableTargetInfo mTargetInfo, Drawable icon) {
+    private void onDirectShareIconLoaded(
+            SelectableTargetInfo mTargetInfo, @Nullable Drawable icon, boolean notify) {
         if (icon != null && !mTargetInfo.hasDisplayIcon()) {
             mTargetInfo.getDisplayIconHolder().setDisplayIcon(icon);
-            notifyDataSetChanged();
+            if (notify) {
+                notifyDataSetChanged();
+            }
         }
     }
 
