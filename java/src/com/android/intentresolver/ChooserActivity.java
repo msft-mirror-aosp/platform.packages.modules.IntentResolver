@@ -1196,13 +1196,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     @Override // ResolverListCommunicator
     public final void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
-        if (!mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
+        mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
                 (ChooserListAdapter) listAdapter,
-                mProfileAvailability.getWaitingToEnableProfile())) {
-            // We no longer have any items... just finish the activity.
-            Log.d(TAG, "onHandlePackagesChanged(): returned false, finishing");
-            finish();
-        }
+                mProfileAvailability.getWaitingToEnableProfile());
     }
 
     final Option optionForChooserTarget(TargetInfo target, int index) {
