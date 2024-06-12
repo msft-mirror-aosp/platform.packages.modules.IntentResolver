@@ -16,6 +16,7 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -92,13 +93,18 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PreviewCarousel(
     previews: PreviewsModel,
     viewModel: ShareouselViewModel,
 ) {
     val centerIdx = previews.startIdx
-    val carouselState = rememberLazyListState(initialFirstVisibleItemIndex = centerIdx)
+    val carouselState =
+        rememberLazyListState(
+            initialFirstVisibleItemIndex = centerIdx,
+            prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
+        )
     // TODO: start item needs to be centered, check out ScalingLazyColumn impl or see if
     //  HorizontalPager works for our use-case
     LazyRow(
