@@ -18,8 +18,11 @@ package com.android.intentresolver.contentpreview
 
 import android.content.Intent
 import android.net.Uri
-import com.android.intentresolver.contentpreview.ChooserContentPreviewUi.ActionFactory
+import android.platform.test.flag.junit.CheckFlagsRule
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
+import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.TestPreviewImageLoader
+import com.android.intentresolver.contentpreview.ChooserContentPreviewUi.ActionFactory
 import com.android.intentresolver.mock
 import com.android.intentresolver.whenever
 import com.android.intentresolver.widget.ActionRow
@@ -30,6 +33,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.never
 import org.mockito.Mockito.times
@@ -40,29 +44,44 @@ class ChooserContentPreviewUiTest {
     private val previewData = mock<PreviewDataProvider>()
     private val headlineGenerator = mock<HeadlineGenerator>()
     private val imageLoader = TestPreviewImageLoader(emptyMap())
+    private val testMetadataText: CharSequence = "Test metadata text"
     private val actionFactory =
         object : ActionFactory {
             override fun getCopyButtonRunnable(): Runnable? = null
+
             override fun getEditButtonRunnable(): Runnable? = null
+
             override fun createCustomActions(): List<ActionRow.Action> = emptyList()
+
             override fun getModifyShareAction(): ActionRow.Action? = null
+
             override fun getExcludeSharedTextAction(): Consumer<Boolean> = Consumer<Boolean> {}
         }
     private val transitionCallback = mock<ImagePreviewView.TransitionElementStatusCallback>()
+    @get:Rule val checkFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
+
+    private fun createContentPreviewUi(
+        targetIntent: Intent,
+        isPayloadTogglingEnabled: Boolean = false
+    ) =
+        ChooserContentPreviewUi(
+            testScope,
+            previewData,
+            targetIntent,
+            imageLoader,
+            actionFactory,
+            transitionCallback,
+            headlineGenerator,
+            ContentTypeHint.NONE,
+            testMetadataText,
+            isPayloadTogglingEnabled,
+        )
 
     @Test
     fun test_textPreviewType_useTextPreviewUi() {
         whenever(previewData.previewType).thenReturn(ContentPreviewType.CONTENT_PREVIEW_TEXT)
-        val testSubject =
-            ChooserContentPreviewUi(
-                testScope,
-                previewData,
-                Intent(Intent.ACTION_VIEW),
-                imageLoader,
-                actionFactory,
-                transitionCallback,
-                headlineGenerator,
-            )
+        val testSubject = createContentPreviewUi(targetIntent = Intent(Intent.ACTION_VIEW))
+
         assertThat(testSubject.preferredContentPreview)
             .isEqualTo(ContentPreviewType.CONTENT_PREVIEW_TEXT)
         assertThat(testSubject.mContentPreviewUi).isInstanceOf(TextContentPreviewUi::class.java)
@@ -72,16 +91,7 @@ class ChooserContentPreviewUiTest {
     @Test
     fun test_filePreviewType_useFilePreviewUi() {
         whenever(previewData.previewType).thenReturn(ContentPreviewType.CONTENT_PREVIEW_FILE)
-        val testSubject =
-            ChooserContentPreviewUi(
-                testScope,
-                previewData,
-                Intent(Intent.ACTION_SEND),
-                imageLoader,
-                actionFactory,
-                transitionCallback,
-                headlineGenerator,
-            )
+        val testSubject = createContentPreviewUi(targetIntent = Intent(Intent.ACTION_SEND))
         assertThat(testSubject.preferredContentPreview)
             .isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
         assertThat(testSubject.mContentPreviewUi).isInstanceOf(FileContentPreviewUi::class.java)
@@ -97,14 +107,9 @@ class ChooserContentPreviewUiTest {
             .thenReturn(FileInfo.Builder(uri).withPreviewUri(uri).withMimeType("image/png").build())
         whenever(previewData.imagePreviewFileInfoFlow).thenReturn(MutableSharedFlow())
         val testSubject =
-            ChooserContentPreviewUi(
-                testScope,
-                previewData,
-                Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_TEXT, "Shared text") },
-                imageLoader,
-                actionFactory,
-                transitionCallback,
-                headlineGenerator,
+            createContentPreviewUi(
+                targetIntent =
+                    Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_TEXT, "Shared text") }
             )
         assertThat(testSubject.mContentPreviewUi)
             .isInstanceOf(FilesPlusTextContentPreviewUi::class.java)
@@ -120,20 +125,30 @@ class ChooserContentPreviewUiTest {
         whenever(previewData.firstFileInfo)
             .thenReturn(FileInfo.Builder(uri).withPreviewUri(uri).withMimeType("image/png").build())
         whenever(previewData.imagePreviewFileInfoFlow).thenReturn(MutableSharedFlow())
-        val testSubject =
-            ChooserContentPreviewUi(
-                testScope,
-                previewData,
-                Intent(Intent.ACTION_SEND),
-                imageLoader,
-                actionFactory,
-                transitionCallback,
-                headlineGenerator,
-            )
+        val testSubject = createContentPreviewUi(targetIntent = Intent(Intent.ACTION_SEND))
         assertThat(testSubject.preferredContentPreview)
             .isEqualTo(ContentPreviewType.CONTENT_PREVIEW_IMAGE)
         assertThat(testSubject.mContentPreviewUi).isInstanceOf(UnifiedContentPreviewUi::class.java)
         verify(previewData, times(1)).imagePreviewFileInfoFlow
         verify(transitionCallback, never()).onAllTransitionElementsReady()
+    }
+
+    @Test
+    fun test_imagePayloadSelectionTypeWithEnabledFlag_usePayloadSelectionPreviewUi() {
+        // Event if we returned wrong type due to a bug, we should not use payload selection UI
+        val uri = Uri.parse("content://org.pkg.app/img.png")
+        whenever(previewData.previewType)
+            .thenReturn(ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION)
+        whenever(previewData.uriCount).thenReturn(2)
+        whenever(previewData.firstFileInfo)
+            .thenReturn(FileInfo.Builder(uri).withPreviewUri(uri).withMimeType("image/png").build())
+        whenever(previewData.imagePreviewFileInfoFlow).thenReturn(MutableSharedFlow())
+        val testSubject =
+            createContentPreviewUi(
+                targetIntent = Intent(Intent.ACTION_SEND),
+                isPayloadTogglingEnabled = true
+            )
+        assertThat(testSubject.mContentPreviewUi)
+            .isInstanceOf(ShareouselContentPreviewUi::class.java)
     }
 }

@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{ກຳລັງແບ່ງປັນວິດີໂອພ້ອມລິ້ງ}other{ກຳລັງແບ່ງປັນ # ວິດີໂອພ້ອມລິ້ງ}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{ກຳລັງແບ່ງປັນໄຟລ໌ພ້ອມຂໍ້ຄວາມ}other{ກຳລັງແບ່ງປັນ # ໄຟລ໌ພ້ອມຂໍ້ຄວາມ}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{ກຳລັງແບ່ງປັນໄຟລ໌ພ້ອມລິ້ງ}other{ກຳລັງແບ່ງປັນ # ໄຟລ໌ພ້ອມລິ້ງ}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"ກຳລັງແບ່ງປັນອະລະບ້ຳ"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{ຮູບເທົ່ານັ້ນ}other{ຮູບເທົ່ານັ້ນ}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{ວິດີໂອເທົ່ານັ້ນ}other{ວິດີໂອເທົ່ານັ້ນ}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{ໄຟລ໌ເທົ່ານັ້ນ}other{ໄຟລ໌ເທົ່ານັ້ນ}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"ແອັບນີ້ບໍ່ໄດ້ຮັບສິດອະນຸຍາດໃນການບັນທຶກ ແຕ່ສາມາດບັນທຶກສຽງໄດ້ຜ່ານອຸປະກອນ USB ນີ້."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"ສ່ວນຕົວ"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"ວຽກ"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"ສ່ວນຕົວ"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"ມຸມມອງສ່ວນຕົວ"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"ມຸມມອງວຽກ"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"ມຸມມອງສ່ວນຕົວ"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"ຖືກບລັອກໄວ້ໂດຍຜູ້ເບິ່ງແຍງໄອທີຂອງທ່ານ"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"ເນື້ອຫານີ້ບໍ່ສາມາດຖືກແບ່ງປັນກັບແອັບບ່ອນເຮັດວຽກໄດ້"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ເນື້ອຫານີ້ບໍ່ສາມາດຖືກເປີດໄດ້ດ້ວຍແອັບບ່ອນເຮັດວຽກ"</string>

@@ -18,6 +18,7 @@ package com.android.intentresolver.contentpreview;
 
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_FILE;
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE;
+import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION;
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT;
 
 import android.content.ClipData;
@@ -32,6 +33,7 @@ import android.view.ViewGroup;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.android.intentresolver.ContentTypeHint;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 
@@ -48,6 +50,7 @@ import kotlinx.coroutines.CoroutineScope;
 public final class ChooserContentPreviewUi {
 
     private final CoroutineScope mScope;
+    private final boolean mIsPayloadTogglingEnabled;
 
     /**
      * Delegate to build the default system action buttons to display in the preview layout, if/when
@@ -98,8 +101,13 @@ public final class ChooserContentPreviewUi {
             ImageLoader imageLoader,
             ActionFactory actionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
-            HeadlineGenerator headlineGenerator) {
+            HeadlineGenerator headlineGenerator,
+            ContentTypeHint contentTypeHint,
+            @Nullable CharSequence metadata,
+            // TODO: replace with the FeatureFlag ref when v1 is gone
+            boolean isPayloadTogglingEnabled) {
         mScope = scope;
+        mIsPayloadTogglingEnabled = isPayloadTogglingEnabled;
         mContentPreviewUi = createContentPreview(
                 previewData,
                 targetIntent,
@@ -107,7 +115,10 @@ public final class ChooserContentPreviewUi {
                 imageLoader,
                 actionFactory,
                 transitionElementStatusCallback,
-                headlineGenerator);
+                headlineGenerator,
+                contentTypeHint,
+                metadata
+        );
         if (mContentPreviewUi.getType() != CONTENT_PREVIEW_IMAGE) {
             transitionElementStatusCallback.onAllTransitionElementsReady();
         }
@@ -120,8 +131,10 @@ public final class ChooserContentPreviewUi {
             ImageLoader imageLoader,
             ActionFactory actionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
-            HeadlineGenerator headlineGenerator) {
-
+            HeadlineGenerator headlineGenerator,
+            ContentTypeHint contentTypeHint,
+            @Nullable CharSequence metadata
+    ) {
         int previewType = previewData.getPreviewType();
         if (previewType == CONTENT_PREVIEW_TEXT) {
             return createTextPreview(
@@ -129,20 +142,31 @@ public final class ChooserContentPreviewUi {
                     targetIntent,
                     actionFactory,
                     imageLoader,
-                    headlineGenerator);
+                    headlineGenerator,
+                    contentTypeHint,
+                    metadata
+            );
         }
         if (previewType == CONTENT_PREVIEW_FILE) {
             FileContentPreviewUi fileContentPreviewUi = new FileContentPreviewUi(
                     previewData.getUriCount(),
                     actionFactory,
-                    headlineGenerator);
+                    headlineGenerator,
+                    metadata
+            );
             if (previewData.getUriCount() > 0) {
                 previewData.getFirstFileName(mScope, fileContentPreviewUi::setFirstFileName);
             }
             return fileContentPreviewUi;
         }
+
+        if (previewType == CONTENT_PREVIEW_PAYLOAD_SELECTION && mIsPayloadTogglingEnabled) {
+            transitionElementStatusCallback.onAllTransitionElementsReady(); // TODO
+            return new ShareouselContentPreviewUi(actionFactory);
+        }
+
         boolean isSingleImageShare = previewData.getUriCount() == 1
-                        && typeClassifier.isImageType(previewData.getFirstFileInfo().getMimeType());
+                && typeClassifier.isImageType(previewData.getFirstFileInfo().getMimeType());
         CharSequence text = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         if (!TextUtils.isEmpty(text)) {
             FilesPlusTextContentPreviewUi previewUi =
@@ -155,7 +179,9 @@ public final class ChooserContentPreviewUi {
                             actionFactory,
                             imageLoader,
                             typeClassifier,
-                            headlineGenerator);
+                            headlineGenerator,
+                            metadata
+                    );
             if (previewData.getUriCount() > 0) {
                 JavaFlowHelper.collectToList(
                         mScope,
@@ -175,7 +201,9 @@ public final class ChooserContentPreviewUi {
                 transitionElementStatusCallback,
                 previewData.getImagePreviewFileInfoFlow(),
                 previewData.getUriCount(),
-                headlineGenerator);
+                headlineGenerator,
+                metadata
+        );
     }
 
     public int getPreferredContentPreview() {
@@ -200,7 +228,10 @@ public final class ChooserContentPreviewUi {
             Intent targetIntent,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
-            HeadlineGenerator headlineGenerator) {
+            HeadlineGenerator headlineGenerator,
+            ContentTypeHint contentTypeHint,
+            @Nullable CharSequence metadata
+    ) {
         CharSequence sharingText = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         CharSequence previewTitle = targetIntent.getCharSequenceExtra(Intent.EXTRA_TITLE);
         ClipData previewData = targetIntent.getClipData();
@@ -211,13 +242,16 @@ public final class ChooserContentPreviewUi {
                 previewThumbnail = previewDataItem.getUri();
             }
         }
+
         return new TextContentPreviewUi(
                 scope,
                 sharingText,
                 previewTitle,
+                metadata,
                 previewThumbnail,
                 actionFactory,
                 imageLoader,
-                headlineGenerator);
+                headlineGenerator,
+                contentTypeHint);
     }
 }

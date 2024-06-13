@@ -8,10 +8,10 @@ import android.os.UserHandle.USER_SYSTEM
 import android.os.UserManager
 import com.android.intentresolver.mock
 import com.android.intentresolver.v2.coroutines.collectLastValue
-import com.android.intentresolver.v2.data.model.User
-import com.android.intentresolver.v2.data.model.User.Role
 import com.android.intentresolver.v2.platform.FakeUserManager
 import com.android.intentresolver.v2.platform.FakeUserManager.ProfileType
+import com.android.intentresolver.v2.shared.model.User
+import com.android.intentresolver.v2.shared.model.User.Role
 import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -34,10 +34,7 @@ internal class UserRepositoryImplTest {
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
         assertThat(users)
-            .containsExactly(
-                userState.primaryUserHandle,
-                User(userState.primaryUserHandle.identifier, Role.PERSONAL)
-            )
+            .containsExactly(User(userState.primaryUserHandle.identifier, Role.PERSONAL))
     }
 
     @Test
@@ -46,10 +43,10 @@ internal class UserRepositoryImplTest {
         val users by collectLastValue(repo.users)
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
-        assertThat(users!!.values.filter { it.role.type == User.Type.PROFILE }).isEmpty()
+        assertThat(users!!.filter { it.role.type == User.Type.PROFILE }).isEmpty()
 
         val profile = userState.createProfile(ProfileType.WORK)
-        assertThat(users).containsEntry(profile, User(profile.identifier, Role.WORK))
+        assertThat(users).contains(User(profile.identifier, Role.WORK))
     }
 
     @Test
@@ -59,40 +56,60 @@ internal class UserRepositoryImplTest {
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
         val work = userState.createProfile(ProfileType.WORK)
-        assertThat(users).containsEntry(work, User(work.identifier, Role.WORK))
+        assertThat(users).contains(User(work.identifier, Role.WORK))
 
         userState.removeProfile(work)
-        assertThat(users).doesNotContainEntry(work, User(work.identifier, Role.WORK))
+        assertThat(users).doesNotContain(User(work.identifier, Role.WORK))
     }
 
     @Test
     fun isAvailable() = runTest {
         val repo = createUserRepository(userManager)
         val work = userState.createProfile(ProfileType.WORK)
+        val workUser = User(work.identifier, Role.WORK)
 
-        val available by collectLastValue(repo.isAvailable(work))
-        assertThat(available).isTrue()
+        val available by collectLastValue(repo.availability)
+        assertThat(available?.get(workUser)).isTrue()
 
         userState.setQuietMode(work, true)
-        assertThat(available).isFalse()
+        assertThat(available?.get(workUser)).isFalse()
 
         userState.setQuietMode(work, false)
-        assertThat(available).isTrue()
+        assertThat(available?.get(workUser)).isTrue()
+    }
+
+    @Test
+    fun onHandleAvailabilityChange_userStateMaintained() = runTest {
+        val repo = createUserRepository(userManager)
+        val private = userState.createProfile(ProfileType.PRIVATE)
+        val privateUser = User(private.identifier, Role.PRIVATE)
+
+        val users by collectLastValue(repo.users)
+
+        repo.requestState(privateUser, false)
+        repo.requestState(privateUser, true)
+
+        assertWithMessage("users.size")
+                .that(users?.size ?: 0).isEqualTo(2) // personal + private
+
+        assertWithMessage("No duplicate IDs")
+                .that(users?.count { it.id == private.identifier }).isEqualTo(1)
     }
 
     @Test
     fun requestState() = runTest {
         val repo = createUserRepository(userManager)
         val work = userState.createProfile(ProfileType.WORK)
+        val workUser = User(work.identifier, Role.WORK)
 
-        val available by collectLastValue(repo.isAvailable(work))
-        assertThat(available).isTrue()
+        val available by collectLastValue(repo.availability)
+        assertThat(available?.get(workUser)).isTrue()
 
-        repo.requestState(work, false)
-        assertThat(available).isFalse()
+        repo.requestState(workUser, false)
+        assertThat(available?.get(workUser)).isFalse()
 
-        repo.requestState(work, true)
-        assertThat(available).isTrue()
+        repo.requestState(workUser, true)
+        assertThat(available?.get(workUser)).isTrue()
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -129,7 +146,7 @@ internal class UserRepositoryImplTest {
         val users by collectLastValue(repo.users)
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
-        assertThat(users).containsExactly(SYSTEM, User(USER_SYSTEM, Role.PERSONAL))
+        assertThat(users).containsExactly(User(USER_SYSTEM, Role.PERSONAL))
     }
 
     @Test
@@ -154,7 +171,7 @@ internal class UserRepositoryImplTest {
         val users by collectLastValue(repo.users)
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
-        assertThat(users).containsExactly(SYSTEM, User(USER_SYSTEM, Role.PERSONAL))
+        assertThat(users).containsExactly(User(USER_SYSTEM, Role.PERSONAL))
     }
 
     @Test
@@ -173,7 +190,7 @@ internal class UserRepositoryImplTest {
         val users by collectLastValue(repo.users)
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
-        assertThat(users).containsExactly(SYSTEM, User(USER_SYSTEM, Role.PERSONAL))
+        assertThat(users).containsExactly(User(USER_SYSTEM, Role.PERSONAL))
     }
 
     @Test
@@ -195,7 +212,7 @@ internal class UserRepositoryImplTest {
         val users by collectLastValue(repo.users)
 
         assertWithMessage("collectLastValue(repo.users)").that(users).isNotNull()
-        assertThat(users).containsExactly(SYSTEM, User(USER_SYSTEM, Role.PERSONAL))
+        assertThat(users).containsExactly(User(USER_SYSTEM, Role.PERSONAL))
     }
 }
 

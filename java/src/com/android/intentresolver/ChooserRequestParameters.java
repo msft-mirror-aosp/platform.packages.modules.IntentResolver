@@ -16,6 +16,8 @@
 
 package com.android.intentresolver;
 
+import static java.util.Objects.requireNonNullElse;
+
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -41,6 +43,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -101,6 +105,9 @@ public class ChooserRequestParameters {
     @Nullable
     private final IntentFilter mTargetIntentFilter;
 
+    @Nullable
+    private final CharSequence mMetadataText;
+
     public ChooserRequestParameters(
             final Intent clientIntent,
             String referrerPackageName,
@@ -125,8 +132,14 @@ public class ChooserRequestParameters {
 
         mReferrerFillInIntent = new Intent().putExtra(Intent.EXTRA_REFERRER, referrer);
 
-        mChosenComponentSender = clientIntent.getParcelableExtra(
-                Intent.EXTRA_CHOSEN_COMPONENT_INTENT_SENDER);
+        mChosenComponentSender =
+                Optional.ofNullable(
+                        clientIntent.getParcelableExtra(Intent.EXTRA_CHOSEN_COMPONENT_INTENT_SENDER,
+                                IntentSender.class))
+                        .orElse(clientIntent.getParcelableExtra(
+                                Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER,
+                                IntentSender.class));
+
         mRefinementIntentSender = clientIntent.getParcelableExtra(
                 Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER);
 
@@ -147,6 +160,12 @@ public class ChooserRequestParameters {
 
         mChooserActions = getChooserActions(clientIntent);
         mModifyShareAction = getModifyShareAction(clientIntent);
+
+        if (android.service.chooser.Flags.enableSharesheetMetadataExtra()) {
+            mMetadataText = clientIntent.getCharSequenceExtra(Intent.EXTRA_METADATA_TEXT);
+        } else {
+            mMetadataText = null;
+        }
     }
 
     public Intent getTargetIntent() {
@@ -250,6 +269,11 @@ public class ChooserRequestParameters {
     @Nullable
     public IntentFilter getTargetIntentFilter() {
         return mTargetIntentFilter;
+    }
+
+    @Nullable
+    public CharSequence getMetadataText() {
+        return mMetadataText;
     }
 
     private static boolean isSendAction(@Nullable String action) {

@@ -125,7 +125,7 @@ import javax.inject.Inject;
  */
 @AndroidEntryPoint(ResolverActivity.class)
 public class ChooserActivity extends Hilt_ChooserActivity implements
-        ResolverListAdapter.ResolverListCommunicator {
+        ResolverListAdapter.ResolverListCommunicator, PackagesChangedListener, StartsSelectedItem {
     private static final String TAG = "ChooserActivity";
 
     /**
@@ -259,7 +259,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 new AppPredictorFactory(
                         this,
                         mChooserRequest.getSharedText(),
-                        mChooserRequest.getTargetIntentFilter()),
+                        mChooserRequest.getTargetIntentFilter(),
+                        getPackageManager().getAppPredictionServicePackageName() != null),
                 mChooserRequest.getTargetIntentFilter());
 
 
@@ -302,14 +303,24 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         BasePreviewViewModel previewViewModel =
                 new ViewModelProvider(this, createPreviewViewModelFactory())
                         .get(BasePreviewViewModel.class);
+        previewViewModel.init(
+                mChooserRequest.getTargetIntent(),
+                getIntent(),
+                /*additionalContentUri = */ null,
+                /*focusedItemIdx = */ 0,
+                /*isPayloadTogglingEnabled = */ false);
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
-                previewViewModel.createOrReuseProvider(mChooserRequest.getTargetIntent()),
+                previewViewModel.getPreviewDataProvider(),
                 mChooserRequest.getTargetIntent(),
-                previewViewModel.createOrReuseImageLoader(),
+                previewViewModel.getImageLoader(),
                 createChooserActionFactory(),
                 mEnterTransitionAnimationDelegate,
-                new HeadlineGeneratorImpl(this));
+                new HeadlineGeneratorImpl(this),
+                ContentTypeHint.NONE,
+                mChooserRequest.getMetadataText(),
+                /*isPayloadTogglingEnabled =*/ false
+        );
 
         updateStickyContentPreview();
         if (shouldShowStickyContentPreview()
@@ -564,6 +575,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     /**
      * Update UI to reflect changes in data.
      */
+    @Override
     public void handlePackagesChanged() {
         handlePackagesChanged(/* listAdapter */ null);
     }
@@ -1206,13 +1218,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                             showTargetDetails(longPressedTargetInfo);
                         }
                     }
-
-                    @Override
-                    public void updateProfileViewButton(View newButtonFromProfileRow) {
-                        mProfileView = newButtonFromProfileRow;
-                        mProfileView.setOnClickListener(ChooserActivity.this::onProfileClick);
-                        ChooserActivity.this.updateProfileViewButton();
-                    }
                 },
                 chooserListAdapter,
                 shouldShowContentPreview(),
@@ -1252,7 +1257,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 maxTargetsPerRow,
                 initialIntentsUserSpace,
                 targetDataLoader,
-                null);
+                null,
+                mFeatureFlags);
     }
 
     @Override
@@ -1409,7 +1415,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         int offset = mSystemWindowInsets != null ? mSystemWindowInsets.bottom : 0;
         int rowsToShow = gridAdapter.getSystemRowCount()
-                + gridAdapter.getProfileRowCount()
                 + gridAdapter.getServiceTargetRowCount()
                 + gridAdapter.getCallerAndRankedTargetRowCount();
 
@@ -1657,8 +1662,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (!shouldShowContentPreview()) {
             return false;
         }
-        boolean isEmpty = mMultiProfilePagerAdapter.getListAdapterForUserHandle(
-                UserHandle.of(UserHandle.myUserId())).getCount() == 0;
+        ResolverListAdapter adapter = mMultiProfilePagerAdapter.getListAdapterForUserHandle(
+                UserHandle.of(UserHandle.myUserId()));
+        boolean isEmpty = adapter == null || adapter.getCount() == 0;
         return (mFeatureFlags.scrollablePreview() || shouldShowTabs())
                 && (!isEmpty || shouldShowContentPreviewWhenEmpty());
     }

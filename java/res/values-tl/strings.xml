@@ -32,7 +32,7 @@
     <string name="whichEditApplicationLabel" msgid="5992662938338600364">"I-edit"</string>
     <string name="whichSendApplication" msgid="59510564281035884">"Ibahagi"</string>
     <string name="whichSendApplicationNamed" msgid="495577664218765855">"Ibahagi gamit ang <xliff:g id="APP">%1$s</xliff:g>"</string>
-    <string name="whichSendApplicationLabel" msgid="2391198069286568035">"Ibahagi"</string>
+    <string name="whichSendApplicationLabel" msgid="2391198069286568035">"I-share"</string>
     <string name="whichSendToApplication" msgid="2724450540348806267">"Ipadala gamit ang"</string>
     <string name="whichSendToApplicationNamed" msgid="1996548940365954543">"Ipadala gamit ang <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichSendToApplicationLabel" msgid="6909037198280591110">"Ipadala"</string>
@@ -57,7 +57,7 @@
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{+ # pang file}one{+ # pang file}other{+ # pang file}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"Ibinabahagi ang text"</string>
     <string name="sharing_link" msgid="2307694372813942916">"Ibinabahagi ang link"</string>
-    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Ibinabahagi ang larawan}one{Ibinabahagi ang # larawan}other{Ibinabahagi ang # na larawan}}"</string>
+    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Shine-share ang larawan}one{Shine-share ang # larawan}other{Shine-share ang # na larawan}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Ibinabahagi ang video}one{Ibinabahagi ang # video}other{Ibinabahagi ang # na video}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Nagshe-share ng # file}one{Nagshe-share ng # file}other{Nagshe-share ng # na file}}"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Nagbabahagi ng larawang may text}one{Nagbabahagi ng # larawang may text}other{Nagbabahagi ng # na larawang may text}}"</string>
@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{Nagbabahagi ng video na may link}one{Nagbabahagi ng # video na may link}other{Nagbabahagi ng # na video na may link}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{Nagbabahagi ng file na may text}one{Nagbabahagi ng # file na may text}other{Nagbabahagi ng # na file na may text}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{Nagbabahagi ng file na may link}one{Nagbabahagi ng # file na may link}other{Nagbabahagi ng # na file na may link}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"Ibinabahagi ang album"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Larawan lang}one{Mga larawan lang}other{Mga larawan lang}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Video lang}one{Mga video lang}other{Mga video lang}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{File lang}one{Mga file lang}other{Mga file lang}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Hindi nabigyan ng pahintulot ang app na ito para mag-record pero nakakapag-capture ito ng audio sa pamamagitan ng USB device na ito."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Personal"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Trabaho"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Pribado"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Personal na view"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"View ng trabaho"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Pribadong view"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Na-block ng iyong IT admin"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Hindi puwedeng ibahagi sa mga app para sa trabaho ang content na ito"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Hindi puwedeng buksan sa mga app para sa trabaho ang content na ito"</string>

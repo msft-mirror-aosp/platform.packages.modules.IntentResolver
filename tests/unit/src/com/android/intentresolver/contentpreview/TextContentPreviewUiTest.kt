@@ -22,6 +22,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.R
 import com.android.intentresolver.mock
 import com.android.intentresolver.whenever
@@ -38,6 +39,7 @@ import org.junit.runner.RunWith
 class TextContentPreviewUiTest {
     private val text = "Shared Text"
     private val title = "Preview Title"
+    private val albumHeadline = "Album headline"
     private val testScope = TestScope(EmptyCoroutineContext + UnconfinedTestDispatcher())
     private val actionFactory =
         object : ChooserContentPreviewUi.ActionFactory {
@@ -49,7 +51,11 @@ class TextContentPreviewUiTest {
         }
     private val imageLoader = mock<ImageLoader>()
     private val headlineGenerator =
-        mock<HeadlineGenerator> { whenever(getTextHeadline(text)).thenReturn(text) }
+        mock<HeadlineGenerator> {
+            whenever(getTextHeadline(text)).thenReturn(text)
+            whenever(getAlbumHeadline()).thenReturn(albumHeadline)
+        }
+    private val testMetadataText: CharSequence = "Test metadata text"
 
     private val context
         get() = InstrumentationRegistry.getInstrumentation().context
@@ -59,10 +65,12 @@ class TextContentPreviewUiTest {
             testScope,
             text,
             title,
+            testMetadataText,
             /*previewThumbnail=*/ null,
             actionFactory,
             imageLoader,
             headlineGenerator,
+            ContentTypeHint.NONE,
         )
 
     @Test
@@ -82,6 +90,9 @@ class TextContentPreviewUiTest {
         val headlineView = previewView?.findViewById<TextView>(R.id.headline)
         assertThat(headlineView).isNotNull()
         assertThat(headlineView?.text).isEqualTo(text)
+        val metadataView = previewView?.findViewById<TextView>(R.id.metadata)
+        assertThat(metadataView).isNotNull()
+        assertThat(metadataView?.text).isEqualTo(testMetadataText)
     }
 
     @Test
@@ -94,15 +105,55 @@ class TextContentPreviewUiTest {
             gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
 
         assertThat(externalHeaderView.findViewById<View>(R.id.headline)).isNull()
+        assertThat(externalHeaderView.findViewById<View>(R.id.metadata)).isNull()
 
         val previewView =
             testSubject.display(context.resources, layoutInflater, gridLayout, externalHeaderView)
 
         assertThat(previewView).isNotNull()
         assertThat(previewView.findViewById<View>(R.id.headline)).isNull()
+        assertThat(previewView.findViewById<View>(R.id.metadata)).isNull()
 
         val headlineView = externalHeaderView.findViewById<TextView>(R.id.headline)
         assertThat(headlineView).isNotNull()
         assertThat(headlineView?.text).isEqualTo(text)
+        val metadataView = externalHeaderView.findViewById<TextView>(R.id.metadata)
+        assertThat(metadataView).isNotNull()
+        assertThat(metadataView?.text).isEqualTo(testMetadataText)
+    }
+
+    @Test
+    fun test_display_albumHeadlineOverride() {
+        val layoutInflater = LayoutInflater.from(context)
+        val gridLayout = layoutInflater.inflate(R.layout.chooser_grid, null, false) as ViewGroup
+
+        val albumSubject =
+            TextContentPreviewUi(
+                testScope,
+                text,
+                title,
+                testMetadataText,
+                /*previewThumbnail=*/ null,
+                actionFactory,
+                imageLoader,
+                headlineGenerator,
+                ContentTypeHint.ALBUM,
+            )
+
+        val previewView =
+            albumSubject.display(
+                context.resources,
+                layoutInflater,
+                gridLayout,
+                /*headlineViewParent=*/ null
+            )
+
+        assertThat(previewView).isNotNull()
+        val headlineView = previewView?.findViewById<TextView>(R.id.headline)
+        assertThat(headlineView).isNotNull()
+        assertThat(headlineView?.text).isEqualTo(albumHeadline)
+        val metadataView = previewView?.findViewById<TextView>(R.id.metadata)
+        assertThat(metadataView).isNotNull()
+        assertThat(metadataView?.text).isEqualTo(testMetadataText)
     }
 }
