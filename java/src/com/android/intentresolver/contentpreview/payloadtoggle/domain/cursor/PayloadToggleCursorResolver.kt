@@ -55,7 +55,7 @@ constructor(
                 )
             }
             .getOrNull()
-            ?.viewBy { readUri()?.let { uri -> CursorRow(uri, readSize()) } }
+            ?.viewBy { readUri()?.let { uri -> CursorRow(uri, readSize(), position) } }
     }
 
     private fun Cursor.readUri(): Uri? {
