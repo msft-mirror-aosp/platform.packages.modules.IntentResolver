@@ -23,14 +23,19 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.p
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.first
 import org.junit.Test
 
 class SelectionInteractorTest {
     @Test
     fun singleSelection_removalPrevented() = runKosmosTest {
         val initialPreview =
-            PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
-        previewSelectionsRepository.selections.value = listOf(initialPreview)
+            PreviewModel(
+                uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                mimeType = null,
+                order = 0
+            )
+        previewSelectionsRepository.selections.value = mapOf(initialPreview.uri to initialPreview)
 
         val underTest =
             SelectionInteractor(
@@ -40,20 +45,29 @@ class SelectionInteractorTest {
                 mimetypeClassifier,
             )
 
-        assertThat(underTest.selections.value).containsExactly(initialPreview)
+        assertThat(underTest.selections.first()).containsExactly(initialPreview.uri)
 
         // Shouldn't do anything!
         underTest.unselect(initialPreview)
 
-        assertThat(underTest.selections.value).containsExactly(initialPreview)
+        assertThat(underTest.selections.first()).containsExactly(initialPreview.uri)
     }
 
     @Test
     fun multipleSelections_removalAllowed() = runKosmosTest {
-        val first = PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
+        val first =
+            PreviewModel(
+                uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                mimeType = null,
+                order = 0
+            )
         val second =
-            PreviewModel(uri = Uri.fromParts("scheme2", "ssp2", "fragment2"), mimeType = null)
-        previewSelectionsRepository.selections.value = listOf(first, second)
+            PreviewModel(
+                uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                mimeType = null,
+                order = 1
+            )
+        previewSelectionsRepository.selections.value = listOf(first, second).associateBy { it.uri }
 
         val underTest =
             SelectionInteractor(
@@ -65,6 +79,6 @@ class SelectionInteractorTest {
 
         underTest.unselect(first)
 
-        assertThat(underTest.selections.value).containsExactly(second)
+        assertThat(underTest.selections.first()).containsExactly(second.uri)
     }
 }

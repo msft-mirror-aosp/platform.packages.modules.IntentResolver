@@ -25,7 +25,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.Curs
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.inject.ContentUris
 import com.android.intentresolver.inject.FocusedItemIndex
-import com.android.intentresolver.util.mapParallel
+import com.android.intentresolver.util.mapParallelIndexed
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -45,7 +45,7 @@ constructor(
     suspend fun activate() = coroutineScope {
         val cursor = async { cursorResolver.getCursor() }
         val initialPreviewMap = getInitialPreviews()
-        selectionRepository.selections.value = initialPreviewMap
+        selectionRepository.selections.value = initialPreviewMap.associateBy { it.uri }
         setCursorPreviews.setPreviews(
             previews = initialPreviewMap,
             startIndex = focusedItemIdx,
@@ -61,7 +61,7 @@ constructor(
         selectedItems
             // Restrict parallelism so as to not overload the metadata reader; anecdotally, too
             // many parallel queries causes failures.
-            .mapParallel(parallelism = 4) { uri ->
+            .mapParallelIndexed(parallelism = 4) { index, uri ->
                 val metadata = uriMetadataReader.getMetadata(uri)
                 PreviewModel(
                     uri = uri,
@@ -70,8 +70,12 @@ constructor(
                     aspectRatio =
                         metadata.previewUri?.let {
                             uriMetadataReader.readPreviewSize(it).aspectRatioOrDefault(1f)
-                        }
-                            ?: 1f,
+                        } ?: 1f,
+                    order = when {
+                        index < focusedItemIdx -> Int.MIN_VALUE + index
+                        index == focusedItemIdx -> 0
+                        else -> Int.MAX_VALUE - selectedItems.size + index + 1
+                    }
                 )
             }
 }
