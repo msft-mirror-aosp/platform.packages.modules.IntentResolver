@@ -16,12 +16,14 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -92,18 +94,24 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PreviewCarousel(
     previews: PreviewsModel,
     viewModel: ShareouselViewModel,
 ) {
     val centerIdx = previews.startIdx
-    val carouselState = rememberLazyListState(initialFirstVisibleItemIndex = centerIdx)
+    val carouselState =
+        rememberLazyListState(
+            initialFirstVisibleItemIndex = centerIdx,
+            prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
+        )
     // TODO: start item needs to be centered, check out ScalingLazyColumn impl or see if
     //  HorizontalPager works for our use-case
     LazyRow(
         state = carouselState,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
         modifier =
             Modifier.fillMaxWidth()
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
