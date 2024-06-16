@@ -16,6 +16,7 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import android.net.Uri
 import com.android.intentresolver.contentpreview.MimeTypeClassifier
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
@@ -23,8 +24,9 @@ import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentTyp
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 
 class SelectionInteractor
@@ -36,31 +38,41 @@ constructor(
     private val mimeTypeClassifier: MimeTypeClassifier,
 ) {
     /** List of selected previews. */
-    val selections: StateFlow<List<PreviewModel>>
-        get() = selectionsRepo.selections
+    val selections: Flow<Set<Uri>> =
+        selectionsRepo.selections.map { it.keys }.distinctUntilChanged()
 
     /** Amount of selected previews. */
     val amountSelected: Flow<Int> = selectionsRepo.selections.map { it.size }
 
-    val aggregateContentType: Flow<ContentType> = selections.map { aggregateContentType(it) }
+    val aggregateContentType: Flow<ContentType> =
+        selectionsRepo.selections.map { aggregateContentType(it.values) }
+
+    fun updateSelection(model: PreviewModel) {
+        selectionsRepo.selections.update {
+            if (it.containsKey(model.uri)) it + (model.uri to model) else it
+        }
+    }
 
     fun select(model: PreviewModel) {
-        updateChooserRequest(selectionsRepo.selections.updateAndGet { it + model })
+        updateChooserRequest(
+            selectionsRepo.selections.updateAndGet { it + (model.uri to model) }.values
+        )
     }
 
     fun unselect(model: PreviewModel) {
         if (selectionsRepo.selections.value.size > 1) {
-            updateChooserRequest(selectionsRepo.selections.updateAndGet { it - model })
+            updateChooserRequest(selectionsRepo.selections.updateAndGet { it - model.uri }.values)
         }
     }
 
-    private fun updateChooserRequest(selections: List<PreviewModel>) {
-        val intent = targetIntentModifier.intentFromSelection(selections)
+    private fun updateChooserRequest(selections: Collection<PreviewModel>) {
+        val sorted = selections.sortedBy { it.order }
+        val intent = targetIntentModifier.intentFromSelection(sorted)
         updateTargetIntentInteractor.updateTargetIntent(intent)
     }
 
     private fun aggregateContentType(
-        items: List<PreviewModel>,
+        items: Collection<PreviewModel>,
     ): ContentType {
         if (items.isEmpty()) {
             return ContentType.Other

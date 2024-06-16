@@ -18,6 +18,10 @@ package com.android.intentresolver.data.repository
 import android.app.admin.DevicePolicyManager
 import android.app.admin.DevicePolicyResources.Strings.Core.FORWARD_INTENT_TO_PERSONAL
 import android.app.admin.DevicePolicyResources.Strings.Core.FORWARD_INTENT_TO_WORK
+import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_PERSONAL
+import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_WORK
+import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_PERSONAL
+import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_WORK
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROSS_PROFILE_BLOCKED_TITLE
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_NO_PERSONAL_APPS
 import android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_NO_WORK_APPS
@@ -39,7 +43,7 @@ open class DevicePolicyResources
 @Inject
 constructor(
     @ApplicationOwned private val resources: Resources,
-    devicePolicyManager: DevicePolicyManager
+    devicePolicyManager: DevicePolicyManager,
 ) {
     private val policyResources = devicePolicyManager.resources
 
@@ -113,19 +117,27 @@ constructor(
     }
 
     open fun toPersonalBlockedByPolicyMessage(share: Boolean): String {
-        return if (share) {
-            resources.getString(R.string.resolver_cant_share_with_personal_apps_explanation)
+        return requireNotNull(if (share) {
+            policyResources.getString(RESOLVER_CANT_SHARE_WITH_PERSONAL) {
+                resources.getString(R.string.resolver_cant_share_with_personal_apps_explanation)
+            }
         } else {
-            resources.getString(R.string.resolver_cant_access_personal_apps_explanation)
-        }
+            policyResources.getString(RESOLVER_CANT_ACCESS_PERSONAL) {
+                resources.getString(R.string.resolver_cant_access_personal_apps_explanation)
+            }
+        })
     }
 
     open fun toWorkBlockedByPolicyMessage(share: Boolean): String {
-        return if (share) {
-            resources.getString(R.string.resolver_cant_share_with_work_apps_explanation)
+        return requireNotNull(if (share) {
+            policyResources.getString(RESOLVER_CANT_SHARE_WITH_WORK) {
+                resources.getString(R.string.resolver_cant_share_with_work_apps_explanation)
+            }
         } else {
-            resources.getString(R.string.resolver_cant_access_work_apps_explanation)
-        }
+            policyResources.getString(RESOLVER_CANT_ACCESS_WORK) {
+                resources.getString(R.string.resolver_cant_access_work_apps_explanation)
+            }
+        })
     }
 
     open fun toPrivateBlockedByPolicyMessage(share: Boolean): String {
