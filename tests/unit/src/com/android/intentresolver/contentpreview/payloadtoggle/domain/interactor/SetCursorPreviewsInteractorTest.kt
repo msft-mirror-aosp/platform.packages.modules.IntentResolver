@@ -39,6 +39,7 @@ class SetCursorPreviewsInteractorTest {
                         PreviewModel(
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = null,
+                            order = 0,
                         )
                     ),
                 startIndex = 100,
@@ -60,6 +61,7 @@ class SetCursorPreviewsInteractorTest {
                     PreviewModel(
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = null,
+                        order = 0
                     )
                 )
                 .inOrder()
@@ -76,6 +78,7 @@ class SetCursorPreviewsInteractorTest {
                             PreviewModel(
                                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                                 mimeType = null,
+                                order = 0,
                             )
                         ),
                     startIndex = 100,
