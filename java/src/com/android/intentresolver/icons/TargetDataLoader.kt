@@ -32,11 +32,11 @@ abstract class TargetDataLoader {
     ): Drawable?
 
     /** Load a shortcut icon */
-    abstract fun loadDirectShareIcon(
+    abstract fun getOrLoadDirectShareIcon(
         info: SelectableTargetInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
-    )
+    ): Drawable?
 
     /** Load target label */
     abstract fun loadLabel(info: DisplayResolveInfo, callback: Consumer<LabelInfo>)

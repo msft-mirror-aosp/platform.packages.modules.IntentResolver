@@ -40,7 +40,11 @@ class SelectablePreviewInteractorTest {
         val underTest =
             SelectablePreviewInteractor(
                 key =
-                    PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                        mimeType = null,
+                        order = 0,
+                    ),
                 selectionInteractor = selectionInteractor,
             )
         runCurrent()
@@ -56,7 +60,8 @@ class SelectablePreviewInteractorTest {
                 key =
                     PreviewModel(
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                        mimeType = "image/bitmap"
+                        mimeType = "image/bitmap",
+                        order = 0,
                     ),
                 selectionInteractor = selectionInteractor,
             )
@@ -64,12 +69,12 @@ class SelectablePreviewInteractorTest {
         assertThat(underTest.isSelected.first()).isFalse()
 
         previewSelectionsRepository.selections.value =
-            listOf(
-                PreviewModel(
+            PreviewModel(
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                    mimeType = "image/bitmap"
+                    mimeType = "image/bitmap",
+                    order = 0,
                 )
-            )
+                .let { mapOf(it.uri to it) }
         runCurrent()
 
         assertThat(underTest.isSelected.first()).isTrue()
@@ -84,7 +89,8 @@ class SelectablePreviewInteractorTest {
                 key =
                     PreviewModel(
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                        mimeType = "image/bitmap"
+                        mimeType = "image/bitmap",
+                        order = 0,
                     ),
                 selectionInteractor = selectionInteractor,
             )
@@ -92,13 +98,8 @@ class SelectablePreviewInteractorTest {
         underTest.setSelected(true)
         runCurrent()
 
-        assertThat(previewSelectionsRepository.selections.value)
-            .containsExactly(
-                PreviewModel(
-                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                    mimeType = "image/bitmap"
-                )
-            )
+        assertThat(previewSelectionsRepository.selections.value.keys)
+            .containsExactly(Uri.fromParts("scheme", "ssp", "fragment"))
 
         assertThat(chooserRequestRepository.chooserRequest.value.targetIntent)
             .isSameInstanceAs(modifiedIntent)

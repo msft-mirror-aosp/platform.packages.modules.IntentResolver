@@ -28,6 +28,7 @@ import javax.inject.Qualifier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -103,6 +104,10 @@ constructor(
         // [Deferred#await] is called in a [runCatching] block to catch
         // [CancellationExceptions]s so that they don't cancel the calling coroutine/scope.
         runCatching { cache[uri].await() }.getOrNull()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getCachedBitmap(uri: Uri): Bitmap? =
+        kotlin.runCatching { cache[uri].getCompleted() }.getOrNull()
 
     companion object {
         private const val TAG = "CachingImgPrevLoader"
