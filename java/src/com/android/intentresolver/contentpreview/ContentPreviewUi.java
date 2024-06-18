@@ -30,12 +30,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
 
-abstract class ContentPreviewUi {
+@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+public abstract class ContentPreviewUi {
     private static final int IMAGE_FADE_IN_MILLIS = 150;
     static final String TAG = "ChooserPreview";
 
@@ -80,6 +82,19 @@ abstract class ContentPreviewUi {
             titleView.setVisibility(View.VISIBLE);
         } else {
             titleView.setVisibility(View.GONE);
+        }
+    }
+
+    protected static void displayMetadata(View layout, @Nullable CharSequence metadata) {
+        TextView metadataView = layout == null ? null : layout.findViewById(R.id.metadata);
+        if (metadataView == null) {
+            return;
+        }
+        if (!TextUtils.isEmpty(metadata)) {
+            metadataView.setText(metadata);
+            metadataView.setVisibility(View.VISIBLE);
+        } else {
+            metadataView.setVisibility(View.GONE);
         }
     }
 

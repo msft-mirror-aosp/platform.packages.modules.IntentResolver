@@ -23,7 +23,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -40,8 +39,6 @@ import com.android.intentresolver.TestContentPreviewViewModel;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
-import com.android.intentresolver.grid.ChooserGridAdapter;
-import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
@@ -57,22 +54,13 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
     private UsageStatsManager mUsm;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setLogic(new TestChooserActivityLogic(
-                        "ChooserWrapper",
-                        () -> this,
-                        this::onWorkProfileStatusUpdated,
-                        () -> mTargetDataLoader,
-                        this::onPreinitialization,
-                        sOverrides));
-    }
-
-    // ResolverActivity (the base class of ChooserActivity) inspects the launched-from UID at
-    // onCreate and needs to see some non-negative value in the test.
-    @Override
-    public int getLaunchedFromUid() {
-        return 1234;
+    protected final ChooserActivityLogic createActivityLogic() {
+        return new TestChooserActivityLogic(
+                "ChooserWrapper",
+                /* activity = */ this,
+                this::onWorkProfileStatusUpdated,
+                sOverrides.annotatedUserHandles,
+                sOverrides.mWorkProfileAvailability);
     }
 
     @Override
@@ -86,11 +74,8 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
             UserHandle userHandle,
             Intent targetIntent,
             Intent referrerFillInIntent,
-            int maxTargetsPerRow,
-            TargetDataLoader targetDataLoader) {
-        PackageManager packageManager =
-                sOverrides.packageManager == null ? context.getPackageManager()
-                        : sOverrides.packageManager;
+            int maxTargetsPerRow) {
+
         return new ChooserListAdapter(
                 context,
                 payloadIntents,
@@ -102,12 +87,13 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
                 targetIntent,
                 referrerFillInIntent,
                 this,
-                packageManager,
+                mPackageManager,
                 getEventLog(),
                 maxTargetsPerRow,
                 userHandle,
-                targetDataLoader,
-                null);
+                mTargetDataLoader,
+                null,
+                mFeatureFlags);
     }
 
     @Override
@@ -117,17 +103,12 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
 
     @Override
     public ChooserListAdapter getPersonalListAdapter() {
-        return ((ChooserGridAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(0))
-                .getListAdapter();
+        return mChooserMultiProfilePagerAdapter.getPersonalListAdapter();
     }
 
     @Override
     public ChooserListAdapter getWorkListAdapter() {
-        if (mMultiProfilePagerAdapter.getInactiveListAdapter() == null) {
-            return null;
-        }
-        return ((ChooserGridAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(1))
-                .getListAdapter();
+        return mChooserMultiProfilePagerAdapter.getWorkListAdapter();
     }
 
     @Override
@@ -175,14 +156,6 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
             return sOverrides.resolverListController;
         }
         return sOverrides.workResolverListController;
-    }
-
-    @Override
-    public PackageManager getPackageManager() {
-        if (sOverrides.createPackageManager != null) {
-            return sOverrides.createPackageManager.apply(super.getPackageManager());
-        }
-        return super.getPackageManager();
     }
 
     @Override
@@ -238,7 +211,7 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
 
     @Override
     public UserHandle getCurrentUserHandle() {
-        return mMultiProfilePagerAdapter.getCurrentUserHandle();
+        return mChooserMultiProfilePagerAdapter.getCurrentUserHandle();
     }
 
     @Override

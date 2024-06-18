@@ -60,22 +60,17 @@ public class ResolverWrapperActivity extends ResolverActivity {
     private final CountingIdlingResource mLabelIdlingResource =
             new CountingIdlingResource("LoadLabelTask");
 
-    public ResolverWrapperActivity() {
-        super(/* isIntentPicker= */ true);
-    }
-
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setLogic(new TestResolverActivityLogic(
+    protected final ResolverActivityLogic createActivityLogic() {
+        return new TestResolverActivityLogic(
                 "ResolverWrapper",
-                () -> this,
+                this,
                 () -> {
                     onWorkProfileStatusUpdated();
                     return Unit.INSTANCE;
                 },
                 sOverrides
-        ));
+        );
     }
 
     public CountingIdlingResource getLabelIdlingResource() {
@@ -89,8 +84,7 @@ public class ResolverWrapperActivity extends ResolverActivity {
             Intent[] initialIntents,
             List<ResolveInfo> rList,
             boolean filterLastUsed,
-            UserHandle userHandle,
-            TargetDataLoader targetDataLoader) {
+            UserHandle userHandle) {
         return new ResolverListAdapter(
                 context,
                 payloadIntents,
@@ -102,7 +96,7 @@ public class ResolverWrapperActivity extends ResolverActivity {
                 payloadIntents.get(0),  // TODO: extract upstream
                 this,
                 userHandle,
-                new TargetDataLoaderWrapper(targetDataLoader, mLabelIdlingResource));
+                new TargetDataLoaderWrapper(mTargetDataLoader, mLabelIdlingResource));
     }
 
     @Override
@@ -118,14 +112,11 @@ public class ResolverWrapperActivity extends ResolverActivity {
     }
 
     ResolverListAdapter getPersonalListAdapter() {
-        return ((ResolverListAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(0));
+        return mMultiProfilePagerAdapter.getPersonalListAdapter();
     }
 
     ResolverListAdapter getWorkListAdapter() {
-        if (mMultiProfilePagerAdapter.getInactiveListAdapter() == null) {
-            return null;
-        }
-        return ((ResolverListAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(1));
+        return mMultiProfilePagerAdapter.getWorkListAdapter();
     }
 
     @Override
@@ -152,14 +143,6 @@ public class ResolverWrapperActivity extends ResolverActivity {
             return sOverrides.resolverListController;
         }
         return sOverrides.workResolverListController;
-    }
-
-    @Override
-    public PackageManager getPackageManager() {
-        if (sOverrides.createPackageManager != null) {
-            return sOverrides.createPackageManager.apply(super.getPackageManager());
-        }
-        return super.getPackageManager();
     }
 
     protected UserHandle getCurrentUserHandle() {

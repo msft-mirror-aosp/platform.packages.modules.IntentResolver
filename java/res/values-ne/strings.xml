@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{लिंक भएको भिडियो सेयर गरिँदै छ}other{लिंक भएका # वटा भिडियो सेयर गरिँदै छन्}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{टेक्स्ट भएको फाइल सेयर गरिँदै छ}other{टेक्स्ट भएका # वटा फाइल सेयर गरिँदै छन्}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{लिंक भएको फाइल सेयर गरिँदै छ}other{लिंक भएका # वटा फाइल सेयर गरिँदै छन्}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"एल्बम सेयर गरिँदै छ"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{फोटो मात्र}other{फोटोहरू मात्र}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{भिडियो मात्र}other{भिडियोहरू मात्र}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{फाइल मात्र}other{फाइलहरू मात्र}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"यो एपलाई रेकर्ड गर्ने अनुमति प्रदान गरिएको छैन तर यसले यो USB यन्त्रमार्फत अडियो क्याप्चर गर्न सक्छ।"</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"व्यक्तिगत"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"काम"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"निजी"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"व्यक्तिगत दृश्य"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"कार्य दृश्य"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"निजी भ्यू"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"तपाईंका IT एड्मिनले ब्लक गर्नुभएको छ"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"यो सामग्री कामसम्बन्धी एपहरूमार्फत सेयर गर्न मिल्दैन"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"यो सामग्री कामसम्बन्धी एपहरूमार्फत खोल्न मिल्दैन"</string>

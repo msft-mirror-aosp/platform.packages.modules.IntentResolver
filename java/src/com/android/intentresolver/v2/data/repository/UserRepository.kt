@@ -20,8 +20,8 @@ import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.Main
 import com.android.intentresolver.inject.ProfileParent
 import com.android.intentresolver.v2.data.broadcastFlow
-import com.android.intentresolver.v2.data.model.User
 import com.android.intentresolver.v2.data.repository.UserRepositoryImpl.UserEvent
+import com.android.intentresolver.v2.shared.model.User
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -39,17 +39,17 @@ import kotlinx.coroutines.withContext
 
 interface UserRepository {
     /**
-     * A [Flow] user profile groups. Each map contains the context user along with all members of
+     * A [Flow] user profile groups. Each list contains the context user along with all members of
      * the profile group. This includes the (Full) parent user, if the context user is a profile.
      */
-    val users: Flow<Map<UserHandle, User>>
+    val users: Flow<List<User>>
 
     /**
      * A [Flow] of availability. Only profile users may become unavailable.
      *
      * Availability is currently defined as not being in [quietMode][UserInfo.isQuietModeEnabled].
      */
-    fun isAvailable(user: User): Flow<Boolean>
+    val availability: Flow<Map<User, Boolean>>
 
     /**
      * Request that availability be updated to the requested state. This currently includes toggling
@@ -70,7 +70,7 @@ private const val TAG = "UserRepository"
 
 private data class UserWithState(val user: User, val available: Boolean)
 
-private typealias UserStateMap = Map<UserHandle, UserWithState>
+private typealias UserStates = List<UserWithState>
 
 /** Tracks and publishes state for the parent user and associated profiles. */
 class UserRepositoryImpl
@@ -110,15 +110,16 @@ constructor(
         override val cause: Throwable? = null
     ) : RuntimeException("$message: event=$event", cause)
 
-    private val usersWithState: Flow<UserStateMap> =
+    private val sharingScope = CoroutineScope(scope.coroutineContext + backgroundDispatcher)
+    private val usersWithState: Flow<UserStates> =
         userEvents
             .onStart { emit(UserEvent(INITIALIZE, profileParent)) }
-            .onEach { Log.i("UserDataSource", "userEvent: $it") }
-            .runningFold<UserEvent, UserStateMap>(emptyMap()) { users, event ->
+            .onEach { Log.i(TAG, "userEvent: $it") }
+            .runningFold<UserEvent, UserStates>(emptyList()) { users, event ->
                 try {
                     // Handle an action by performing some operation, then returning a new map
                     when (event.action) {
-                        INITIALIZE -> createNewUserStateMap(profileParent)
+                        INITIALIZE -> createNewUserStates(profileParent)
                         ACTION_PROFILE_ADDED -> handleProfileAdded(event, users)
                         ACTION_PROFILE_REMOVED -> handleProfileRemoved(event, users)
                         ACTION_MANAGED_PROFILE_UNAVAILABLE,
@@ -133,77 +134,67 @@ constructor(
                 } catch (e: UserStateException) {
                     Log.e(TAG, "An error occurred handling an event: ${e.event}", e)
                     Log.e(TAG, "Attempting to recover...")
-                    createNewUserStateMap(profileParent)
+                    createNewUserStates(profileParent)
                 }
             }
-            .onEach { Log.i("UserDataSource", "userStateMap: $it") }
-            .stateIn(scope, SharingStarted.Eagerly, emptyMap())
+            .distinctUntilChanged()
+            .onEach { Log.i(TAG, "userStateList: $it") }
+            .stateIn(sharingScope, SharingStarted.Eagerly, emptyList())
             .filterNot { it.isEmpty() }
 
-    override val users: Flow<Map<UserHandle, User>> =
-        usersWithState.map { map -> map.mapValues { it.value.user } }.distinctUntilChanged()
+    override val users: Flow<List<User>> =
+        usersWithState.map { userStateMap -> userStateMap.map { it.user } }.distinctUntilChanged()
 
-    private val availability: Flow<Map<UserHandle, Boolean>> =
-        usersWithState.map { map -> map.mapValues { it.value.available } }.distinctUntilChanged()
-
-    override fun isAvailable(user: User): Flow<Boolean> {
-        return isAvailable(user.handle)
-    }
-
-    @VisibleForTesting
-    fun isAvailable(handle: UserHandle): Flow<Boolean> {
-        return availability.map { it[handle] ?: false }
-    }
+    override val availability: Flow<Map<User, Boolean>> =
+        usersWithState
+            .map { list -> list.associate { it.user to it.available } }
+            .distinctUntilChanged()
 
     override suspend fun requestState(user: User, available: Boolean) {
         require(user.type == User.Type.PROFILE) { "Only profile users are supported" }
-        return requestState(user.handle, available)
-    }
-
-    @VisibleForTesting
-    suspend fun requestState(user: UserHandle, available: Boolean) {
         return withContext(backgroundDispatcher) {
             Log.i(TAG, "requestQuietModeEnabled: ${!available} for user $user")
-            userManager.requestQuietModeEnabled(/* enableQuietMode = */ !available, user)
+            userManager.requestQuietModeEnabled(/* enableQuietMode = */ !available, user.handle)
         }
     }
 
-    private fun handleAvailability(event: UserEvent, current: UserStateMap): UserStateMap {
+    private fun List<UserWithState>.update(handle: UserHandle, user: UserWithState) =
+        filter { it.user.id != handle.identifier } + user
+
+    private fun handleAvailability(event: UserEvent, current: UserStates): UserStates {
         val userEntry =
-            current[event.user]
+            current.firstOrNull { it.user.id == event.user.identifier }
                 ?: throw UserStateException("User was not present in the map", event)
-        return current + (event.user to userEntry.copy(available = !event.quietMode))
+        return current.update(event.user, userEntry.copy(available = !event.quietMode))
     }
 
-    private fun handleProfileRemoved(event: UserEvent, current: UserStateMap): UserStateMap {
-        if (!current.containsKey(event.user)) {
+    private fun handleProfileRemoved(event: UserEvent, current: UserStates): UserStates {
+        if (!current.any { it.user.id == event.user.identifier }) {
             throw UserStateException("User was not present in the map", event)
         }
-        return current.filterKeys { it != event.user }
+        return current.filter { it.user.id != event.user.identifier }
     }
 
-    private suspend fun handleProfileAdded(event: UserEvent, current: UserStateMap): UserStateMap {
+    private suspend fun handleProfileAdded(event: UserEvent, current: UserStates): UserStates {
         val user =
             try {
                 requireNotNull(readUser(event.user))
             } catch (e: Exception) {
                 throw UserStateException("Failed to read user from UserManager", event, e)
             }
-        return current + (event.user to UserWithState(user, !event.quietMode))
+        return current + UserWithState(user, !event.quietMode)
     }
 
-    private suspend fun createNewUserStateMap(user: UserHandle): UserStateMap {
+    private suspend fun createNewUserStates(user: UserHandle): UserStates {
         val profiles = readProfileGroup(user)
-        return profiles
-            .mapNotNull { userInfo ->
-                userInfo.toUser()?.let { user -> UserWithState(user, userInfo.isAvailable()) }
-            }
-            .associateBy { it.user.handle }
+        return profiles.mapNotNull { userInfo ->
+            userInfo.toUser()?.let { user -> UserWithState(user, userInfo.isAvailable()) }
+        }
     }
 
-    private suspend fun readProfileGroup(handle: UserHandle): List<UserInfo> {
+    private suspend fun readProfileGroup(member: UserHandle): List<UserInfo> {
         return withContext(backgroundDispatcher) {
-                @Suppress("DEPRECATION") userManager.getEnabledProfiles(handle.identifier)
+                @Suppress("DEPRECATION") userManager.getEnabledProfiles(member.identifier)
             }
             .toList()
     }

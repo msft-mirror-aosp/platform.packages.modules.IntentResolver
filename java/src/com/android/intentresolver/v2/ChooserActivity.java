@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,39 @@
 
 package com.android.intentresolver.v2;
 
+import static android.app.VoiceInteractor.PickOptionRequest.Option;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_PERSONAL;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_ACCESS_WORK;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_PERSONAL;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CANT_SHARE_WITH_WORK;
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_CROSS_PROFILE_BLOCKED_TITLE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL;
 import static android.stats.devicepolicy.nano.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
+import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
 
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
+import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION;
+import static com.android.intentresolver.v2.ext.CreationExtrasExtKt.addDefaultArgs;
+import static com.android.intentresolver.v2.ui.model.ActivityModel.ACTIVITY_MODEL_KEY;
+import static com.android.internal.annotations.VisibleForTesting.Visibility.PROTECTED;
 import static com.android.internal.util.LatencyTracker.ACTION_LOAD_SHARE_SHEET;
 
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
+import android.app.ActivityThread;
+import android.app.VoiceInteractor;
+import android.app.admin.DevicePolicyEventLogger;
 import android.app.prediction.AppPredictor;
 import android.app.prediction.AppTarget;
 import android.app.prediction.AppTargetEvent;
 import android.app.prediction.AppTargetId;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -45,32 +57,48 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
+import android.content.pm.UserInfo;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Insets;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.os.SystemClock;
+import android.os.Trace;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.service.chooser.ChooserTarget;
+import android.stats.devicepolicy.DevicePolicyEnums;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Slog;
-import android.util.SparseArray;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TabHost;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.viewmodel.CreationExtras;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
@@ -79,23 +107,28 @@ import com.android.intentresolver.AnnotatedUserHandles;
 import com.android.intentresolver.ChooserGridLayoutManager;
 import com.android.intentresolver.ChooserListAdapter;
 import com.android.intentresolver.ChooserRefinementManager;
-import com.android.intentresolver.ChooserRequestParameters;
 import com.android.intentresolver.ChooserStackedAppDialogFragment;
 import com.android.intentresolver.ChooserTargetActionsDialogFragment;
 import com.android.intentresolver.EnterTransitionAnimationDelegate;
 import com.android.intentresolver.FeatureFlags;
 import com.android.intentresolver.IntentForwarderActivity;
+import com.android.intentresolver.PackagesChangedListener;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverListAdapter;
 import com.android.intentresolver.ResolverListController;
 import com.android.intentresolver.ResolverViewPager;
+import com.android.intentresolver.StartsSelectedItem;
+import com.android.intentresolver.WorkProfileAvailabilityManager;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.contentpreview.BasePreviewViewModel;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.contentpreview.HeadlineGeneratorImpl;
+import com.android.intentresolver.contentpreview.PayloadToggleInteractor;
 import com.android.intentresolver.contentpreview.PreviewViewModel;
+import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
+import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
 import com.android.intentresolver.emptystate.EmptyState;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.grid.ChooserGridAdapter;
@@ -107,28 +140,50 @@ import com.android.intentresolver.model.AppPredictionServiceResolverComparator;
 import com.android.intentresolver.model.ResolverRankerServiceResolverComparator;
 import com.android.intentresolver.shortcuts.AppPredictorFactory;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
+import com.android.intentresolver.v2.data.repository.DevicePolicyResources;
+import com.android.intentresolver.v2.emptystate.NoAppsAvailableEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider;
 import com.android.intentresolver.v2.emptystate.NoCrossProfileEmptyStateProvider.DevicePolicyBlockerEmptyState;
+import com.android.intentresolver.v2.emptystate.WorkProfilePausedEmptyStateProvider;
+import com.android.intentresolver.v2.platform.AppPredictionAvailable;
 import com.android.intentresolver.v2.platform.ImageEditor;
 import com.android.intentresolver.v2.platform.NearbyShare;
+import com.android.intentresolver.v2.profiles.ChooserMultiProfilePagerAdapter;
+import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter;
+import com.android.intentresolver.v2.profiles.MultiProfilePagerAdapter.ProfileType;
+import com.android.intentresolver.v2.profiles.OnProfileSelectedListener;
+import com.android.intentresolver.v2.profiles.OnSwitchOnWorkSelectedListener;
+import com.android.intentresolver.v2.profiles.TabConfig;
+import com.android.intentresolver.v2.ui.ActionTitle;
+import com.android.intentresolver.v2.ui.ShareResultSender;
+import com.android.intentresolver.v2.ui.ShareResultSenderFactory;
+import com.android.intentresolver.v2.ui.model.ActivityModel;
+import com.android.intentresolver.v2.ui.model.ChooserRequest;
+import com.android.intentresolver.v2.ui.viewmodel.ChooserViewModel;
 import com.android.intentresolver.widget.ImagePreviewView;
+import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.content.PackageMonitor;
+import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
+import com.android.internal.util.LatencyTracker;
+
+import com.google.common.collect.ImmutableList;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
+import kotlin.Pair;
 import kotlin.Unit;
 
-import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -142,9 +197,9 @@ import javax.inject.Inject;
  *
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-@AndroidEntryPoint(ResolverActivity.class)
+@AndroidEntryPoint(FragmentActivity.class)
 public class ChooserActivity extends Hilt_ChooserActivity implements
-        ResolverListAdapter.ResolverListCommunicator {
+        ResolverListAdapter.ResolverListCommunicator, PackagesChangedListener, StartsSelectedItem {
     private static final String TAG = "ChooserActivity";
 
     /**
@@ -167,6 +222,41 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     public static final String LAUNCH_LOCATION_DIRECT_SHARE = "direct_share";
     private static final String SHORTCUT_TARGET = "shortcut_target";
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Inherited properties.
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    private static final String TAB_TAG_PERSONAL = "personal";
+    private static final String TAB_TAG_WORK = "work";
+
+    private static final String LAST_SHOWN_TAB_KEY = "last_shown_tab_key";
+    protected static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
+
+    private int mLayoutId;
+    private UserHandle mHeaderCreatorUser;
+    protected static final int PROFILE_PERSONAL = MultiProfilePagerAdapter.PROFILE_PERSONAL;
+    protected static final int PROFILE_WORK = MultiProfilePagerAdapter.PROFILE_WORK;
+    private boolean mRegistered;
+    private PackageMonitor mPersonalPackageMonitor;
+    private PackageMonitor mWorkPackageMonitor;
+    protected View mProfileView;
+
+    protected ActivityLogic mLogic;
+    protected ResolverDrawerLayout mResolverDrawerLayout;
+    protected ChooserMultiProfilePagerAdapter mChooserMultiProfilePagerAdapter;
+    protected final LatencyTracker mLatencyTracker = getLatencyTracker();
+
+    /** See {@link #setRetainInOnStop}. */
+    private boolean mRetainInOnStop;
+    protected Insets mSystemWindowInsets = null;
+    private ResolverActivity.PickTargetOptionRequest mPickOptionRequest;
+
+    @Nullable
+    private OnSwitchOnWorkSelectedListener mOnSwitchOnWorkSelectedListener;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+
     // TODO: these data structures are for one-time use in shuttling data from where they're
     // populated in `ShortcutToChooserTargetConverter` to where they're consumed in
     // `ShortcutSelectionLogic` which packs the appropriate elements into the final `TargetInfo`.
@@ -184,11 +274,21 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final int SCROLL_STATUS_SCROLLING_VERTICAL = 1;
     private static final int SCROLL_STATUS_SCROLLING_HORIZONTAL = 2;
 
+    @Inject public ChooserHelper mChooserHelper;
     @Inject public FeatureFlags mFeatureFlags;
+    @Inject public android.service.chooser.FeatureFlags mChooserServiceFeatureFlags;
     @Inject public EventLog mEventLog;
+    @Inject @AppPredictionAvailable public boolean mAppPredictionAvailable;
     @Inject @ImageEditor public Optional<ComponentName> mImageEditor;
     @Inject @NearbyShare public Optional<ComponentName> mNearbyShare;
     @Inject public TargetDataLoader mTargetDataLoader;
+    @Inject public DevicePolicyResources mDevicePolicyResources;
+    @Inject public PackageManager mPackageManager;
+    @Inject public ClipboardManager mClipboardManager;
+    @Inject public IntentForwarding mIntentForwarding;
+    @Inject public ShareResultSenderFactory mShareResultSenderFactory;
+    @Nullable
+    private ShareResultSender mShareResultSender;
 
     private ChooserRefinementManager mRefinementManager;
 
@@ -216,14 +316,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private int mScrollStatus = SCROLL_STATUS_IDLE;
 
-    @VisibleForTesting
-    protected ChooserMultiProfilePagerAdapter mChooserMultiProfilePagerAdapter;
     private final EnterTransitionAnimationDelegate mEnterTransitionAnimationDelegate =
             new EnterTransitionAnimationDelegate(this, () -> mResolverDrawerLayout);
 
-    private View mContentView = null;
+    private final View mContentView = null;
 
-    private final SparseArray<ProfileRecord> mProfileRecords = new SparseArray<>();
+    private final Map<Integer, ProfileRecord> mProfileRecords = new HashMap<>();
 
     private boolean mExcludeSharedText = false;
     /**
@@ -236,35 +334,260 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private final AtomicLong mIntentReceivedTime = new AtomicLong(-1);
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        Tracer.INSTANCE.markLaunched();
-        super.onCreate(savedInstanceState);
-        setLogic(new ChooserActivityLogic(
-                TAG,
-                () -> this,
-                this::onWorkProfileStatusUpdated,
-                () -> mTargetDataLoader,
-                this::onPreinitialization));
-        addInitializer(this::init);
+    protected ActivityModel createActivityModel() {
+        return ActivityModel.createFrom(this);
     }
 
-    private void init() {
-        if (getChooserRequest() == null) {
+    private ChooserViewModel mViewModel;
+    private ActivityModel mActivityModel;
+
+    @VisibleForTesting
+    protected ChooserActivityLogic createActivityLogic() {
+        return new ChooserActivityLogic(
+                TAG,
+                /* activity = */ this,
+                this::onWorkProfileStatusUpdated);
+    }
+
+    @NonNull
+    @Override
+    public CreationExtras getDefaultViewModelCreationExtras() {
+        return addDefaultArgs(
+                super.getDefaultViewModelCreationExtras(),
+                new Pair<>(ACTIVITY_MODEL_KEY, createActivityModel()));
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate");
+        mViewModel = new ViewModelProvider(this).get(ChooserViewModel.class);
+        mActivityModel = mViewModel.getActivityModel();
+
+        int callerUid = mActivityModel.getLaunchedFromUid();
+        if (callerUid < 0 || UserHandle.isIsolated(callerUid)) {
+            Log.e(TAG, "Can't start a resolver from uid " + callerUid);
+            finish();
+        }
+
+        setTheme(R.style.Theme_DeviceDefault_Chooser);
+        Tracer.INSTANCE.markLaunched();
+        if (!mViewModel.init()) {
             finish();
             return;
         }
-        if (isFinishing()) {
-            // Performing a clean exit:
-            //    Skip initializing any additional resources.
-            return;
+
+        // The post-create callback is invoked when this function returns, via Lifecycle.
+        mChooserHelper.setPostCreateCallback(this::init);
+
+        IntentSender chosenComponentSender =
+                mViewModel.getChooserRequest().getChosenComponentSender();
+        if (chosenComponentSender != null) {
+            mShareResultSender = mShareResultSenderFactory
+                    .create(mActivityModel.getLaunchedFromUid(), chosenComponentSender);
         }
-        setTheme(mLogic.getThemeResId());
+        mLogic = createActivityLogic();
+    }
+
+    @Override
+    protected final void onStart() {
+        super.onStart();
+
+        this.getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
+        if (hasWorkProfile()) {
+            mLogic.getWorkProfileAvailabilityManager().registerWorkProfileStateReceiver(this);
+        }
+    }
+
+    @Override
+    protected final void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: " + getComponentName().flattenToShortString());
+        mFinishWhenStopped = false;
+        mRefinementManager.onActivityResume();
+    }
+
+    @Override
+    protected final void onStop() {
+        super.onStop();
+
+        final Window window = this.getWindow();
+        final WindowManager.LayoutParams attrs = window.getAttributes();
+        attrs.privateFlags &= ~SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
+        window.setAttributes(attrs);
+
+        if (mRegistered) {
+            mPersonalPackageMonitor.unregister();
+            if (mWorkPackageMonitor != null) {
+                mWorkPackageMonitor.unregister();
+            }
+            mRegistered = false;
+        }
+        final Intent intent = getIntent();
+        if ((intent.getFlags() & FLAG_ACTIVITY_NEW_TASK) != 0 && !isVoiceInteraction()
+                && !mRetainInOnStop) {
+            // This resolver is in the unusual situation where it has been
+            // launched at the top of a new task.  We don't let it be added
+            // to the recent tasks shown to the user, and we need to make sure
+            // that each time we are launched we get the correct launching
+            // uid (not re-using the same resolver from an old launching uid),
+            // so we will now finish ourself since being no longer visible,
+            // the user probably can't get back to us.
+            if (!isChangingConfigurations()) {
+                finish();
+            }
+        }
+        mLogic.getWorkProfileAvailabilityManager().unregisterWorkProfileStateReceiver(this);
+
+        if (mRefinementManager != null) {
+            mRefinementManager.onActivityStop(isChangingConfigurations());
+        }
+
+        if (mFinishWhenStopped) {
+            mFinishWhenStopped = false;
+            finish();
+        }
+    }
+
+    @Override
+    protected final void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
+        if (viewPager != null) {
+            outState.putInt(LAST_SHOWN_TAB_KEY, viewPager.getCurrentItem());
+        }
+    }
+
+    @Override
+    protected final void onRestart() {
+        super.onRestart();
+        if (!mRegistered) {
+            mPersonalPackageMonitor.register(
+                    this,
+                    getMainLooper(),
+                    requireAnnotatedUserHandles().personalProfileUserHandle,
+                    false);
+            if (hasWorkProfile()) {
+                if (mWorkPackageMonitor == null) {
+                    mWorkPackageMonitor = createPackageMonitor(
+                            mChooserMultiProfilePagerAdapter.getWorkListAdapter());
+                }
+                mWorkPackageMonitor.register(
+                        this,
+                        getMainLooper(),
+                        requireAnnotatedUserHandles().workProfileUserHandle,
+                        false);
+            }
+            mRegistered = true;
+        }
+        WorkProfileAvailabilityManager workProfileAvailabilityManager =
+                mLogic.getWorkProfileAvailabilityManager();
+        if (hasWorkProfile() && workProfileAvailabilityManager.isWaitingToEnableWorkProfile()) {
+            if (workProfileAvailabilityManager.isQuietModeEnabled()) {
+                workProfileAvailabilityManager.markWorkProfileEnabledBroadcastReceived();
+            }
+        }
+        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (isFinishing()) {
+            mLatencyTracker.onActionCancel(ACTION_LOAD_SHARE_SHEET);
+        }
+
+        mBackgroundThreadPoolExecutor.shutdownNow();
+
+        destroyProfileRecords();
+    }
+
+    private void init() {
+        mIntentReceivedTime.set(System.currentTimeMillis());
+        mLatencyTracker.onActionStart(ACTION_LOAD_SHARE_SHEET);
+
+        mPinnedSharedPrefs = getPinnedSharedPrefs(this);
+        mMaxTargetsPerRow =
+                getResources().getInteger(R.integer.config_chooser_max_targets_per_row);
+        mShouldDisplayLandscape =
+                shouldDisplayLandscape(getResources().getConfiguration().orientation);
+
+        ChooserRequest chooserRequest = mViewModel.getChooserRequest();
+        setRetainInOnStop(chooserRequest.shouldRetainInOnStop());
+        createProfileRecords(
+                new AppPredictorFactory(
+                        this,
+                        Objects.toString(chooserRequest.getSharedText(), null),
+                        chooserRequest.getShareTargetFilter(),
+                        mAppPredictionAvailable
+                ),
+                chooserRequest.getShareTargetFilter()
+        );
+
+        Intent intent = mViewModel.getChooserRequest().getTargetIntent();
+        List<Intent> initialIntents = mViewModel.getChooserRequest().getInitialIntents();
+
+        mChooserMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
+                requireNonNullElse(initialIntents, emptyList()).toArray(new Intent[0]),
+                /* resolutionList = */ null,
+                false
+        );
+        if (!configureContentView(mTargetDataLoader)) {
+            mPersonalPackageMonitor = createPackageMonitor(
+                    mChooserMultiProfilePagerAdapter.getPersonalListAdapter());
+            mPersonalPackageMonitor.register(
+                    this,
+                    getMainLooper(),
+                    requireAnnotatedUserHandles().personalProfileUserHandle,
+                    false
+            );
+            if (hasWorkProfile()) {
+                mWorkPackageMonitor = createPackageMonitor(
+                        mChooserMultiProfilePagerAdapter.getWorkListAdapter());
+                mWorkPackageMonitor.register(
+                        this,
+                        getMainLooper(),
+                        requireAnnotatedUserHandles().workProfileUserHandle,
+                        false
+                );
+            }
+            mRegistered = true;
+            final ResolverDrawerLayout rdl = findViewById(
+                    com.android.internal.R.id.contentPanel);
+            if (rdl != null) {
+                rdl.setOnDismissedListener(new ResolverDrawerLayout.OnDismissedListener() {
+                    @Override
+                    public void onDismissed() {
+                        finish();
+                    }
+                });
+
+                boolean hasTouchScreen = mPackageManager
+                        .hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN);
+
+                if (isVoiceInteraction() || !hasTouchScreen) {
+                    rdl.setCollapsed(false);
+                }
+
+                rdl.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                rdl.setOnApplyWindowInsetsListener(this::onApplyWindowInsets);
+
+                mResolverDrawerLayout = rdl;
+            }
+            final Set<String> categories = intent.getCategories();
+            MetricsLogger.action(this,
+                    mChooserMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()
+                            ? MetricsEvent.ACTION_SHOW_APP_DISAMBIG_APP_FEATURED
+                            : MetricsEvent.ACTION_SHOW_APP_DISAMBIG_NONE_FEATURED,
+                    intent.getAction() + ":" + intent.getType() + ":"
+                            + (categories != null ? Arrays.toString(categories.toArray())
+                            : ""));
+        }
 
         getEventLog().logSharesheetTriggered();
-
         mRefinementManager = new ViewModelProvider(this).get(ChooserRefinementManager.class);
-
         mRefinementManager.getRefinementCompletion().observe(this, completion -> {
             if (completion.consume()) {
                 TargetInfo targetInfo = completion.getTargetInfo();
@@ -276,26 +599,56 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                     // can't recover a Chooser session if that's the reason the refined target fails
                     // to launch now. Fire-and-forget the refined launch; ignore the return value
                     // and just make sure the Sharesheet session gets cleaned up regardless.
-                    ChooserActivity.super.onTargetSelected(targetInfo, false);
+                    final ResolveInfo ri = targetInfo.getResolveInfo();
+                    final Intent intent1 = targetInfo.getResolvedIntent();
+
+                    safelyStartActivity(targetInfo);
+
+                    // Rely on the ActivityManager to pop up a dialog regarding app suspension
+                    // and return false
+                    targetInfo.isSuspended();
                 }
 
                 finish();
             }
         });
-
         BasePreviewViewModel previewViewModel =
                 new ViewModelProvider(this, createPreviewViewModelFactory())
                         .get(BasePreviewViewModel.class);
-        ChooserRequestParameters chooserRequest = requireChooserRequest();
+        previewViewModel.init(
+                chooserRequest.getTargetIntent(),
+                mActivityModel.getIntent(),
+                chooserRequest.getAdditionalContentUri(),
+                chooserRequest.getFocusedItemPosition(),
+                mChooserServiceFeatureFlags.chooserPayloadToggling());
+        ChooserActionFactory chooserActionFactory = createChooserActionFactory();
+        ChooserContentPreviewUi.ActionFactory actionFactory = chooserActionFactory;
+        if (previewViewModel.getPreviewDataProvider().getPreviewType()
+                == CONTENT_PREVIEW_PAYLOAD_SELECTION
+                && mChooserServiceFeatureFlags.chooserPayloadToggling()) {
+            PayloadToggleInteractor payloadToggleInteractor =
+                    previewViewModel.getPayloadToggleInteractor();
+            if (payloadToggleInteractor != null) {
+                ChooserMutableActionFactory mutableActionFactory =
+                        new ChooserMutableActionFactory(chooserActionFactory);
+                actionFactory = mutableActionFactory;
+                JavaFlowHelper.collect(
+                        getCoroutineScope(getLifecycle()),
+                        payloadToggleInteractor.getCustomActions(),
+                        mutableActionFactory::updateCustomActions);
+            }
+        }
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
-                previewViewModel.createOrReuseProvider(chooserRequest.getTargetIntent()),
+                previewViewModel.getPreviewDataProvider(),
                 chooserRequest.getTargetIntent(),
-                previewViewModel.createOrReuseImageLoader(),
-                createChooserActionFactory(),
+                previewViewModel.getImageLoader(),
+                actionFactory,
                 mEnterTransitionAnimationDelegate,
-                new HeadlineGeneratorImpl(this));
-
+                new HeadlineGeneratorImpl(this),
+                chooserRequest.getContentTypeHint(),
+                chooserRequest.getMetadataText(),
+                mChooserServiceFeatureFlags.chooserPayloadToggling());
         updateStickyContentPreview();
         if (shouldShowStickyContentPreview()
                 || mChooserMultiProfilePagerAdapter
@@ -303,12 +656,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             getEventLog().logActionShareWithPreview(
                     mChooserContentPreviewUi.getPreferredContentPreview());
         }
-
         mChooserShownTime = System.currentTimeMillis();
         final long systemCost = mChooserShownTime - mIntentReceivedTime.get();
         getEventLog().logChooserActivityShown(
                 isWorkProfile(), chooserRequest.getTargetType(), systemCost);
-
         if (mResolverDrawerLayout != null) {
             mResolverDrawerLayout.addOnLayoutChangeListener(this::handleLayoutChange);
 
@@ -318,63 +669,604 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                         getEventLog().logSharesheetExpansionChanged(isCollapsed);
                     });
         }
-
         if (DEBUG) {
             Log.d(TAG, "System Time Cost is " + systemCost);
         }
-
         getEventLog().logShareStarted(
-                mLogic.getReferrerPackageName(),
+                chooserRequest.getReferrerPackage(),
                 chooserRequest.getTargetType(),
                 chooserRequest.getCallerChooserTargets().size(),
-                (chooserRequest.getInitialIntents() == null)
-                        ? 0 : chooserRequest.getInitialIntents().length,
+                chooserRequest.getInitialIntents().size(),
                 isWorkProfile(),
                 mChooserContentPreviewUi.getPreferredContentPreview(),
                 chooserRequest.getTargetAction(),
                 chooserRequest.getChooserActions().size(),
                 chooserRequest.getModifyShareAction() != null
         );
-
         mEnterTransitionAnimationDelegate.postponeTransition();
     }
 
-    protected final Unit onPreinitialization() {
-        mIntentReceivedTime.set(System.currentTimeMillis());
-        mLatencyTracker.onActionStart(ACTION_LOAD_SHARE_SHEET);
-
-        mPinnedSharedPrefs = getPinnedSharedPrefs(this);
-        mMaxTargetsPerRow =
-                getResources().getInteger(R.integer.config_chooser_max_targets_per_row);
-        mShouldDisplayLandscape =
-                shouldDisplayLandscape(getResources().getConfiguration().orientation);
-
-
-        ChooserRequestParameters chooserRequest = getChooserRequest();
-        if (chooserRequest == null) {
-            return Unit.INSTANCE;
+    private void restore(@Nullable Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            // onRestoreInstanceState
+            //resetButtonBar();
+            ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
+            if (viewPager != null) {
+                viewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
+            }
         }
-        setRetainInOnStop(chooserRequest.shouldRetainInOnStop());
 
-        createProfileRecords(
-                new AppPredictorFactory(
-                        this,
-                        chooserRequest.getSharedText(),
-                        chooserRequest.getTargetIntentFilter()
-                ),
-                chooserRequest.getTargetIntentFilter()
+        mChooserMultiProfilePagerAdapter.clearInactiveProfileCache();
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Inherited methods
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+    private boolean isAutolaunching() {
+        return !mRegistered && isFinishing();
+    }
+
+    private boolean maybeAutolaunchIfSingleTarget() {
+        int count = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();
+        if (count != 1) {
+            return false;
+        }
+
+        if (mChooserMultiProfilePagerAdapter.getActiveListAdapter().getOtherProfile() != null) {
+            return false;
+        }
+
+        // Only one target, so we're a candidate to auto-launch!
+        final TargetInfo target = mChooserMultiProfilePagerAdapter.getActiveListAdapter()
+                .targetInfoForPosition(0, false);
+        if (shouldAutoLaunchSingleChoice(target)) {
+            safelyStartActivity(target);
+            finish();
+            return true;
+        }
+        return false;
+    }
+
+
+    private boolean isTwoPagePersonalAndWorkConfiguration() {
+        return (mChooserMultiProfilePagerAdapter.getCount() == 2)
+                && mChooserMultiProfilePagerAdapter.hasPageForProfile(PROFILE_PERSONAL)
+                && mChooserMultiProfilePagerAdapter.hasPageForProfile(PROFILE_WORK);
+    }
+
+    /**
+     * When we have a personal and a work profile, we auto launch in the following scenario:
+     * - There is 1 resolved target on each profile
+     * - That target is the same app on both profiles
+     * - The target app has permission to communicate cross profiles
+     * - The target app has declared it supports cross-profile communication via manifest metadata
+     */
+    private boolean maybeAutolaunchIfCrossProfileSupported() {
+        if (!isTwoPagePersonalAndWorkConfiguration()) {
+            return false;
+        }
+
+        ResolverListAdapter activeListAdapter =
+                (mChooserMultiProfilePagerAdapter.getActiveProfile() == PROFILE_PERSONAL)
+                        ? mChooserMultiProfilePagerAdapter.getPersonalListAdapter()
+                        : mChooserMultiProfilePagerAdapter.getWorkListAdapter();
+
+        ResolverListAdapter inactiveListAdapter =
+                (mChooserMultiProfilePagerAdapter.getActiveProfile() == PROFILE_PERSONAL)
+                        ? mChooserMultiProfilePagerAdapter.getWorkListAdapter()
+                        : mChooserMultiProfilePagerAdapter.getPersonalListAdapter();
+
+        if (!activeListAdapter.isTabLoaded() || !inactiveListAdapter.isTabLoaded()) {
+            return false;
+        }
+
+        if ((activeListAdapter.getUnfilteredCount() != 1)
+                || (inactiveListAdapter.getUnfilteredCount() != 1)) {
+            return false;
+        }
+
+        TargetInfo activeProfileTarget = activeListAdapter.targetInfoForPosition(0, false);
+        TargetInfo inactiveProfileTarget = inactiveListAdapter.targetInfoForPosition(0, false);
+        if (!Objects.equals(
+                activeProfileTarget.getResolvedComponentName(),
+                inactiveProfileTarget.getResolvedComponentName())) {
+            return false;
+        }
+
+        if (!shouldAutoLaunchSingleChoice(activeProfileTarget)) {
+            return false;
+        }
+
+        String packageName = activeProfileTarget.getResolvedComponentName().getPackageName();
+        if (!mIntentForwarding.canAppInteractAcrossProfiles(this, packageName)) {
+            return false;
+        }
+
+        DevicePolicyEventLogger
+                .createEvent(DevicePolicyEnums.RESOLVER_AUTOLAUNCH_CROSS_PROFILE_TARGET)
+                .setBoolean(activeListAdapter.getUserHandle()
+                        .equals(requireAnnotatedUserHandles().personalProfileUserHandle))
+                .setStrings(getMetricsCategory())
+                .write();
+        safelyStartActivity(activeProfileTarget);
+        finish();
+        return true;
+    }
+
+    /**
+     * @return {@code true} if a resolved target is autolaunched, otherwise {@code false}
+     */
+    private boolean maybeAutolaunchActivity() {
+        int numberOfProfiles = mChooserMultiProfilePagerAdapter.getItemCount();
+        // TODO(b/280988288): If the ChooserActivity is shown we should consider showing the
+        //  correct intent-picker UIs (e.g., mini-resolver) if it was launched without
+        //  ACTION_SEND.
+        if (numberOfProfiles == 1 && maybeAutolaunchIfSingleTarget()) {
+            return true;
+        } else if (maybeAutolaunchIfCrossProfileSupported()) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override // ResolverListCommunicator
+    public final void onPostListReady(ResolverListAdapter listAdapter, boolean doPostProcessing,
+            boolean rebuildCompleted) {
+        if (isAutolaunching()) {
+            return;
+        }
+        if (mChooserMultiProfilePagerAdapter
+                .shouldShowEmptyStateScreen((ChooserListAdapter) listAdapter)) {
+            mChooserMultiProfilePagerAdapter
+                    .showEmptyResolverListEmptyState((ChooserListAdapter) listAdapter);
+        } else {
+            mChooserMultiProfilePagerAdapter.showListView((ChooserListAdapter) listAdapter);
+        }
+        // showEmptyResolverListEmptyState can mark the tab as loaded,
+        // which is a precondition for auto launching
+        if (rebuildCompleted && maybeAutolaunchActivity()) {
+            return;
+        }
+        if (doPostProcessing) {
+            maybeCreateHeader(listAdapter);
+            onListRebuilt(listAdapter, rebuildCompleted);
+        }
+    }
+
+    private CharSequence getOrLoadDisplayLabel(TargetInfo info) {
+        if (info.isDisplayResolveInfo()) {
+            mTargetDataLoader.getOrLoadLabel((DisplayResolveInfo) info);
+        }
+        CharSequence displayLabel = info.getDisplayLabel();
+        return displayLabel == null ? "" : displayLabel;
+    }
+
+    protected final CharSequence getTitleForAction(Intent intent, int defaultTitleRes) {
+        final ActionTitle title = ActionTitle.forAction(intent.getAction());
+
+        // While there may already be a filtered item, we can only use it in the title if the list
+        // is already sorted and all information relevant to it is already in the list.
+        final boolean named =
+                mChooserMultiProfilePagerAdapter.getActiveListAdapter().getFilteredPosition() >= 0;
+        if (title == ActionTitle.DEFAULT && defaultTitleRes != 0) {
+            return getString(defaultTitleRes);
+        } else {
+            return named
+                    ? getString(
+                    title.namedTitleRes,
+                    getOrLoadDisplayLabel(
+                            mChooserMultiProfilePagerAdapter
+                                    .getActiveListAdapter().getFilteredItem()))
+                    : getString(title.titleRes);
+        }
+    }
+
+    /**
+     * Configure the area above the app selection list (title, content preview, etc).
+     */
+    private void maybeCreateHeader(ResolverListAdapter listAdapter) {
+        if (mHeaderCreatorUser != null
+                && !listAdapter.getUserHandle().equals(mHeaderCreatorUser)) {
+            return;
+        }
+        if (!hasWorkProfile()
+                && listAdapter.getCount() == 0 && listAdapter.getPlaceholderCount() == 0) {
+            final TextView titleView = findViewById(com.android.internal.R.id.title);
+            if (titleView != null) {
+                titleView.setVisibility(View.GONE);
+            }
+        }
+
+        CharSequence title = mViewModel.getChooserRequest().getTitle() != null
+                ? mViewModel.getChooserRequest().getTitle()
+                : getTitleForAction(mViewModel.getChooserRequest().getTargetIntent(),
+                        mViewModel.getChooserRequest().getDefaultTitleResource());
+
+        if (!TextUtils.isEmpty(title)) {
+            final TextView titleView = findViewById(com.android.internal.R.id.title);
+            if (titleView != null) {
+                titleView.setText(title);
+            }
+            setTitle(title);
+        }
+
+        final ImageView iconView = findViewById(com.android.internal.R.id.icon);
+        if (iconView != null) {
+            listAdapter.loadFilteredItemIconTaskAsync(iconView);
+        }
+        mHeaderCreatorUser = listAdapter.getUserHandle();
+    }
+
+    /** Start the activity specified by the {@link TargetInfo}.*/
+    public final void safelyStartActivity(TargetInfo cti) {
+        // In case cloned apps are present, we would want to start those apps in cloned user
+        // space, which will not be same as the adapter's userHandle. resolveInfo.userHandle
+        // identifies the correct user space in such cases.
+        UserHandle activityUserHandle = cti.getResolveInfo().userHandle;
+        safelyStartActivityAsUser(cti, activityUserHandle, null);
+    }
+
+    protected final void safelyStartActivityAsUser(
+            TargetInfo cti, UserHandle user, @Nullable Bundle options) {
+        // We're dispatching intents that might be coming from legacy apps, so
+        // don't kill ourselves.
+        StrictMode.disableDeathOnFileUriExposure();
+        try {
+            safelyStartActivityInternal(cti, user, options);
+        } finally {
+            StrictMode.enableDeathOnFileUriExposure();
+        }
+    }
+
+    @VisibleForTesting
+    protected void safelyStartActivityInternal(
+            TargetInfo cti, UserHandle user, @Nullable Bundle options) {
+        // If the target is suspended, the activity will not be successfully launched.
+        // Do not unregister from package manager updates in this case
+        if (!cti.isSuspended() && mRegistered) {
+            if (mPersonalPackageMonitor != null) {
+                mPersonalPackageMonitor.unregister();
+            }
+            if (mWorkPackageMonitor != null) {
+                mWorkPackageMonitor.unregister();
+            }
+            mRegistered = false;
+        }
+        // If needed, show that intent is forwarded
+        // from managed profile to owner or other way around.
+        String profileSwitchMessage = mIntentForwarding.forwardMessageFor(
+                mViewModel.getChooserRequest().getTargetIntent());
+        if (profileSwitchMessage != null) {
+            Toast.makeText(this, profileSwitchMessage, Toast.LENGTH_LONG).show();
+        }
+        try {
+            if (cti.startAsCaller(this, options, user.getIdentifier())) {
+                maybeSendShareResult(cti);
+                maybeLogCrossProfileTargetLaunch(cti, user);
+            }
+        } catch (RuntimeException e) {
+            Slog.wtf(TAG,
+                    "Unable to launch as uid " + mActivityModel.getLaunchedFromUid()
+                            + " package " + mActivityModel.getLaunchedFromPackage() +
+                            ", while running in " + ActivityThread.currentProcessName(), e);
+        }
+    }
+
+    private void maybeLogCrossProfileTargetLaunch(TargetInfo cti, UserHandle currentUserHandle) {
+        if (!hasWorkProfile() || currentUserHandle.equals(getUser())) {
+            return;
+        }
+        DevicePolicyEventLogger
+                .createEvent(DevicePolicyEnums.RESOLVER_CROSS_PROFILE_TARGET_OPENED)
+                .setBoolean(
+                        currentUserHandle.equals(
+                                requireAnnotatedUserHandles().personalProfileUserHandle))
+                .setStrings(getMetricsCategory(),
+                        cti.isInDirectShareMetricsCategory() ? "direct_share" : "other_target")
+                .write();
+    }
+
+    private boolean hasWorkProfile() {
+        return requireAnnotatedUserHandles().workProfileUserHandle != null;
+    }
+    private LatencyTracker getLatencyTracker() {
+        return LatencyTracker.getInstance(this);
+    }
+
+    /**
+     * If {@code retainInOnStop} is set to true, we will not finish ourselves when onStop gets
+     * called and we are launched in a new task.
+     */
+    protected final void setRetainInOnStop(boolean retainInOnStop) {
+        mRetainInOnStop = retainInOnStop;
+    }
+
+    // @NonFinalForTesting
+    @VisibleForTesting
+    protected CrossProfileIntentsChecker createCrossProfileIntentsChecker() {
+        return new CrossProfileIntentsChecker(getContentResolver());
+    }
+
+    protected final EmptyStateProvider createEmptyStateProvider(
+            @Nullable UserHandle workProfileUserHandle) {
+        final EmptyStateProvider blockerEmptyStateProvider = createBlockerEmptyStateProvider();
+
+        final EmptyStateProvider workProfileOffEmptyStateProvider =
+                new WorkProfilePausedEmptyStateProvider(this, workProfileUserHandle,
+                        mLogic.getWorkProfileAvailabilityManager(),
+                        /* onSwitchOnWorkSelectedListener= */
+                        () -> {
+                            if (mOnSwitchOnWorkSelectedListener != null) {
+                                mOnSwitchOnWorkSelectedListener.onSwitchOnWorkSelected();
+                            }
+                        },
+                        getMetricsCategory());
+
+        final EmptyStateProvider noAppsEmptyStateProvider = new NoAppsAvailableEmptyStateProvider(
+                this,
+                workProfileUserHandle,
+                requireAnnotatedUserHandles().personalProfileUserHandle,
+                getMetricsCategory(),
+                requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch
         );
-        return Unit.INSTANCE;
+
+        // Return composite provider, the order matters (the higher, the more priority)
+        return new CompositeEmptyStateProvider(
+                blockerEmptyStateProvider,
+                workProfileOffEmptyStateProvider,
+                noAppsEmptyStateProvider
+        );
     }
 
-    @Nullable
-    private ChooserRequestParameters getChooserRequest() {
-        return ((ChooserActivityLogic) mLogic).getChooserRequestParameters();
+    private boolean supportsManagedProfiles(ResolveInfo resolveInfo) {
+        try {
+            ApplicationInfo appInfo = mPackageManager.getApplicationInfo(
+                    resolveInfo.activityInfo.packageName, 0 /* default flags */);
+            return appInfo.targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
     }
 
-    private ChooserRequestParameters requireChooserRequest() {
-        return requireNonNull(getChooserRequest());
+    private boolean hasManagedProfile() {
+        UserManager userManager = (UserManager) getSystemService(Context.USER_SERVICE);
+        if (userManager == null) {
+            return false;
+        }
+
+        try {
+            List<UserInfo> profiles = userManager.getProfiles(getUserId());
+            for (UserInfo userInfo : profiles) {
+                if (userInfo != null && userInfo.isManagedProfile()) {
+                    return true;
+                }
+            }
+        } catch (SecurityException e) {
+            return false;
+        }
+        return false;
     }
+
+    /**
+     * Returns the {@link UserHandle} to use when querying resolutions for intents in a
+     * {@link ResolverListController} configured for the provided {@code userHandle}.
+     */
+    protected final UserHandle getQueryIntentsUser(UserHandle userHandle) {
+        return requireAnnotatedUserHandles().getQueryIntentsUser(userHandle);
+    }
+
+    protected final boolean isLaunchedAsCloneProfile() {
+        UserHandle launchUser = requireAnnotatedUserHandles().userHandleSharesheetLaunchedAs;
+        UserHandle cloneUser = requireAnnotatedUserHandles().cloneProfileUserHandle;
+        return hasCloneProfile() && launchUser.equals(cloneUser);
+    }
+
+    private boolean hasCloneProfile() {
+        return requireAnnotatedUserHandles().cloneProfileUserHandle != null;
+    }
+
+    /**
+     * Returns the {@link List} of {@link UserHandle} to pass on to the
+     * {@link ResolverRankerServiceResolverComparator} as per the provided {@code userHandle}.
+     */
+    @VisibleForTesting(visibility = PROTECTED)
+    public final List<UserHandle> getResolverRankerServiceUserHandleList(UserHandle userHandle) {
+        return getResolverRankerServiceUserHandleListInternal(userHandle);
+    }
+
+
+    @VisibleForTesting
+    protected List<UserHandle> getResolverRankerServiceUserHandleListInternal(
+            UserHandle userHandle) {
+        List<UserHandle> userList = new ArrayList<>();
+        userList.add(userHandle);
+        // Add clonedProfileUserHandle to the list only if we are:
+        // a. Building the Personal Tab.
+        // b. CloneProfile exists on the device.
+        if (userHandle.equals(requireAnnotatedUserHandles().personalProfileUserHandle)
+                && hasCloneProfile()) {
+            userList.add(requireAnnotatedUserHandles().cloneProfileUserHandle);
+        }
+        return userList;
+    }
+
+    /**
+     * Start activity as a fixed user handle.
+     * @param cti TargetInfo to be launched.
+     * @param user User to launch this activity as.
+     */
+    @VisibleForTesting(visibility = VisibleForTesting.Visibility.PROTECTED)
+    public final void safelyStartActivityAsUser(TargetInfo cti, UserHandle user) {
+        safelyStartActivityAsUser(cti, user, null);
+    }
+
+    protected WindowInsets super_onApplyWindowInsets(View v, WindowInsets insets) {
+        mSystemWindowInsets = insets.getSystemWindowInsets();
+
+        mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
+                mSystemWindowInsets.right, 0);
+
+        // Need extra padding so the list can fully scroll up
+        // To accommodate for window insets
+        applyFooterView(mSystemWindowInsets.bottom);
+
+        return insets.consumeSystemWindowInsets();
+    }
+
+    @Override // ResolverListCommunicator
+    public final void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
+        if (!mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
+                (ChooserListAdapter) listAdapter,
+                mLogic.getWorkProfileAvailabilityManager().isWaitingToEnableWorkProfile())) {
+            // We no longer have any items... just finish the activity.
+            finish();
+        }
+    }
+
+    final Option optionForChooserTarget(TargetInfo target, int index) {
+        return new Option(getOrLoadDisplayLabel(target), index);
+    }
+
+    @Override // ResolverListCommunicator
+    public final void sendVoiceChoicesIfNeeded() {
+        if (!isVoiceInteraction()) {
+            // Clearly not needed.
+            return;
+        }
+
+        int count = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getCount();
+        final Option[] options = new Option[count];
+        for (int i = 0; i < options.length; i++) {
+            TargetInfo target = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getItem(i);
+            if (target == null) {
+                // If this occurs, a new set of targets is being loaded. Let that complete,
+                // and have the next call to send voice choices proceed instead.
+                return;
+            }
+            options[i] = optionForChooserTarget(target, i);
+        }
+
+        mPickOptionRequest = new ResolverActivity.PickTargetOptionRequest(
+                new VoiceInteractor.Prompt(getTitle()), options, null);
+        getVoiceInteractor().submitRequest(mPickOptionRequest);
+    }
+
+    /**
+     * Sets up the content view.
+     * @return <code>true</code> if the activity is finishing and creation should halt.
+     */
+    private boolean configureContentView(TargetDataLoader targetDataLoader) {
+        if (mChooserMultiProfilePagerAdapter.getActiveListAdapter() == null) {
+            throw new IllegalStateException("mMultiProfilePagerAdapter.getCurrentListAdapter() "
+                    + "cannot be null.");
+        }
+        Trace.beginSection("configureContentView");
+        // We partially rebuild the inactive adapter to determine if we should auto launch
+        // isTabLoaded will be true here if the empty state screen is shown instead of the list.
+        boolean rebuildCompleted = mChooserMultiProfilePagerAdapter.rebuildTabs(hasWorkProfile());
+
+        mLayoutId = mFeatureFlags.scrollablePreview()
+                ? R.layout.chooser_grid_scrollable_preview
+                : R.layout.chooser_grid;
+
+        setContentView(mLayoutId);
+        mChooserMultiProfilePagerAdapter.setupViewPager(
+                requireViewById(com.android.internal.R.id.profile_pager));
+        boolean result = postRebuildList(rebuildCompleted);
+        Trace.endSection();
+        return result;
+    }
+
+    /**
+     * Finishing procedures to be performed after the list has been rebuilt.
+     * </p>Subclasses must call postRebuildListInternal at the end of postRebuildList.
+     * @param rebuildCompleted
+     * @return <code>true</code> if the activity is finishing and creation should halt.
+     */
+    protected boolean postRebuildList(boolean rebuildCompleted) {
+        return postRebuildListInternal(rebuildCompleted);
+    }
+
+    /**
+     * Add a label to signify that the user can pick a different app.
+     * @param adapter The adapter used to provide data to item views.
+     */
+    public void addUseDifferentAppLabelIfNecessary(ResolverListAdapter adapter) {
+        final boolean useHeader = adapter.hasFilteredItem();
+        if (useHeader) {
+            FrameLayout stub = findViewById(com.android.internal.R.id.stub);
+            stub.setVisibility(View.VISIBLE);
+            TextView textView = (TextView) LayoutInflater.from(this).inflate(
+                    R.layout.resolver_different_item_header, null, false);
+            if (hasWorkProfile()) {
+                textView.setGravity(Gravity.CENTER);
+            }
+            stub.addView(textView);
+        }
+    }
+    private void setupViewVisibilities() {
+        ChooserListAdapter activeListAdapter =
+                mChooserMultiProfilePagerAdapter.getActiveListAdapter();
+        if (!mChooserMultiProfilePagerAdapter.shouldShowEmptyStateScreen(activeListAdapter)) {
+            addUseDifferentAppLabelIfNecessary(activeListAdapter);
+        }
+    }
+    /**
+     * Finishing procedures to be performed after the list has been rebuilt.
+     * @param rebuildCompleted
+     * @return <code>true</code> if the activity is finishing and creation should halt.
+     */
+    final boolean postRebuildListInternal(boolean rebuildCompleted) {
+        int count = mChooserMultiProfilePagerAdapter.getActiveListAdapter().getUnfilteredCount();
+
+        // We only rebuild asynchronously when we have multiple elements to sort. In the case where
+        // we're already done, we can check if we should auto-launch immediately.
+        if (rebuildCompleted && maybeAutolaunchActivity()) {
+            return true;
+        }
+
+        setupViewVisibilities();
+
+        if (hasWorkProfile()) {
+            setupProfileTabs();
+        }
+
+        return false;
+    }
+
+    private void setupProfileTabs() {
+        TabHost tabHost = findViewById(com.android.internal.R.id.profile_tabhost);
+        ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
+
+        mChooserMultiProfilePagerAdapter.setupProfileTabs(
+                getLayoutInflater(),
+                tabHost,
+                viewPager,
+                R.layout.resolver_profile_tab_button,
+                com.android.internal.R.id.profile_pager,
+                () -> onProfileTabSelected(viewPager.getCurrentItem()),
+                new OnProfileSelectedListener() {
+                    @Override
+                    public void onProfilePageSelected(@ProfileType int profileId, int pageNumber) {}
+
+                    @Override
+                    public void onProfilePageStateChanged(int state) {
+                        onHorizontalSwipeStateChanged(state);
+                    }
+                });
+        mOnSwitchOnWorkSelectedListener = () -> {
+            final View workTab =
+                    tabHost.getTabWidget().getChildAt(
+                            mChooserMultiProfilePagerAdapter.getPageNumberForProfile(PROFILE_WORK));
+            workTab.setFocusable(true);
+            workTab.setFocusableInTouchMode(true);
+            workTab.requestFocus();
+        };
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     private AnnotatedUserHandles requireAnnotatedUserHandles() {
         return requireNonNull(mLogic.getAnnotatedUserHandles());
@@ -412,7 +1304,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     @Nullable
     private ProfileRecord getProfileRecord(UserHandle userHandle) {
-        return mProfileRecords.get(userHandle.getIdentifier(), null);
+        return mProfileRecords.get(userHandle.getIdentifier());
     }
 
     @VisibleForTesting
@@ -435,25 +1327,22 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return context.getSharedPreferences(PINNED_SHARED_PREFS_NAME, MODE_PRIVATE);
     }
 
-    @Override
     protected ChooserMultiProfilePagerAdapter createMultiProfilePagerAdapter(
             Intent[] initialIntents,
             List<ResolveInfo> rList,
-            boolean filterLastUsed,
-            TargetDataLoader targetDataLoader) {
-        if (shouldShowTabs()) {
+            boolean filterLastUsed) {
+        if (hasWorkProfile()) {
             mChooserMultiProfilePagerAdapter = createChooserMultiProfilePagerAdapterForTwoProfiles(
-                    initialIntents, rList, filterLastUsed, targetDataLoader);
+                    initialIntents, rList, filterLastUsed);
         } else {
             mChooserMultiProfilePagerAdapter = createChooserMultiProfilePagerAdapterForOneProfile(
-                    initialIntents, rList, filterLastUsed, targetDataLoader);
+                    initialIntents, rList, filterLastUsed);
         }
         return mChooserMultiProfilePagerAdapter;
     }
 
-    @Override
     protected EmptyStateProvider createBlockerEmptyStateProvider() {
-        final boolean isSendAction = requireChooserRequest().isSendActionTarget();
+        final boolean isSendAction = mViewModel.getChooserRequest().isSendActionTarget();
 
         final EmptyState noWorkToPersonalEmptyState =
                 new DevicePolicyBlockerEmptyState(
@@ -492,21 +1381,27 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private ChooserMultiProfilePagerAdapter createChooserMultiProfilePagerAdapterForOneProfile(
             Intent[] initialIntents,
             List<ResolveInfo> rList,
-            boolean filterLastUsed,
-            TargetDataLoader targetDataLoader) {
+            boolean filterLastUsed) {
         ChooserGridAdapter adapter = createChooserGridAdapter(
                 /* context */ this,
-                mLogic.getPayloadIntents(),
+                mViewModel.getChooserRequest().getPayloadIntents(),
                 initialIntents,
                 rList,
                 filterLastUsed,
-                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle,
-                targetDataLoader);
+                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle
+        );
         return new ChooserMultiProfilePagerAdapter(
                 /* context */ this,
-                adapter,
+                ImmutableList.of(
+                        new TabConfig<>(
+                                PROFILE_PERSONAL,
+                                mDevicePolicyResources.getPersonalTabLabel(),
+                                mDevicePolicyResources.getPersonalTabAccessibilityLabel(),
+                                TAB_TAG_PERSONAL,
+                                adapter)),
                 createEmptyStateProvider(/* workProfileUserHandle= */ null),
                 /* workProfileQuietModeChecker= */ () -> false,
+                /* defaultProfile= */ PROFILE_PERSONAL,
                 /* workProfileUserHandle= */ null,
                 requireAnnotatedUserHandles().cloneProfileUserHandle,
                 mMaxTargetsPerRow,
@@ -516,29 +1411,39 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private ChooserMultiProfilePagerAdapter createChooserMultiProfilePagerAdapterForTwoProfiles(
             Intent[] initialIntents,
             List<ResolveInfo> rList,
-            boolean filterLastUsed,
-            TargetDataLoader targetDataLoader) {
+            boolean filterLastUsed) {
         int selectedProfile = findSelectedProfile();
         ChooserGridAdapter personalAdapter = createChooserGridAdapter(
                 /* context */ this,
-                mLogic.getPayloadIntents(),
+                mViewModel.getChooserRequest().getPayloadIntents(),
                 selectedProfile == PROFILE_PERSONAL ? initialIntents : null,
                 rList,
                 filterLastUsed,
-                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle,
-                targetDataLoader);
+                /* userHandle */ requireAnnotatedUserHandles().personalProfileUserHandle
+        );
         ChooserGridAdapter workAdapter = createChooserGridAdapter(
                 /* context */ this,
-                mLogic.getPayloadIntents(),
+                mViewModel.getChooserRequest().getPayloadIntents(),
                 selectedProfile == PROFILE_WORK ? initialIntents : null,
                 rList,
                 filterLastUsed,
-                /* userHandle */ requireAnnotatedUserHandles().workProfileUserHandle,
-                targetDataLoader);
+                /* userHandle */ requireAnnotatedUserHandles().workProfileUserHandle
+        );
         return new ChooserMultiProfilePagerAdapter(
                 /* context */ this,
-                personalAdapter,
-                workAdapter,
+                ImmutableList.of(
+                        new TabConfig<>(
+                                PROFILE_PERSONAL,
+                                mDevicePolicyResources.getPersonalTabLabel(),
+                                mDevicePolicyResources.getPersonalTabAccessibilityLabel(),
+                                TAB_TAG_PERSONAL,
+                                personalAdapter),
+                        new TabConfig<>(
+                                PROFILE_WORK,
+                                mDevicePolicyResources.getWorkTabLabel(),
+                                mDevicePolicyResources.getWorkTabAccessibilityLabel(),
+                                TAB_TAG_WORK,
+                                workAdapter)),
                 createEmptyStateProvider(requireAnnotatedUserHandles().workProfileUserHandle),
                 () -> mLogic.getWorkProfileAvailabilityManager().isQuietModeEnabled(),
                 selectedProfile,
@@ -549,12 +1454,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private int findSelectedProfile() {
-        int selectedProfile = getSelectedProfileExtra();
-        if (selectedProfile == -1) {
-            selectedProfile = getProfileForUser(
-                    requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch);
-        }
-        return selectedProfile;
+        return getProfileForUser(requireAnnotatedUserHandles().tabOwnerUserHandleForLaunch);
     }
 
     /**
@@ -567,7 +1467,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 .getUserInfo(UserHandle.myUserId()).isManagedProfile();
     }
 
-    @Override
+    //@Override
     protected PackageMonitor createPackageMonitor(ResolverListAdapter listAdapter) {
         return new PackageMonitor() {
             @Override
@@ -580,6 +1480,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     /**
      * Update UI to reflect changes in data.
      */
+    @Override
     public void handlePackagesChanged() {
         handlePackagesChanged(/* listAdapter */ null);
     }
@@ -597,23 +1498,20 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         } else {
             listAdapter.handlePackagesChanged();
         }
-        updateProfileViewButton();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume: " + getComponentName().flattenToShortString());
-        mFinishWhenStopped = false;
-        mRefinementManager.onActivityResume();
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        mChooserMultiProfilePagerAdapter.getActiveListAdapter().handlePackagesChanged();
+
+        if (mSystemWindowInsets != null) {
+            mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
+                    mSystemWindowInsets.right, 0);
+        }
         ViewPager viewPager = findViewById(com.android.internal.R.id.profile_pager);
         if (viewPager.isLayoutRtl()) {
-            mMultiProfilePagerAdapter.setupViewPager(viewPager);
+            mChooserMultiProfilePagerAdapter.setupViewPager(viewPager);
         }
 
         mShouldDisplayLandscape = shouldDisplayLandscape(newConfig.orientation);
@@ -643,7 +1541,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void updateTabPadding() {
-        if (shouldShowTabs()) {
+        if (hasWorkProfile()) {
             View tabs = findViewById(com.android.internal.R.id.tabs);
             float iconSize = getResources().getDimension(R.dimen.chooser_icon_size);
             // The entire width consists of icons or padding. Divide the item padding in half to get
@@ -703,45 +1601,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return resolver.query(uri, null, null, null, null);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (mRefinementManager != null) {
-            mRefinementManager.onActivityStop(isChangingConfigurations());
-        }
-
-        if (mFinishWhenStopped) {
-            mFinishWhenStopped = false;
-            finish();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        if (isFinishing()) {
-            mLatencyTracker.onActionCancel(ACTION_LOAD_SHARE_SHEET);
-        }
-
-        mBackgroundThreadPoolExecutor.shutdownNow();
-
-        destroyProfileRecords();
-    }
-
     private void destroyProfileRecords() {
-        for (int i = 0; i < mProfileRecords.size(); ++i) {
-            mProfileRecords.valueAt(i).destroy();
-        }
+        mProfileRecords.values().forEach(ProfileRecord::destroy);
         mProfileRecords.clear();
     }
 
     @Override // ResolverListCommunicator
     public Intent getReplacementIntent(ActivityInfo aInfo, Intent defIntent) {
-        ChooserRequestParameters chooserRequest = getChooserRequest();
-        if (chooserRequest == null) {
-            return defIntent;
-        }
+        ChooserRequest chooserRequest = mViewModel.getChooserRequest();
 
         Intent result = defIntent;
         if (chooserRequest.getReplacementExtras() != null) {
@@ -765,32 +1632,20 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return result;
     }
 
-    @Override
-    public void onActivityStarted(TargetInfo cti) {
-        ChooserRequestParameters chooserRequest = requireChooserRequest();
-        if (chooserRequest.getChosenComponentSender() != null) {
+    private void maybeSendShareResult(TargetInfo cti) {
+        if (mShareResultSender != null) {
             final ComponentName target = cti.getResolvedComponentName();
             if (target != null) {
-                final Intent fillIn = new Intent().putExtra(Intent.EXTRA_CHOSEN_COMPONENT, target);
-                try {
-                    chooserRequest.getChosenComponentSender().sendIntent(
-                            this, Activity.RESULT_OK, fillIn, null, null);
-                } catch (IntentSender.SendIntentException e) {
-                    Slog.e(TAG, "Unable to launch supplied IntentSender to report "
-                            + "the chosen component: " + e);
-                }
+                mShareResultSender.onComponentSelected(target, cti.isChooserTargetInfo());
             }
         }
     }
 
     private void addCallerChooserTargets() {
-        ChooserRequestParameters chooserRequest = requireChooserRequest();
+        ChooserRequest chooserRequest = mViewModel.getChooserRequest();
         if (!chooserRequest.getCallerChooserTargets().isEmpty()) {
             // Send the caller's chooser targets only to the default profile.
-            UserHandle defaultUser = (findSelectedProfile() == PROFILE_WORK)
-                    ? requireAnnotatedUserHandles().workProfileUserHandle
-                    : requireAnnotatedUserHandles().personalProfileUserHandle;
-            if (mChooserMultiProfilePagerAdapter.getCurrentUserHandle() == defaultUser) {
+            if (mChooserMultiProfilePagerAdapter.getActiveProfile() == findSelectedProfile()) {
                 mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults(
                         /* origTarget */ null,
                         new ArrayList<>(chooserRequest.getCallerChooserTargets()),
@@ -801,28 +1656,18 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
     }
 
-    @Override
-    public int getLayoutResource() {
-        return mFeatureFlags.scrollablePreview()
-                ? R.layout.chooser_grid_scrollable_preview
-                : R.layout.chooser_grid;
-    }
-
     @Override // ResolverListCommunicator
     public boolean shouldGetActivityMetadata() {
         return true;
     }
 
-    @Override
     public boolean shouldAutoLaunchSingleChoice(TargetInfo target) {
-        // Note that this is only safe because the Intent handled by the ChooserActivity is
-        // guaranteed to contain no extras unknown to the local ClassLoader. That is why this
-        // method can not be replaced in the ResolverActivity whole hog.
-        if (!super.shouldAutoLaunchSingleChoice(target)) {
+        if (target.isSuspended()) {
             return false;
         }
 
-        return getIntent().getBooleanExtra(Intent.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE, true);
+        return mActivityModel.getIntent().getBooleanExtra(Intent.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE,
+                true);
     }
 
     private void showTargetDetails(TargetInfo targetInfo) {
@@ -837,8 +1682,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         // TODO: implement these type-conditioned behaviors polymorphically, and consider moving
         // the logic into `ChooserTargetActionsDialogFragment.show()`.
         boolean isShortcutPinned = targetInfo.isSelectableTargetInfo() && targetInfo.isPinned();
-        IntentFilter intentFilter = targetInfo.isSelectableTargetInfo()
-                ? requireChooserRequest().getTargetIntentFilter() : null;
+        IntentFilter intentFilter;
+        intentFilter = targetInfo.isSelectableTargetInfo()
+                ? mViewModel.getChooserRequest().getShareTargetFilter() : null;
         String shortcutTitle = targetInfo.isSelectableTargetInfo()
                 ? targetInfo.getDisplayLabel().toString() : null;
         String shortcutIdKey = targetInfo.getDirectShareShortcutId();
@@ -855,22 +1701,25 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 intentFilter);
     }
 
-    @Override
-    protected boolean onTargetSelected(TargetInfo target, boolean alwaysCheck) {
+    protected boolean onTargetSelected(TargetInfo target) {
         if (mRefinementManager.maybeHandleSelection(
                 target,
-                requireChooserRequest().getRefinementIntentSender(),
+                mViewModel.getChooserRequest().getRefinementIntentSender(),
                 getApplication(),
                 getMainThreadHandler())) {
             return false;
         }
         updateModelAndChooserCounts(target);
         maybeRemoveSharedText(target);
-        return super.onTargetSelected(target, alwaysCheck);
+        safelyStartActivity(target);
+
+        // Rely on the ActivityManager to pop up a dialog regarding app suspension
+        // and return false
+        return !target.isSuspended();
     }
 
     @Override
-    public void startSelected(int which, boolean always, boolean filtered) {
+    public void startSelected(int which, /* unused */ boolean always, boolean filtered) {
         ChooserListAdapter currentListAdapter =
                 mChooserMultiProfilePagerAdapter.getActiveListAdapter();
         TargetInfo targetInfo = currentListAdapter
@@ -893,8 +1742,23 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 return;
             }
         }
+        if (isFinishing()) {
+            return;
+        }
 
-        super.startSelected(which, always, filtered);
+        TargetInfo target = mChooserMultiProfilePagerAdapter.getActiveListAdapter()
+                .targetInfoForPosition(which, filtered);
+        if (target != null) {
+            if (onTargetSelected(target)) {
+                MetricsLogger.action(
+                        this, MetricsEvent.ACTION_APP_DISAMBIG_TAP);
+                MetricsLogger.action(this,
+                        mChooserMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()
+                                ? MetricsEvent.ACTION_HIDE_APP_DISAMBIG_APP_FEATURED
+                                : MetricsEvent.ACTION_HIDE_APP_DISAMBIG_NONE_FEATURED);
+                finish();
+            }
+        }
 
         // TODO: both of the conditions around this switch logic *should* be redundant, and
         // can be removed if certain invariants can be guaranteed. In particular, it seems
@@ -914,7 +1778,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                             targetInfo.getResolveInfo().activityInfo.processName,
                             which,
                             /* directTargetAlsoRanked= */ getRankedPosition(targetInfo),
-                            requireChooserRequest().getCallerChooserTargets().size(),
+                            mViewModel.getChooserRequest().getCallerChooserTargets().size(),
                             targetInfo.getHashedTargetIdForMetrics(this),
                             targetInfo.isPinned(),
                             mIsSuccessfullySelected,
@@ -951,7 +1815,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                             mIsSuccessfullySelected,
                             selectionCost
                     );
-                    return;
             }
         }
     }
@@ -973,13 +1836,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return -1;
     }
 
-    @Override
-    protected boolean shouldAddFooterView() {
-        // To accommodate for window insets
-        return true;
-    }
-
-    @Override
     protected void applyFooterView(int height) {
         mChooserMultiProfilePagerAdapter.setFooterHeightInEveryAdapter(height);
     }
@@ -1001,7 +1857,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (info != null) {
             sendClickToAppPredictor(info);
             final ResolveInfo ri = info.getResolveInfo();
-            Intent targetIntent = mLogic.getTargetIntent();
+            Intent targetIntent = mViewModel.getChooserRequest().getTargetIntent();
             if (ri != null && ri.activityInfo != null && targetIntent != null) {
                 ChooserListAdapter currentListAdapter =
                         mChooserMultiProfilePagerAdapter.getActiveListAdapter();
@@ -1029,7 +1885,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (targetIntent == null) {
             return;
         }
-        Intent originalTargetIntent = new Intent(requireChooserRequest().getTargetIntent());
+        Intent originalTargetIntent = new Intent(mViewModel.getChooserRequest().getTargetIntent());
         // Our TargetInfo implementations add associated component to the intent, let's do the same
         // for the sake of the comparison below.
         if (targetIntent.getComponent() != null) {
@@ -1103,59 +1959,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 ? null : record.appPredictor;
     }
 
-    /**
-     * Sort intents alphabetically based on display label.
-     */
-    static class AzInfoComparator implements Comparator<DisplayResolveInfo> {
-        Comparator<DisplayResolveInfo> mComparator;
-        AzInfoComparator(Context context) {
-            Collator collator = Collator
-                        .getInstance(context.getResources().getConfiguration().locale);
-            // Adding two stage comparator, first stage compares using displayLabel, next stage
-            //  compares using resolveInfo.userHandle
-            mComparator = Comparator.comparing(DisplayResolveInfo::getDisplayLabel, collator)
-                    .thenComparingInt(target -> target.getResolveInfo().userHandle.getIdentifier());
-        }
-
-        @Override
-        public int compare(
-                DisplayResolveInfo lhsp, DisplayResolveInfo rhsp) {
-            return mComparator.compare(lhsp, rhsp);
-        }
-    }
-
     protected EventLog getEventLog() {
         return mEventLog;
-    }
-
-    public class ChooserListController extends ResolverListController {
-        public ChooserListController(
-                Context context,
-                PackageManager pm,
-                Intent targetIntent,
-                String referrerPackageName,
-                int launchedFromUid,
-                AbstractResolverComparator resolverComparator,
-                UserHandle queryIntentsAsUser) {
-            super(
-                    context,
-                    pm,
-                    targetIntent,
-                    referrerPackageName,
-                    launchedFromUid,
-                    resolverComparator,
-                    queryIntentsAsUser);
-        }
-
-        @Override
-        public boolean isComponentFiltered(ComponentName name) {
-            return requireChooserRequest().getFilteredComponentNames().contains(name);
-        }
-
-        @Override
-        public boolean isComponentPinned(ComponentName name) {
-            return mPinnedSharedPrefs.getBoolean(name.flattenToString(), false);
-        }
     }
 
     @VisibleForTesting
@@ -1165,9 +1970,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             Intent[] initialIntents,
             List<ResolveInfo> rList,
             boolean filterLastUsed,
-            UserHandle userHandle,
-            TargetDataLoader targetDataLoader) {
-        ChooserRequestParameters parameters = requireChooserRequest();
+            UserHandle userHandle) {
+        ChooserRequest request = mViewModel.getChooserRequest();
         ChooserListAdapter chooserListAdapter = createChooserListAdapter(
                 context,
                 payloadIntents,
@@ -1176,17 +1980,17 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 filterLastUsed,
                 createListController(userHandle),
                 userHandle,
-                mLogic.getTargetIntent(),
-                parameters.getReferrerFillInIntent(),
-                mMaxTargetsPerRow,
-                targetDataLoader);
+                request.getTargetIntent(),
+                request.getReferrerFillInIntent(),
+                mMaxTargetsPerRow
+        );
 
         return new ChooserGridAdapter(
                 context,
                 new ChooserGridAdapter.ChooserActivityDelegate() {
                     @Override
                     public boolean shouldShowTabs() {
-                        return ChooserActivity.this.shouldShowTabs();
+                        return hasWorkProfile();
                     }
 
                     @Override
@@ -1212,13 +2016,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                             showTargetDetails(longPressedTargetInfo);
                         }
                     }
-
-                    @Override
-                    public void updateProfileViewButton(View newButtonFromProfileRow) {
-                        mProfileView = newButtonFromProfileRow;
-                        mProfileView.setOnClickListener(ChooserActivity.this::onProfileClick);
-                        ChooserActivity.this.updateProfileViewButton();
-                    }
                 },
                 chooserListAdapter,
                 shouldShowContentPreview(),
@@ -1237,8 +2034,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             UserHandle userHandle,
             Intent targetIntent,
             Intent referrerFillInIntent,
-            int maxTargetsPerRow,
-            TargetDataLoader targetDataLoader) {
+            int maxTargetsPerRow) {
         UserHandle initialIntentsUserSpace = isLaunchedAsCloneProfile()
                 && userHandle.equals(requireAnnotatedUserHandles().personalProfileUserHandle)
                 ? requireAnnotatedUserHandles().cloneProfileUserHandle : userHandle;
@@ -1253,30 +2049,35 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 targetIntent,
                 referrerFillInIntent,
                 this,
-                context.getPackageManager(),
+                mPackageManager,
                 getEventLog(),
                 maxTargetsPerRow,
                 initialIntentsUserSpace,
-                targetDataLoader,
+                mTargetDataLoader,
                 () -> {
                     ProfileRecord record = getProfileRecord(userHandle);
                     if (record != null && record.shortcutLoader != null) {
                         record.shortcutLoader.reset();
                     }
-                });
+                },
+                mFeatureFlags);
     }
 
-    @Override
     protected Unit onWorkProfileStatusUpdated() {
         UserHandle workUser = requireAnnotatedUserHandles().workProfileUserHandle;
         ProfileRecord record = workUser == null ? null : getProfileRecord(workUser);
         if (record != null && record.shortcutLoader != null) {
             record.shortcutLoader.reset();
         }
-        return super.onWorkProfileStatusUpdated();
+        if (mChooserMultiProfilePagerAdapter.getCurrentUserHandle().equals(
+                requireAnnotatedUserHandles().workProfileUserHandle)) {
+            mChooserMultiProfilePagerAdapter.rebuildActiveTab(true);
+        } else {
+            mChooserMultiProfilePagerAdapter.clearInactiveProfileCache();
+        }
+        return Unit.INSTANCE;
     }
 
-    @Override
     @VisibleForTesting
     protected ChooserListController createListController(UserHandle userHandle) {
         AppPredictor appPredictor = getAppPredictor(userHandle);
@@ -1284,8 +2085,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (appPredictor != null) {
             resolverComparator = new AppPredictionServiceResolverComparator(
                     this,
-                    mLogic.getTargetIntent(),
-                    mLogic.getReferrerPackageName(),
+                    mViewModel.getChooserRequest().getTargetIntent(),
+                    mViewModel.getChooserRequest().getLaunchedFromPackage(),
                     appPredictor,
                     userHandle,
                     getEventLog(),
@@ -1295,8 +2096,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             resolverComparator =
                     new ResolverRankerServiceResolverComparator(
                             this,
-                            mLogic.getTargetIntent(),
-                            mLogic.getReferrerPackageName(),
+                            mViewModel.getChooserRequest().getTargetIntent(),
+                            mViewModel.getChooserRequest().getReferrerPackage(),
                             null,
                             getEventLog(),
                             getResolverRankerServiceUserHandleList(userHandle),
@@ -1305,12 +2106,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         return new ChooserListController(
                 this,
-                mPm,
-                mLogic.getTargetIntent(),
-                mLogic.getReferrerPackageName(),
+                mPackageManager,
+                mViewModel.getChooserRequest().getTargetIntent(),
+                mViewModel.getChooserRequest().getReferrerPackage(),
                 requireAnnotatedUserHandles().userIdOfCallingApp,
                 resolverComparator,
-                getQueryIntentsUser(userHandle));
+                getQueryIntentsUser(userHandle),
+                mViewModel.getChooserRequest().getFilteredComponentNames(),
+                mPinnedSharedPrefs);
     }
 
     @VisibleForTesting
@@ -1319,11 +2122,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private ChooserActionFactory createChooserActionFactory() {
-        ChooserRequestParameters request = requireChooserRequest();
+        ChooserRequest request = mViewModel.getChooserRequest();
         return new ChooserActionFactory(
                 this,
                 request.getTargetIntent(),
-                request.getReferrerPackageName(),
+                request.getLaunchedFromPackage(),
                 request.getChooserActions(),
                 request.getModifyShareAction(),
                 mImageEditor,
@@ -1354,12 +2157,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                         mFinishWhenStopped = true;
                     }
                 },
+                mShareResultSender,
                 (status) -> {
                     if (status != null) {
                         setResult(status);
                     }
                     finish();
-                });
+                },
+                mClipboardManager);
     }
 
     /*
@@ -1404,8 +2209,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 updateTabPadding();
             }
 
-            UserHandle currentUserHandle = mChooserMultiProfilePagerAdapter.getCurrentUserHandle();
-            int currentProfile = getProfileForUser(currentUserHandle);
+            int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
             int initialProfile = findSelectedProfile();
             if (currentProfile != initialProfile) {
                 return;
@@ -1432,7 +2236,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         int offset = mSystemWindowInsets != null ? mSystemWindowInsets.bottom : 0;
         int rowsToShow = gridAdapter.getSystemRowCount()
-                + gridAdapter.getProfileRowCount()
                 + gridAdapter.getServiceTargetRowCount()
                 + gridAdapter.getCallerAndRankedTargetRowCount();
 
@@ -1455,7 +2258,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             offset += stickyContentPreview.getHeight();
         }
 
-        if (shouldShowTabs()) {
+        if (hasWorkProfile()) {
             offset += findViewById(com.android.internal.R.id.tabs).getHeight();
         }
 
@@ -1512,7 +2315,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return PROFILE_PERSONAL;
     }
 
-    @Override
     protected void onListRebuilt(ResolverListAdapter listAdapter, boolean rebuildComplete) {
         setupScrollListener();
         maybeSetupGlobalLayoutListener();
@@ -1582,7 +2384,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             adapter.completeServiceTargetLoading();
         }
 
-        if (mMultiProfilePagerAdapter.getActiveListAdapter() == adapter) {
+        if (mChooserMultiProfilePagerAdapter.getActiveListAdapter() == adapter) {
             long duration = Tracer.INSTANCE.endLaunchToShortcutTrace();
             if (duration >= 0) {
                 Log.d(TAG, "stat to first shortcut time: " + duration + " ms");
@@ -1597,7 +2399,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (mResolverDrawerLayout == null) {
             return;
         }
-        int elevatedViewResId = shouldShowTabs() ? com.android.internal.R.id.tabs : com.android.internal.R.id.chooser_header;
+        int elevatedViewResId = hasWorkProfile() ?
+                com.android.internal.R.id.tabs : com.android.internal.R.id.chooser_header;
         final View elevatedView = mResolverDrawerLayout.findViewById(elevatedViewResId);
         final float defaultElevation = elevatedView.getElevation();
         final float chooserHeaderScrollElevation =
@@ -1635,7 +2438,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void maybeSetupGlobalLayoutListener() {
-        if (shouldShowTabs()) {
+        if (hasWorkProfile()) {
             return;
         }
         final View recyclerView = mChooserMultiProfilePagerAdapter.getActiveAdapterView();
@@ -1669,9 +2472,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (!shouldShowContentPreview()) {
             return false;
         }
-        boolean isEmpty = mMultiProfilePagerAdapter.getListAdapterForUserHandle(
+        boolean isEmpty = mChooserMultiProfilePagerAdapter.getListAdapterForUserHandle(
                 UserHandle.of(UserHandle.myUserId())).getCount() == 0;
-        return (mFeatureFlags.scrollablePreview() || shouldShowTabs())
+        return (mFeatureFlags.scrollablePreview() || hasWorkProfile())
                 && (!isEmpty || shouldShowContentPreviewWhenEmpty());
     }
 
@@ -1690,7 +2493,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
      * @return true if we want to show the content preview area
      */
     protected boolean shouldShowContentPreview() {
-        ChooserRequestParameters chooserRequest = getChooserRequest();
+        ChooserRequest chooserRequest = mViewModel.getChooserRequest();
         return (chooserRequest != null) && chooserRequest.isSendActionTarget();
     }
 
@@ -1735,34 +2538,22 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         contentPreviewContainer.setVisibility(View.GONE);
     }
 
-    private View findRootView() {
-        if (mContentView == null) {
-            mContentView = findViewById(android.R.id.content);
-        }
-        return mContentView;
-    }
-
-    /**
-     * Intentionally override the {@link ResolverActivity} implementation as we only need that
-     * implementation for the intent resolver case.
-     */
-    @Override
-    public void onButtonClick(View v) {}
-
-    /**
-     * Intentionally override the {@link ResolverActivity} implementation as we only need that
-     * implementation for the intent resolver case.
-     */
-    @Override
-    protected void resetButtonBar() {}
-
-    @Override
     protected String getMetricsCategory() {
         return METRICS_CATEGORY_CHOOSER;
     }
 
-    @Override
-    protected void onProfileTabSelected() {
+    protected void onProfileTabSelected(int currentPage) {
+        setupViewVisibilities();
+        maybeLogProfileChange();
+        if (hasWorkProfile()) {
+            // The device policy logger is only concerned with sessions that include a work profile.
+            DevicePolicyEventLogger
+                    .createEvent(DevicePolicyEnums.RESOLVER_SWITCH_TABS)
+                    .setInt(currentPage)
+                    .setStrings(getMetricsCategory())
+                    .write();
+        }
+
         // This fixes an edge case where after performing a variety of gestures, vertical scrolling
         // ends up disabled. That's because at some point the old tab's vertical scrolling is
         // disabled and the new tab's is enabled. For context, see b/159997845
@@ -1772,14 +2563,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
     }
 
-    @Override
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
-        if (shouldShowTabs()) {
+        if (hasWorkProfile()) {
             mChooserMultiProfilePagerAdapter
                     .setEmptyStateBottomOffset(insets.getSystemWindowInsetBottom());
         }
 
-        WindowInsets result = super.onApplyWindowInsets(v, insets);
+        WindowInsets result = super_onApplyWindowInsets(v, insets);
         if (mResolverDrawerLayout != null) {
             mResolverDrawerLayout.requestLayout();
         }
@@ -1798,7 +2588,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         layoutManager.setVerticalScrollEnabled(enabled);
     }
 
-    @Override
     void onHorizontalSwipeStateChanged(int state) {
         if (state == ViewPager.SCROLL_STATE_DRAGGING) {
             if (mScrollStatus == SCROLL_STATUS_IDLE) {
@@ -1813,7 +2602,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
     }
 
-    @Override
     protected void maybeLogProfileChange() {
         getEventLog().logSharesheetProfileChanged();
     }

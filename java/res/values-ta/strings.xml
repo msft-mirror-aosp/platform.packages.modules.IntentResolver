@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{இணைப்புடன் வீடியோவைப் பகிர்கிறது}other{இணைப்புடன் # வீடியோக்களைப் பகிர்கிறது}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{வார்த்தைகளைக் கொண்ட ஃபைலைப் பகிர்கிறது}other{வார்த்தைகளைக் கொண்ட # ஃபைல்களைப் பகிர்கிறது}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{இணைப்பைக் கொண்ட ஃபைலைப் பகிர்கிறது}other{இணைப்பைக் கொண்ட # ஃபைல்களைப் பகிர்கிறது}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"ஆல்பத்தைப் பகிர்தல்"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{படம் மட்டும்}other{படங்கள் மட்டும்}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{வீடியோ மட்டும்}other{வீடியோக்கள் மட்டும்}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{ஃபைல் மட்டும்}other{ஃபைல்கள் மட்டும்}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"இந்த ஆப்ஸிற்கு ரெக்கார்டு செய்வதற்கான அனுமதி வழங்கப்படவில்லை, எனினும் இந்த USB சாதனம் மூலம் ஆடியோவைப் பதிவுசெய்ய முடியும்."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"தனிப்பட்ட சுயவிவரம்"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"பணிச் சுயவிவரம்"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"ரகசியம்"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"தனிப்பட்ட காட்சி"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"பணிக் காட்சி"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"ரகசியக் காட்சி"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"இதை உங்கள் IT நிர்வாகி தடைசெய்துள்ளார்"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"பணி ஆப்ஸுடன் இந்த உள்ளடக்கத்தைப் பகிர முடியாது"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"பணி ஆப்ஸ் மூலம் இந்த உள்ளடக்கத்தைத் திறக்க முடியாது"</string>

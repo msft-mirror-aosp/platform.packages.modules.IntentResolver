@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.v2;
+package com.android.intentresolver.v2.profiles;
 
 import android.content.Context;
 import android.os.UserHandle;
@@ -27,7 +27,6 @@ import androidx.viewpager.widget.PagerAdapter;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverListAdapter;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
-import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
 
@@ -37,40 +36,20 @@ import java.util.function.Supplier;
 /**
  * A {@link PagerAdapter} which describes the work and personal profile intent resolver screens.
  */
-@VisibleForTesting
 public class ResolverMultiProfilePagerAdapter extends
         MultiProfilePagerAdapter<ListView, ResolverListAdapter, ResolverListAdapter> {
     private final BottomPaddingOverrideSupplier mBottomPaddingOverrideSupplier;
 
-    public ResolverMultiProfilePagerAdapter(
-            Context context,
-            ResolverListAdapter adapter,
-            EmptyStateProvider emptyStateProvider,
-            Supplier<Boolean> workProfileQuietModeChecker,
-            UserHandle workProfileUserHandle,
-            UserHandle cloneProfileUserHandle) {
-        this(
-                context,
-                ImmutableList.of(adapter),
-                emptyStateProvider,
-                workProfileQuietModeChecker,
-                /* defaultProfile= */ 0,
-                workProfileUserHandle,
-                cloneProfileUserHandle,
-                new BottomPaddingOverrideSupplier());
-    }
-
     public ResolverMultiProfilePagerAdapter(Context context,
-                                            ResolverListAdapter personalAdapter,
-                                            ResolverListAdapter workAdapter,
+                                            ImmutableList<TabConfig<ResolverListAdapter>> tabs,
                                             EmptyStateProvider emptyStateProvider,
                                             Supplier<Boolean> workProfileQuietModeChecker,
-                                            @Profile int defaultProfile,
+                                            @ProfileType int defaultProfile,
                                             UserHandle workProfileUserHandle,
                                             UserHandle cloneProfileUserHandle) {
         this(
                 context,
-                ImmutableList.of(personalAdapter, workAdapter),
+                tabs,
                 emptyStateProvider,
                 workProfileQuietModeChecker,
                 defaultProfile,
@@ -81,17 +60,17 @@ public class ResolverMultiProfilePagerAdapter extends
 
     private ResolverMultiProfilePagerAdapter(
             Context context,
-            ImmutableList<ResolverListAdapter> listAdapters,
+            ImmutableList<TabConfig<ResolverListAdapter>> tabs,
             EmptyStateProvider emptyStateProvider,
             Supplier<Boolean> workProfileQuietModeChecker,
-            @Profile int defaultProfile,
+            @ProfileType int defaultProfile,
             UserHandle workProfileUserHandle,
             UserHandle cloneProfileUserHandle,
             BottomPaddingOverrideSupplier bottomPaddingOverrideSupplier) {
         super(
                         listAdapter -> listAdapter,
                         (listView, bindAdapter) -> listView.setAdapter(bindAdapter),
-                listAdapters,
+                tabs,
                 emptyStateProvider,
                 workProfileQuietModeChecker,
                 defaultProfile,
@@ -109,11 +88,13 @@ public class ResolverMultiProfilePagerAdapter extends
 
     /** Un-check any item(s) that may be checked in any of our inactive adapter(s). */
     public void clearCheckedItemsInInactiveProfiles() {
-        // TODO: apply to all inactive adapters; for now we just have the one.
-        ListView inactiveListView = getInactiveAdapterView();
-        if (inactiveListView.getCheckedItemCount() > 0) {
-            inactiveListView.setItemChecked(inactiveListView.getCheckedItemPosition(), false);
-        }
+        // TODO: The "inactive" condition is legacy logic. Could we simplify and clear-all?
+        forEachInactivePage(pageNumber -> {
+            ListView inactiveListView = getListViewForIndex(pageNumber);
+            if (inactiveListView.getCheckedItemCount() > 0) {
+                inactiveListView.setItemChecked(inactiveListView.getCheckedItemPosition(), false);
+            }
+        });
     }
 
     private static class BottomPaddingOverrideSupplier implements Supplier<Optional<Integer>> {

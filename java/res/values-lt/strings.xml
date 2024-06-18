@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{Bendrinamas vaizdo įrašas su nuoroda}one{Bendrinamas # vaizdo įrašas su nuoroda}few{Bendrinami # vaizdo įrašai su nuoroda}many{Bendrinamas # vaizdo įrašo su nuoroda}other{Bendrinama # vaizdo įrašų su nuoroda}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{Bendrinamas failas su tekstu}one{Bendrinamas # failas su tekstu}few{Bendrinami # failai su tekstu}many{Bendrinama # failo su tekstu}other{Bendrinama # failų su tekstu}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{Bendrinamas failas su nuoroda}one{Bendrinamas # failas su nuoroda}few{Bendrinami # failai su nuoroda}many{Bendrinama # failo su nuoroda}other{Bendrinama # failų su nuoroda}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"Bendrinamas albumas"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Tik vaizdas}one{Tik vaizdai}few{Tik vaizdai}many{Tik vaizdai}other{Tik vaizdai}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Tik vaizdo įrašas}one{Tik vaizdo įrašai}few{Tik vaizdo įrašai}many{Tik vaizdo įrašai}other{Tik vaizdo įrašai}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Tik failas}one{Tik failai}few{Tik failai}many{Tik failai}other{Tik failai}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Šiai programai nebuvo suteiktas leidimas įrašyti, bet ji gali užfiksuoti garsą per šį USB įrenginį."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Asmeninis"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Darbo"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Privatus"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Asmeninė peržiūra"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Darbo peržiūra"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Privatus rodinys"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Užblokavo jūsų IT administratorius"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Šio turinio negalima bendrinti su darbo programomis"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Šio turinio negalima atidaryti naudojant darbo programas"</string>

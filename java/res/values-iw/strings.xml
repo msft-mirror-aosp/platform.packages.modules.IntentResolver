@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{שיתוף סרטון עם קישור}one{שיתוף # סרטונים עם קישור}two{שיתוף # סרטונים עם קישור}other{שיתוף # סרטונים עם קישור}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{שיתוף קובץ עם טקסט}one{שיתוף # קבצים עם טקסט}two{שיתוף # קבצים עם טקסט}other{שיתוף # קבצים עם טקסט}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{שיתוף תמונה עם קישור}one{שיתוף # תמונות עם קישור}two{שיתוף # תמונות עם קישור}other{שיתוף # תמונות עם קישור}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"שיתוף האלבום"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{תמונה בלבד}one{תמונות בלבד}two{תמונות בלבד}other{תמונות בלבד}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{סרטון בלבד}one{סרטונים בלבד}two{סרטונים בלבד}other{סרטונים בלבד}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{קובץ בלבד}one{קבצים בלבד}two{קבצים בלבד}other{קבצים בלבד}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏לאפליקציה זו לא ניתנה הרשאת הקלטה, אבל אפשר להקליט אודיו באמצעות התקן ה-USB הזה."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"אישי"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"עבודה"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"פרטי"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"תצוגה אישית"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"תצוגת עבודה"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"תצוגה פרטית"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"‏נחסם על ידי מנהל ה-IT"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"אי אפשר לשתף את התוכן הזה עם אפליקציות לעבודה"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"אי אפשר לפתוח את התוכן הזה באמצעות אפליקציות לעבודה"</string>
