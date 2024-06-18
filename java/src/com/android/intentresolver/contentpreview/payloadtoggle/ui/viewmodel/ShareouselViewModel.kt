@@ -24,6 +24,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.CustomActionsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectablePreviewsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectionInteractor
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
@@ -55,7 +56,8 @@ data class ShareouselViewModel(
     /** List of action chips presented underneath Shareousel. */
     val actions: Flow<List<ActionChipViewModel>>,
     /** Creates a [ShareouselPreviewViewModel] for a [PreviewModel] present in [previews]. */
-    val preview: (index: Int, key: PreviewModel) -> ShareouselPreviewViewModel,
+    val preview:
+        (key: PreviewModel, index: Int?, scope: CoroutineScope) -> ShareouselPreviewViewModel,
 )
 
 @Module
@@ -112,7 +114,7 @@ interface ShareouselViewModelModule {
                             }
                         }
                     },
-                preview = { index, key ->
+                preview = { key, index, previewScope ->
                     keySet.value?.maybeLoad(index)
                     val previewInteractor = interactor.preview(key)
                     val contentType =
@@ -121,8 +123,19 @@ interface ShareouselViewModelModule {
                             mimeTypeClassifier.isVideoType(key.mimeType) -> ContentType.Video
                             else -> ContentType.Other
                         }
+                    val initialBitmapValue =
+                        key.previewUri?.let {
+                            imageLoader.getCachedBitmap(it)?.let { ValueUpdate.Value(it) }
+                        } ?: ValueUpdate.Absent
                     ShareouselPreviewViewModel(
-                        bitmap = flow { emit(key.previewUri?.let { imageLoader(it) }) },
+                        bitmapLoadState =
+                            flow {
+                                    emit(
+                                        key.previewUri?.let { ValueUpdate.Value(imageLoader(it)) }
+                                            ?: ValueUpdate.Absent
+                                    )
+                                }
+                                .stateIn(previewScope, SharingStarted.Eagerly, initialBitmapValue),
                         contentType = contentType,
                         isSelected = previewInteractor.isSelected,
                         setSelected = previewInteractor::setSelected,
@@ -134,9 +147,10 @@ interface ShareouselViewModelModule {
     }
 }
 
-private fun PreviewsModel.maybeLoad(index: Int) {
-    when (index) {
-        previewModels.indices.firstOrNull() -> loadMoreLeft?.invoke()
-        previewModels.indices.lastOrNull() -> loadMoreRight?.invoke()
+private fun PreviewsModel.maybeLoad(index: Int?) {
+    when {
+        index == null -> {}
+        index <= leftTriggerIndex -> loadMoreLeft?.invoke()
+        index >= rightTriggerIndex -> loadMoreRight?.invoke()
     }
 }

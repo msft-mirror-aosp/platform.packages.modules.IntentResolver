@@ -27,6 +27,9 @@ import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
 import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.readSize
@@ -59,6 +62,7 @@ class CursorPreviewsInteractorTest {
             this.focusedItemIndex = focusedItemIndex
             this.pageSize = pageSize
             this.maxLoadedPages = maxLoadedPages
+            this.targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
             uriMetadataReader =
                 object : UriMetadataReader {
                     override fun getMetadata(uri: Uri): FileInfo =
@@ -103,9 +107,15 @@ class CursorPreviewsInteractorTest {
                         )
                     }
                 }
-                .viewBy { getString(0)?.let { uriStr -> CursorRow(Uri.parse(uriStr), readSize()) } }
+                .viewBy {
+                    getString(0)?.let { uriStr ->
+                        CursorRow(Uri.parse(uriStr), readSize(), position)
+                    }
+                }
         val initialPreviews: List<PreviewModel> =
-            initialSelectionRange.map { i -> PreviewModel(uri = uri(i), mimeType = "image/bitmap") }
+            initialSelectionRange.map { i ->
+                PreviewModel(uri = uri(i), mimeType = "image/bitmap", order = i)
+            }
     }
 
     @Test
@@ -136,7 +146,8 @@ class CursorPreviewsInteractorTest {
                                         0 -> 2f
                                         3 -> 4f
                                         else -> 1f
-                                    }
+                                    },
+                                order = it,
                             )
                         }
                     )
@@ -144,6 +155,8 @@ class CursorPreviewsInteractorTest {
                 assertThat(startIdx).isEqualTo(0)
                 assertThat(loadMoreLeft).isNull()
                 assertThat(loadMoreRight).isNotNull()
+                assertThat(leftTriggerIndex).isEqualTo(2)
+                assertThat(rightTriggerIndex).isEqualTo(4)
             }
         }
 
@@ -254,6 +267,34 @@ class CursorPreviewsInteractorTest {
             assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme24", "ssp24", "fragment24"))
             assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreLeft).isNull()
+        }
+
+    @Test
+    fun unclaimedRecordsGotUpdatedInSelectionInteractor() =
+        runTestWithDeps(
+            initialSelection = listOf(1),
+            focusedItemIndex = 0,
+            cursor = listOf(0, 1),
+            cursorStartPosition = 1,
+        ) { deps ->
+            previewSelectionsRepository.selections.value =
+                PreviewModel(
+                    uri = uri(1),
+                    mimeType = "image/png",
+                    order = 0,
+                ).let { mapOf(it.uri to it) }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
+            }
+            runCurrent()
+
+            assertThat(previewSelectionsRepository.selections.value.values).containsExactly(
+                PreviewModel(
+                    uri = uri(1),
+                    mimeType = "image/bitmap",
+                    order = 1,
+                )
+            )
         }
 }
 

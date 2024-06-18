@@ -22,6 +22,7 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
+import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
@@ -392,6 +393,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             // so we will now finish ourself since being no longer visible,
             // the user probably can't get back to us.
             if (!isChangingConfigurations()) {
+                Log.d(TAG, "finishing in onStop");
                 finish();
             }
         }
@@ -724,6 +726,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void onAppTargetsLoaded(ResolverListAdapter listAdapter) {
+        Log.d(TAG, "onAppTargetsLoaded("
+                + "listAdapter.userHandle=" + listAdapter.getUserHandle() + ")");
+
         if (mChooserMultiProfilePagerAdapter == null) {
             return;
         }
@@ -859,6 +864,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         final TargetInfo target = mChooserMultiProfilePagerAdapter.getActiveListAdapter()
                 .targetInfoForPosition(0, false);
         if (shouldAutoLaunchSingleChoice(target)) {
+            Log.d(TAG, "auto launching " + target + " and finishing.");
             safelyStartActivity(target);
             finish();
             return true;
@@ -927,6 +933,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 .setStrings(getMetricsCategory())
                 .write();
         safelyStartActivity(activeProfileTarget);
+        Log.d(TAG, "auto launching! " + activeProfileTarget);
         finish();
         return true;
     }
@@ -1079,7 +1086,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
         try {
             if (cti.startAsCaller(this, options, user.getIdentifier())) {
-                maybeSendShareResult(cti);
+                // Prevent sending a second chooser result when starting the edit action intent.
+                if (!cti.getTargetIntent().hasExtra(EDIT_SOURCE)) {
+                    maybeSendShareResult(cti);
+                }
                 maybeLogCrossProfileTargetLaunch(cti, user);
             }
         } catch (RuntimeException e) {
@@ -1186,12 +1196,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     @Override // ResolverListCommunicator
     public final void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
-        if (!mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
+        mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
                 (ChooserListAdapter) listAdapter,
-                mProfileAvailability.getWaitingToEnableProfile())) {
-            // We no longer have any items... just finish the activity.
-            finish();
-        }
+                mProfileAvailability.getWaitingToEnableProfile());
     }
 
     final Option optionForChooserTarget(TargetInfo target, int index) {
@@ -1757,6 +1764,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                         mChooserMultiProfilePagerAdapter.getActiveListAdapter().hasFilteredItem()
                                 ? MetricsEvent.ACTION_HIDE_APP_DISAMBIG_APP_FEATURED
                                 : MetricsEvent.ACTION_HIDE_APP_DISAMBIG_NONE_FEATURED);
+                Log.d(TAG, "onTargetSelected() returned true, finishing! " + target);
                 finish();
             }
         }
@@ -2179,6 +2187,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                                 targetInfo,
                                 mProfiles.getPersonalHandle()
                         );
+                        Log.d(TAG, "safelyStartActivityAsPersonalProfileUser("
+                                + targetInfo + "): finishing!");
                         finish();
                     }
 
@@ -2198,7 +2208,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 },
                 mShareResultSender,
                 this::finishWithStatus,
-                mClipboardManager);
+                mClipboardManager,
+                mFeatureFlags);
     }
 
     private Supplier<ActionRow.Action> createModifyShareActionFactory() {
@@ -2214,6 +2225,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (status != null) {
             setResult(status);
         }
+        Log.d(TAG, "finishWithStatus: result=" + status);
         finish();
     }
 
@@ -2356,6 +2368,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     protected void onListRebuilt(ResolverListAdapter listAdapter, boolean rebuildComplete) {
+        Log.d(TAG, "onListRebuilt(listAdapter.userHandle=" + listAdapter.getUserHandle() + ", "
+                + "rebuildComplete=" + rebuildComplete + ")");
         setupScrollListener();
         maybeSetupGlobalLayoutListener();
 
@@ -2371,6 +2385,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         //TODO: move this block inside ChooserListAdapter (should be called when
         // ResolverListAdapter#mPostListReadyRunnable is executed.
         if (chooserListAdapter.getDisplayResolveInfoCount() == 0) {
+            Log.d(TAG, "getDisplayResolveInfoCount() == 0");
             if (rebuildComplete && mChooserServiceFeatureFlags.chooserPayloadToggling()) {
                 onAppTargetsLoaded(listAdapter);
             }
