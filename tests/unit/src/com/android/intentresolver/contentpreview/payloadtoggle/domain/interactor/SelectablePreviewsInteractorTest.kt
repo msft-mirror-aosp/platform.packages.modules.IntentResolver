@@ -43,20 +43,27 @@ class SelectablePreviewsInteractorTest {
                         PreviewModel(
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = "image/bitmap",
+                            order = 0,
                         ),
                         PreviewModel(
                             uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                             mimeType = "image/bitmap",
+                            order = 1,
                         ),
                     ),
                 startIdx = 0,
                 loadMoreLeft = null,
                 loadMoreRight = null,
+                leftTriggerIndex = 0,
+                rightTriggerIndex = 1,
             )
         previewSelectionsRepository.selections.value =
-            listOf(
-                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
-            )
+            PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = null,
+                    order = 0,
+                )
+                .let { mapOf(it.uri to it) }
         targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
         val underTest = selectablePreviewsInteractor
         val keySet = underTest.previews.stateIn(backgroundScope)
@@ -66,11 +73,13 @@ class SelectablePreviewsInteractorTest {
             .containsExactly(
                 PreviewModel(
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                    mimeType = "image/bitmap"
+                    mimeType = "image/bitmap",
+                    order = 0,
                 ),
                 PreviewModel(
                     uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                    mimeType = "image/bitmap"
+                    mimeType = "image/bitmap",
+                    order = 1,
                 ),
             )
             .inOrder()
@@ -80,13 +89,21 @@ class SelectablePreviewsInteractorTest {
 
         val firstModel =
             underTest.preview(
-                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
+                PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = null,
+                    order = 0,
+                )
             )
         assertThat(firstModel.isSelected.first()).isTrue()
 
         val secondModel =
             underTest.preview(
-                PreviewModel(uri = Uri.fromParts("scheme2", "ssp2", "fragment2"), mimeType = null)
+                PreviewModel(
+                    uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                    mimeType = null,
+                    order = 1,
+                )
             )
         assertThat(secondModel.isSelected.first()).isFalse()
     }
@@ -94,16 +111,23 @@ class SelectablePreviewsInteractorTest {
     @Test
     fun keySet_reflectsRepositoryUpdate() = runKosmosTest {
         previewSelectionsRepository.selections.value =
-            listOf(
-                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null),
-            )
+            PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = null,
+                    order = 0,
+                )
+                .let { mapOf(it.uri to it) }
         targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
         val underTest = selectablePreviewsInteractor
 
         val previews = underTest.previews.stateIn(backgroundScope)
         val firstModel =
             underTest.preview(
-                PreviewModel(uri = Uri.fromParts("scheme", "ssp", "fragment"), mimeType = null)
+                PreviewModel(
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = null,
+                    order = 0,
+                )
             )
 
         assertThat(previews.value).isNull()
@@ -118,17 +142,21 @@ class SelectablePreviewsInteractorTest {
                         PreviewModel(
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = "image/bitmap",
+                            order = 0,
                         ),
                         PreviewModel(
                             uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                             mimeType = "image/bitmap",
+                            order = 1,
                         ),
                     ),
                 startIdx = 5,
                 loadMoreLeft = null,
                 loadMoreRight = { loadRequested = true },
+                leftTriggerIndex = 0,
+                rightTriggerIndex = 1,
             )
-        previewSelectionsRepository.selections.value = emptyList()
+        previewSelectionsRepository.selections.value = emptyMap()
         runCurrent()
 
         assertThat(previews.value).isNotNull()
@@ -136,11 +164,13 @@ class SelectablePreviewsInteractorTest {
             .containsExactly(
                 PreviewModel(
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                    mimeType = "image/bitmap"
+                    mimeType = "image/bitmap",
+                    order = 0,
                 ),
                 PreviewModel(
                     uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                    mimeType = "image/bitmap"
+                    mimeType = "image/bitmap",
+                    order = 1,
                 ),
             )
             .inOrder()
