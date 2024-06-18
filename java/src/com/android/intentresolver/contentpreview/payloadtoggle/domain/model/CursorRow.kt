@@ -20,4 +20,4 @@ import android.net.Uri
 import android.util.Size
 
 /** Represents additional content cursor row */
-data class CursorRow(val uri: Uri, val previewSize: Size?)
+data class CursorRow(val uri: Uri, val previewSize: Size?, val position: Int)

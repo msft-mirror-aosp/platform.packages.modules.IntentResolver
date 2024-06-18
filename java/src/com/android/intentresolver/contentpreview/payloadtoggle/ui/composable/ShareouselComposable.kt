@@ -15,12 +15,15 @@
  */
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -41,7 +44,9 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,10 +60,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.R
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselPreviewViewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
+import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 @Composable
@@ -86,32 +94,55 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PreviewCarousel(
     previews: PreviewsModel,
     viewModel: ShareouselViewModel,
 ) {
     val centerIdx = previews.startIdx
-    val carouselState = rememberLazyListState(initialFirstVisibleItemIndex = centerIdx)
+    val carouselState =
+        rememberLazyListState(
+            initialFirstVisibleItemIndex = centerIdx,
+            prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
+        )
     // TODO: start item needs to be centered, check out ScalingLazyColumn impl or see if
     //  HorizontalPager works for our use-case
     LazyRow(
         state = carouselState,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp),
         modifier =
             Modifier.fillMaxWidth()
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
                 .systemGestureExclusion()
     ) {
         itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
-            ShareouselCard(viewModel.preview(index, model))
+
+            // Index if this is the element in the center of the viewing area, otherwise null
+            val previewIndex by remember {
+                derivedStateOf {
+                    carouselState.layoutInfo.visibleItemsInfo
+                        .firstOrNull { it.index == index }
+                        ?.let {
+                            val viewportCenter = carouselState.layoutInfo.viewportEndOffset / 2
+                            val halfPreviewWidth = it.size / 2
+                            val previewCenter = it.offset + halfPreviewWidth
+                            val previewDistanceToViewportCenter =
+                                abs(previewCenter - viewportCenter)
+                            if (previewDistanceToViewportCenter <= halfPreviewWidth) index else null
+                        }
+                }
+            }
+
+            ShareouselCard(viewModel.preview(model, previewIndex, rememberCoroutineScope()))
         }
     }
 }
 
 @Composable
 private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
-    val bitmap by viewModel.bitmap.collectAsStateWithLifecycle(initialValue = null)
+    val bitmapLoadState by viewModel.bitmapLoadState.collectAsStateWithLifecycle()
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
     val borderColor = MaterialTheme.colorScheme.primary
     val scope = rememberCoroutineScope()
@@ -121,39 +152,56 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
             ContentType.Video -> stringResource(R.string.selectable_video)
             else -> stringResource(R.string.selectable_item)
         }
-    ShareouselCard(
-        image = {
-            // TODO: max ratio is actually equal to the viewport ratio
-            val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
-            bitmap?.let { bitmap ->
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.aspectRatio(aspectRatio),
-                )
-            }
-                ?: run {
-                    // TODO: look at ScrollableImagePreviewView.setLoading()
-                    Box(modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio))
-                }
-        },
-        contentType = viewModel.contentType,
-        selected = selected,
+    Crossfade(
+        targetState = bitmapLoadState,
         modifier =
-            Modifier.thenIf(selected) {
-                    Modifier.border(
-                        width = 4.dp,
-                        color = borderColor,
-                        shape = RoundedCornerShape(size = 12.dp),
-                    )
-                }
-                .semantics { this.contentDescription = contentDescription }
+            Modifier.semantics { this.contentDescription = contentDescription }
                 .clip(RoundedCornerShape(size = 12.dp))
                 .toggleable(
                     value = selected,
                     onValueChange = { scope.launch { viewModel.setSelected(it) } },
                 )
+    ) { state ->
+        // TODO: max ratio is actually equal to the viewport ratio
+        val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
+        if (state is ValueUpdate.Value) {
+            state.getOrDefault(null).let { bitmap ->
+                ShareouselCard(
+                    image = {
+                        bitmap?.let {
+                            Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.aspectRatio(aspectRatio),
+                            )
+                        } ?: PlaceholderBox(aspectRatio)
+                    },
+                    contentType = viewModel.contentType,
+                    selected = selected,
+                    modifier =
+                        Modifier.thenIf(selected) {
+                            Modifier.border(
+                                width = 4.dp,
+                                color = borderColor,
+                                shape = RoundedCornerShape(size = 12.dp),
+                            )
+                        }
+                )
+            }
+        } else {
+            PlaceholderBox(aspectRatio)
+        }
+    }
+}
+
+@Composable
+private fun PlaceholderBox(aspectRatio: Float) {
+    Box(
+        modifier =
+            Modifier.fillMaxHeight()
+                .aspectRatio(aspectRatio)
+                .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
     )
 }
 

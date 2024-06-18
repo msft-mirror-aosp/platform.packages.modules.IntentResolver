@@ -43,6 +43,8 @@ import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Qualifier
+import kotlin.math.max
+import kotlin.math.min
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
@@ -54,6 +56,7 @@ class CursorPreviewsInteractor
 @Inject
 constructor(
     private val interactor: SetCursorPreviewsInteractor,
+    private val selectionInteractor: SelectionInteractor,
     @FocusedItemIndex private val focusedItemIdx: Int,
     private val uriMetadataReader: UriMetadataReader,
     @PageSize private val pageSize: Int,
@@ -93,11 +96,14 @@ constructor(
         var state = initialState
         val startPageNum = state.firstLoadedPageNum
         while ((state.hasMoreLeft || state.hasMoreRight) && state.numLoadedPages < maxLoadedPages) {
+            val (leftTriggerIndex, rightTriggerIndex) = state.triggerIndices()
             interactor.setPreviews(
                 previews = state.merged.values.toList(),
                 startIndex = startPageNum,
                 hasMoreLeft = state.hasMoreLeft,
                 hasMoreRight = state.hasMoreRight,
+                leftTriggerIndex = leftTriggerIndex,
+                rightTriggerIndex = rightTriggerIndex,
             )
             val loadedLeft = startPageNum - state.firstLoadedPageNum
             val loadedRight = state.lastLoadedPageNum - startPageNum
@@ -120,6 +126,8 @@ constructor(
     ) {
         var state = initialState
         while (true) {
+            val (leftTriggerIndex, rightTriggerIndex) = state.triggerIndices()
+
             // Design note: in order to prevent load requests from the UI when it was displaying a
             // previously-published dataset being accidentally associated with a recently-published
             // one, we generate a new Flow of load requests for each dataset and only listen to
@@ -130,6 +138,8 @@ constructor(
                     startIndex = 0, // TODO: actually track this as the window changes?
                     hasMoreLeft = state.hasMoreLeft,
                     hasMoreRight = state.hasMoreRight,
+                    leftTriggerIndex = leftTriggerIndex,
+                    rightTriggerIndex = rightTriggerIndex,
                 )
             state = loadingState.handleOneLoadRequest(state, pagedCursor, unclaimedRecords)
         }
@@ -238,6 +248,13 @@ constructor(
         }
     }
 
+    private fun CursorWindow.triggerIndices(): Pair<Int, Int> {
+        val totalIndices = numLoadedPages * pageSize
+        val midIndex = totalIndices / 2
+        val halfPage = pageSize / 2
+        return max(midIndex - halfPage, 0) to min(midIndex + halfPage, totalIndices - 1)
+    }
+
     private suspend fun readPage(
         state: CursorWindow,
         pagedCursor: PagedCursor<CursorRow?>,
@@ -271,19 +288,26 @@ constructor(
     private fun createPreviewModel(
         row: CursorRow,
         unclaimedRecords: MutableUnclaimedMap,
-    ): PreviewModel =
-        unclaimedRecords.remove(row.uri)?.second
-            ?: uriMetadataReader.getMetadata(row.uri).let { metadata ->
-                val size =
-                    row.previewSize
-                        ?: metadata.previewUri?.let { uriMetadataReader.readPreviewSize(it) }
-                PreviewModel(
-                    uri = row.uri,
-                    previewUri = metadata.previewUri,
-                    mimeType = metadata.mimeType,
-                    aspectRatio = size.aspectRatioOrDefault(1f),
-                )
+    ): PreviewModel = uriMetadataReader.getMetadata(row.uri).let { metadata ->
+            val size =
+                row.previewSize
+                    ?: metadata.previewUri?.let { uriMetadataReader.readPreviewSize(it) }
+            PreviewModel(
+                uri = row.uri,
+                previewUri = metadata.previewUri,
+                mimeType = metadata.mimeType,
+                aspectRatio = size.aspectRatioOrDefault(1f),
+                order = row.position,
+            )
+        }.also { updated ->
+            if (unclaimedRecords.remove(row.uri) != null) {
+                // unclaimedRecords contains initially shared (and thus selected) items with unknown
+                // cursor position. Update selection records when any of those items is encountered
+                // in the cursor to maintain proper selection order should other items also be
+                // selected.
+                selectionInteractor.updateSelection(updated)
             }
+        }
 
     private fun <M : MutablePreviewMap> M.putAllUnclaimedRight(unclaimed: UnclaimedMap): M =
         putAllUnclaimedWhere(unclaimed) { it >= focusedItemIdx }
