@@ -30,16 +30,16 @@ import com.android.intentresolver.ResolverDataProvider
 import com.android.intentresolver.ResolverDataProvider.createResolveInfo
 import com.android.intentresolver.createChooserTarget
 import com.android.intentresolver.createShortcutInfo
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.any
-import org.mockito.Mockito.never
-import org.mockito.Mockito.spy
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 class TargetInfoTest {
     private val PERSONAL_USER_HANDLE: UserHandle =
@@ -422,9 +422,7 @@ class TargetInfoTest {
                 )
             )
         val targetTwo =
-            mock<DisplayResolveInfo> {
-                whenever(tryToCloneWithAppliedRefinement(any())).thenReturn(this)
-            }
+            mock<DisplayResolveInfo> { on { tryToCloneWithAppliedRefinement(any()) } doReturn mock }
 
         val multiTargetInfo =
             MultiDisplayResolveInfo.newMultiDisplayResolveInfo(listOf(targetOne, targetTwo))

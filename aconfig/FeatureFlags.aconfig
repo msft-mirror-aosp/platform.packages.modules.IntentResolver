@@ -16,13 +16,6 @@ flag {
 }
 
 flag {
-  name: "scrollable_preview"
-  namespace: "intentresolver"
-  description: "Makes preview scrollable with multiple profiles"
-  bug: "287102904"
-}
-
-flag {
   name: "target_data_caching"
   namespace: "intentresolver"
   description: "Enables caching target icons and labels in a local DB"
@@ -47,5 +40,52 @@ flag {
   name: "enable_private_profile"
   namespace: "intentresolver"
   description: "Enable private profile support"
-  bug: "311348033"
+  bug: "328029692"
+}
+
+flag {
+  name: "refine_system_actions"
+  namespace: "intentresolver"
+  description: "This flag enables sending system actions to the caller refinement flow"
+  bug: "331206205"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_empty_state_padding"
+  namespace: "intentresolver"
+  description: "Always apply systemBar window insets regardless of profiles present"
+  bug: "338447666"
+}
+
+flag {
+  name: "fix_empty_state_padding_bug"
+  namespace: "intentresolver"
+  description: "Always apply systemBar window insets regardless of profiles present"
+  bug: "338447666"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_partial_image_edit_transition"
+  namespace: "intentresolver"
+  description: "Do not run the shared element transition animation for a partially visible image"
+  bug: "339583191"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_private_space_locked_on_restart"
+  namespace: "intentresolver"
+  description: "Dismiss Share sheet on restart if private space became locked while stopped"
+  bug: "338125945"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
 }

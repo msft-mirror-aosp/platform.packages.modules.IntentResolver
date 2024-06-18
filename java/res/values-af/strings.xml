@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Hierdie inhoud kan nie met werkprogramme oopgemaak word nie"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Hierdie inhoud kan nie met persoonlike apps gedeel word nie"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Hierdie inhoud kan nie met persoonlike programme oopgemaak word nie"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Hierdie inhoud kan nie met privaat apps gedeel word nie"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Hierdie inhoud kan nie met privaat apps oopgemaak word nie"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Werkapps word onderbreek"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Hervat"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Geen werkprogramme nie"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Geen persoonlike programme nie"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Geen private apps nie"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Maak <xliff:g id="APP">%s</xliff:g> in jou persoonlike profiel oop?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Maak <xliff:g id="APP">%s</xliff:g> in jou werkprofiel oop?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Gebruik persoonlike blaaier"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Sluit skakel uit"</string>
     <string name="include_link" msgid="827855767220339802">"Sluit skakel in"</string>
     <string name="pinned" msgid="7623664001331394139">"Vasgespeld"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Kiesbare prent"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Kiesbare video"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Kiesbare item"</string>
 </resources>

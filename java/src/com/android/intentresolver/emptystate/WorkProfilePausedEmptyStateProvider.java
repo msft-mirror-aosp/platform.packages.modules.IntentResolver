@@ -18,19 +18,21 @@ package com.android.intentresolver.emptystate;
 
 import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_WORK_PAUSED_TITLE;
 
-import android.app.admin.DevicePolicyEventLogger;
+import static java.util.Objects.requireNonNull;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.os.UserHandle;
-import android.stats.devicepolicy.nano.DevicePolicyEnums;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.intentresolver.MultiProfilePagerAdapter.OnSwitchOnWorkSelectedListener;
+import com.android.intentresolver.ProfileAvailability;
+import com.android.intentresolver.ProfileHelper;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverListAdapter;
-import com.android.intentresolver.WorkProfileAvailabilityManager;
+import com.android.intentresolver.profiles.OnSwitchOnWorkSelectedListener;
+import com.android.intentresolver.shared.model.Profile;
 
 /**
  * Chooser/ResolverActivity empty state provider that returns empty state which is shown when
@@ -38,20 +40,20 @@ import com.android.intentresolver.WorkProfileAvailabilityManager;
  */
 public class WorkProfilePausedEmptyStateProvider implements EmptyStateProvider {
 
-    private final UserHandle mWorkProfileUserHandle;
-    private final WorkProfileAvailabilityManager mWorkProfileAvailability;
+    private final ProfileHelper mProfileHelper;
+    private final ProfileAvailability mProfileAvailability;
     private final String mMetricsCategory;
     private final OnSwitchOnWorkSelectedListener mOnSwitchOnWorkSelectedListener;
     private final Context mContext;
 
     public WorkProfilePausedEmptyStateProvider(@NonNull Context context,
-            @Nullable UserHandle workProfileUserHandle,
-            @NonNull WorkProfileAvailabilityManager workProfileAvailability,
+            ProfileHelper profileHelper,
+            ProfileAvailability profileAvailability,
             @Nullable OnSwitchOnWorkSelectedListener onSwitchOnWorkSelectedListener,
             @NonNull String metricsCategory) {
         mContext = context;
-        mWorkProfileUserHandle = workProfileUserHandle;
-        mWorkProfileAvailability = workProfileAvailability;
+        mProfileHelper = profileHelper;
+        mProfileAvailability = profileAvailability;
         mMetricsCategory = metricsCategory;
         mOnSwitchOnWorkSelectedListener = onSwitchOnWorkSelectedListener;
     }
@@ -59,56 +61,34 @@ public class WorkProfilePausedEmptyStateProvider implements EmptyStateProvider {
     @Nullable
     @Override
     public EmptyState getEmptyState(ResolverListAdapter resolverListAdapter) {
-        if (!resolverListAdapter.getUserHandle().equals(mWorkProfileUserHandle)
-                || !mWorkProfileAvailability.isQuietModeEnabled()
-                || resolverListAdapter.getCount() == 0) {
+        UserHandle userHandle = resolverListAdapter.getUserHandle();
+        if (!mProfileHelper.getWorkProfilePresent()) {
+            return null;
+        }
+        Profile workProfile = requireNonNull(mProfileHelper.getWorkProfile());
+
+        // Policy: only show the "Work profile paused" state when:
+        // * provided list adapter is from the work profile
+        // * the list adapter is not empty
+        // * work profile quiet mode is _enabled_ (unavailable)
+
+        if (!userHandle.equals(workProfile.getPrimary().getHandle())
+                || resolverListAdapter.getCount() == 0
+                || mProfileAvailability.isAvailable(workProfile)) {
             return null;
         }
 
-        final String title = mContext.getSystemService(DevicePolicyManager.class)
+        String title = mContext.getSystemService(DevicePolicyManager.class)
                 .getResources().getString(RESOLVER_WORK_PAUSED_TITLE,
                     () -> mContext.getString(R.string.resolver_turn_on_work_apps));
 
-        return new WorkProfileOffEmptyState(title, (tab) -> {
+        return new WorkProfileOffEmptyState(title, /* EmptyState.ClickListener */ (tab) -> {
             tab.showSpinner();
             if (mOnSwitchOnWorkSelectedListener != null) {
                 mOnSwitchOnWorkSelectedListener.onSwitchOnWorkSelected();
             }
-            mWorkProfileAvailability.requestQuietModeEnabled(false);
+            mProfileAvailability.requestQuietModeState(workProfile, false);
         }, mMetricsCategory);
     }
 
-    public static class WorkProfileOffEmptyState implements EmptyState {
-
-        private final String mTitle;
-        private final ClickListener mOnClick;
-        private final String mMetricsCategory;
-
-        public WorkProfileOffEmptyState(String title, @NonNull ClickListener onClick,
-                @NonNull String metricsCategory) {
-            mTitle = title;
-            mOnClick = onClick;
-            mMetricsCategory = metricsCategory;
-        }
-
-        @Nullable
-        @Override
-        public String getTitle() {
-            return mTitle;
-        }
-
-        @Nullable
-        @Override
-        public ClickListener getButtonClickListener() {
-            return mOnClick;
-        }
-
-        @Override
-        public void onEmptyStateShown() {
-            DevicePolicyEventLogger
-                    .createEvent(DevicePolicyEnums.RESOLVER_EMPTY_STATE_WORK_APPS_DISABLED)
-                    .setStrings(mMetricsCategory)
-                    .write();
-        }
-    }
 }

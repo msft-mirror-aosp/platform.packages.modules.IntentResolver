@@ -24,8 +24,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.R
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.android.intentresolver.widget.ActionRow
 import com.google.common.truth.Truth.assertThat
 import java.util.function.Consumer
@@ -34,6 +32,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 @RunWith(AndroidJUnit4::class)
 class TextContentPreviewUiTest {
@@ -44,16 +44,20 @@ class TextContentPreviewUiTest {
     private val actionFactory =
         object : ChooserContentPreviewUi.ActionFactory {
             override fun getEditButtonRunnable(): Runnable? = null
+
             override fun getCopyButtonRunnable(): Runnable? = null
+
             override fun createCustomActions(): List<ActionRow.Action> = emptyList()
+
             override fun getModifyShareAction(): ActionRow.Action? = null
+
             override fun getExcludeSharedTextAction(): Consumer<Boolean> = Consumer<Boolean> {}
         }
     private val imageLoader = mock<ImageLoader>()
     private val headlineGenerator =
         mock<HeadlineGenerator> {
-            whenever(getTextHeadline(text)).thenReturn(text)
-            whenever(getAlbumHeadline()).thenReturn(albumHeadline)
+            on { getTextHeadline(text) } doReturn text
+            on { getAlbumHeadline() } doReturn albumHeadline
         }
     private val testMetadataText: CharSequence = "Test metadata text"
 
@@ -76,48 +80,24 @@ class TextContentPreviewUiTest {
     @Test
     fun test_display_headlineIsDisplayed() {
         val layoutInflater = LayoutInflater.from(context)
-        val gridLayout = layoutInflater.inflate(R.layout.chooser_grid, null, false) as ViewGroup
+        val gridLayout =
+            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
+                as ViewGroup
+        val headlineRow = gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
 
         val previewView =
             testSubject.display(
                 context.resources,
                 layoutInflater,
                 gridLayout,
-                /*headlineViewParent=*/ null
+                headlineRow,
             )
 
         assertThat(previewView).isNotNull()
-        val headlineView = previewView?.findViewById<TextView>(R.id.headline)
+        val headlineView = headlineRow.findViewById<TextView>(R.id.headline)
         assertThat(headlineView).isNotNull()
         assertThat(headlineView?.text).isEqualTo(text)
-        val metadataView = previewView?.findViewById<TextView>(R.id.metadata)
-        assertThat(metadataView).isNotNull()
-        assertThat(metadataView?.text).isEqualTo(testMetadataText)
-    }
-
-    @Test
-    fun test_displayWithExternalHeaderView_externalHeaderIsDisplayed() {
-        val layoutInflater = LayoutInflater.from(context)
-        val gridLayout =
-            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
-                as ViewGroup
-        val externalHeaderView =
-            gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
-
-        assertThat(externalHeaderView.findViewById<View>(R.id.headline)).isNull()
-        assertThat(externalHeaderView.findViewById<View>(R.id.metadata)).isNull()
-
-        val previewView =
-            testSubject.display(context.resources, layoutInflater, gridLayout, externalHeaderView)
-
-        assertThat(previewView).isNotNull()
-        assertThat(previewView.findViewById<View>(R.id.headline)).isNull()
-        assertThat(previewView.findViewById<View>(R.id.metadata)).isNull()
-
-        val headlineView = externalHeaderView.findViewById<TextView>(R.id.headline)
-        assertThat(headlineView).isNotNull()
-        assertThat(headlineView?.text).isEqualTo(text)
-        val metadataView = externalHeaderView.findViewById<TextView>(R.id.metadata)
+        val metadataView = headlineRow.findViewById<TextView>(R.id.metadata)
         assertThat(metadataView).isNotNull()
         assertThat(metadataView?.text).isEqualTo(testMetadataText)
     }
@@ -125,7 +105,10 @@ class TextContentPreviewUiTest {
     @Test
     fun test_display_albumHeadlineOverride() {
         val layoutInflater = LayoutInflater.from(context)
-        val gridLayout = layoutInflater.inflate(R.layout.chooser_grid, null, false) as ViewGroup
+        val gridLayout =
+            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
+                as ViewGroup
+        val headlineRow = gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
 
         val albumSubject =
             TextContentPreviewUi(
@@ -145,14 +128,14 @@ class TextContentPreviewUiTest {
                 context.resources,
                 layoutInflater,
                 gridLayout,
-                /*headlineViewParent=*/ null
+                headlineRow,
             )
 
         assertThat(previewView).isNotNull()
-        val headlineView = previewView?.findViewById<TextView>(R.id.headline)
+        val headlineView = headlineRow.findViewById<TextView>(R.id.headline)
         assertThat(headlineView).isNotNull()
         assertThat(headlineView?.text).isEqualTo(albumHeadline)
-        val metadataView = previewView?.findViewById<TextView>(R.id.metadata)
+        val metadataView = headlineRow.findViewById<TextView>(R.id.metadata)
         assertThat(metadataView).isNotNull()
         assertThat(metadataView?.text).isEqualTo(testMetadataText)
     }

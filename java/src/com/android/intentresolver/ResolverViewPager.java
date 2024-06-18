@@ -75,6 +75,12 @@ public class ResolverViewPager extends ViewPager {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return !isLayoutRtl() && mSwipingEnabled && super.onInterceptTouchEvent(ev);
+        return !isEnabled()
+                || (!isLayoutRtl() && mSwipingEnabled && super.onInterceptTouchEvent(ev));
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        return isEnabled() && super.onTouchEvent(ev);
     }
 }

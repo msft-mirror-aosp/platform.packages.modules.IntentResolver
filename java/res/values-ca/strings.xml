@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"No es pot obrir aquest contingut amb aplicacions de treball"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"No es pot compartir aquest contingut amb aplicacions personals"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"No es pot obrir aquest contingut amb aplicacions personals"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Aquest contingut no es pot compartir amb aplicacions privades"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Aquest contingut no es pot obrir amb aplicacions privades"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Les aplicacions de treball estan en pausa"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Reactiva"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Cap aplicació de treball"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Cap aplicació personal"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Cap aplicació privada"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Vols obrir <xliff:g id="APP">%s</xliff:g> al teu perfil personal?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Vols obrir <xliff:g id="APP">%s</xliff:g> al teu perfil de treball?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Utilitza el navegador personal"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Exclou l\'enllaç"</string>
     <string name="include_link" msgid="827855767220339802">"Inclou l\'enllaç"</string>
     <string name="pinned" msgid="7623664001331394139">"Fixat"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Imatge seleccionable"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Vídeo seleccionable"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Element seleccionable"</string>
 </resources>

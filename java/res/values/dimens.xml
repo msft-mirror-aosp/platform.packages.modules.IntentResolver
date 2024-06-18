@@ -34,6 +34,9 @@
     <dimen name="chooser_max_collapsed_height">288dp</dimen>
     <dimen name="chooser_icon_size">56dp</dimen>
     <dimen name="chooser_badge_size">22dp</dimen>
+    <dimen name="chooser_headline_text_size">18sp</dimen>
+    <dimen name="chooser_grid_target_name_text_size">12sp</dimen>
+    <dimen name="chooser_grid_activity_name_text_size">12sp</dimen>
     <dimen name="resolver_icon_size">32dp</dimen>
     <dimen name="resolver_button_bar_spacing">0dp</dimen>
     <dimen name="resolver_badge_size">18dp</dimen>
@@ -51,6 +54,7 @@
     <dimen name="resolver_empty_state_container_padding_bottom">8dp</dimen>
     <dimen name="resolver_profile_tab_margin">4dp</dimen>
     <dimen name="chooser_action_view_icon_size">22dp</dimen>
+    <dimen name="chooser_action_view_text_size">12sp</dimen>
     <dimen name="chooser_action_margin">0dp</dimen>
     <dimen name="modify_share_text_toggle_max_width">150dp</dimen>
     <dimen name="chooser_view_spacing">16dp</dimen>
@@ -58,7 +62,7 @@
     <!-- Note that the values in this section are for landscape phones. For screen configs taller
          than 480dp, the values are set in values-h480dp/dimens.xml -->
     <dimen name="chooser_preview_width">412dp</dimen>
-    <dimen name="chooser_preview_image_height_tall">46dp</dimen>
+    <dimen name="chooser_preview_image_height_tall">124dp</dimen>
     <dimen name="grid_padding">8dp</dimen>
     <dimen name="width_text_image_preview_size">46dp</dimen>
     <!-- END SECTION -->

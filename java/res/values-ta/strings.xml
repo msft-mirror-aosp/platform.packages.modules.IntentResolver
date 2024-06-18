@@ -77,7 +77,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"இந்த ஆப்ஸிற்கு ரெக்கார்டு செய்வதற்கான அனுமதி வழங்கப்படவில்லை, எனினும் இந்த USB சாதனம் மூலம் ஆடியோவைப் பதிவுசெய்ய முடியும்."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"தனிப்பட்ட சுயவிவரம்"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"பணிச் சுயவிவரம்"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"ரகசியம்"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"இரகசியமானவை"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"தனிப்பட்ட காட்சி"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"பணிக் காட்சி"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"ரகசியக் காட்சி"</string>
@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"பணி ஆப்ஸ் மூலம் இந்த உள்ளடக்கத்தைத் திறக்க முடியாது"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"தனிப்பட்ட ஆப்ஸுடன் இந்த உள்ளடக்கத்தைப் பகிர முடியாது"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"தனிப்பட்ட ஆப்ஸ் மூலம் இந்த உள்ளடக்கத்தைத் திறக்க முடியாது"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"தனிப்பட்ட ஆப்ஸுடன் இந்த உள்ளடக்கத்தைப் பகிர முடியாது"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"தனிப்பட்ட ஆப்ஸ் மூலம் இந்த உள்ளடக்கத்தைத் திறக்க முடியாது"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"பணி ஆப்ஸ் இடைநிறுத்தப்பட்டுள்ளன"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"மீண்டும் இயக்கு"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"பணி ஆப்ஸ் எதுவுமில்லை"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"தனிப்பட்ட ஆப்ஸ் எதுவுமில்லை"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"தனிப்பட்ட ஆப்ஸ் எதுவுமில்லை"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"உங்கள் தனிப்பட்ட கணக்கில் <xliff:g id="APP">%s</xliff:g> ஆப்ஸைத் திறக்கவா?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"உங்கள் பணிக் கணக்கில் <xliff:g id="APP">%s</xliff:g> ஆப்ஸைத் திறக்கவா?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"தனிப்பட்ட உலாவியைப் பயன்படுத்து"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"இணைப்பைத் தவிர்"</string>
     <string name="include_link" msgid="827855767220339802">"இணைப்பைச் சேர்"</string>
     <string name="pinned" msgid="7623664001331394139">"பின் செய்யப்பட்டுள்ளது"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"தேர்ந்தெடுக்கக்கூடிய படம்"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"தேர்ந்தெடுக்கக்கூடிய வீடியோ"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"தேர்ந்தெடுக்கக்கூடியது"</string>
 </resources>

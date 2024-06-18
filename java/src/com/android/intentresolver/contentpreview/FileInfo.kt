@@ -22,8 +22,11 @@ class FileInfo private constructor(val uri: Uri, val previewUri: Uri?, val mimeT
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     class Builder(val uri: Uri) {
         var previewUri: Uri? = null
+            @Synchronized get
             private set
+
         var mimeType: String? = null
+            @Synchronized get
             private set
 
         @Synchronized fun withPreviewUri(uri: Uri?): Builder = apply { previewUri = uri }

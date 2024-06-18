@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
  * latest value is emitted.
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     emit(1)     // t=0ms
@@ -70,10 +69,11 @@ fun <T> Flow<T>.throttle(periodMs: Long): Flow<T> = channelFlow {
                 // We create delayJob to allow cancellation during the delay period
                 delayJob = launch {
                     delay(timeUntilNextEmit)
-                    sendJob = outerScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                        send(it)
-                        previousEmitTimeMs = SystemClock.elapsedRealtime()
-                    }
+                    sendJob =
+                        outerScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                            send(it)
+                            previousEmitTimeMs = SystemClock.elapsedRealtime()
+                        }
                 }
             } else {
                 send(it)

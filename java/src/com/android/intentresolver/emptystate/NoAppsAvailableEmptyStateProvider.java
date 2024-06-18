@@ -16,24 +16,20 @@
 
 package com.android.intentresolver.emptystate;
 
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_NO_PERSONAL_APPS;
-import static android.app.admin.DevicePolicyResources.Strings.Core.RESOLVER_NO_WORK_APPS;
 
-import android.app.admin.DevicePolicyEventLogger;
-import android.app.admin.DevicePolicyManager;
-import android.content.Context;
-import android.content.pm.ResolveInfo;
+import static com.android.intentresolver.shared.model.Profile.Type.PERSONAL;
+
+import static java.util.Objects.requireNonNull;
+
 import android.os.UserHandle;
-import android.stats.devicepolicy.nano.DevicePolicyEnums;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
-import com.android.intentresolver.R;
-import com.android.intentresolver.ResolvedComponentInfo;
+import com.android.intentresolver.ProfileAvailability;
+import com.android.intentresolver.ProfileHelper;
 import com.android.intentresolver.ResolverListAdapter;
-
-import java.util.List;
+import com.android.intentresolver.shared.model.Profile;
+import com.android.intentresolver.ui.ProfilePagerResources;
 
 /**
  * Chooser/ResolverActivity empty state provider that returns empty state which is shown when
@@ -41,118 +37,37 @@ import java.util.List;
  */
 public class NoAppsAvailableEmptyStateProvider implements EmptyStateProvider {
 
-    @NonNull
-    private final Context mContext;
-    @Nullable
-    private final UserHandle mWorkProfileUserHandle;
-    @Nullable
-    private final UserHandle mPersonalProfileUserHandle;
-    @NonNull
-    private final String mMetricsCategory;
-    @NonNull
-    private final UserHandle mTabOwnerUserHandleForLaunch;
+    @NonNull private final String mMetricsCategory;
+    private final ProfilePagerResources mProfilePagerResources;
+    private final ProfileHelper mProfileHelper;
+    private final ProfileAvailability mProfileAvailability;
 
     public NoAppsAvailableEmptyStateProvider(
-            @NonNull Context context,
-            @Nullable UserHandle workProfileUserHandle,
-            @Nullable UserHandle personalProfileUserHandle,
+            ProfileHelper profileHelper,
+            ProfileAvailability profileAvailability,
             @NonNull String metricsCategory,
-            @NonNull UserHandle tabOwnerUserHandleForLaunch) {
-        mContext = context;
-        mWorkProfileUserHandle = workProfileUserHandle;
-        mPersonalProfileUserHandle = personalProfileUserHandle;
+            ProfilePagerResources profilePagerResources) {
+        mProfileHelper = profileHelper;
+        mProfileAvailability = profileAvailability;
         mMetricsCategory = metricsCategory;
-        mTabOwnerUserHandleForLaunch = tabOwnerUserHandleForLaunch;
+        mProfilePagerResources = profilePagerResources;
     }
 
-    @Nullable
+    @NonNull
     @Override
-    @SuppressWarnings("ReferenceEquality")
     public EmptyState getEmptyState(ResolverListAdapter resolverListAdapter) {
         UserHandle listUserHandle = resolverListAdapter.getUserHandle();
-
-        if (mWorkProfileUserHandle != null
-                && (mTabOwnerUserHandleForLaunch.equals(listUserHandle)
-                || !hasAppsInOtherProfile(resolverListAdapter))) {
-
-            String title;
-            if (listUserHandle == mPersonalProfileUserHandle) {
-                title = mContext.getSystemService(
-                        DevicePolicyManager.class).getResources().getString(
-                        RESOLVER_NO_PERSONAL_APPS,
-                            () -> mContext.getString(R.string.resolver_no_personal_apps_available));
-            } else {
-                title = mContext.getSystemService(
-                        DevicePolicyManager.class).getResources().getString(
-                        RESOLVER_NO_WORK_APPS,
-                            () -> mContext.getString(R.string.resolver_no_work_apps_available));
-            }
-
-            return new NoAppsAvailableEmptyState(
-                    title, mMetricsCategory,
-                    /* isPersonalProfile= */ listUserHandle == mPersonalProfileUserHandle
-            );
-        } else if (mWorkProfileUserHandle == null) {
-            // Return default empty state without tracking
+        if (mProfileAvailability.visibleProfileCount() == 1) {
             return new DefaultEmptyState();
-        }
-
-        return null;
-    }
-
-    private boolean hasAppsInOtherProfile(ResolverListAdapter adapter) {
-        if (mWorkProfileUserHandle == null) {
-            return false;
-        }
-        List<ResolvedComponentInfo> resolversForIntent =
-                adapter.getResolversForUser(mTabOwnerUserHandleForLaunch);
-        for (ResolvedComponentInfo info : resolversForIntent) {
-            ResolveInfo resolveInfo = info.getResolveInfoAt(0);
-            if (resolveInfo.targetUserId != UserHandle.USER_CURRENT) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static class DefaultEmptyState implements EmptyState {
-        @Override
-        public boolean useDefaultEmptyView() {
-            return true;
-        }
-    }
-
-    public static class NoAppsAvailableEmptyState implements EmptyState {
-
-        @NonNull
-        private String mTitle;
-
-        @NonNull
-        private String mMetricsCategory;
-
-        private boolean mIsPersonalProfile;
-
-        public NoAppsAvailableEmptyState(@NonNull String title,
-                                         @NonNull String metricsCategory,
-                                         boolean isPersonalProfile) {
-            mTitle = title;
-            mMetricsCategory = metricsCategory;
-            mIsPersonalProfile = isPersonalProfile;
-        }
-
-        @Nullable
-        @Override
-        public String getTitle() {
-            return mTitle;
-        }
-
-        @Override
-        public void onEmptyStateShown() {
-            DevicePolicyEventLogger.createEvent(
-                            DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_APPS_RESOLVED)
-                    .setStrings(mMetricsCategory)
-                    .setBoolean(/*isPersonalProfile*/ mIsPersonalProfile)
-                    .write();
+        } else {
+            Profile.Type profileType =
+                    requireNonNull(mProfileHelper.findProfileType(listUserHandle));
+            String title = mProfilePagerResources.noAppsMessage(profileType);
+            return new NoAppsAvailableEmptyState(
+                    title,
+                    mMetricsCategory,
+                    /* isPersonalProfile= */ profileType == PERSONAL
+            );
         }
     }
 }

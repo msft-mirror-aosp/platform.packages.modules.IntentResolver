@@ -77,7 +77,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Ta aplikacja nie ma uprawnień do nagrywania, ale może rejestrować dźwięk za pomocą tego urządzenia USB."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Osobiste"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Służbowe"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"Prywatna"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Prywatne"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Widok osobisty"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Widok służbowy"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Widok prywatny"</string>
@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Tych treści nie można otworzyć w aplikacjach służbowych"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Tych treści nie można udostępniać w aplikacjach osobistych"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Tych treści nie można otworzyć w aplikacjach osobistych"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Tych treści nie można udostępniać w aplikacjach prywatnych"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Tych treści nie można otworzyć w aplikacjach prywatnych"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Aplikacje służbowe są wstrzymane"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Cofnij wstrzymanie"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Brak aplikacji służbowych"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Brak aplikacji osobistych"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Brak prywatnych aplikacji"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Otworzyć aplikację <xliff:g id="APP">%s</xliff:g> w profilu osobistym?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Otworzyć aplikację <xliff:g id="APP">%s</xliff:g> w profilu służbowym?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Użyj przeglądarki osobistej"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Wyklucz link"</string>
     <string name="include_link" msgid="827855767220339802">"Dołącz link"</string>
     <string name="pinned" msgid="7623664001331394139">"Przypięte"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Obraz do wyboru"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Film do wyboru"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Element do wyboru"</string>
 </resources>

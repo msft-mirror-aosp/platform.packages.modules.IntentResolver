@@ -23,12 +23,19 @@ import javax.inject.Qualifier
 @Qualifier
 @MustBeDocumented
 @Retention(AnnotationRetention.RUNTIME)
+annotation class ViewModelOwned
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.RUNTIME)
 annotation class ApplicationOwned
 
 @Qualifier
 @MustBeDocumented
 @Retention(AnnotationRetention.RUNTIME)
 annotation class ApplicationUser
+
+@Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class Broadcast
 
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class ProfileParent
 

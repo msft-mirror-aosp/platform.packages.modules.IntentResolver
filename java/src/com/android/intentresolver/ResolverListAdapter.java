@@ -448,6 +448,9 @@ public class ResolverListAdapter extends BaseAdapter {
         // Send an "incomplete" list-ready while the async task is running.
         postListReadyRunnable(doPostProcessing, /* rebuildCompleted */ false);
         mBgExecutor.execute(() -> {
+            if (isDestroyed()) {
+                return;
+            }
             List<ResolvedComponentInfo> sortedComponents = null;
             //TODO: the try-catch logic here is to formally match the AsyncTask's behavior.
             // Empirically, we don't need it as in the case on an exception, the app will crash and
@@ -736,26 +739,31 @@ public class ResolverListAdapter extends BaseAdapter {
                 holder.bindLabel("", "");
                 loadLabel(dri);
             }
-            holder.bindIcon(info);
             if (!dri.hasDisplayIcon()) {
                 loadIcon(dri);
             }
+            holder.bindIcon(info);
         }
     }
 
     protected final void loadIcon(DisplayResolveInfo info) {
         if (mRequestedIcons.add(info)) {
-            mTargetDataLoader.loadAppTargetIcon(
+            Drawable icon = mTargetDataLoader.getOrLoadAppTargetIcon(
                     info,
                     getUserHandle(),
-                    (drawable) -> onIconLoaded(info, drawable));
+                    (drawable) -> {
+                        onIconLoaded(info, drawable);
+                        notifyDataSetChanged();
+                    });
+            if (icon != null) {
+                onIconLoaded(info, icon);
+            }
         }
     }
 
     private void onIconLoaded(DisplayResolveInfo displayResolveInfo, Drawable drawable) {
         if (!displayResolveInfo.hasDisplayIcon()) {
             displayResolveInfo.getDisplayIconHolder().setDisplayIcon(drawable);
-            notifyDataSetChanged();
         }
     }
 
@@ -783,6 +791,10 @@ public class ResolverListAdapter extends BaseAdapter {
         }
         mRequestedIcons.clear();
         mRequestedLabels.clear();
+    }
+
+    public final boolean isDestroyed() {
+        return mDestroyed.get();
     }
 
     private static ColorMatrixColorFilter getSuspendedColorMatrix() {
@@ -815,7 +827,7 @@ public class ResolverListAdapter extends BaseAdapter {
     public void loadFilteredItemIconTaskAsync(@NonNull ImageView iconView) {
         final DisplayResolveInfo iconInfo = getFilteredItem();
         if (iconInfo != null) {
-            mTargetDataLoader.loadAppTargetIcon(
+            mTargetDataLoader.getOrLoadAppTargetIcon(
                     iconInfo, getUserHandle(), iconView::setImageDrawable);
         }
     }
@@ -833,7 +845,7 @@ public class ResolverListAdapter extends BaseAdapter {
                 userHandle);
     }
 
-    public final List<Intent> getIntents() {
+    public List<Intent> getIntents() {
         // TODO: immutable copy?
         return mIntents;
     }

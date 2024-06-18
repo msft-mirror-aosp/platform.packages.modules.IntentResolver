@@ -34,6 +34,7 @@ java_defaults {
         strict_updatability_linting: false,
         extra_check_modules: ["SystemUILintChecker"],
         warning_checks: ["MissingApacheLicenseDetector"],
+        baseline_filename: "lint-baseline.xml",
     },
 }
 
@@ -69,6 +70,11 @@ android_library {
         "androidx.lifecycle_lifecycle-viewmodel-compose",
         "androidx.lifecycle_lifecycle-runtime-compose",
     ],
+    javacflags: [
+        "-Adagger.fastInit=enabled",
+        "-Adagger.explicitBindingConflictsWithInject=ERROR",
+        "-Adagger.strictMultibindingValidation=enabled",
+    ],
 }
 
 java_defaults {
@@ -93,7 +99,7 @@ android_app {
         enabled: true,
         optimize: true,
         shrink: true,
-        shrink_resources: true,
+        optimized_shrink_resources: true,
         proguard_flags_files: ["proguard.flags"],
     },
     visibility: ["//visibility:public"],
