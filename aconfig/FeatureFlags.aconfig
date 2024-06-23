@@ -6,10 +6,13 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
-  name: "example_new_sharing_method"
+  name: "fix_target_list_footer"
   namespace: "intentresolver"
-  description: "Enables the example new sharing mechanism."
-  bug: "<none>"
+  description: "Update app target grid footer on window insets change"
+  bug: "324011248"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
 }
 
 flag {
@@ -31,4 +34,18 @@ flag {
   namespace: "intentresolver"
   description: "Enables the new modular framework"
   bug: "302113519"
+}
+
+flag {
+  name: "bespoke_label_view"
+  namespace: "intentresolver"
+  description: "Use a custom view to draw target labels"
+  bug: "302188527"
+}
+
+flag {
+  name: "enable_private_profile"
+  namespace: "intentresolver"
+  description: "Enable private profile support"
+  bug: "311348033"
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.v2
+package com.android.intentresolver.v2.profiles
 
 import android.os.UserHandle
 import android.view.LayoutInflater
@@ -55,7 +55,15 @@ class MultiProfilePagerAdapterTest {
                 { listView: ListView, bindAdapter: ResolverListAdapter ->
                     listView.setAdapter(bindAdapter)
                 },
-                ImmutableList.of(personalListAdapter),
+                ImmutableList.of(
+                    TabConfig(
+                        PROFILE_PERSONAL,
+                        "personal",
+                        "personal_a11y",
+                        "TAG_PERSONAL",
+                        personalListAdapter
+                    )
+                ),
                 object : EmptyStateProvider {},
                 { false },
                 PROFILE_PERSONAL,
@@ -67,9 +75,8 @@ class MultiProfilePagerAdapterTest {
         assertThat(pagerAdapter.count).isEqualTo(1)
         assertThat(pagerAdapter.currentPage).isEqualTo(PROFILE_PERSONAL)
         assertThat(pagerAdapter.currentUserHandle).isEqualTo(PERSONAL_USER_HANDLE)
-        assertThat(pagerAdapter.getAdapterForIndex(0)).isSameInstanceAs(personalListAdapter)
+        assertThat(pagerAdapter.getPageAdapterForIndex(0)).isSameInstanceAs(personalListAdapter)
         assertThat(pagerAdapter.activeListAdapter).isSameInstanceAs(personalListAdapter)
-        assertThat(pagerAdapter.inactiveListAdapter).isNull()
         assertThat(pagerAdapter.personalListAdapter).isSameInstanceAs(personalListAdapter)
         assertThat(pagerAdapter.workListAdapter).isNull()
         assertThat(pagerAdapter.itemCount).isEqualTo(1)
@@ -89,7 +96,16 @@ class MultiProfilePagerAdapterTest {
                 { listView: ListView, bindAdapter: ResolverListAdapter ->
                     listView.setAdapter(bindAdapter)
                 },
-                ImmutableList.of(personalListAdapter, workListAdapter),
+                ImmutableList.of(
+                    TabConfig(
+                        PROFILE_PERSONAL,
+                        "personal",
+                        "personal_a11y",
+                        "TAG_PERSONAL",
+                        personalListAdapter
+                    ),
+                    TabConfig(PROFILE_WORK, "work", "work_a11y", "TAG_WORK", workListAdapter)
+                ),
                 object : EmptyStateProvider {},
                 { false },
                 PROFILE_PERSONAL,
@@ -101,10 +117,9 @@ class MultiProfilePagerAdapterTest {
         assertThat(pagerAdapter.count).isEqualTo(2)
         assertThat(pagerAdapter.currentPage).isEqualTo(PROFILE_PERSONAL)
         assertThat(pagerAdapter.currentUserHandle).isEqualTo(PERSONAL_USER_HANDLE)
-        assertThat(pagerAdapter.getAdapterForIndex(0)).isSameInstanceAs(personalListAdapter)
-        assertThat(pagerAdapter.getAdapterForIndex(1)).isSameInstanceAs(workListAdapter)
+        assertThat(pagerAdapter.getPageAdapterForIndex(0)).isSameInstanceAs(personalListAdapter)
+        assertThat(pagerAdapter.getPageAdapterForIndex(1)).isSameInstanceAs(workListAdapter)
         assertThat(pagerAdapter.activeListAdapter).isSameInstanceAs(personalListAdapter)
-        assertThat(pagerAdapter.inactiveListAdapter).isSameInstanceAs(workListAdapter)
         assertThat(pagerAdapter.personalListAdapter).isSameInstanceAs(personalListAdapter)
         assertThat(pagerAdapter.workListAdapter).isSameInstanceAs(workListAdapter)
         assertThat(pagerAdapter.itemCount).isEqualTo(2)
@@ -128,7 +143,16 @@ class MultiProfilePagerAdapterTest {
                 { listView: ListView, bindAdapter: ResolverListAdapter ->
                     listView.setAdapter(bindAdapter)
                 },
-                ImmutableList.of(personalListAdapter, workListAdapter),
+                ImmutableList.of(
+                    TabConfig(
+                        PROFILE_PERSONAL,
+                        "personal",
+                        "personal_a11y",
+                        "TAG_PERSONAL",
+                        personalListAdapter
+                    ),
+                    TabConfig(PROFILE_WORK, "work", "work_a11y", "TAG_WORK", workListAdapter)
+                ),
                 object : EmptyStateProvider {},
                 { false },
                 PROFILE_WORK, // <-- This test specifically requests we start on work profile.
@@ -140,10 +164,9 @@ class MultiProfilePagerAdapterTest {
         assertThat(pagerAdapter.count).isEqualTo(2)
         assertThat(pagerAdapter.currentPage).isEqualTo(PROFILE_WORK)
         assertThat(pagerAdapter.currentUserHandle).isEqualTo(WORK_USER_HANDLE)
-        assertThat(pagerAdapter.getAdapterForIndex(0)).isSameInstanceAs(personalListAdapter)
-        assertThat(pagerAdapter.getAdapterForIndex(1)).isSameInstanceAs(workListAdapter)
+        assertThat(pagerAdapter.getPageAdapterForIndex(0)).isSameInstanceAs(personalListAdapter)
+        assertThat(pagerAdapter.getPageAdapterForIndex(1)).isSameInstanceAs(workListAdapter)
         assertThat(pagerAdapter.activeListAdapter).isSameInstanceAs(workListAdapter)
-        assertThat(pagerAdapter.inactiveListAdapter).isSameInstanceAs(personalListAdapter)
         assertThat(pagerAdapter.personalListAdapter).isSameInstanceAs(personalListAdapter)
         assertThat(pagerAdapter.workListAdapter).isSameInstanceAs(workListAdapter)
         assertThat(pagerAdapter.itemCount).isEqualTo(2)
@@ -163,7 +186,15 @@ class MultiProfilePagerAdapterTest {
                 { listView: ListView, bindAdapter: ResolverListAdapter ->
                     listView.setAdapter(bindAdapter)
                 },
-                ImmutableList.of(personalListAdapter),
+                ImmutableList.of(
+                    TabConfig(
+                        PROFILE_PERSONAL,
+                        "personal",
+                        "personal_a11y",
+                        "TAG_PERSONAL",
+                        personalListAdapter
+                    )
+                ),
                 object : EmptyStateProvider {},
                 { false },
                 PROFILE_PERSONAL,
@@ -194,7 +225,15 @@ class MultiProfilePagerAdapterTest {
                 { listView: ListView, bindAdapter: ResolverListAdapter ->
                     listView.setAdapter(bindAdapter)
                 },
-                ImmutableList.of(personalListAdapter),
+                ImmutableList.of(
+                    TabConfig(
+                        PROFILE_PERSONAL,
+                        "personal",
+                        "personal_a11y",
+                        "TAG_PERSONAL",
+                        personalListAdapter
+                    )
+                ),
                 object : EmptyStateProvider {},
                 { false },
                 PROFILE_PERSONAL,
@@ -236,7 +275,16 @@ class MultiProfilePagerAdapterTest {
                 { listView: ListView, bindAdapter: ResolverListAdapter ->
                     listView.setAdapter(bindAdapter)
                 },
-                ImmutableList.of(personalListAdapter, workListAdapter),
+                ImmutableList.of(
+                    TabConfig(
+                        PROFILE_PERSONAL,
+                        "personal",
+                        "personal_a11y",
+                        "TAG_PERSONAL",
+                        personalListAdapter
+                    ),
+                    TabConfig(PROFILE_WORK, "work", "work_a11y", "TAG_WORK", workListAdapter)
+                ),
                 object : EmptyStateProvider {},
                 { true }, // <-- Work mode is quiet.
                 PROFILE_WORK,
@@ -270,7 +318,16 @@ class MultiProfilePagerAdapterTest {
                 { listView: ListView, bindAdapter: ResolverListAdapter ->
                     listView.setAdapter(bindAdapter)
                 },
-                ImmutableList.of(personalListAdapter, workListAdapter),
+                ImmutableList.of(
+                    TabConfig(
+                        PROFILE_PERSONAL,
+                        "personal",
+                        "personal_a11y",
+                        "TAG_PERSONAL",
+                        personalListAdapter
+                    ),
+                    TabConfig(PROFILE_WORK, "work", "work_a11y", "TAG_WORK", workListAdapter)
+                ),
                 object : EmptyStateProvider {},
                 { false }, // <-- Work mode is not quiet.
                 PROFILE_WORK,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.v2;
+package com.android.intentresolver.v2.profiles;
 
 import android.content.Context;
 import android.os.UserHandle;
@@ -32,7 +32,6 @@ import com.android.intentresolver.R;
 import com.android.intentresolver.emptystate.EmptyStateProvider;
 import com.android.intentresolver.grid.ChooserGridAdapter;
 import com.android.intentresolver.measurements.Tracer;
-import com.android.internal.annotations.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
 
@@ -42,7 +41,6 @@ import java.util.function.Supplier;
 /**
  * A {@link PagerAdapter} which describes the work and personal profile share sheet screens.
  */
-@VisibleForTesting
 public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
         RecyclerView, ChooserGridAdapter, ChooserListAdapter> {
     private static final int SINGLE_CELL_SPAN_SIZE = 1;
@@ -52,9 +50,10 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
 
     public ChooserMultiProfilePagerAdapter(
             Context context,
-            ChooserGridAdapter adapter,
+            ImmutableList<TabConfig<ChooserGridAdapter>> tabs,
             EmptyStateProvider emptyStateProvider,
             Supplier<Boolean> workProfileQuietModeChecker,
+            @ProfileType int defaultProfile,
             UserHandle workProfileUserHandle,
             UserHandle cloneProfileUserHandle,
             int maxTargetsPerRow,
@@ -62,31 +61,7 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
         this(
                 context,
                 new ChooserProfileAdapterBinder(maxTargetsPerRow),
-                ImmutableList.of(adapter),
-                emptyStateProvider,
-                workProfileQuietModeChecker,
-                /* defaultProfile= */ 0,
-                workProfileUserHandle,
-                cloneProfileUserHandle,
-                new BottomPaddingOverrideSupplier(context),
-                featureFlags);
-    }
-
-    public ChooserMultiProfilePagerAdapter(
-            Context context,
-            ChooserGridAdapter personalAdapter,
-            ChooserGridAdapter workAdapter,
-            EmptyStateProvider emptyStateProvider,
-            Supplier<Boolean> workProfileQuietModeChecker,
-            @Profile int defaultProfile,
-            UserHandle workProfileUserHandle,
-            UserHandle cloneProfileUserHandle,
-            int maxTargetsPerRow,
-            FeatureFlags featureFlags) {
-        this(
-                context,
-                new ChooserProfileAdapterBinder(maxTargetsPerRow),
-                ImmutableList.of(personalAdapter, workAdapter),
+                tabs,
                 emptyStateProvider,
                 workProfileQuietModeChecker,
                 defaultProfile,
@@ -99,10 +74,10 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
     private ChooserMultiProfilePagerAdapter(
             Context context,
             ChooserProfileAdapterBinder adapterBinder,
-            ImmutableList<ChooserGridAdapter> gridAdapters,
+            ImmutableList<TabConfig<ChooserGridAdapter>> tabs,
             EmptyStateProvider emptyStateProvider,
             Supplier<Boolean> workProfileQuietModeChecker,
-            @Profile int defaultProfile,
+            @ProfileType int defaultProfile,
             UserHandle workProfileUserHandle,
             UserHandle cloneProfileUserHandle,
             BottomPaddingOverrideSupplier bottomPaddingOverrideSupplier,
@@ -110,7 +85,7 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
         super(
                         gridAdapter -> gridAdapter.getListAdapter(),
                 adapterBinder,
-                gridAdapters,
+                tabs,
                 emptyStateProvider,
                 workProfileQuietModeChecker,
                 defaultProfile,
@@ -137,7 +112,7 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
      */
     public void setIsCollapsed(boolean isCollapsed) {
         for (int i = 0, size = getItemCount(); i < size; i++) {
-            getAdapterForIndex(i).setAzLabelVisibility(!isCollapsed);
+            getPageAdapterForIndex(i).setAzLabelVisibility(!isCollapsed);
         }
     }
 
@@ -172,7 +147,7 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
     /** Apply the specified {@code height} as the footer in each tab's adapter. */
     public void setFooterHeightInEveryAdapter(int height) {
         for (int i = 0; i < getItemCount(); ++i) {
-            getAdapterForIndex(i).setFooterHeight(height);
+            getPageAdapterForIndex(i).setFooterHeight(height);
         }
     }
 

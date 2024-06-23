@@ -57,7 +57,7 @@
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{# fitxer més}many{# de fitxers més}other{# fitxers més}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"S\'està compartint text"</string>
     <string name="sharing_link" msgid="2307694372813942916">"S\'està compartint un enllaç"</string>
-    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{S\'està compartint una imatge}many{S\'estan compartint # d\'imatges}other{S\'estan compartint # imatges}}"</string>
+    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Comparteix una imatge}many{Comparteix # d\'imatges}other{Comparteix # imatges}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{S\'està compartint un vídeo}many{S\'estan compartint # de vídeos}other{S\'estan compartint # vídeos}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{S\'està compartint # fitxer}many{S\'estan compartint # de fitxers}other{S\'estan compartint # fitxers}}"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{S\'està compartint la imatge amb text}many{S\'estan compartint # d\'imatges amb text}other{S\'estan compartint # imatges amb text}}"</string>
@@ -66,6 +66,7 @@
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{S\'està compartint el vídeo amb un enllaç}many{S\'estan compartint # de vídeos amb un enllaç}other{S\'estan compartint # vídeos amb un enllaç}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{S\'està compartint el fitxer amb text}many{S\'estan compartint # de fitxers amb text}other{S\'estan compartint # fitxers amb text}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{S\'està compartint el fitxer amb un enllaç}many{S\'estan compartint # de fitxers amb un enllaç}other{S\'estan compartint # fitxers amb un enllaç}}"</string>
+    <string name="sharing_album" msgid="191743129899503345">"S\'està compartint l\'àlbum"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Només imatge}many{Només imatges}other{Només imatges}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Només vídeo}many{Només vídeos}other{Només vídeos}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Només fitxer}many{Només fitxers}other{Només fitxers}}"</string>
@@ -76,8 +77,10 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Aquesta aplicació no té permís de gravació, però pot capturar àudio a través d\'aquest dispositiu USB."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Personal"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Feina"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Privat"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Visualització personal"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Visualització de treball"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Visualització privada"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Bloquejat per l\'administrador de TI"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"No es pot compartir aquest contingut amb aplicacions de treball"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"No es pot obrir aquest contingut amb aplicacions de treball"</string>
