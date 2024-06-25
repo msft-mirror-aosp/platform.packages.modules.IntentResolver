@@ -111,6 +111,7 @@ private fun PreviewCarousel(
             prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
         )
     var maxAspectRatio by remember { mutableStateOf(0f) }
+    var viewportHeight by remember { mutableStateOf(0) }
 
     val horizontalPadding = 16.dp
     Box(
@@ -130,9 +131,8 @@ private fun PreviewCarousel(
                                 MAX_ASPECT_RATIO
                             )
                         }
-                    if (maxAspectRatio != aspectRatio) {
-                        maxAspectRatio = aspectRatio
-                    }
+                    maxAspectRatio = aspectRatio
+                    viewportHeight = placeable.height
                     layout(placeable.width, placeable.height) { placeable.place(0, 0) }
                 },
     ) {
@@ -170,7 +170,12 @@ private fun PreviewCarousel(
                 }
 
                 ShareouselCard(
-                    viewModel.preview(model, previewIndex, rememberCoroutineScope()),
+                    viewModel.preview(
+                        model,
+                        viewportHeight,
+                        previewIndex,
+                        rememberCoroutineScope()
+                    ),
                     maxAspectRatio,
                 )
             }
