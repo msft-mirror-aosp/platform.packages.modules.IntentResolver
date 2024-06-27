@@ -1196,13 +1196,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     @Override // ResolverListCommunicator
     public final void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
-        if (!mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
+        mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
                 (ChooserListAdapter) listAdapter,
-                mProfileAvailability.getWaitingToEnableProfile())) {
-            // We no longer have any items... just finish the activity.
-            Log.d(TAG, "onHandlePackagesChanged(): returned false, finishing");
-            finish();
-        }
+                mProfileAvailability.getWaitingToEnableProfile());
     }
 
     final Option optionForChooserTarget(TargetInfo target, int index) {
@@ -2262,7 +2258,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         if (isLayoutUpdated
                 || insetsChanged
-                || mLastNumberOfChildren != recyclerView.getChildCount()) {
+                || mLastNumberOfChildren != recyclerView.getChildCount()
+                || mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
             mCurrAvailableWidth = availableWidth;
             if (isLayoutUpdated) {
                 // It is very important we call setAdapter from here. Otherwise in some cases
@@ -2281,7 +2278,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 return;
             }
 
-            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged) {
+            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged
+                    && !mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
                 return;
             }
 

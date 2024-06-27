@@ -71,6 +71,16 @@ flag {
 }
 
 flag {
+  name: "fix_missing_drawer_offset_calculation"
+  namespace: "intentresolver"
+  description: "Recalculate drawer offset upon the preview size change when the targets list remains unchanged"
+  bug: "347316548"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "fix_partial_image_edit_transition"
   namespace: "intentresolver"
   description: "Do not run the shared element transition animation for a partially visible image"
