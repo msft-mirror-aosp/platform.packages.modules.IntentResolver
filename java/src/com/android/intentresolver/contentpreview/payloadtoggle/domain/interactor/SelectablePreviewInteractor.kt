@@ -29,7 +29,7 @@ class SelectablePreviewInteractor(
     val uri: Uri = key.uri
 
     /** Whether or not this preview is selected by the user. */
-    val isSelected: Flow<Boolean> = selectionInteractor.selections.map { key in it }
+    val isSelected: Flow<Boolean> = selectionInteractor.selections.map { key.uri in it }
 
     /** Sets whether this preview is selected by the user. */
     fun setSelected(isSelected: Boolean) {

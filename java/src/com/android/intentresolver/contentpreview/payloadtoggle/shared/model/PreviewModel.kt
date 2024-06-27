@@ -27,4 +27,8 @@ data class PreviewModel(
     /** Mimetype for the data [uri] points to. */
     val mimeType: String?,
     val aspectRatio: Float = 1f,
+    /**
+     * Relative item position in the list that is used to determine items order in the target intent
+     */
+    val order: Int,
 )

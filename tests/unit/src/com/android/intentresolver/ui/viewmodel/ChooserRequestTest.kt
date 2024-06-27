@@ -60,7 +60,6 @@ class ChooserRequestTest {
     private val fakeChooserServiceFlags =
         FakeChooserServiceFlags().apply {
             setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false)
-            setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, false)
             setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
         }
 
@@ -244,7 +243,6 @@ class ChooserRequestTest {
 
     @Test
     fun testAlbumType() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, true)
         val model = createActivityModel(Intent(ACTION_SEND))
         model.intent.putExtra(
             Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT,
