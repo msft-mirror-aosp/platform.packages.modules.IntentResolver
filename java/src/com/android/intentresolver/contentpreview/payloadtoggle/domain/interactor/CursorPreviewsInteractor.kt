@@ -56,6 +56,7 @@ class CursorPreviewsInteractor
 @Inject
 constructor(
     private val interactor: SetCursorPreviewsInteractor,
+    private val selectionInteractor: SelectionInteractor,
     @FocusedItemIndex private val focusedItemIdx: Int,
     private val uriMetadataReader: UriMetadataReader,
     @PageSize private val pageSize: Int,
@@ -287,19 +288,26 @@ constructor(
     private fun createPreviewModel(
         row: CursorRow,
         unclaimedRecords: MutableUnclaimedMap,
-    ): PreviewModel =
-        unclaimedRecords.remove(row.uri)?.second
-            ?: uriMetadataReader.getMetadata(row.uri).let { metadata ->
-                val size =
-                    row.previewSize
-                        ?: metadata.previewUri?.let { uriMetadataReader.readPreviewSize(it) }
-                PreviewModel(
-                    uri = row.uri,
-                    previewUri = metadata.previewUri,
-                    mimeType = metadata.mimeType,
-                    aspectRatio = size.aspectRatioOrDefault(1f),
-                )
+    ): PreviewModel = uriMetadataReader.getMetadata(row.uri).let { metadata ->
+            val size =
+                row.previewSize
+                    ?: metadata.previewUri?.let { uriMetadataReader.readPreviewSize(it) }
+            PreviewModel(
+                uri = row.uri,
+                previewUri = metadata.previewUri,
+                mimeType = metadata.mimeType,
+                aspectRatio = size.aspectRatioOrDefault(1f),
+                order = row.position,
+            )
+        }.also { updated ->
+            if (unclaimedRecords.remove(row.uri) != null) {
+                // unclaimedRecords contains initially shared (and thus selected) items with unknown
+                // cursor position. Update selection records when any of those items is encountered
+                // in the cursor to maintain proper selection order should other items also be
+                // selected.
+                selectionInteractor.updateSelection(updated)
             }
+        }
 
     private fun <M : MutablePreviewMap> M.putAllUnclaimedRight(unclaimed: UnclaimedMap): M =
         putAllUnclaimedWhere(unclaimed) { it >= focusedItemIdx }
