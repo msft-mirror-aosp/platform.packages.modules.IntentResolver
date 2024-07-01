@@ -48,3 +48,24 @@ private suspend fun <A, B> Iterable<A>.mapParallel(block: suspend (A) -> B): Lis
             }
             .awaitAll()
     }
+
+suspend fun <A, B> Iterable<A>.mapParallelIndexed(
+    parallelism: Int? = null,
+    block: suspend (Int, A) -> B,
+): List<B> =
+    parallelism?.let { permits ->
+        withSemaphore(permits = permits) {
+            mapParallelIndexed { idx, item -> withPermit { block(idx, item) } }
+        }
+    } ?: mapParallelIndexed(block)
+
+private suspend fun <A, B> Iterable<A>.mapParallelIndexed(block: suspend (Int, A) -> B): List<B> =
+    coroutineScope {
+        mapIndexed { index, item ->
+                async {
+                    yield()
+                    block(index, item)
+                }
+            }
+            .awaitAll()
+    }
