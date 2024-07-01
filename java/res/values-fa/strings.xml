@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"تصویربرداری با"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"گرفتن عکس با <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"تصویربرداری"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"استتفاده از یک برنامه دیگر"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"استفاده از یک برنامه دیگر"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"انتخاب کنش"</string>
     <string name="noApplications" msgid="1139487441772284671">"‏هیچ برنامه‌ای نمی‌‎تواند این کار را انجام دهد."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"شما از این برنامه در خارج از نمایه کاری‌تان استفاده می‌کنید"</string>
