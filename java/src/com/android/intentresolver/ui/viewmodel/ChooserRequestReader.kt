@@ -95,8 +95,7 @@ fun readChooserRequest(
         val initialIntents =
             optional(array<Intent>(EXTRA_INITIAL_INTENTS))?.take(MAX_INITIAL_INTENTS)?.map {
                 it.maybeAddSendActionFlags()
-            }
-                ?: emptyList()
+            } ?: emptyList()
 
         val chosenComponentSender =
             optional(value<IntentSender>(EXTRA_CHOOSER_RESULT_INTENT_SENDER))
@@ -132,13 +131,9 @@ fun readChooserRequest(
         }
 
         val contentTypeHint =
-            if (flags.chooserAlbumText()) {
-                when (optional(value<Int>(Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT))) {
-                    Intent.CHOOSER_CONTENT_TYPE_ALBUM -> ContentTypeHint.ALBUM
-                    else -> ContentTypeHint.NONE
-                }
-            } else {
-                ContentTypeHint.NONE
+            when (optional(value<Int>(Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT))) {
+                Intent.CHOOSER_CONTENT_TYPE_ALBUM -> ContentTypeHint.ALBUM
+                else -> ContentTypeHint.NONE
             }
 
         val metadataText =

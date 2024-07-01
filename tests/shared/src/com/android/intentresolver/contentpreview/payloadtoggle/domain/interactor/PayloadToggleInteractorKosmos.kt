@@ -48,6 +48,7 @@ val Kosmos.cursorPreviewsInteractor
     get() =
         CursorPreviewsInteractor(
             interactor = setCursorPreviewsInteractor,
+            selectionInteractor = selectionInteractor,
             focusedItemIdx = focusedItemIndex,
             uriMetadataReader = uriMetadataReader,
             pageSize = pageSize,
