@@ -2258,7 +2258,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         if (isLayoutUpdated
                 || insetsChanged
-                || mLastNumberOfChildren != recyclerView.getChildCount()) {
+                || mLastNumberOfChildren != recyclerView.getChildCount()
+                || mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
             mCurrAvailableWidth = availableWidth;
             if (isLayoutUpdated) {
                 // It is very important we call setAdapter from here. Otherwise in some cases
@@ -2277,7 +2278,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 return;
             }
 
-            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged) {
+            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged
+                    && !mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
                 return;
             }
 
