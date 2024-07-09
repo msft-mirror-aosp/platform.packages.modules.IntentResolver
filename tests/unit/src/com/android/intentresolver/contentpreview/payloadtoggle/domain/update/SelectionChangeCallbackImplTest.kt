@@ -69,7 +69,6 @@ class SelectionChangeCallbackImplTest {
     private val flags =
         FakeChooserServiceFlags().apply {
             setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false)
-            setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, false)
             setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
         }
 
