@@ -75,8 +75,7 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
                 maxTargetsPerRow,
                 userHandle,
                 mTargetDataLoader,
-                null,
-                mFeatureFlags);
+                null);
     }
 
     @Override
