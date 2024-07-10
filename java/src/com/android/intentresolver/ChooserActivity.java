@@ -96,10 +96,8 @@ import com.android.intentresolver.ChooserRefinementManager.RefinementType;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
-import com.android.intentresolver.contentpreview.BasePreviewViewModel;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.contentpreview.HeadlineGeneratorImpl;
-import com.android.intentresolver.contentpreview.PreviewViewModel;
 import com.android.intentresolver.data.model.ChooserRequest;
 import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
@@ -633,21 +631,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 finish();
             }
         });
-        BasePreviewViewModel previewViewModel =
-                new ViewModelProvider(this, createPreviewViewModelFactory())
-                        .get(BasePreviewViewModel.class);
-        previewViewModel.init(
-                mRequest.getTargetIntent(),
-                mRequest.getAdditionalContentUri(),
-                mChooserServiceFeatureFlags.chooserPayloadToggling());
         ChooserContentPreviewUi.ActionFactory actionFactory =
                 decorateActionFactoryWithRefinement(
                         createChooserActionFactory(mRequest.getTargetIntent()));
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
-                previewViewModel.getPreviewDataProvider(),
+                mViewModel.getPreviewDataProvider(),
                 mRequest.getTargetIntent(),
-                previewViewModel.getImageLoader(),
+                mViewModel.getImageLoader(),
                 actionFactory,
                 createModifyShareActionFactory(),
                 mEnterTransitionAnimationDelegate,
@@ -2106,11 +2097,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles.getQueryIntentsHandle(userHandle),
                 mRequest.getFilteredComponentNames(),
                 mPinnedSharedPrefs);
-    }
-
-    @VisibleForTesting
-    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
-        return PreviewViewModel.Companion.getFactory();
     }
 
     private ChooserContentPreviewUi.ActionFactory decorateActionFactoryWithRefinement(
