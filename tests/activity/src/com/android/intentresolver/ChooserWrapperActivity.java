@@ -30,8 +30,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
 
-import androidx.lifecycle.ViewModelProvider;
-
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
@@ -149,13 +147,6 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
             return sOverrides.resources;
         }
         return super.getResources();
-    }
-
-    @Override
-    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
-        return TestContentPreviewViewModel.Companion.wrap(
-                super.createPreviewViewModelFactory(),
-                sOverrides.imageLoader);
     }
 
     @Override
