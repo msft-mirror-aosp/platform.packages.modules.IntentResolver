@@ -305,9 +305,6 @@ public class ChooserActivityTest {
         // values to the dependency graph at activity launch time. This allows replacing
         // arbitrary bindings per-test case if needed.
         mPackageManager = mContext.getPackageManager();
-
-        // TODO: inject image loader in the prod code and remove this override
-        ChooserActivityOverrideData.getInstance().imageLoader = mFakeImageLoader;
     }
 
     public ChooserActivityTest(boolean appPredictionAvailable) {
