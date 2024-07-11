@@ -159,11 +159,7 @@ public class ChooserRequestParameters {
         mChooserActions = getChooserActions(clientIntent);
         mModifyShareAction = getModifyShareAction(clientIntent);
 
-        if (android.service.chooser.Flags.enableSharesheetMetadataExtra()) {
-            mMetadataText = clientIntent.getCharSequenceExtra(Intent.EXTRA_METADATA_TEXT);
-        } else {
-            mMetadataText = null;
-        }
+        mMetadataText = clientIntent.getCharSequenceExtra(Intent.EXTRA_METADATA_TEXT);
     }
 
     public Intent getTargetIntent() {
