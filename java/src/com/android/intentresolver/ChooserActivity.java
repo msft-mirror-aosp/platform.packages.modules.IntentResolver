@@ -2043,8 +2043,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                     if (record != null && record.shortcutLoader != null) {
                         record.shortcutLoader.reset();
                     }
-                },
-                mFeatureFlags);
+                });
     }
 
     private void onWorkProfileStatusUpdated() {
