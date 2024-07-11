@@ -23,19 +23,14 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityRetainedComponent
-import dagger.hilt.android.scopes.ActivityRetainedScoped
+import dagger.hilt.android.components.ViewModelComponent
 
 @Module
-@InstallIn(ActivityRetainedComponent::class)
+@InstallIn(ViewModelComponent::class)
 interface ImageLoaderModule {
-    @Binds
-    @ActivityRetainedScoped
-    fun imageLoader(previewImageLoader: ImagePreviewImageLoader): ImageLoader
+    @Binds fun imageLoader(previewImageLoader: ImagePreviewImageLoader): ImageLoader
 
-    @Binds
-    @ActivityRetainedScoped
-    fun thumbnailLoader(thumbnailLoader: ThumbnailLoaderImpl): ThumbnailLoader
+    @Binds fun thumbnailLoader(thumbnailLoader: ThumbnailLoaderImpl): ThumbnailLoader
 
     companion object {
         @Provides
