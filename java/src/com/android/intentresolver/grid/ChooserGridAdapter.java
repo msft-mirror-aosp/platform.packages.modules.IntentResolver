@@ -150,11 +150,9 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
     public void setFooterHeight(int height) {
         if (mFooterHeight != height) {
             mFooterHeight = height;
-            if (mFeatureFlags.fixTargetListFooter()) {
-                // we always have at least one view, the footer, see getItemCount() and
-                // getFooterRowCount()
-                notifyItemChanged(getItemCount() - 1);
-            }
+            // we always have at least one view, the footer, see getItemCount() and
+            // getFooterRowCount()
+            notifyItemChanged(getItemCount() - 1);
         }
     }
 
