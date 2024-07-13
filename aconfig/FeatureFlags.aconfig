@@ -64,16 +64,6 @@ flag {
 }
 
 flag {
-  name: "fix_partial_image_edit_transition"
-  namespace: "intentresolver"
-  description: "Do not run the shared element transition animation for a partially visible image"
-  bug: "339583191"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
   name: "fix_private_space_locked_on_restart"
   namespace: "intentresolver"
   description: "Dismiss Share sheet on restart if private space became locked while stopped"
