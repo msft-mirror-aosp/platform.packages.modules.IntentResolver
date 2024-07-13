@@ -20,6 +20,8 @@ import android.graphics.Bitmap
 import android.net.Uri
 import java.util.function.Consumer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /** A content preview image loader. */
 interface ImageLoader : suspend (Uri) -> Bitmap?, suspend (Uri, Boolean) -> Bitmap? {
@@ -30,7 +32,14 @@ interface ImageLoader : suspend (Uri) -> Bitmap?, suspend (Uri, Boolean) -> Bitm
      * @param callback a callback that will be invoked with the loaded image or null if loading has
      *   failed.
      */
-    fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>)
+    fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>) {
+        callerScope.launch {
+            val bitmap = invoke(uri)
+            if (isActive) {
+                callback.accept(bitmap)
+            }
+        }
+    }
 
     /** Prepopulate the image loader cache. */
     fun prePopulate(uris: List<Uri>)
