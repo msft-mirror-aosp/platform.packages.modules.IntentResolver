@@ -15,10 +15,13 @@
  */
 package com.android.intentresolver.ui.viewmodel
 
+import android.content.ContentInterface
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.intentresolver.contentpreview.ImageLoader
+import com.android.intentresolver.contentpreview.PreviewDataProvider
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.FetchPreviewsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.ProcessTargetIntentUpdatesInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
@@ -38,6 +41,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 
 private const val TAG = "ChooserViewModel"
 
@@ -58,6 +62,8 @@ constructor(
      */
     val initialRequest: ValidationResult<ChooserRequest>,
     private val chooserRequestRepository: Lazy<ChooserRequestRepository>,
+    private val contentResolver: ContentInterface,
+    val imageLoader: ImageLoader,
 ) : ViewModel() {
 
     /** Parcelable-only references provided from the creating Activity */
@@ -85,6 +91,17 @@ constructor(
      */
     val request: StateFlow<ChooserRequest>
         get() = chooserRequestRepository.get().chooserRequest.asStateFlow()
+
+    val previewDataProvider by lazy {
+        val chooserRequest = (initialRequest as Valid<ChooserRequest>).value
+        PreviewDataProvider(
+            viewModelScope + bgDispatcher,
+            chooserRequest.targetIntent,
+            chooserRequest.additionalContentUri,
+            contentResolver,
+            flags,
+        )
+    }
 
     init {
         if (initialRequest is Invalid) {
