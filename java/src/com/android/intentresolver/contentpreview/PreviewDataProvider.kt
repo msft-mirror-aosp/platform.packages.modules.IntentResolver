@@ -32,6 +32,7 @@ import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREV
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT
+import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.measurements.runTracing
 import com.android.intentresolver.util.ownedByCurrentUser
 import java.util.concurrent.atomic.AtomicInteger
@@ -76,9 +77,7 @@ constructor(
     private val targetIntent: Intent,
     private val additionalContentUri: Uri?,
     private val contentResolver: ContentInterface,
-    // TODO: replace with the ChooserServiceFlags ref when PreviewViewModel dependencies are sorted
-    // out
-    private val isPayloadTogglingEnabled: Boolean,
+    private val featureFlags: ChooserServiceFlags,
     private val typeClassifier: MimeTypeClassifier = DefaultMimeTypeClassifier,
 ) {
 
@@ -129,7 +128,7 @@ constructor(
              * IMAGE, FILE, TEXT. */
             if (!targetIntent.isSend || records.isEmpty()) {
                 CONTENT_PREVIEW_TEXT
-            } else if (isPayloadTogglingEnabled && shouldShowPayloadSelection()) {
+            } else if (featureFlags.chooserPayloadToggling() && shouldShowPayloadSelection()) {
                 // TODO: replace with the proper flags injection
                 CONTENT_PREVIEW_PAYLOAD_SELECTION
             } else {
@@ -275,13 +274,16 @@ constructor(
         val mimeType: String? by lazy { contentResolver.getTypeSafe(uri) }
         val isImageType: Boolean
             get() = typeClassifier.isImageType(mimeType)
+
         val supportsImageType: Boolean by lazy {
             contentResolver.getStreamTypesSafe(uri).firstOrNull(typeClassifier::isImageType) != null
         }
         val supportsThumbnail: Boolean
             get() = query.supportsThumbnail
+
         val title: String
             get() = query.title
+
         val iconUri: Uri?
             get() = query.iconUri
 
@@ -326,8 +328,7 @@ constructor(
                     }
 
                 QueryResult(supportsThumbnail, title, iconUri)
-            }
-                ?: QueryResult()
+            } ?: QueryResult()
     }
 
     private class QueryResult(
