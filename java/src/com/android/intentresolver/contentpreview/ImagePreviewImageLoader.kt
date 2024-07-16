@@ -98,10 +98,11 @@ constructor(
     @GuardedBy("lock") private val cache = LruCache<Uri, RequestRecord>(cacheSize)
     @GuardedBy("lock") private val runningRequests = HashMap<Uri, RequestRecord>()
 
-    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? = loadImageAsync(uri, caching)
+    override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap? =
+        loadImageAsync(uri, caching)
 
-    override fun prePopulate(uris: List<Uri>) {
-        uris.asSequence().take(cache.maxSize()).forEach { uri ->
+    override fun prePopulate(uriSizePairs: List<Pair<Uri, Size>>) {
+        uriSizePairs.asSequence().take(cache.maxSize()).forEach { (uri, _) ->
             scope.launch { loadImageAsync(uri, caching = true) }
         }
     }

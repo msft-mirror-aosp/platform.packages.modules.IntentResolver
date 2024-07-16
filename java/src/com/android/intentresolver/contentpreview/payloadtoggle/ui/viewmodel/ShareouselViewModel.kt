@@ -15,6 +15,7 @@
  */
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel
 
+import android.util.Size
 import com.android.intentresolver.contentpreview.CachingImagePreviewImageLoader
 import com.android.intentresolver.contentpreview.HeadlineGenerator
 import com.android.intentresolver.contentpreview.ImageLoader
@@ -57,7 +58,9 @@ data class ShareouselViewModel(
     val actions: Flow<List<ActionChipViewModel>>,
     /** Creates a [ShareouselPreviewViewModel] for a [PreviewModel] present in [previews]. */
     val preview:
-        (key: PreviewModel, index: Int?, scope: CoroutineScope) -> ShareouselPreviewViewModel,
+        (
+            key: PreviewModel, previewHeight: Int, index: Int?, scope: CoroutineScope
+        ) -> ShareouselPreviewViewModel,
 )
 
 @Module
@@ -114,7 +117,7 @@ interface ShareouselViewModelModule {
                             }
                         }
                     },
-                preview = { key, index, previewScope ->
+                preview = { key, previewHeight, index, previewScope ->
                     keySet.value?.maybeLoad(index)
                     val previewInteractor = interactor.preview(key)
                     val contentType =
@@ -130,9 +133,19 @@ interface ShareouselViewModelModule {
                     ShareouselPreviewViewModel(
                         bitmapLoadState =
                             flow {
+                                    val previewWidth =
+                                        if (key.aspectRatio > 0) {
+                                                previewHeight.toFloat() / key.aspectRatio
+                                            } else {
+                                                previewHeight
+                                            }
+                                            .toInt()
                                     emit(
-                                        key.previewUri?.let { ValueUpdate.Value(imageLoader(it)) }
-                                            ?: ValueUpdate.Absent
+                                        key.previewUri?.let {
+                                            ValueUpdate.Value(
+                                                imageLoader(it, Size(previewWidth, previewHeight))
+                                            )
+                                        } ?: ValueUpdate.Absent
                                     )
                                 }
                                 .stateIn(previewScope, SharingStarted.Eagerly, initialBitmapValue),
