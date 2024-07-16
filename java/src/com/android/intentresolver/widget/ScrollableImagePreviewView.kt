@@ -22,6 +22,7 @@ import android.graphics.Rect
 import android.net.Uri
 import android.util.AttributeSet
 import android.util.PluralsMessageFormatter
+import android.util.Size
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -60,11 +61,13 @@ private const val MIN_ASPECT_RATIO_STRING = "2:5"
 private const val MAX_ASPECT_RATIO = 2.5f
 private const val MAX_ASPECT_RATIO_STRING = "5:2"
 
-private typealias CachingImageLoader = suspend (Uri, Boolean) -> Bitmap?
+private typealias CachingImageLoader = suspend (Uri, Size, Boolean) -> Bitmap?
 
 class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
     constructor(context: Context) : this(context, null)
+
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
+
     constructor(
         context: Context,
         attrs: AttributeSet?,
@@ -121,11 +124,18 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
      * A hint about the maximum width this view can grow to, this helps to optimize preview loading.
      */
     var maxWidthHint: Int = -1
+
     private var requestedHeight: Int = 0
     private var isMeasured = false
     private var maxAspectRatio = MAX_ASPECT_RATIO
     private var maxAspectRatioString = MAX_ASPECT_RATIO_STRING
     private var outerSpacing: Int = 0
+
+    var previewHeight: Int
+        get() = previewAdapter.previewHeight
+        set(value) {
+            previewAdapter.previewHeight = value
+        }
 
     override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         super.onMeasure(widthSpec, heightSpec)
@@ -198,6 +208,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
             BatchPreviewLoader(
                 previewAdapter.imageLoader ?: error("Image loader is not set"),
                 previews,
+                Size(previewHeight, previewHeight),
                 totalItemCount,
                 onUpdate = previewAdapter::addPreviews,
                 onCompletion = {
@@ -303,10 +314,18 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
         private var isLoading = false
         private val hasOtherItem
             get() = previews.size < totalItemCount
+
         val hasPreviews: Boolean
             get() = previews.isNotEmpty()
 
         var transitionStatusElementCallback: TransitionElementStatusCallback? = null
+
+        private var previewSize: Size = Size(0, 0)
+        var previewHeight: Int
+            get() = previewSize.height
+            set(value) {
+                previewSize = Size(value, value)
+            }
 
         fun reset(totalItemCount: Int) {
             firstImagePos = -1
@@ -387,6 +406,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                     vh.bind(
                         previews[position],
                         imageLoader ?: error("ImageLoader is missing"),
+                        previewSize,
                         fadeInDurationMs,
                         isSharedTransitionElement = position == firstImagePos,
                         previewReadyCallback =
@@ -438,6 +458,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
         fun bind(
             preview: Preview,
             imageLoader: CachingImageLoader,
+            previewSize: Size,
             fadeInDurationMs: Long,
             isSharedTransitionElement: Boolean,
             previewReadyCallback: ((String) -> Unit)?
@@ -477,7 +498,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                 }
             }
             resetScope().launch {
-                loadImage(preview, imageLoader)
+                loadImage(preview, previewSize, imageLoader)
                 if (preview.type == PreviewType.Image && previewReadyCallback != null) {
                     image.waitForPreDraw()
                     previewReadyCallback(TRANSITION_NAME)
@@ -487,12 +508,16 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
             }
         }
 
-        private suspend fun loadImage(preview: Preview, imageLoader: CachingImageLoader) {
+        private suspend fun loadImage(
+            preview: Preview,
+            previewSize: Size,
+            imageLoader: CachingImageLoader,
+        ) {
             val bitmap =
                 runCatching {
                         // it's expected for all loading/caching optimizations to be implemented by
                         // the loader
-                        imageLoader(preview.uri, true)
+                        imageLoader(preview.uri, previewSize, true)
                     }
                     .getOrNull()
             image.setImageBitmap(bitmap)
@@ -507,6 +532,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                         setAnimationListener(
                             object : AnimationListener {
                                 override fun onAnimationStart(animation: Animation?) = Unit
+
                                 override fun onAnimationRepeat(animation: Animation?) = Unit
 
                                 override fun onAnimationEnd(animation: Animation?) {
@@ -551,6 +577,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
 
     private class LoadingItemViewHolder(view: View) : ViewHolder(view) {
         fun bind() = Unit
+
         override fun unbind() = Unit
     }
 
@@ -638,6 +665,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
     class BatchPreviewLoader(
         private val imageLoader: CachingImageLoader,
         private val previews: Flow<Preview>,
+        private val previewSize: Size,
         val totalItemCount: Int,
         private val onUpdate: (List<Preview>) -> Unit,
         private val onCompletion: () -> Unit,
@@ -701,10 +729,10 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                                     //  imagine is one of the first images never loads so we never
                                     //  fill the initial viewport and does not show the previews at
                                     //  all.
-                                    imageLoader(preview.uri, isFirstBlock)?.let { bitmap ->
+                                    imageLoader(preview.uri, previewSize, isFirstBlock)?.let {
+                                        bitmap ->
                                         previewSizeUpdater(preview, bitmap.width, bitmap.height)
-                                    }
-                                        ?: 0
+                                    } ?: 0
                                 }
                                 .getOrDefault(0)
 
