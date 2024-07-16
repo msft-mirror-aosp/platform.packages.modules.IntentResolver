@@ -18,6 +18,7 @@ package com.android.intentresolver.contentpreview
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Size
 import com.google.common.truth.Truth.assertThat
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -43,6 +44,7 @@ class CachingImagePreviewImageLoaderTest {
         testJobTime * ceil((testCacheSize).toFloat() / testMaxConcurrency.toFloat()).roundToInt()
     private val testUris =
         List(5) { Uri.fromParts("TestScheme$it", "TestSsp$it", "TestFragment$it") }
+    private val previewSize = Size(500, 500)
     private val testTimeToLoadAllUris =
         testJobTime * ceil((testUris.size).toFloat() / testMaxConcurrency.toFloat()).roundToInt()
     private val testBitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ALPHA_8)
@@ -72,7 +74,7 @@ class CachingImagePreviewImageLoaderTest {
             var result: Bitmap? = null
 
             // Act
-            imageLoader.loadImage(testScope, testUris[0]) { result = it }
+            imageLoader.loadImage(testScope, testUris[0], previewSize) { result = it }
             advanceTimeBy(testJobTime)
             runCurrent()
 
@@ -85,14 +87,14 @@ class CachingImagePreviewImageLoaderTest {
     fun loadImage_cached_usesCachedValue() =
         testScope.runTest {
             // Arrange
-            imageLoader.loadImage(testScope, testUris[0]) {}
+            imageLoader.loadImage(testScope, testUris[0], previewSize) {}
             advanceTimeBy(testJobTime)
             runCurrent()
             fakeThumbnailLoader.invokeCalls.clear()
             var result: Bitmap? = null
 
             // Act
-            imageLoader.loadImage(testScope, testUris[0]) { result = it }
+            imageLoader.loadImage(testScope, testUris[0], previewSize) { result = it }
             advanceTimeBy(testJobTime)
             runCurrent()
 
@@ -112,7 +114,7 @@ class CachingImagePreviewImageLoaderTest {
             var result: Bitmap? = testBitmap
 
             // Act
-            imageLoader.loadImage(testScope, testUris[0]) { result = it }
+            imageLoader.loadImage(testScope, testUris[0], previewSize) { result = it }
             advanceTimeBy(testJobTime)
             runCurrent()
 
@@ -130,7 +132,7 @@ class CachingImagePreviewImageLoaderTest {
 
             // Act
             testUris.take(testMaxConcurrency + 1).forEach { uri ->
-                imageLoader.loadImage(testScope, uri) { results.add(it) }
+                imageLoader.loadImage(testScope, uri, previewSize) { results.add(it) }
             }
 
             // Assert
@@ -153,10 +155,10 @@ class CachingImagePreviewImageLoaderTest {
             assertThat(testUris.size).isGreaterThan(testCacheSize)
 
             // Act
-            imageLoader.loadImage(testScope, testUris[0]) { results[0] = it }
+            imageLoader.loadImage(testScope, testUris[0], previewSize) { results[0] = it }
             runCurrent()
             testUris.indices.drop(1).take(testCacheSize).forEach { i ->
-                imageLoader.loadImage(testScope, testUris[i]) { results[i] = it }
+                imageLoader.loadImage(testScope, testUris[i], previewSize) { results[i] = it }
             }
             advanceTimeBy(testTimeToFillCache)
             runCurrent()
@@ -179,7 +181,7 @@ class CachingImagePreviewImageLoaderTest {
             assertThat(fullCacheUris).hasSize(testCacheSize)
 
             // Act
-            imageLoader.prePopulate(fullCacheUris)
+            imageLoader.prePopulate(fullCacheUris.map { it to previewSize })
             advanceTimeBy(testTimeToFillCache)
             runCurrent()
 
@@ -188,7 +190,7 @@ class CachingImagePreviewImageLoaderTest {
 
             // Act
             fakeThumbnailLoader.invokeCalls.clear()
-            imageLoader.prePopulate(fullCacheUris)
+            imageLoader.prePopulate(fullCacheUris.map { it to previewSize })
             advanceTimeBy(testTimeToFillCache)
             runCurrent()
 
@@ -203,7 +205,7 @@ class CachingImagePreviewImageLoaderTest {
             assertThat(testUris.size).isGreaterThan(testCacheSize)
 
             // Act
-            imageLoader.prePopulate(testUris)
+            imageLoader.prePopulate(testUris.map { it to previewSize })
             advanceTimeBy(testTimeToLoadAllUris)
             runCurrent()
 
@@ -213,7 +215,7 @@ class CachingImagePreviewImageLoaderTest {
 
             // Act
             fakeThumbnailLoader.invokeCalls.clear()
-            imageLoader.prePopulate(testUris)
+            imageLoader.prePopulate(testUris.map { it to previewSize })
             advanceTimeBy(testTimeToLoadAllUris)
             runCurrent()
 
@@ -229,7 +231,7 @@ class CachingImagePreviewImageLoaderTest {
             assertThat(unfilledCacheUris.size).isLessThan(testCacheSize)
 
             // Act
-            imageLoader.prePopulate(unfilledCacheUris)
+            imageLoader.prePopulate(unfilledCacheUris.map { it to previewSize })
             advanceTimeBy(testJobTime)
             runCurrent()
 
@@ -238,7 +240,7 @@ class CachingImagePreviewImageLoaderTest {
 
             // Act
             fakeThumbnailLoader.invokeCalls.clear()
-            imageLoader.prePopulate(unfilledCacheUris)
+            imageLoader.prePopulate(unfilledCacheUris.map { it to previewSize })
             advanceTimeBy(testJobTime)
             runCurrent()
 
@@ -252,8 +254,8 @@ class CachingImagePreviewImageLoaderTest {
             // Arrange
 
             // Act
-            imageLoader.invoke(testUris[0], caching = false)
-            imageLoader.invoke(testUris[0], caching = false)
+            imageLoader.invoke(testUris[0], previewSize, caching = false)
+            imageLoader.invoke(testUris[0], previewSize, caching = false)
             advanceTimeBy(testJobTime)
             runCurrent()
 
@@ -267,8 +269,8 @@ class CachingImagePreviewImageLoaderTest {
             // Arrange
 
             // Act
-            imageLoader.invoke(testUris[0], caching = true)
-            imageLoader.invoke(testUris[0], caching = true)
+            imageLoader.invoke(testUris[0], previewSize, caching = true)
+            imageLoader.invoke(testUris[0], previewSize, caching = true)
             advanceTimeBy(testJobTime)
             runCurrent()
 

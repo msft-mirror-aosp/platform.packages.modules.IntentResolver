@@ -67,11 +67,7 @@ class SelectionChangeCallbackImplTest {
     private val contentResolver = mock<ContentInterface>()
     private val context = InstrumentationRegistry.getInstrumentation().context
     private val flags =
-        FakeChooserServiceFlags().apply {
-            setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false)
-            setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, false)
-            setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
-        }
+        FakeChooserServiceFlags().apply { setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false) }
 
     @Test
     fun testPayloadChangeCallbackContact() = runTest {
@@ -378,30 +374,8 @@ class SelectionChangeCallbackImplTest {
     }
 
     @Test
-    fun testPayloadChangeCallbackUpdatesMetadataTextWithDisabledFlag_noUpdates() = runTest {
-        val metadataText = "[Metadata]"
-        whenever(contentResolver.call(any<String>(), any(), any(), any()))
-            .thenReturn(Bundle().apply { putCharSequence(EXTRA_METADATA_TEXT, metadataText) })
-
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
-
-        val targetIntent = Intent(ACTION_SEND)
-        val result = testSubject.onSelectionChanged(targetIntent)
-        assertWithMessage("Callback result should not be null").that(result).isNotNull()
-        requireNotNull(result)
-        assertThat(result.customActions).isEqualTo(Absent)
-        assertThat(result.modifyShareAction).isEqualTo(Absent)
-        assertThat(result.alternateIntents).isEqualTo(Absent)
-        assertThat(result.callerTargets).isEqualTo(Absent)
-        assertThat(result.refinementIntentSender).isEqualTo(Absent)
-        assertThat(result.resultIntentSender).isEqualTo(Absent)
-        assertThat(result.metadataText).isEqualTo(Absent)
-    }
-
-    @Test
     fun testPayloadChangeCallbackUpdatesMetadataTextWithEnabledFlag_valueUpdated() = runTest {
         val metadataText = "[Metadata]"
-        flags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
         whenever(contentResolver.call(any<String>(), any(), any(), any()))
             .thenReturn(Bundle().apply { putCharSequence(EXTRA_METADATA_TEXT, metadataText) })
 
@@ -422,7 +396,6 @@ class SelectionChangeCallbackImplTest {
 
     @Test
     fun testPayloadChangeCallbackProvidesInvalidData_invalidDataIgnored() = runTest {
-        flags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
         whenever(contentResolver.call(any<String>(), any(), any(), any()))
             .thenReturn(
                 Bundle().apply {

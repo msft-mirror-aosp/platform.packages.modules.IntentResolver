@@ -16,15 +16,18 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -44,13 +47,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -92,48 +98,93 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PreviewCarousel(
     previews: PreviewsModel,
     viewModel: ShareouselViewModel,
 ) {
     val centerIdx = previews.startIdx
-    val carouselState = rememberLazyListState(initialFirstVisibleItemIndex = centerIdx)
-    // TODO: start item needs to be centered, check out ScalingLazyColumn impl or see if
-    //  HorizontalPager works for our use-case
-    LazyRow(
-        state = carouselState,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    val carouselState =
+        rememberLazyListState(
+            initialFirstVisibleItemIndex = centerIdx,
+            prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
+        )
+    var maxAspectRatio by remember { mutableStateOf(0f) }
+    var viewportHeight by remember { mutableStateOf(0) }
+
+    val horizontalPadding = 16.dp
+    Box(
         modifier =
             Modifier.fillMaxWidth()
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
-                .systemGestureExclusion()
-    ) {
-        itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
-
-            // Index if this is the element in the center of the viewing area, otherwise null
-            val previewIndex by remember {
-                derivedStateOf {
-                    carouselState.layoutInfo.visibleItemsInfo
-                        .firstOrNull { it.index == index }
-                        ?.let {
-                            val viewportCenter = carouselState.layoutInfo.viewportEndOffset / 2
-                            val halfPreviewWidth = it.size / 2
-                            val previewCenter = it.offset + halfPreviewWidth
-                            val previewDistanceToViewportCenter =
-                                abs(previewCenter - viewportCenter)
-                            if (previewDistanceToViewportCenter <= halfPreviewWidth) index else null
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    val aspectRatio =
+                        if (placeable.height <= 0) {
+                            0f
+                        } else {
+                            val maxItemWidth =
+                                maxOf(0, placeable.width - 2 * horizontalPadding.roundToPx())
+                            (maxItemWidth.toFloat() / placeable.height).coerceIn(
+                                0f,
+                                MAX_ASPECT_RATIO
+                            )
                         }
+                    maxAspectRatio = aspectRatio
+                    viewportHeight = placeable.height
+                    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+                },
+    ) {
+        if (maxAspectRatio <= 0) {
+            // Do not compose the list until we know the viewport size
+            return@Box
+        }
+        // TODO: start item needs to be centered, check out ScalingLazyColumn impl or see if
+        //  HorizontalPager works for our use-case
+        LazyRow(
+            state = carouselState,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding),
+            modifier = Modifier.fillMaxSize().systemGestureExclusion(),
+        ) {
+            itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
+                // Index if this is the element in the center of the viewing area, otherwise null
+                val previewIndex by remember {
+                    derivedStateOf {
+                        carouselState.layoutInfo.visibleItemsInfo
+                            .firstOrNull { it.index == index }
+                            ?.let {
+                                val viewportCenter = carouselState.layoutInfo.viewportEndOffset / 2
+                                val halfPreviewWidth = it.size / 2
+                                val previewCenter = it.offset + halfPreviewWidth
+                                val previewDistanceToViewportCenter =
+                                    abs(previewCenter - viewportCenter)
+                                if (previewDistanceToViewportCenter <= halfPreviewWidth) {
+                                    index
+                                } else {
+                                    null
+                                }
+                            }
+                    }
                 }
-            }
 
-            ShareouselCard(viewModel.preview(model, previewIndex, rememberCoroutineScope()))
+                ShareouselCard(
+                    viewModel.preview(
+                        model,
+                        viewportHeight,
+                        previewIndex,
+                        rememberCoroutineScope()
+                    ),
+                    maxAspectRatio,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
+private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio: Float) {
     val bitmapLoadState by viewModel.bitmapLoadState.collectAsStateWithLifecycle()
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
     val borderColor = MaterialTheme.colorScheme.primary
@@ -154,8 +205,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel) {
                     onValueChange = { scope.launch { viewModel.setSelected(it) } },
                 )
     ) { state ->
-        // TODO: max ratio is actually equal to the viewport ratio
-        val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, MAX_ASPECT_RATIO)
+        val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, maxAspectRatio)
         if (state is ValueUpdate.Value) {
             state.getOrDefault(null).let { bitmap ->
                 ShareouselCard(

@@ -26,12 +26,16 @@ import android.service.chooser.AdditionalContentContract.Columns.URI
 import android.util.Size
 import com.android.intentresolver.util.cursor.get
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.capture
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 
 class PayloadToggleCursorResolverTest {
     private val cursorUri = Uri.parse("content://org.pkg.app.extra")
@@ -99,6 +103,40 @@ class PayloadToggleCursorResolverTest {
             assertThat(row).isNotNull()
             assertThat(row!!.uri).isEqualTo(uri)
             assertThat(row.previewSize).isEqualTo(Size(100, 50))
+        }
+        val columnsCaptor = argumentCaptor<Array<String>>()
+        verify(fakeContentProvider).query(eq(cursorUri), columnsCaptor.capture(), any(), any())
+        assertThat(columnsCaptor.firstValue.toList()).containsExactly(URI, WIDTH, HEIGHT)
+    }
+
+    @Test
+    fun testRowPositionValues() = runTest {
+        val rowCount = 10
+        val sourceCursor =
+            MatrixCursor(arrayOf(URI)).apply {
+                for (i in 1..rowCount) {
+                    addRow(arrayOf(createUri(i).toString()))
+                }
+            }
+        val fakeContentProvider =
+            mock<ContentInterface> {
+                on { query(eq(cursorUri), any(), any(), any()) } doReturn sourceCursor
+            }
+        val testSubject =
+            PayloadToggleCursorResolver(
+                fakeContentProvider,
+                cursorUri,
+                chooserIntent,
+            )
+
+        val cursor = testSubject.getCursor()
+        assertThat(cursor).isNotNull()
+        assertThat(cursor!!.count).isEqualTo(rowCount)
+        for (i in 0 until rowCount) {
+            cursor[i].let { row ->
+                assertWithMessage("Row $i").that(row).isNotNull()
+                assertWithMessage("Row $i").that(row!!.position).isEqualTo(i)
+            }
         }
     }
 }
