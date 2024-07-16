@@ -18,6 +18,7 @@ package com.android.intentresolver.widget
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Size
 import com.android.intentresolver.captureMany
 import com.android.intentresolver.mock
 import com.android.intentresolver.widget.ScrollableImagePreviewView.BatchPreviewLoader
@@ -49,6 +50,7 @@ class BatchPreviewLoaderTest {
     private val testScope = CoroutineScope(dispatcher)
     private val onCompletion = mock<() -> Unit>()
     private val onUpdate = mock<(List<Preview>) -> Unit>()
+    private val previewSize = Size(500, 500)
 
     @Before
     fun setup() {
@@ -71,6 +73,7 @@ class BatchPreviewLoaderTest {
             BatchPreviewLoader(
                 imageLoader,
                 previews(uriOne, uriTwo),
+                previewSize,
                 totalItemCount = 2,
                 onUpdate,
                 onCompletion
@@ -94,6 +97,7 @@ class BatchPreviewLoaderTest {
             BatchPreviewLoader(
                 imageLoader,
                 previews(uriOne, uriTwo, uriThree),
+                previewSize,
                 totalItemCount = 3,
                 onUpdate,
                 onCompletion
@@ -122,7 +126,14 @@ class BatchPreviewLoaderTest {
             }
         imageLoader.setUriLoadingOrder(*loadingOrder)
         val testSubject =
-            BatchPreviewLoader(imageLoader, previews(*uris), uris.size, onUpdate, onCompletion)
+            BatchPreviewLoader(
+                imageLoader,
+                previews(*uris),
+                previewSize,
+                uris.size,
+                onUpdate,
+                onCompletion
+            )
         testSubject.loadAspectRatios(200) { _, _, _ -> 100 }
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -151,7 +162,14 @@ class BatchPreviewLoaderTest {
         val expectedUris = Array(uris.size / 2) { createUri(it * 2 + 1) }
         imageLoader.setUriLoadingOrder(*loadingOrder)
         val testSubject =
-            BatchPreviewLoader(imageLoader, previews(*uris), uris.size, onUpdate, onCompletion)
+            BatchPreviewLoader(
+                imageLoader,
+                previews(*uris),
+                previewSize,
+                uris.size,
+                onUpdate,
+                onCompletion
+            )
         testSubject.loadAspectRatios(200) { _, _, _ -> 100 }
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -166,7 +184,9 @@ class BatchPreviewLoaderTest {
     private fun createUri(idx: Int): Uri = Uri.parse("content://org.pkg.app/image-$idx.png")
 
     private fun fail(uri: Uri) = uri to false
+
     private fun succeed(uri: Uri) = uri to true
+
     private fun previews(vararg uris: Uri) =
         uris
             .fold(ArrayList<Preview>(uris.size)) { acc, uri ->
@@ -175,7 +195,7 @@ class BatchPreviewLoaderTest {
             .asFlow()
 }
 
-private class TestImageLoader(scope: CoroutineScope) : suspend (Uri, Boolean) -> Bitmap? {
+private class TestImageLoader(scope: CoroutineScope) : suspend (Uri, Size, Boolean) -> Bitmap? {
     private val loadingOrder = ArrayDeque<Pair<Uri, Boolean>>()
     private val pendingRequests = LinkedHashMap<Uri, CompletableDeferred<Bitmap?>>()
     private val flow = MutableSharedFlow<Unit>(replay = 1)
@@ -203,7 +223,7 @@ private class TestImageLoader(scope: CoroutineScope) : suspend (Uri, Boolean) ->
         loadingOrder.addAll(uris)
     }
 
-    override suspend fun invoke(uri: Uri, cache: Boolean): Bitmap? {
+    override suspend fun invoke(uri: Uri, size: Size, cache: Boolean): Bitmap? {
         val deferred = pendingRequests.getOrPut(uri) { CompletableDeferred() }
         flow.tryEmit(Unit)
         return deferred.await()
