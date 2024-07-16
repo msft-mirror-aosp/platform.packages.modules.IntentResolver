@@ -19,6 +19,7 @@ package com.android.intentresolver.contentpreview
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
+import android.util.Size
 import androidx.core.util.lruCache
 import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.ViewModelOwned
@@ -72,11 +73,11 @@ constructor(
             }
         )
 
-    override fun prePopulate(uris: List<Uri>) {
-        uris.take(cache.maxSize()).map { cache[it] }
+    override fun prePopulate(uriSizePairs: List<Pair<Uri, Size>>) {
+        uriSizePairs.take(cache.maxSize()).map { cache[it.first] }
     }
 
-    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? {
+    override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap? {
         return if (caching) {
             loadCachedImage(uri)
         } else {
