@@ -136,12 +136,8 @@ private fun readCallbackResponse(
                 optional(value<IntentSender>(key))
             }
         val metadataText =
-            if (flags.enableSharesheetMetadataExtra()) {
-                bundle.readValueUpdate(EXTRA_METADATA_TEXT) { key ->
-                    optional(value<CharSequence>(key))
-                }
-            } else {
-                ValueUpdate.Absent
+            bundle.readValueUpdate(EXTRA_METADATA_TEXT) { key ->
+                optional(value<CharSequence>(key))
             }
 
         ShareouselUpdate(

@@ -58,11 +58,7 @@ private fun createActivityModel(
 class ChooserRequestTest {
 
     private val fakeChooserServiceFlags =
-        FakeChooserServiceFlags().apply {
-            setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false)
-            setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, false)
-            setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
-        }
+        FakeChooserServiceFlags().apply { setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false) }
 
     @Test
     fun missingIntent() {
@@ -244,7 +240,6 @@ class ChooserRequestTest {
 
     @Test
     fun testAlbumType() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, true)
         val model = createActivityModel(Intent(ACTION_SEND))
         model.intent.putExtra(
             Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT,
@@ -261,26 +256,8 @@ class ChooserRequestTest {
     }
 
     @Test
-    fun metadataText_whenFlagFalse_isNull() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
-        val metadataText: CharSequence = "Test metadata text"
-        val model =
-            createActivityModel(targetIntent = Intent()).apply {
-                intent.putExtra(Intent.EXTRA_METADATA_TEXT, metadataText)
-            }
-
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
-
-        assertThat(result).isInstanceOf(Valid::class.java)
-        result as Valid<ChooserRequest>
-
-        assertThat(result.value.metadataText).isNull()
-    }
-
-    @Test
-    fun metadataText_whenFlagTrue_isPassedText() {
+    fun metadataText_isPassedText() {
         // Arrange
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
         val metadataText: CharSequence = "Test metadata text"
         val model =
             createActivityModel(targetIntent = Intent()).apply {
