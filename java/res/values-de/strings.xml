@@ -46,7 +46,7 @@
     <string name="chooseActivity" msgid="6659724877523973446">"Aktion auswählen"</string>
     <string name="noApplications" msgid="1139487441772284671">"Diese Aktion kann von keiner App ausgeführt werden."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Du verwendest diese App außerhalb deines Arbeitsprofils"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"Du verwendest diese App in deinem Arbeitsprofil."</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"Du verwendest diese App in deinem Arbeitsprofil"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"Immer"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"Nur diesmal"</string>
     <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"<xliff:g id="APP">%1$s</xliff:g> unterstützt das Arbeitsprofil nicht"</string>
