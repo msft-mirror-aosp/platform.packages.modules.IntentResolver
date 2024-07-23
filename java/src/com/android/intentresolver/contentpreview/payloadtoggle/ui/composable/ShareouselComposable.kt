@@ -205,7 +205,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio
                     onValueChange = { scope.launch { viewModel.setSelected(it) } },
                 )
     ) { state ->
-        val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, maxAspectRatio)
+        val aspectRatio = minOf(maxAspectRatio, maxOf(MIN_ASPECT_RATIO, viewModel.aspectRatio))
         if (state is ValueUpdate.Value) {
             state.getOrDefault(null).let { bitmap ->
                 ShareouselCard(
