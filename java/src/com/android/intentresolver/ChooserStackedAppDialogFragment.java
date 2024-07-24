@@ -22,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.UserHandle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
@@ -62,10 +63,11 @@ public class ChooserStackedAppDialogFragment extends ChooserTargetActionsDialogF
     @Override
     public void onClick(DialogInterface dialog, int which) {
         mMultiDisplayResolveInfo.setSelected(which);
-        ((ChooserActivity) getActivity()).startSelected(mParentWhich, false, true);
+        ((StartsSelectedItem) getActivity()).startSelected(mParentWhich, false, true);
         dismiss();
     }
 
+    @NonNull
     @Override
     protected CharSequence getItemLabel(DisplayResolveInfo dri) {
         final PackageManager pm = getContext().getPackageManager();

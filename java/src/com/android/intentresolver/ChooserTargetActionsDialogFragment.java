@@ -21,8 +21,6 @@ import static android.content.Context.ACTIVITY_SERVICE;
 
 import static java.util.stream.Collectors.toList;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.ComponentName;
@@ -46,6 +44,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -205,7 +205,7 @@ public class ChooserTargetActionsDialogFragment extends DialogFragment
         } else {
             pinComponent(mTargetInfos.get(which).getResolvedComponentName());
         }
-        ((ChooserActivity) getActivity()).handlePackagesChanged();
+        ((PackagesChangedListener) getActivity()).handlePackagesChanged();
         dismiss();
     }
 

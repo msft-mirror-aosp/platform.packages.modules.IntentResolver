@@ -18,18 +18,20 @@ package com.android.intentresolver.contentpreview;
 
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
-import android.annotation.IntDef;
+import androidx.annotation.IntDef;
 
 import java.lang.annotation.Retention;
 
 @Retention(SOURCE)
 @IntDef({ContentPreviewType.CONTENT_PREVIEW_FILE,
         ContentPreviewType.CONTENT_PREVIEW_IMAGE,
-        ContentPreviewType.CONTENT_PREVIEW_TEXT})
+        ContentPreviewType.CONTENT_PREVIEW_TEXT,
+        ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION})
 public @interface ContentPreviewType {
     // Starting at 1 since 0 is considered "undefined" for some of the database transformations
     // of tron logs.
     int CONTENT_PREVIEW_IMAGE = 1;
     int CONTENT_PREVIEW_FILE = 2;
     int CONTENT_PREVIEW_TEXT = 3;
+    int CONTENT_PREVIEW_PAYLOAD_SELECTION = 4;
 }

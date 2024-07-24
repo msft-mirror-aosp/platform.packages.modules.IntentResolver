@@ -46,12 +46,16 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     private final MimeTypeClassifier mTypeClassifier;
     private final TransitionElementStatusCallback mTransitionElementStatusCallback;
     private final HeadlineGenerator mHeadlineGenerator;
+    @Nullable
+    private final CharSequence mMetadata;
     private final Flow<FileInfo> mFileInfoFlow;
     private final int mItemCount;
     @Nullable
     private List<FileInfo> mFiles;
     @Nullable
     private ViewGroup mContentPreviewView;
+    @Nullable
+    private View mHeadlineView;
 
     UnifiedContentPreviewUi(
             CoroutineScope scope,
@@ -63,7 +67,8 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             TransitionElementStatusCallback transitionElementStatusCallback,
             Flow<FileInfo> fileInfoFlow,
             int itemCount,
-            HeadlineGenerator headlineGenerator) {
+            HeadlineGenerator headlineGenerator,
+            @Nullable CharSequence metadata) {
         mShowEditAction = isSingleImage;
         mIntentMimeType = intentMimeType;
         mActionFactory = actionFactory;
@@ -73,6 +78,7 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
         mFileInfoFlow = fileInfoFlow;
         mItemCount = itemCount;
         mHeadlineGenerator = headlineGenerator;
+        mMetadata = metadata;
 
         JavaFlowHelper.collectToList(scope, fileInfoFlow, this::setFiles);
     }
@@ -83,9 +89,14 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     }
 
     @Override
-    public ViewGroup display(Resources resources, LayoutInflater layoutInflater, ViewGroup parent) {
-        ViewGroup layout = displayInternal(layoutInflater, parent);
-        displayModifyShareAction(layout, mActionFactory);
+    public ViewGroup display(
+            Resources resources,
+            LayoutInflater layoutInflater,
+            ViewGroup parent,
+            @Nullable View headlineViewParent) {
+        ViewGroup layout = displayInternal(layoutInflater, parent, headlineViewParent);
+        displayModifyShareAction(
+                headlineViewParent == null ? layout : headlineViewParent, mActionFactory);
         return layout;
     }
 
@@ -96,13 +107,16 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
                 .toList());
         mFiles = files;
         if (mContentPreviewView != null) {
-            updatePreviewWithFiles(mContentPreviewView, files);
+            updatePreviewWithFiles(mContentPreviewView, mHeadlineView, files);
         }
     }
 
-    private ViewGroup displayInternal(LayoutInflater layoutInflater, ViewGroup parent) {
+    private ViewGroup displayInternal(
+            LayoutInflater layoutInflater, ViewGroup parent, @Nullable View headlineViewParent) {
         mContentPreviewView = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_image, parent, false);
+        mHeadlineView = headlineViewParent == null ? mContentPreviewView : headlineViewParent;
+        inflateHeadline(mHeadlineView);
 
         final ActionRow actionRow =
                 mContentPreviewView.findViewById(com.android.internal.R.id.chooser_action_row);
@@ -122,10 +136,10 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
                 mItemCount);
 
         if (mFiles != null) {
-            updatePreviewWithFiles(mContentPreviewView, mFiles);
+            updatePreviewWithFiles(mContentPreviewView, mHeadlineView, mFiles);
         } else {
             displayHeadline(
-                    mContentPreviewView,
+                    mHeadlineView,
                     mItemCount,
                     mTypeClassifier.isImageType(mIntentMimeType),
                     mTypeClassifier.isVideoType(mIntentMimeType));
@@ -135,7 +149,8 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
         return mContentPreviewView;
     }
 
-    private void updatePreviewWithFiles(ViewGroup contentPreviewView, List<FileInfo> files) {
+    private void updatePreviewWithFiles(
+            ViewGroup contentPreviewView, View headlineView, List<FileInfo> files) {
         final int count = files.size();
         ScrollableImagePreviewView imagePreview =
                 contentPreviewView.requireViewById(R.id.scrollable_image_preview);
@@ -158,11 +173,11 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             allVideos = allVideos && previewType == ScrollableImagePreviewView.PreviewType.Video;
         }
 
-        displayHeadline(contentPreviewView, count, allImages, allVideos);
+        displayHeadline(headlineView, count, allImages, allVideos);
     }
 
     private void displayHeadline(
-            ViewGroup layout, int count, boolean allImages, boolean allVideos) {
+            View layout, int count, boolean allImages, boolean allVideos) {
         if (allImages) {
             displayHeadline(layout, mHeadlineGenerator.getImagesHeadline(count));
         } else if (allVideos) {
@@ -170,5 +185,6 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
         } else {
             displayHeadline(layout, mHeadlineGenerator.getFilesHeadline(count));
         }
+        displayMetadata(layout, mMetadata);
     }
 }
