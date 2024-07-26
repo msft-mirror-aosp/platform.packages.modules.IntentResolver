@@ -82,3 +82,10 @@ flag {
     purpose: PURPOSE_BUGFIX
   }
 }
+
+flag {
+  name: "preview_image_loader"
+  namespace: "intentresolver"
+  description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
+  bug: "348665058"
+}
