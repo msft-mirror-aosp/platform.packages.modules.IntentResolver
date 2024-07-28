@@ -20,10 +20,25 @@ import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Size
+import com.android.intentresolver.util.withCancellationSignal
 import javax.inject.Inject
 
 /** Interface for objects that can attempt load a [Bitmap] from a [Uri]. */
-interface ThumbnailLoader : suspend (Uri) -> Bitmap?
+interface ThumbnailLoader {
+    /**
+     * Loads a thumbnail for the given [uri].
+     *
+     * The size of the thumbnail is determined by the implementation.
+     */
+    suspend fun loadThumbnail(uri: Uri): Bitmap?
+
+    /**
+     * Loads a thumbnail for the given [uri] and [size].
+     *
+     * The [size] is the size of the thumbnail in pixels.
+     */
+    suspend fun loadThumbnail(uri: Uri, size: Size): Bitmap?
+}
 
 /** Default implementation of [ThumbnailLoader]. */
 class ThumbnailLoaderImpl
@@ -35,6 +50,11 @@ constructor(
 
     private val size = Size(thumbnailSize, thumbnailSize)
 
-    override suspend fun invoke(uri: Uri): Bitmap =
-        contentResolver.loadThumbnail(uri, size, /* signal = */ null)
+    override suspend fun loadThumbnail(uri: Uri): Bitmap =
+        contentResolver.loadThumbnail(uri, size, /* signal= */ null)
+
+    override suspend fun loadThumbnail(uri: Uri, size: Size): Bitmap =
+        withCancellationSignal { signal ->
+            contentResolver.loadThumbnail(uri, size, signal)
+        }
 }
