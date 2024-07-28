@@ -204,7 +204,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final String TAB_TAG_PERSONAL = "personal";
     private static final String TAB_TAG_WORK = "work";
 
-    private static final String LAST_SHOWN_TAB_KEY = "last_shown_tab_key";
+    private static final String LAST_SHOWN_PROFILE = "last_shown_tab_key";
     public static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
 
     private int mLayoutId;
@@ -349,6 +349,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             mChooserHelper.setOnPendingSelection(this::onPendingSelection);
         }
     }
+    private int mInitialProfile = -1;
 
     @Override
     protected final void onStart() {
@@ -410,7 +411,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     protected final void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (mViewPager != null) {
-            outState.putInt(LAST_SHOWN_TAB_KEY, mViewPager.getCurrentItem());
+            outState.putInt(
+                    LAST_SHOWN_PROFILE, mChooserMultiProfilePagerAdapter.getActiveProfile());
         }
     }
 
@@ -679,6 +681,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getModifyShareAction() != null
         );
         mEnterTransitionAnimationDelegate.postponeTransition();
+        mInitialProfile = findSelectedProfile();
         Tracer.INSTANCE.markLaunched();
     }
 
@@ -828,7 +831,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         if (mViewPager != null) {
-            mViewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
+            int profile = savedInstanceState.getInt(LAST_SHOWN_PROFILE);
+            int profileNumber = mChooserMultiProfilePagerAdapter.getPageNumberForProfile(profile);
+            if (profileNumber != -1) {
+                mViewPager.setCurrentItem(profileNumber);
+                mInitialProfile = profile;
+            }
         }
         mChooserMultiProfilePagerAdapter.clearInactiveProfileCache();
     }
@@ -2257,7 +2265,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
 
             int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
-            int initialProfile = findSelectedProfile();
+            int initialProfile = Flags.fixDrawerOffsetOnConfigChange()
+                    ? mInitialProfile
+                    : findSelectedProfile();
             if (currentProfile != initialProfile) {
                 return;
             }
