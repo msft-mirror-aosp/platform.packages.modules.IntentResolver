@@ -17,27 +17,33 @@
 package com.android.intentresolver.contentpreview
 
 import android.content.res.Resources
+import com.android.intentresolver.Flags
 import com.android.intentresolver.R
 import com.android.intentresolver.inject.ApplicationOwned
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityRetainedComponent
-import dagger.hilt.android.scopes.ActivityRetainedScoped
+import dagger.hilt.android.components.ViewModelComponent
+import javax.inject.Provider
 
 @Module
-@InstallIn(ActivityRetainedComponent::class)
+@InstallIn(ViewModelComponent::class)
 interface ImageLoaderModule {
-    @Binds
-    @ActivityRetainedScoped
-    fun imageLoader(previewImageLoader: ImagePreviewImageLoader): ImageLoader
-
-    @Binds
-    @ActivityRetainedScoped
-    fun thumbnailLoader(thumbnailLoader: ThumbnailLoaderImpl): ThumbnailLoader
+    @Binds fun thumbnailLoader(thumbnailLoader: ThumbnailLoaderImpl): ThumbnailLoader
 
     companion object {
+        @Provides
+        fun imageLoader(
+            imagePreviewImageLoader: Provider<ImagePreviewImageLoader>,
+            previewImageLoader: Provider<PreviewImageLoader>
+        ): ImageLoader =
+            if (Flags.previewImageLoader()) {
+                previewImageLoader.get()
+            } else {
+                imagePreviewImageLoader.get()
+            }
+
         @Provides
         @ThumbnailSize
         fun thumbnailSize(@ApplicationOwned resources: Resources): Int =

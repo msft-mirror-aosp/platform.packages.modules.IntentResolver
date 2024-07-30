@@ -96,10 +96,8 @@ import com.android.intentresolver.ChooserRefinementManager.RefinementType;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
-import com.android.intentresolver.contentpreview.BasePreviewViewModel;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.contentpreview.HeadlineGeneratorImpl;
-import com.android.intentresolver.contentpreview.PreviewViewModel;
 import com.android.intentresolver.data.model.ChooserRequest;
 import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
@@ -206,7 +204,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final String TAB_TAG_PERSONAL = "personal";
     private static final String TAB_TAG_WORK = "work";
 
-    private static final String LAST_SHOWN_TAB_KEY = "last_shown_tab_key";
+    private static final String LAST_SHOWN_PROFILE = "last_shown_tab_key";
     public static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
 
     private int mLayoutId;
@@ -351,6 +349,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             mChooserHelper.setOnPendingSelection(this::onPendingSelection);
         }
     }
+    private int mInitialProfile = -1;
 
     @Override
     protected final void onStart() {
@@ -412,7 +411,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     protected final void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (mViewPager != null) {
-            outState.putInt(LAST_SHOWN_TAB_KEY, mViewPager.getCurrentItem());
+            outState.putInt(
+                    LAST_SHOWN_PROFILE, mChooserMultiProfilePagerAdapter.getActiveProfile());
         }
     }
 
@@ -633,21 +633,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 finish();
             }
         });
-        BasePreviewViewModel previewViewModel =
-                new ViewModelProvider(this, createPreviewViewModelFactory())
-                        .get(BasePreviewViewModel.class);
-        previewViewModel.init(
-                mRequest.getTargetIntent(),
-                mRequest.getAdditionalContentUri(),
-                mChooserServiceFeatureFlags.chooserPayloadToggling());
         ChooserContentPreviewUi.ActionFactory actionFactory =
                 decorateActionFactoryWithRefinement(
                         createChooserActionFactory(mRequest.getTargetIntent()));
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
-                previewViewModel.getPreviewDataProvider(),
+                mViewModel.getPreviewDataProvider(),
                 mRequest.getTargetIntent(),
-                previewViewModel.getImageLoader(),
+                mViewModel.getImageLoader(),
                 actionFactory,
                 createModifyShareActionFactory(),
                 mEnterTransitionAnimationDelegate,
@@ -688,6 +681,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getModifyShareAction() != null
         );
         mEnterTransitionAnimationDelegate.postponeTransition();
+        mInitialProfile = findSelectedProfile();
         Tracer.INSTANCE.markLaunched();
     }
 
@@ -837,7 +831,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         if (mViewPager != null) {
-            mViewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
+            int profile = savedInstanceState.getInt(LAST_SHOWN_PROFILE);
+            int profileNumber = mChooserMultiProfilePagerAdapter.getPageNumberForProfile(profile);
+            if (profileNumber != -1) {
+                mViewPager.setCurrentItem(profileNumber);
+                mInitialProfile = profile;
+            }
         }
         mChooserMultiProfilePagerAdapter.clearInactiveProfileCache();
     }
@@ -1196,13 +1195,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     @Override // ResolverListCommunicator
     public final void onHandlePackagesChanged(ResolverListAdapter listAdapter) {
-        if (!mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
+        mChooserMultiProfilePagerAdapter.onHandlePackagesChanged(
                 (ChooserListAdapter) listAdapter,
-                mProfileAvailability.getWaitingToEnableProfile())) {
-            // We no longer have any items... just finish the activity.
-            Log.d(TAG, "onHandlePackagesChanged(): returned false, finishing");
-            finish();
-        }
+                mProfileAvailability.getWaitingToEnableProfile());
     }
 
     final Option optionForChooserTarget(TargetInfo target, int index) {
@@ -2056,8 +2051,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                     if (record != null && record.shortcutLoader != null) {
                         record.shortcutLoader.reset();
                     }
-                },
-                mFeatureFlags);
+                });
     }
 
     private void onWorkProfileStatusUpdated() {
@@ -2110,11 +2104,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfiles.getQueryIntentsHandle(userHandle),
                 mRequest.getFilteredComponentNames(),
                 mPinnedSharedPrefs);
-    }
-
-    @VisibleForTesting
-    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
-        return PreviewViewModel.Companion.getFactory();
     }
 
     private ChooserContentPreviewUi.ActionFactory decorateActionFactoryWithRefinement(
@@ -2212,8 +2201,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 },
                 mShareResultSender,
                 this::finishWithStatus,
-                mClipboardManager,
-                mFeatureFlags);
+                mClipboardManager);
     }
 
     private Supplier<ActionRow.Action> createModifyShareActionFactory() {
@@ -2262,7 +2250,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         if (isLayoutUpdated
                 || insetsChanged
-                || mLastNumberOfChildren != recyclerView.getChildCount()) {
+                || mLastNumberOfChildren != recyclerView.getChildCount()
+                || mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
             mCurrAvailableWidth = availableWidth;
             if (isLayoutUpdated) {
                 // It is very important we call setAdapter from here. Otherwise in some cases
@@ -2276,12 +2265,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
 
             int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
-            int initialProfile = findSelectedProfile();
+            int initialProfile = Flags.fixDrawerOffsetOnConfigChange()
+                    ? mInitialProfile
+                    : findSelectedProfile();
             if (currentProfile != initialProfile) {
                 return;
             }
 
-            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged) {
+            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged
+                    && !mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
                 return;
             }
 
