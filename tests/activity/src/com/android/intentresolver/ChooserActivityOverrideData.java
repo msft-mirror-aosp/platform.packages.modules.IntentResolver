@@ -26,7 +26,6 @@ import android.database.Cursor;
 import android.os.UserHandle;
 
 import com.android.intentresolver.chooser.TargetInfo;
-import com.android.intentresolver.contentpreview.ImageLoader;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
 
@@ -58,7 +57,6 @@ public class ChooserActivityOverrideData {
     public Boolean isVoiceInteraction;
     public Cursor resolverCursor;
     public boolean resolverForceException;
-    public ImageLoader imageLoader;
     public Resources resources;
     public boolean hasCrossProfileIntents;
     public boolean isQuietModeEnabled;
@@ -68,7 +66,6 @@ public class ChooserActivityOverrideData {
     public void reset() {
         onSafelyStartInternalCallback = null;
         isVoiceInteraction = null;
-        imageLoader = null;
         resolverCursor = null;
         resolverForceException = false;
         resolverListController = mock(ChooserListController.class);
