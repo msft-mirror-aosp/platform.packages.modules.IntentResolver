@@ -25,7 +25,6 @@ import androidx.annotation.GuardedBy
 import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
 import com.android.intentresolver.inject.Background
-import java.util.function.Consumer
 import javax.inject.Inject
 import javax.inject.Qualifier
 import kotlinx.coroutines.CancellationException
@@ -36,7 +35,6 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 
@@ -100,19 +98,11 @@ constructor(
     @GuardedBy("lock") private val cache = LruCache<Uri, RequestRecord>(cacheSize)
     @GuardedBy("lock") private val runningRequests = HashMap<Uri, RequestRecord>()
 
-    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? = loadImageAsync(uri, caching)
+    override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap? =
+        loadImageAsync(uri, caching)
 
-    override fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>) {
-        callerScope.launch {
-            val image = loadImageAsync(uri, caching = true)
-            if (isActive) {
-                callback.accept(image)
-            }
-        }
-    }
-
-    override fun prePopulate(uris: List<Uri>) {
-        uris.asSequence().take(cache.maxSize()).forEach { uri ->
+    override fun prePopulate(uriSizePairs: List<Pair<Uri, Size>>) {
+        uriSizePairs.asSequence().take(cache.maxSize()).forEach { (uri, _) ->
             scope.launch { loadImageAsync(uri, caching = true) }
         }
     }
