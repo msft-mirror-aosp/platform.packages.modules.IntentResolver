@@ -18,10 +18,13 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.MediaStore.MediaColumns.HEIGHT
 import android.provider.MediaStore.MediaColumns.WIDTH
+import android.service.chooser.AdditionalContentContract.Columns.URI
+import android.service.chooser.AdditionalContentContract.CursorExtraKeys.POSITION
 import android.util.Size
 import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
@@ -39,6 +42,7 @@ import com.android.intentresolver.util.cursor.CursorView
 import com.android.intentresolver.util.cursor.viewBy
 import com.android.intentresolver.util.runTest
 import com.android.systemui.kosmos.Kosmos
+import com.google.common.truth.Correspondence
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -93,9 +97,9 @@ class CursorPreviewsInteractorTest {
         private val cursorSizes: Map<Int, Size>,
     ) {
         val cursor: CursorView<CursorRow?> =
-            MatrixCursor(arrayOf("uri", WIDTH, HEIGHT))
+            MatrixCursor(arrayOf(URI, WIDTH, HEIGHT))
                 .apply {
-                    extras = bundleOf("position" to cursorStartPosition)
+                    extras = bundleOf(POSITION to cursorStartPosition)
                     for (i in cursorRange) {
                         val size = cursorSizes[i]
                         addRow(
@@ -279,22 +283,83 @@ class CursorPreviewsInteractorTest {
         ) { deps ->
             previewSelectionsRepository.selections.value =
                 PreviewModel(
-                    uri = uri(1),
-                    mimeType = "image/png",
-                    order = 0,
-                ).let { mapOf(it.uri to it) }
+                        uri = uri(1),
+                        mimeType = "image/png",
+                        order = 0,
+                    )
+                    .let { mapOf(it.uri to it) }
             backgroundScope.launch {
                 cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
             }
             runCurrent()
 
-            assertThat(previewSelectionsRepository.selections.value.values).containsExactly(
-                PreviewModel(
-                    uri = uri(1),
-                    mimeType = "image/bitmap",
-                    order = 1,
+            assertThat(previewSelectionsRepository.selections.value.values)
+                .containsExactly(
+                    PreviewModel(
+                        uri = uri(1),
+                        mimeType = "image/bitmap",
+                        order = 1,
+                    )
                 )
-            )
+        }
+
+    @Test
+    fun testReadFailedPages() =
+        runTestWithDeps(
+            initialSelection = listOf(4),
+            cursor = emptyList(),
+            cursorStartPosition = 0,
+            pageSize = 2,
+            maxLoadedPages = 5,
+        ) { deps ->
+            val cursor =
+                MatrixCursor(arrayOf(URI)).apply {
+                    extras = bundleOf(POSITION to 4)
+                    for (i in 0 until 10) {
+                        addRow(arrayOf(uri(i)))
+                    }
+                }
+            val failingPositions = setOf(1, 5, 8)
+            val failingCursor =
+                object : Cursor by cursor {
+                        override fun move(offset: Int): Boolean = moveToPosition(position + offset)
+
+                        override fun moveToPosition(position: Int): Boolean {
+                            if (failingPositions.contains(position)) {
+                                throw RuntimeException(
+                                    "A test exception when moving the cursor to position $position"
+                                )
+                            }
+                            return cursor.moveToPosition(position)
+                        }
+
+                        override fun moveToFirst(): Boolean = moveToPosition(0)
+
+                        override fun moveToLast(): Boolean = moveToPosition(count - 1)
+
+                        override fun moveToNext(): Boolean = move(1)
+
+                        override fun moveToPrevious(): Boolean = move(-1)
+                    }
+                    .viewBy {
+                        getString(0)?.let { uriStr ->
+                            CursorRow(Uri.parse(uriStr), readSize(), position)
+                        }
+                    }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(failingCursor, deps.initialPreviews)
+            }
+            runCurrent()
+
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels)
+                .comparingElementsUsing<PreviewModel, Uri>(
+                    Correspondence.transforming({ it.uri }, "has a Uri of")
+                )
+                .containsExactlyElementsIn(
+                    (0..7).filterNot { failingPositions.contains(it) }.map { uri(it) }
+                )
+                .inOrder()
         }
 }
 
