@@ -45,8 +45,8 @@
     <string name="use_a_different_app" msgid="2062380818535918975">"استخدام تطبيق آخر"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"اختيار إجراء"</string>
     <string name="noApplications" msgid="1139487441772284671">"ليست هناك تطبيقات يمكنها تنفيذ هذا الإجراء."</string>
-    <string name="forward_intent_to_owner" msgid="6454987608971162379">"أنت تستخدم هذا التطبيق خارج ملفك الشخصي للعمل"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"أنت تستخدم هذا التطبيق في ملفك الشخصي للعمل"</string>
+    <string name="forward_intent_to_owner" msgid="6454987608971162379">"أنت تستخدم هذا التطبيق خارج ملف العمل الخاص بك"</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"أنت تستخدم هذا التطبيق في ملف العمل الخاص بك"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"دائمًا"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"مرة واحدة فقط"</string>
     <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"لا يتوافق تطبيق \"<xliff:g id="APP">%1$s</xliff:g>\" مع ملف العمل."</string>
@@ -94,7 +94,7 @@
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"ما مِن تطبيقات شخصية."</string>
     <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"ما مِن تطبيقات خاصة"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"هل تريد فتح <xliff:g id="APP">%s</xliff:g> في ملفك الشخصي؟"</string>
-    <string name="miniresolver_open_in_work" msgid="4271638122142624693">"هل تريد فتح <xliff:g id="APP">%s</xliff:g> في ملفك الشخصي للعمل؟"</string>
+    <string name="miniresolver_open_in_work" msgid="4271638122142624693">"هل تريد فتح <xliff:g id="APP">%s</xliff:g> في ملف العمل الخاص بك؟"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"استخدام المتصفّح الشخصي"</string>
     <string name="miniresolver_use_work_browser" msgid="7892699758493230342">"استخدام متصفّح العمل"</string>
     <string name="exclude_text" msgid="5508128757025928034">"استثناء النص"</string>
