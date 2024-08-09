@@ -2116,6 +2116,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             @Override
             @Nullable
             public Runnable getEditButtonRunnable() {
+                if (originalFactory.getEditButtonRunnable() == null) return null;
                 return () -> {
                     if (!mRefinementManager.maybeHandleSelection(
                             RefinementType.EDIT_ACTION,
