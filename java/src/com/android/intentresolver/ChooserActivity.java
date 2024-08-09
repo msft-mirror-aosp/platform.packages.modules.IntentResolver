@@ -1362,7 +1362,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                     && !mProfileAvailability.isAvailable(profile)) {
                 continue;
             }
-            ProfileRecord record = createProfileRecord(profile, targetIntentFilter, factory);
+            ProfileRecord record = createProfileRecord(
+                    profile,
+                    targetIntentFilter,
+                    launchedAsProfile.equals(profile)
+                            ? mRequest.getCallerChooserTargets()
+                            : Collections.emptyList(),
+                    factory);
             if (profile.equals(launchedAsProfile) && record.shortcutLoader == null) {
                 Tracer.INSTANCE.endLaunchToShortcutTrace();
             }
@@ -1370,7 +1376,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private ProfileRecord createProfileRecord(
-            Profile profile, IntentFilter targetIntentFilter, AppPredictorFactory factory) {
+            Profile profile,
+            IntentFilter targetIntentFilter,
+            List<ChooserTarget> callerTargets,
+            AppPredictorFactory factory) {
         UserHandle userHandle = profile.getPrimary().getHandle();
         AppPredictor appPredictor = factory.create(userHandle);
         ShortcutLoader shortcutLoader = ActivityManager.isLowRamDeviceStatic()
@@ -1381,7 +1390,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                             userHandle,
                             targetIntentFilter,
                             shortcutsResult -> onShortcutsLoaded(userHandle, shortcutsResult));
-        ProfileRecord record = new ProfileRecord(profile, appPredictor, shortcutLoader);
+        ProfileRecord record = new ProfileRecord(
+                profile, appPredictor, shortcutLoader, callerTargets);
         mProfileRecords.put(userHandle.getIdentifier(), record);
         return record;
     }
@@ -1655,17 +1665,18 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
     }
 
-    private void addCallerChooserTargets() {
-        if (!mRequest.getCallerChooserTargets().isEmpty()) {
-            // Send the caller's chooser targets only to the default profile.
-            if (mChooserMultiProfilePagerAdapter.getActiveProfile() == findSelectedProfile()) {
-                mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults(
-                        /* origTarget */ null,
-                        new ArrayList<>(mRequest.getCallerChooserTargets()),
-                        TARGET_TYPE_DEFAULT,
-                        /* directShareShortcutInfoCache */ Collections.emptyMap(),
-                        /* directShareAppTargetCache */ Collections.emptyMap());
-            }
+    private void addCallerChooserTargets(ChooserListAdapter adapter) {
+        ProfileRecord record = getProfileRecord(adapter.getUserHandle());
+        List<ChooserTarget> callerTargets = record == null
+                ? Collections.emptyList()
+                : record.callerTargets;
+        if (!callerTargets.isEmpty()) {
+            adapter.addServiceResults(
+                    /* origTarget */ null,
+                    new ArrayList<>(mRequest.getCallerChooserTargets()),
+                    TARGET_TYPE_DEFAULT,
+                    /* directShareShortcutInfoCache */ Collections.emptyMap(),
+                    /* directShareAppTargetCache */ Collections.emptyMap());
         }
     }
 
@@ -2408,7 +2419,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             if (duration >= 0) {
                 Log.d(TAG, "app target loading time " + duration + " ms");
             }
-            addCallerChooserTargets();
+            addCallerChooserTargets(chooserListAdapter);
             getEventLog().logSharesheetAppLoadComplete();
             maybeQueryAdditionalPostProcessingTargets(
                     listProfileUserHandle,
@@ -2689,15 +2700,18 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
          */
         @Nullable
         public final ShortcutLoader shortcutLoader;
+        public final List<ChooserTarget> callerTargets;
         public long loadingStartTime;
 
         private ProfileRecord(
                 Profile profile,
                 @Nullable AppPredictor appPredictor,
-                @Nullable ShortcutLoader shortcutLoader) {
+                @Nullable ShortcutLoader shortcutLoader,
+                List<ChooserTarget> callerTargets) {
             this.profile = profile;
             this.appPredictor = appPredictor;
             this.shortcutLoader = shortcutLoader;
+            this.callerTargets = callerTargets;
         }
 
         public void destroy() {
