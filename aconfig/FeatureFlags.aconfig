@@ -6,13 +6,6 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
-  name: "target_data_caching"
-  namespace: "intentresolver"
-  description: "Enables caching target icons and labels in a local DB"
-  bug: "285314844"
-}
-
-flag {
   name: "modular_framework"
   namespace: "intentresolver"
   description: "Enables the new modular framework"
