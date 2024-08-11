@@ -18,6 +18,7 @@ package com.android.intentresolver;
 
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_PREDICTION_SERVICE;
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_SHORTCUT_MANAGER;
+import static com.android.intentresolver.util.graphics.SuspendedMatrixColorFilter.getSuspendedColorMatrix;
 
 import android.app.ActivityManager;
 import android.app.prediction.AppTarget;
@@ -153,6 +154,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             };
 
     private boolean mAnimateItems = true;
+    private boolean mTargetsEnabled = true;
 
     public ChooserListAdapter(
             Context context,
@@ -306,6 +308,16 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
+    /**
+     * Set the enabled state for all targets.
+     */
+    public void setTargetsEnabled(boolean isEnabled) {
+        if (mTargetsEnabled != isEnabled) {
+            mTargetsEnabled = isEnabled;
+            notifyDataSetChanged();
+        }
+    }
+
     public void setAnimateItems(boolean animateItems) {
         mAnimateItems = animateItems;
     }
@@ -353,7 +365,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
     @VisibleForTesting
     @Override
     public void onBindView(View view, TargetInfo info, int position) {
-        view.setEnabled(!isDestroyed());
+        view.setEnabled(!isDestroyed() && mTargetsEnabled);
         final ViewHolder holder = (ViewHolder) view.getTag();
 
         resetViewHolder(holder);
@@ -413,6 +425,9 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
 
         holder.bindIcon(info);
+        if (info.hasDisplayIcon() && !mTargetsEnabled) {
+            holder.icon.setColorFilter(getSuspendedColorMatrix());
+        }
         if (mAnimateItems && info.hasDisplayIcon()) {
             mAnimationTracker.animateIcon(holder.icon, info);
         }
