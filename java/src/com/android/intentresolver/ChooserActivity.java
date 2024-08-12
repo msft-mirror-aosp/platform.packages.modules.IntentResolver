@@ -24,6 +24,7 @@ import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
+import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
@@ -785,6 +786,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
         // Update the pager adapter but do not attach it to the view till the targets are reloaded,
         // see onChooserAppTargetsLoaded method.
+        ChooserMultiProfilePagerAdapter oldPagerAdapter =
+                mChooserMultiProfilePagerAdapter;
         mChooserMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
                 /* context = */ this,
                 mProfilePagerResources,
@@ -824,6 +827,19 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         postRebuildList(
                 mChooserMultiProfilePagerAdapter.rebuildTabs(
                     mProfiles.getWorkProfilePresent() || mProfiles.getPrivateProfilePresent()));
+        if (fixShortcutsFlashing() && oldPagerAdapter != null) {
+            for (int i = 0, count = mChooserMultiProfilePagerAdapter.getCount(); i < count; i++) {
+                ChooserListAdapter listAdapter =
+                        mChooserMultiProfilePagerAdapter.getPageAdapterForIndex(i)
+                                .getListAdapter();
+                ChooserListAdapter oldListAdapter =
+                        oldPagerAdapter.getListAdapterForUserHandle(listAdapter.getUserHandle());
+                if (oldListAdapter != null) {
+                    listAdapter.copyDirectTargetsFrom(oldListAdapter);
+                    listAdapter.setDirectTargetsEnabled(false);
+                }
+            }
+        }
         setTabsViewEnabled(false);
     }
 
@@ -2419,7 +2435,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             if (duration >= 0) {
                 Log.d(TAG, "app target loading time " + duration + " ms");
             }
-            addCallerChooserTargets(chooserListAdapter);
+            if (!fixShortcutsFlashing()) {
+                addCallerChooserTargets(chooserListAdapter);
+            }
             getEventLog().logSharesheetAppLoadComplete();
             maybeQueryAdditionalPostProcessingTargets(
                     listProfileUserHandle,
@@ -2449,6 +2467,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         ChooserListAdapter adapter =
                 mChooserMultiProfilePagerAdapter.getListAdapterForUserHandle(userHandle);
         if (adapter != null) {
+            if (fixShortcutsFlashing()) {
+                adapter.setDirectTargetsEnabled(true);
+                addCallerChooserTargets(adapter);
+            }
             for (ShortcutLoader.ShortcutResultInfo resultInfo : result.getShortcutsByApp()) {
                 adapter.addServiceResults(
                         resultInfo.getAppTarget(),
