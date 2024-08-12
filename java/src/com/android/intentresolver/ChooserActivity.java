@@ -23,6 +23,7 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
+import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
@@ -749,10 +750,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         Intent newTargetIntent = newChooserRequest.getTargetIntent();
         List<Intent> oldAltIntents = oldChooserRequest.getAdditionalTargets();
         List<Intent> newAltIntents = newChooserRequest.getAdditionalTargets();
+        List<ComponentName> oldExcluded = oldChooserRequest.getFilteredComponentNames();
+        List<ComponentName> newExcluded = newChooserRequest.getFilteredComponentNames();
 
         // TODO: a workaround for the unnecessary target reloading caused by multiple flow updates -
         //  an artifact of the current implementation; revisit.
-        return !oldTargetIntent.equals(newTargetIntent) || !oldAltIntents.equals(newAltIntents);
+        return !oldTargetIntent.equals(newTargetIntent)
+                || !oldAltIntents.equals(newAltIntents)
+                || (shareouselUpdateExcludeComponentsExtra()
+                        && !oldExcluded.equals(newExcluded));
     }
 
     private void recreatePagerAdapter() {

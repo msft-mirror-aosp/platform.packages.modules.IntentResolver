@@ -82,3 +82,10 @@ flag {
   description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
   bug: "348665058"
 }
+
+flag {
+  name: "shareousel_update_exclude_components_extra"
+  namespace: "intentresolver"
+  description: "Allow Shareousel selection change callback to update Intent#EXTRA_EXCLUDE_COMPONENTS"
+  bug: "352496527"
+}
