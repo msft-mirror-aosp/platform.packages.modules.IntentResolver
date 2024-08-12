@@ -1093,7 +1093,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             if (cti.startAsCaller(this, options, user.getIdentifier())) {
                 // Prevent sending a second chooser result when starting the edit action intent.
                 if (!cti.getTargetIntent().hasExtra(EDIT_SOURCE)) {
-                    maybeSendShareResult(cti);
+                    maybeSendShareResult(cti, user);
                 }
                 maybeLogCrossProfileTargetLaunch(cti, user);
             }
@@ -1645,11 +1645,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return result;
     }
 
-    private void maybeSendShareResult(TargetInfo cti) {
+    private void maybeSendShareResult(TargetInfo cti, UserHandle launchedAsUser) {
         if (mShareResultSender != null) {
             final ComponentName target = cti.getResolvedComponentName();
             if (target != null) {
-                mShareResultSender.onComponentSelected(target, cti.isChooserTargetInfo());
+                boolean crossProfile = !UserHandle.of(UserHandle.myUserId()).equals(launchedAsUser);
+                mShareResultSender.onComponentSelected(
+                        target, cti.isChooserTargetInfo(), crossProfile);
             }
         }
     }
