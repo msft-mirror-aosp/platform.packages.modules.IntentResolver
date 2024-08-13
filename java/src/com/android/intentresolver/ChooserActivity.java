@@ -23,6 +23,7 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
+import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
@@ -749,10 +750,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         Intent newTargetIntent = newChooserRequest.getTargetIntent();
         List<Intent> oldAltIntents = oldChooserRequest.getAdditionalTargets();
         List<Intent> newAltIntents = newChooserRequest.getAdditionalTargets();
+        List<ComponentName> oldExcluded = oldChooserRequest.getFilteredComponentNames();
+        List<ComponentName> newExcluded = newChooserRequest.getFilteredComponentNames();
 
         // TODO: a workaround for the unnecessary target reloading caused by multiple flow updates -
         //  an artifact of the current implementation; revisit.
-        return !oldTargetIntent.equals(newTargetIntent) || !oldAltIntents.equals(newAltIntents);
+        return !oldTargetIntent.equals(newTargetIntent)
+                || !oldAltIntents.equals(newAltIntents)
+                || (shareouselUpdateExcludeComponentsExtra()
+                        && !oldExcluded.equals(newExcluded));
     }
 
     private void recreatePagerAdapter() {
@@ -1087,7 +1093,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             if (cti.startAsCaller(this, options, user.getIdentifier())) {
                 // Prevent sending a second chooser result when starting the edit action intent.
                 if (!cti.getTargetIntent().hasExtra(EDIT_SOURCE)) {
-                    maybeSendShareResult(cti);
+                    maybeSendShareResult(cti, user);
                 }
                 maybeLogCrossProfileTargetLaunch(cti, user);
             }
@@ -1639,11 +1645,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return result;
     }
 
-    private void maybeSendShareResult(TargetInfo cti) {
+    private void maybeSendShareResult(TargetInfo cti, UserHandle launchedAsUser) {
         if (mShareResultSender != null) {
             final ComponentName target = cti.getResolvedComponentName();
             if (target != null) {
-                mShareResultSender.onComponentSelected(target, cti.isChooserTargetInfo());
+                boolean crossProfile = !UserHandle.of(UserHandle.myUserId()).equals(launchedAsUser);
+                mShareResultSender.onComponentSelected(
+                        target, cti.isChooserTargetInfo(), crossProfile);
             }
         }
     }
