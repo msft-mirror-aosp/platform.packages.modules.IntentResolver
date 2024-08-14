@@ -26,7 +26,10 @@ import android.content.pm.PackageManager.ApplicationInfoFlags
 import android.content.pm.ShortcutManager
 import android.os.UserHandle
 import android.os.UserManager
+import android.platform.test.annotations.EnableFlags
+import android.platform.test.flag.junit.SetFlagsRule
 import androidx.test.filters.SmallTest
+import com.android.intentresolver.Flags.FLAG_FIX_SHORTCUT_LOADER_JOB_LEAK
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.createAppTarget
 import com.android.intentresolver.createShareShortcutInfo
@@ -42,6 +45,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
@@ -56,6 +60,8 @@ import org.mockito.kotlin.whenever
 @OptIn(ExperimentalCoroutinesApi::class)
 @SmallTest
 class ShortcutLoaderTest {
+    @get:Rule val flagRule = SetFlagsRule()
+
     private val appInfo =
         ApplicationInfo().apply {
             enabled = true
@@ -463,6 +469,30 @@ class ShortcutLoaderTest {
     @Test
     fun test_mainProfileQuiteModeEnabled_callServicesAnyway() {
         testAlwaysCallSystemForMainProfile(isQuietModeEnabled = true)
+    }
+
+    @Test
+    @EnableFlags(FLAG_FIX_SHORTCUT_LOADER_JOB_LEAK)
+    fun test_ShortcutLoaderDestroyed_appPredictorCallbackUnregisteredAndWatchdogCancelled() {
+        scope.runTest {
+            val testSubject =
+                ShortcutLoader(
+                    context,
+                    backgroundScope,
+                    appPredictor,
+                    UserHandle.of(0),
+                    true,
+                    intentFilter,
+                    dispatcher,
+                    callback
+                )
+
+            testSubject.updateAppTargets(appTargets)
+            testSubject.destroy()
+
+            verify(appPredictor, times(1)).registerPredictionUpdates(any(), any())
+            verify(appPredictor, times(1)).unregisterPredictionUpdates(any())
+        }
     }
 
     private fun testDisabledWorkProfileDoNotCallSystem(

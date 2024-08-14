@@ -2701,6 +2701,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             if (appPredictor != null) {
                 appPredictor.destroy();
             }
+            if (shortcutLoader != null) {
+                shortcutLoader.destroy();
+            }
         }
     }
 }
