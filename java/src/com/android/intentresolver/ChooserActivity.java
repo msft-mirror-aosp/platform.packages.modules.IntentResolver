@@ -153,8 +153,10 @@ import kotlinx.coroutines.CoroutineDispatcher;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -305,7 +307,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private final EnterTransitionAnimationDelegate mEnterTransitionAnimationDelegate =
             new EnterTransitionAnimationDelegate(this, () -> mResolverDrawerLayout);
 
-    private final Map<Integer, ProfileRecord> mProfileRecords = new HashMap<>();
+    private final Map<Integer, ProfileRecord> mProfileRecords = new LinkedHashMap<>();
 
     private boolean mExcludeSharedText = false;
     /**
@@ -518,6 +520,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfilePagerResources,
                 mRequest,
                 mProfiles,
+                mProfileRecords.values(),
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
@@ -787,6 +790,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfilePagerResources,
                 mRequest,
                 mProfiles,
+                mProfileRecords.values(),
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
@@ -1351,26 +1355,23 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private void createProfileRecords(
             AppPredictorFactory factory, IntentFilter targetIntentFilter) {
-        UserHandle mainUserHandle = mProfiles.getPersonalHandle();
-        ProfileRecord record = createProfileRecord(mainUserHandle, targetIntentFilter, factory);
-        if (record.shortcutLoader == null) {
-            Tracer.INSTANCE.endLaunchToShortcutTrace();
-        }
 
-        UserHandle workUserHandle = mProfiles.getWorkHandle();
-        if (workUserHandle != null) {
-            createProfileRecord(workUserHandle, targetIntentFilter, factory);
-        }
-
-        UserHandle privateUserHandle = mProfiles.getPrivateHandle();
-        if (privateUserHandle != null && mProfileAvailability.isAvailable(
-                requireNonNull(mProfiles.getPrivateProfile()))) {
-            createProfileRecord(privateUserHandle, targetIntentFilter, factory);
+        Profile launchedAsProfile = mProfiles.getLaunchedAsProfile();
+        for (Profile profile : mProfiles.getProfiles()) {
+            if (profile.getType() == Profile.Type.PRIVATE
+                    && !mProfileAvailability.isAvailable(profile)) {
+                continue;
+            }
+            ProfileRecord record = createProfileRecord(profile, targetIntentFilter, factory);
+            if (profile.equals(launchedAsProfile) && record.shortcutLoader == null) {
+                Tracer.INSTANCE.endLaunchToShortcutTrace();
+            }
         }
     }
 
     private ProfileRecord createProfileRecord(
-            UserHandle userHandle, IntentFilter targetIntentFilter, AppPredictorFactory factory) {
+            Profile profile, IntentFilter targetIntentFilter, AppPredictorFactory factory) {
+        UserHandle userHandle = profile.getPrimary().getHandle();
         AppPredictor appPredictor = factory.create(userHandle);
         ShortcutLoader shortcutLoader = ActivityManager.isLowRamDeviceStatic()
                     ? null
@@ -1380,7 +1381,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                             userHandle,
                             targetIntentFilter,
                             shortcutsResult -> onShortcutsLoaded(userHandle, shortcutsResult));
-        ProfileRecord record = new ProfileRecord(appPredictor, shortcutLoader);
+        ProfileRecord record = new ProfileRecord(profile, appPredictor, shortcutLoader);
         mProfileRecords.put(userHandle.getIdentifier(), record);
         return record;
     }
@@ -1415,6 +1416,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             ProfilePagerResources profilePagerResources,
             ChooserRequest request,
             ProfileHelper profileHelper,
+            Collection<ProfileRecord> profileRecords,
             ProfileAvailability profileAvailability,
             List<Intent> initialIntents,
             int maxTargetsPerRow) {
@@ -1426,11 +1428,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         List<Intent> payloadIntents = request.getPayloadIntents();
 
         List<TabConfig<ChooserGridAdapter>> tabs = new ArrayList<>();
-        for (Profile profile : profileHelper.getProfiles()) {
-            if (profile.getType() == Profile.Type.PRIVATE
-                    && !profileAvailability.isAvailable(profile)) {
-                continue;
-            }
+        for (ProfileRecord record : profileRecords) {
+            Profile profile = record.profile;
             ChooserGridAdapter adapter = createChooserGridAdapter(
                     context,
                     payloadIntents,
@@ -2044,7 +2043,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 initialIntents,
                 rList,
                 filterLastUsed,
-                createListController(userHandle),
+                resolverListController,
                 userHandle,
                 targetIntent,
                 referrerFillInIntent,
@@ -2680,6 +2679,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private static class ProfileRecord {
+        public final Profile profile;
+
         /** The {@link AppPredictor} for this profile, if any. */
         @Nullable
         public final AppPredictor appPredictor;
@@ -2691,8 +2692,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         public long loadingStartTime;
 
         private ProfileRecord(
+                Profile profile,
                 @Nullable AppPredictor appPredictor,
                 @Nullable ShortcutLoader shortcutLoader) {
+            this.profile = profile;
             this.appPredictor = appPredictor;
             this.shortcutLoader = shortcutLoader;
         }
@@ -2700,6 +2703,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         public void destroy() {
             if (appPredictor != null) {
                 appPredictor.destroy();
+            }
+            if (shortcutLoader != null) {
+                shortcutLoader.destroy();
             }
         }
     }
