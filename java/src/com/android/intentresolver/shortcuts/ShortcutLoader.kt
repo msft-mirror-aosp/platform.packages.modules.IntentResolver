@@ -36,18 +36,22 @@ import androidx.annotation.OpenForTesting
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.WorkerThread
 import com.android.intentresolver.Flags.fixShortcutLoaderJobLeak
+import com.android.intentresolver.Flags.fixShortcutsFlashing
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.measurements.Tracer
 import com.android.intentresolver.measurements.runTracing
 import java.util.concurrent.Executor
 import java.util.function.Consumer
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -80,6 +84,7 @@ constructor(
         if (fixShortcutLoaderJobLeak()) parentScope.createChildScope() else parentScope
     private val shortcutToChooserTargetConverter = ShortcutToChooserTargetConverter()
     private val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
+    private val appPredictorWatchdog = atomic<Job?>(null)
     private val appPredictorCallback =
         ScopedAppTargetListCallback(scope) { onAppPredictorCallback(it) }.toAppPredictorCallback()
 
@@ -186,8 +191,29 @@ constructor(
         if (!skipAppPredictionService && appPredictor != null) {
             try {
                 Log.d(TAG, "[$id] query AppPredictor for user $userHandle")
+
+                val watchdogJob =
+                    if (fixShortcutsFlashing()) {
+                        scope
+                            .launch(start = CoroutineStart.LAZY) {
+                                delay(APP_PREDICTOR_RESPONSE_TIMEOUT_MS)
+                                Log.w(TAG, "AppPredictor response timeout for user: $userHandle")
+                                appPredictorCallback.onTargetsAvailable(emptyList())
+                            }
+                            .also { job ->
+                                appPredictorWatchdog.getAndSet(job)?.cancel()
+                                job.invokeOnCompletion {
+                                    appPredictorWatchdog.compareAndSet(job, null)
+                                }
+                            }
+                    } else {
+                        null
+                    }
+
                 Tracer.beginAppPredictorQueryTrace(userHandle)
                 appPredictor.requestPredictionUpdate()
+
+                watchdogJob?.start()
                 return
             } catch (e: Throwable) {
                 endAppPredictorQueryTrace(userHandle)
@@ -230,6 +256,7 @@ constructor(
 
     @WorkerThread
     private fun onAppPredictorCallback(appPredictorTargets: List<AppTarget>) {
+        appPredictorWatchdog.value?.cancel()
         endAppPredictorQueryTrace(userHandle)
         Log.d(TAG, "[$id] receive app targets from AppPredictor")
         if (appPredictorTargets.isEmpty() && shouldQueryDirectShareTargets()) {
@@ -378,6 +405,7 @@ constructor(
     }
 
     companion object {
+        @VisibleForTesting const val APP_PREDICTOR_RESPONSE_TIMEOUT_MS = 2_000L
         private const val TAG = "ShortcutLoader"
 
         private fun PackageManager.isPackageEnabled(packageName: String): Boolean {
