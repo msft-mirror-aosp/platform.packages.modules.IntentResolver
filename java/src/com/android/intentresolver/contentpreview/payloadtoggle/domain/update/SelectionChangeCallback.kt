@@ -16,6 +16,7 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.update
 
+import android.content.ComponentName
 import android.content.ContentInterface
 import android.content.Intent
 import android.content.Intent.EXTRA_ALTERNATE_INTENTS
@@ -24,6 +25,7 @@ import android.content.Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION
 import android.content.Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_TARGETS
+import android.content.Intent.EXTRA_EXCLUDE_COMPONENTS
 import android.content.Intent.EXTRA_INTENT
 import android.content.Intent.EXTRA_METADATA_TEXT
 import android.content.IntentSender
@@ -32,11 +34,11 @@ import android.os.Bundle
 import android.service.chooser.AdditionalContentContract.MethodNames.ON_SELECTION_CHANGED
 import android.service.chooser.ChooserAction
 import android.service.chooser.ChooserTarget
+import com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.inject.AdditionalContent
 import com.android.intentresolver.inject.ChooserIntent
-import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.ui.viewmodel.readAlternateIntents
 import com.android.intentresolver.ui.viewmodel.readChooserActions
 import com.android.intentresolver.validation.Invalid
@@ -70,7 +72,6 @@ constructor(
     @AdditionalContent private val uri: Uri,
     @ChooserIntent private val chooserIntent: Intent,
     private val contentResolver: ContentInterface,
-    private val flags: ChooserServiceFlags,
 ) : SelectionChangeCallback {
     private val mutex = Mutex()
 
@@ -90,7 +91,7 @@ constructor(
                 )
             }
             ?.let { bundle ->
-                return when (val result = readCallbackResponse(bundle, flags)) {
+                return when (val result = readCallbackResponse(bundle)) {
                     is Valid -> {
                         result.warnings.forEach { it.log(TAG) }
                         result.value
@@ -105,7 +106,6 @@ constructor(
 
 private fun readCallbackResponse(
     bundle: Bundle,
-    flags: ChooserServiceFlags
 ): ValidationResult<ShareouselUpdate> {
     return validateFrom(bundle::get) {
         // An error is treated as an empty collection or null as the presence of a value indicates
@@ -136,9 +136,13 @@ private fun readCallbackResponse(
                 optional(value<IntentSender>(key))
             }
         val metadataText =
-            if (flags.enableSharesheetMetadataExtra()) {
-                bundle.readValueUpdate(EXTRA_METADATA_TEXT) { key ->
-                    optional(value<CharSequence>(key))
+            bundle.readValueUpdate(EXTRA_METADATA_TEXT) { key ->
+                optional(value<CharSequence>(key))
+            }
+        val excludedComponents: ValueUpdate<List<ComponentName>> =
+            if (shareouselUpdateExcludeComponentsExtra()) {
+                bundle.readValueUpdate(EXTRA_EXCLUDE_COMPONENTS) { key ->
+                    optional(array<ComponentName>(key)) ?: emptyList()
                 }
             } else {
                 ValueUpdate.Absent
@@ -152,6 +156,7 @@ private fun readCallbackResponse(
             refinementIntentSender,
             resultIntentSender,
             metadataText,
+            excludedComponents,
         )
     }
 }

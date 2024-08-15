@@ -18,15 +18,21 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.MediaStore.MediaColumns.HEIGHT
 import android.provider.MediaStore.MediaColumns.WIDTH
+import android.service.chooser.AdditionalContentContract.Columns.URI
+import android.service.chooser.AdditionalContentContract.CursorExtraKeys.POSITION
 import android.util.Size
 import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.FileInfo
 import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.readSize
@@ -36,6 +42,7 @@ import com.android.intentresolver.util.cursor.CursorView
 import com.android.intentresolver.util.cursor.viewBy
 import com.android.intentresolver.util.runTest
 import com.android.systemui.kosmos.Kosmos
+import com.google.common.truth.Correspondence
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -59,6 +66,7 @@ class CursorPreviewsInteractorTest {
             this.focusedItemIndex = focusedItemIndex
             this.pageSize = pageSize
             this.maxLoadedPages = maxLoadedPages
+            this.targetIntentModifier = TargetIntentModifier { error("unexpected invocation") }
             uriMetadataReader =
                 object : UriMetadataReader {
                     override fun getMetadata(uri: Uri): FileInfo =
@@ -89,9 +97,9 @@ class CursorPreviewsInteractorTest {
         private val cursorSizes: Map<Int, Size>,
     ) {
         val cursor: CursorView<CursorRow?> =
-            MatrixCursor(arrayOf("uri", WIDTH, HEIGHT))
+            MatrixCursor(arrayOf(URI, WIDTH, HEIGHT))
                 .apply {
-                    extras = bundleOf("position" to cursorStartPosition)
+                    extras = bundleOf(POSITION to cursorStartPosition)
                     for (i in cursorRange) {
                         val size = cursorSizes[i]
                         addRow(
@@ -103,9 +111,15 @@ class CursorPreviewsInteractorTest {
                         )
                     }
                 }
-                .viewBy { getString(0)?.let { uriStr -> CursorRow(Uri.parse(uriStr), readSize()) } }
+                .viewBy {
+                    getString(0)?.let { uriStr ->
+                        CursorRow(Uri.parse(uriStr), readSize(), position)
+                    }
+                }
         val initialPreviews: List<PreviewModel> =
-            initialSelectionRange.map { i -> PreviewModel(uri = uri(i), mimeType = "image/bitmap") }
+            initialSelectionRange.map { i ->
+                PreviewModel(uri = uri(i), mimeType = "image/bitmap", order = i)
+            }
     }
 
     @Test
@@ -136,7 +150,8 @@ class CursorPreviewsInteractorTest {
                                         0 -> 2f
                                         3 -> 4f
                                         else -> 1f
-                                    }
+                                    },
+                                order = it,
                             )
                         }
                     )
@@ -144,6 +159,8 @@ class CursorPreviewsInteractorTest {
                 assertThat(startIdx).isEqualTo(0)
                 assertThat(loadMoreLeft).isNull()
                 assertThat(loadMoreRight).isNotNull()
+                assertThat(leftTriggerIndex).isEqualTo(2)
+                assertThat(rightTriggerIndex).isEqualTo(4)
             }
         }
 
@@ -254,6 +271,95 @@ class CursorPreviewsInteractorTest {
             assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels.last().uri)
                 .isEqualTo(Uri.fromParts("scheme24", "ssp24", "fragment24"))
             assertThat(cursorPreviewsRepository.previewsModel.value!!.loadMoreLeft).isNull()
+        }
+
+    @Test
+    fun unclaimedRecordsGotUpdatedInSelectionInteractor() =
+        runTestWithDeps(
+            initialSelection = listOf(1),
+            focusedItemIndex = 0,
+            cursor = listOf(0, 1),
+            cursorStartPosition = 1,
+        ) { deps ->
+            previewSelectionsRepository.selections.value =
+                PreviewModel(
+                        uri = uri(1),
+                        mimeType = "image/png",
+                        order = 0,
+                    )
+                    .let { mapOf(it.uri to it) }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(deps.cursor, deps.initialPreviews)
+            }
+            runCurrent()
+
+            assertThat(previewSelectionsRepository.selections.value.values)
+                .containsExactly(
+                    PreviewModel(
+                        uri = uri(1),
+                        mimeType = "image/bitmap",
+                        order = 1,
+                    )
+                )
+        }
+
+    @Test
+    fun testReadFailedPages() =
+        runTestWithDeps(
+            initialSelection = listOf(4),
+            cursor = emptyList(),
+            cursorStartPosition = 0,
+            pageSize = 2,
+            maxLoadedPages = 5,
+        ) { deps ->
+            val cursor =
+                MatrixCursor(arrayOf(URI)).apply {
+                    extras = bundleOf(POSITION to 4)
+                    for (i in 0 until 10) {
+                        addRow(arrayOf(uri(i)))
+                    }
+                }
+            val failingPositions = setOf(1, 5, 8)
+            val failingCursor =
+                object : Cursor by cursor {
+                        override fun move(offset: Int): Boolean = moveToPosition(position + offset)
+
+                        override fun moveToPosition(position: Int): Boolean {
+                            if (failingPositions.contains(position)) {
+                                throw RuntimeException(
+                                    "A test exception when moving the cursor to position $position"
+                                )
+                            }
+                            return cursor.moveToPosition(position)
+                        }
+
+                        override fun moveToFirst(): Boolean = moveToPosition(0)
+
+                        override fun moveToLast(): Boolean = moveToPosition(count - 1)
+
+                        override fun moveToNext(): Boolean = move(1)
+
+                        override fun moveToPrevious(): Boolean = move(-1)
+                    }
+                    .viewBy {
+                        getString(0)?.let { uriStr ->
+                            CursorRow(Uri.parse(uriStr), readSize(), position)
+                        }
+                    }
+            backgroundScope.launch {
+                cursorPreviewsInteractor.launch(failingCursor, deps.initialPreviews)
+            }
+            runCurrent()
+
+            assertThat(cursorPreviewsRepository.previewsModel.value).isNotNull()
+            assertThat(cursorPreviewsRepository.previewsModel.value!!.previewModels)
+                .comparingElementsUsing<PreviewModel, Uri>(
+                    Correspondence.transforming({ it.uri }, "has a Uri of")
+                )
+                .containsExactlyElementsIn(
+                    (0..7).filterNot { failingPositions.contains(it) }.map { uri(it) }
+                )
+                .inOrder()
         }
 }
 

@@ -18,25 +18,39 @@ package com.android.intentresolver.contentpreview
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Size
 import java.util.function.Consumer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /** A content preview image loader. */
-interface ImageLoader : suspend (Uri) -> Bitmap?, suspend (Uri, Boolean) -> Bitmap? {
+interface ImageLoader : suspend (Uri, Size) -> Bitmap?, suspend (Uri, Size, Boolean) -> Bitmap? {
     /**
      * Load preview image asynchronously; caching is allowed.
      *
      * @param uri content URI
+     * @param size target bitmap size
      * @param callback a callback that will be invoked with the loaded image or null if loading has
      *   failed.
      */
-    fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>)
+    fun loadImage(callerScope: CoroutineScope, uri: Uri, size: Size, callback: Consumer<Bitmap?>) {
+        callerScope.launch {
+            val bitmap = invoke(uri, size)
+            if (isActive) {
+                callback.accept(bitmap)
+            }
+        }
+    }
 
     /** Prepopulate the image loader cache. */
-    fun prePopulate(uris: List<Uri>)
+    fun prePopulate(uriSizePairs: List<Pair<Uri, Size>>)
+
+    /** Returns a bitmap for the given URI if it's already cached, otherwise null */
+    fun getCachedBitmap(uri: Uri): Bitmap? = null
 
     /** Load preview image; caching is allowed. */
-    override suspend fun invoke(uri: Uri) = invoke(uri, true)
+    override suspend fun invoke(uri: Uri, size: Size) = invoke(uri, size, true)
 
     /**
      * Load preview image.
@@ -44,5 +58,5 @@ interface ImageLoader : suspend (Uri) -> Bitmap?, suspend (Uri, Boolean) -> Bitm
      * @param uri content URI
      * @param caching indicates if the loaded image could be cached.
      */
-    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap?
+    override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap?
 }

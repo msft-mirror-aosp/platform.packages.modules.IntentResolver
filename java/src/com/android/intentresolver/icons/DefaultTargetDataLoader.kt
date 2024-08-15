@@ -77,11 +77,11 @@ class DefaultTargetDataLoader(
         return null
     }
 
-    override fun loadDirectShareIcon(
+    override fun getOrLoadDirectShareIcon(
         info: SelectableTargetInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
-    ) {
+    ): Drawable? {
         val taskId = nextTaskId.getAndIncrement()
         LoadDirectShareIconTask(
                 context.createContextAsUser(userHandle, 0),
@@ -93,6 +93,7 @@ class DefaultTargetDataLoader(
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
+        return null
     }
 
     override fun loadLabel(info: DisplayResolveInfo, callback: Consumer<LabelInfo>) {

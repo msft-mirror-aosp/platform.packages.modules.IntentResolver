@@ -19,18 +19,18 @@ package com.android.intentresolver.contentpreview
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
+import android.util.Size
 import androidx.core.util.lruCache
 import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.ViewModelOwned
-import java.util.function.Consumer
 import javax.inject.Inject
 import javax.inject.Qualifier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -73,15 +73,11 @@ constructor(
             }
         )
 
-    override fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>) {
-        callerScope.launch { callback.accept(loadCachedImage(uri)) }
+    override fun prePopulate(uriSizePairs: List<Pair<Uri, Size>>) {
+        uriSizePairs.take(cache.maxSize()).map { cache[it.first] }
     }
 
-    override fun prePopulate(uris: List<Uri>) {
-        uris.take(cache.maxSize()).map { cache[it] }
-    }
-
-    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? {
+    override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap? {
         return if (caching) {
             loadCachedImage(uri)
         } else {
@@ -91,7 +87,7 @@ constructor(
 
     private suspend fun loadUncachedImage(uri: Uri): Bitmap? =
         withContext(bgDispatcher) {
-            runCatching { semaphore.withPermit { thumbnailLoader.invoke(uri) } }
+            runCatching { semaphore.withPermit { thumbnailLoader.loadThumbnail(uri) } }
                 .onFailure {
                     ensureActive()
                     Log.d(TAG, "Failed to load preview for $uri", it)
@@ -103,6 +99,10 @@ constructor(
         // [Deferred#await] is called in a [runCatching] block to catch
         // [CancellationExceptions]s so that they don't cancel the calling coroutine/scope.
         runCatching { cache[uri].await() }.getOrNull()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getCachedBitmap(uri: Uri): Bitmap? =
+        kotlin.runCatching { cache[uri].getCompleted() }.getOrNull()
 
     companion object {
         private const val TAG = "CachingImgPrevLoader"
