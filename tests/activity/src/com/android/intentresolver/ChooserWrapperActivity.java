@@ -65,7 +65,7 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
                 initialIntents,
                 rList,
                 filterLastUsed,
-                createListController(userHandle),
+                resolverListController,
                 userHandle,
                 targetIntent,
                 referrerFillInIntent,

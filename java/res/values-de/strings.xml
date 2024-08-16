@@ -81,7 +81,7 @@
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Private Ansicht"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Geschäftliche Ansicht"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Private Ansicht"</string>
-    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Von deinem IT-Administrator blockiert"</string>
+    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Vom IT‑Administrator blockiert"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Diese Art von Inhalt kann nicht über geschäftliche Apps geteilt werden"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Diese Art von Inhalt kann nicht mit geschäftlichen Apps geöffnet werden"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Diese Art von Inhalt kann nicht über private Apps geteilt werden"</string>

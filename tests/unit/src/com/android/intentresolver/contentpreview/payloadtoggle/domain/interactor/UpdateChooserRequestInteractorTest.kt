@@ -18,7 +18,11 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
+import android.content.ComponentName
 import android.content.Intent
+import android.platform.test.annotations.EnableFlags
+import android.platform.test.flag.junit.SetFlagsRule
+import com.android.intentresolver.Flags.FLAG_SHAREOUSEL_UPDATE_EXCLUDE_COMPONENTS_EXTRA
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.pendingSelectionCallbackRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
@@ -29,9 +33,12 @@ import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import org.junit.Rule
 import org.junit.Test
 
 class UpdateChooserRequestInteractorTest {
+    @get:Rule val setFlagsRule = SetFlagsRule()
+
     @Test
     fun updateTargetIntentWithSelection() = runKosmosTest {
         val selectionCallbackResult = ShareouselUpdate(metadataText = ValueUpdate.Value("update"))
@@ -44,5 +51,22 @@ class UpdateChooserRequestInteractorTest {
 
         assertThat(pendingSelectionCallbackRepository.pendingTargetIntent.value).isNull()
         assertThat(chooserRequestRepository.chooserRequest.value.metadataText).isEqualTo("update")
+    }
+
+    @Test
+    @EnableFlags(FLAG_SHAREOUSEL_UPDATE_EXCLUDE_COMPONENTS_EXTRA)
+    fun testSelectionResultWithExcludedComponents_chooserRequestIsUpdated() = runKosmosTest {
+        val excludedComponent = ComponentName("org.pkg.app", "Class")
+        val selectionCallbackResult =
+            ShareouselUpdate(excludeComponents = ValueUpdate.Value(listOf(excludedComponent)))
+        selectionChangeCallback = SelectionChangeCallback { selectionCallbackResult }
+
+        backgroundScope.launch { processTargetIntentUpdatesInteractor.activate() }
+
+        updateTargetIntentInteractor.updateTargetIntent(Intent())
+        runCurrent()
+
+        assertThat(chooserRequestRepository.chooserRequest.value.filteredComponentNames)
+            .containsExactly(excludedComponent)
     }
 }
