@@ -29,32 +29,34 @@ import android.content.Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION
 import android.content.Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_TARGETS
+import android.content.Intent.EXTRA_EXCLUDE_COMPONENTS
 import android.content.Intent.EXTRA_INTENT
 import android.content.Intent.EXTRA_METADATA_TEXT
 import android.content.Intent.EXTRA_STREAM
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Bundle
+import android.platform.test.annotations.EnableFlags
+import android.platform.test.flag.junit.SetFlagsRule
 import android.service.chooser.AdditionalContentContract.MethodNames.ON_SELECTION_CHANGED
 import android.service.chooser.ChooserAction
 import android.service.chooser.ChooserTarget
-import android.service.chooser.Flags
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.intentresolver.Flags.FLAG_SHAREOUSEL_UPDATE_EXCLUDE_COMPONENTS_EXTRA
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate.Absent
-import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.google.common.truth.Correspondence
 import com.google.common.truth.Correspondence.BinaryPredicate
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import java.lang.IllegalArgumentException
 import kotlinx.coroutines.test.runTest
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.capture
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
@@ -62,20 +64,16 @@ import org.mockito.kotlin.whenever
 
 @RunWith(AndroidJUnit4::class)
 class SelectionChangeCallbackImplTest {
+    @get:Rule val setFlagsRule = SetFlagsRule()
+
     private val uri = Uri.parse("content://org.pkg/content-provider")
     private val chooserIntent = Intent(ACTION_CHOOSER)
     private val contentResolver = mock<ContentInterface>()
     private val context = InstrumentationRegistry.getInstrumentation().context
-    private val flags =
-        FakeChooserServiceFlags().apply {
-            setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false)
-            setFlag(Flags.FLAG_CHOOSER_ALBUM_TEXT, false)
-            setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, false)
-        }
 
     @Test
     fun testPayloadChangeCallbackContact() = runTest {
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val u1 = createUri(1)
         val u2 = createUri(2)
@@ -170,7 +168,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelableArray(EXTRA_CHOOSER_CUSTOM_ACTIONS, arrayOf(a1, a2)) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND_MULTIPLE)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -187,6 +185,7 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.refinementIntentSender).isEqualTo(Absent)
         assertThat(result.resultIntentSender).isEqualTo(Absent)
         assertThat(result.metadataText).isEqualTo(Absent)
+        assertThat(result.excludeComponents).isEqualTo(Absent)
     }
 
     @Test
@@ -208,7 +207,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelable(EXTRA_CHOOSER_MODIFY_SHARE_ACTION, modifyShare) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -227,6 +226,7 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.refinementIntentSender).isEqualTo(Absent)
         assertThat(result.resultIntentSender).isEqualTo(Absent)
         assertThat(result.metadataText).isEqualTo(Absent)
+        assertThat(result.excludeComponents).isEqualTo(Absent)
     }
 
     @Test
@@ -243,7 +243,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelableArray(EXTRA_ALTERNATE_INTENTS, alternateIntents) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -268,6 +268,7 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.refinementIntentSender).isEqualTo(Absent)
         assertThat(result.resultIntentSender).isEqualTo(Absent)
         assertThat(result.metadataText).isEqualTo(Absent)
+        assertThat(result.excludeComponents).isEqualTo(Absent)
     }
 
     @Test
@@ -293,7 +294,7 @@ class SelectionChangeCallbackImplTest {
                 Bundle().apply { putParcelableArray(EXTRA_CHOOSER_TARGETS, arrayOf(t1, t2)) }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -321,6 +322,7 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.refinementIntentSender).isEqualTo(Absent)
         assertThat(result.resultIntentSender).isEqualTo(Absent)
         assertThat(result.metadataText).isEqualTo(Absent)
+        assertThat(result.excludeComponents).isEqualTo(Absent)
     }
 
     @Test
@@ -335,7 +337,7 @@ class SelectionChangeCallbackImplTest {
                 }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -348,6 +350,7 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.refinementIntentSender.getOrThrow()).isNotNull()
         assertThat(result.resultIntentSender).isEqualTo(Absent)
         assertThat(result.metadataText).isEqualTo(Absent)
+        assertThat(result.excludeComponents).isEqualTo(Absent)
     }
 
     @Test
@@ -362,7 +365,7 @@ class SelectionChangeCallbackImplTest {
                 }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -375,37 +378,16 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.refinementIntentSender).isEqualTo(Absent)
         assertThat(result.resultIntentSender.getOrThrow()).isNotNull()
         assertThat(result.metadataText).isEqualTo(Absent)
-    }
-
-    @Test
-    fun testPayloadChangeCallbackUpdatesMetadataTextWithDisabledFlag_noUpdates() = runTest {
-        val metadataText = "[Metadata]"
-        whenever(contentResolver.call(any<String>(), any(), any(), any()))
-            .thenReturn(Bundle().apply { putCharSequence(EXTRA_METADATA_TEXT, metadataText) })
-
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
-
-        val targetIntent = Intent(ACTION_SEND)
-        val result = testSubject.onSelectionChanged(targetIntent)
-        assertWithMessage("Callback result should not be null").that(result).isNotNull()
-        requireNotNull(result)
-        assertThat(result.customActions).isEqualTo(Absent)
-        assertThat(result.modifyShareAction).isEqualTo(Absent)
-        assertThat(result.alternateIntents).isEqualTo(Absent)
-        assertThat(result.callerTargets).isEqualTo(Absent)
-        assertThat(result.refinementIntentSender).isEqualTo(Absent)
-        assertThat(result.resultIntentSender).isEqualTo(Absent)
-        assertThat(result.metadataText).isEqualTo(Absent)
+        assertThat(result.excludeComponents).isEqualTo(Absent)
     }
 
     @Test
     fun testPayloadChangeCallbackUpdatesMetadataTextWithEnabledFlag_valueUpdated() = runTest {
         val metadataText = "[Metadata]"
-        flags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
         whenever(contentResolver.call(any<String>(), any(), any(), any()))
             .thenReturn(Bundle().apply { putCharSequence(EXTRA_METADATA_TEXT, metadataText) })
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
@@ -418,11 +400,39 @@ class SelectionChangeCallbackImplTest {
         assertThat(result.refinementIntentSender).isEqualTo(Absent)
         assertThat(result.resultIntentSender).isEqualTo(Absent)
         assertThat(result.metadataText.getOrThrow()).isEqualTo(metadataText)
+        assertThat(result.excludeComponents).isEqualTo(Absent)
+    }
+
+    @Test
+    @EnableFlags(FLAG_SHAREOUSEL_UPDATE_EXCLUDE_COMPONENTS_EXTRA)
+    fun testPayloadChangeCallbackUpdatesExcludedComponents_valueUpdated() = runTest {
+        val excludedComponent = ComponentName("org.pkg.app", "org.pkg.app.TheClass")
+        whenever(contentResolver.call(any<String>(), any(), any(), any()))
+            .thenReturn(
+                Bundle().apply {
+                    putParcelableArray(EXTRA_EXCLUDE_COMPONENTS, arrayOf(excludedComponent))
+                }
+            )
+
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
+
+        val targetIntent = Intent(ACTION_SEND)
+        val result = testSubject.onSelectionChanged(targetIntent)
+
+        assertWithMessage("Callback result should not be null").that(result).isNotNull()
+        requireNotNull(result)
+        assertThat(result.customActions).isEqualTo(Absent)
+        assertThat(result.modifyShareAction).isEqualTo(Absent)
+        assertThat(result.alternateIntents).isEqualTo(Absent)
+        assertThat(result.callerTargets).isEqualTo(Absent)
+        assertThat(result.refinementIntentSender).isEqualTo(Absent)
+        assertThat(result.resultIntentSender).isEqualTo(Absent)
+        assertThat(result.metadataText).isEqualTo(Absent)
+        assertThat(result.excludeComponents.getOrThrow()).containsExactly(excludedComponent)
     }
 
     @Test
     fun testPayloadChangeCallbackProvidesInvalidData_invalidDataIgnored() = runTest {
-        flags.setFlag(Flags.FLAG_ENABLE_SHARESHEET_METADATA_EXTRA, true)
         whenever(contentResolver.call(any<String>(), any(), any(), any()))
             .thenReturn(
                 Bundle().apply {
@@ -436,7 +446,7 @@ class SelectionChangeCallbackImplTest {
                 }
             )
 
-        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver, flags)
+        val testSubject = SelectionChangeCallbackImpl(uri, chooserIntent, contentResolver)
 
         val targetIntent = Intent(ACTION_SEND)
         val result = testSubject.onSelectionChanged(targetIntent)
