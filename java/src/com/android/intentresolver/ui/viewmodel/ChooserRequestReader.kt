@@ -136,12 +136,7 @@ fun readChooserRequest(
                 else -> ContentTypeHint.NONE
             }
 
-        val metadataText =
-            if (flags.enableSharesheetMetadataExtra()) {
-                optional(value<CharSequence>(EXTRA_METADATA_TEXT))
-            } else {
-                null
-            }
+        val metadataText = optional(value<CharSequence>(EXTRA_METADATA_TEXT))
 
         ChooserRequest(
             targetIntent = targetIntent,
