@@ -45,6 +45,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,6 +72,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.Prev
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselPreviewViewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 import kotlin.math.abs
+import kotlin.math.min
 import kotlinx.coroutines.launch
 
 @Composable
@@ -104,44 +106,48 @@ private fun PreviewCarousel(
     previews: PreviewsModel,
     viewModel: ShareouselViewModel,
 ) {
-    val centerIdx = previews.startIdx
-    val carouselState =
-        rememberLazyListState(
-            initialFirstVisibleItemIndex = centerIdx,
-            prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
-        )
     var maxAspectRatio by remember { mutableStateOf(0f) }
     var viewportHeight by remember { mutableStateOf(0) }
-
-    val horizontalPadding = 16.dp
+    var viewportCenter by remember { mutableStateOf(0) }
+    var horizontalPadding by remember { mutableStateOf(0.dp) }
     Box(
         modifier =
             Modifier.fillMaxWidth()
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
                 .layout { measurable, constraints ->
                     val placeable = measurable.measure(constraints)
-                    val aspectRatio =
+                    val (minItemWidth, maxAR) =
                         if (placeable.height <= 0) {
-                            0f
+                            0f to 0f
                         } else {
-                            val maxItemWidth =
-                                maxOf(0, placeable.width - 2 * horizontalPadding.roundToPx())
-                            (maxItemWidth.toFloat() / placeable.height).coerceIn(
-                                0f,
-                                MAX_ASPECT_RATIO
-                            )
+                            val minItemWidth = (MIN_ASPECT_RATIO * placeable.height)
+                            val maxItemWidth = maxOf(0, placeable.width - 32.dp.roundToPx())
+                            val maxAR =
+                                (maxItemWidth.toFloat() / placeable.height).coerceIn(
+                                    0f,
+                                    MAX_ASPECT_RATIO
+                                )
+                            minItemWidth to maxAR
                         }
-                    maxAspectRatio = aspectRatio
+                    viewportCenter = placeable.width / 2
+                    maxAspectRatio = maxAR
                     viewportHeight = placeable.height
+                    horizontalPadding = ((placeable.width - minItemWidth) / 2).toDp()
                     layout(placeable.width, placeable.height) { placeable.place(0, 0) }
                 },
     ) {
-        if (maxAspectRatio <= 0) {
+        if (maxAspectRatio <= 0 && previews.previewModels.isNotEmpty()) {
             // Do not compose the list until we know the viewport size
             return@Box
         }
-        // TODO: start item needs to be centered, check out ScalingLazyColumn impl or see if
-        //  HorizontalPager works for our use-case
+
+        var firstSelectedIndex by remember { mutableStateOf(null as Int?) }
+
+        val carouselState =
+            rememberLazyListState(
+                prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() },
+            )
+
         LazyRow(
             state = carouselState,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -149,24 +155,36 @@ private fun PreviewCarousel(
             modifier = Modifier.fillMaxSize().systemGestureExclusion(),
         ) {
             itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
+                val visibleItem by remember {
+                    derivedStateOf {
+                        carouselState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
+                    }
+                }
+
                 // Index if this is the element in the center of the viewing area, otherwise null
                 val previewIndex by remember {
                     derivedStateOf {
-                        carouselState.layoutInfo.visibleItemsInfo
-                            .firstOrNull { it.index == index }
-                            ?.let {
-                                val viewportCenter = carouselState.layoutInfo.viewportEndOffset / 2
-                                val halfPreviewWidth = it.size / 2
-                                val previewCenter = it.offset + halfPreviewWidth
-                                val previewDistanceToViewportCenter =
-                                    abs(previewCenter - viewportCenter)
-                                if (previewDistanceToViewportCenter <= halfPreviewWidth) {
-                                    index
-                                } else {
-                                    null
-                                }
+                        visibleItem?.let {
+                            val halfPreviewWidth = it.size / 2
+                            val previewCenter = it.offset + halfPreviewWidth
+                            val previewDistanceToViewportCenter =
+                                abs(previewCenter - viewportCenter)
+                            if (previewDistanceToViewportCenter <= halfPreviewWidth) {
+                                index
+                            } else {
+                                null
                             }
+                        }
                     }
+                }
+
+                val previewModel =
+                    viewModel.preview(model, viewportHeight, previewIndex, rememberCoroutineScope())
+                val selected by
+                    previewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
+
+                if (selected) {
+                    firstSelectedIndex = min(index, firstSelectedIndex ?: Int.MAX_VALUE)
                 }
 
                 ShareouselCard(
@@ -177,6 +195,22 @@ private fun PreviewCarousel(
                         rememberCoroutineScope()
                     ),
                     maxAspectRatio,
+                )
+            }
+        }
+
+        firstSelectedIndex?.let { index ->
+            LaunchedEffect(Unit) {
+                val visibleItem =
+                    carouselState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
+                val center =
+                    with(carouselState.layoutInfo) {
+                        ((viewportEndOffset - viewportStartOffset) / 2) + viewportStartOffset
+                    }
+
+                carouselState.scrollToItem(
+                    index = index,
+                    scrollOffset = visibleItem?.size?.div(2)?.minus(center) ?: 0,
                 )
             }
         }
@@ -205,7 +239,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio
                     onValueChange = { scope.launch { viewModel.setSelected(it) } },
                 )
     ) { state ->
-        val aspectRatio = viewModel.aspectRatio.coerceIn(MIN_ASPECT_RATIO, maxAspectRatio)
+        val aspectRatio = minOf(maxAspectRatio, maxOf(MIN_ASPECT_RATIO, viewModel.aspectRatio))
         if (state is ValueUpdate.Value) {
             state.getOrDefault(null).let { bitmap ->
                 ShareouselCard(
