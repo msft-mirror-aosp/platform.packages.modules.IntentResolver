@@ -162,6 +162,9 @@
         }
     </string>
 
+    <!-- Title atop a sharing UI indicating that a selection needs to be made for sharing -->
+    <string name="select_items_to_share">Select items to share</string>
+
     <!-- Title atop a sharing UI indicating that some number of images are being shared
          along with text [CHAR_LIMIT=50] -->
     <string name="sharing_images_with_text">{count, plural,
