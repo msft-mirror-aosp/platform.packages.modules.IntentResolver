@@ -36,4 +36,6 @@ interface HeadlineGenerator {
     fun getVideosHeadline(count: Int): String
 
     fun getFilesHeadline(count: Int): String
+
+    fun getNotItemsSelectedHeadline(): String
 }
