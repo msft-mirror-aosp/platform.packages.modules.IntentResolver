@@ -16,6 +16,7 @@
 
 package com.android.intentresolver;
 
+import static com.android.intentresolver.Flags.unselectFinalItem;
 import static com.android.intentresolver.util.graphics.SuspendedMatrixColorFilter.getSuspendedColorMatrix;
 
 import android.content.Context;
@@ -973,13 +974,26 @@ public class ResolverListAdapter extends BaseAdapter {
         /**
          * Bind view holder to a TargetInfo.
          */
-        public void bindIcon(TargetInfo info) {
+        public final void bindIcon(TargetInfo info) {
+            bindIcon(info, true);
+        }
+
+        /**
+         * Bind view holder to a TargetInfo.
+         */
+        public void bindIcon(TargetInfo info, boolean isEnabled) {
             Drawable displayIcon = info.getDisplayIconHolder().getDisplayIcon();
             icon.setImageDrawable(displayIcon);
-            if (info.isSuspended()) {
+            if (info.isSuspended() || !isEnabled) {
                 icon.setColorFilter(getSuspendedColorMatrix());
             } else {
                 icon.setColorFilter(null);
+                if (unselectFinalItem() && displayIcon != null) {
+                    // For some reason, ImageView.setColorFilter() not always propagate the call
+                    // to the drawable and the icon remains grayscale when rebound; reset the filter
+                    // explicitly.
+                    displayIcon.setColorFilter(null);
+                }
             }
         }
     }
