@@ -17,6 +17,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel
 
 import android.util.Size
 import com.android.intentresolver.Flags
+import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.contentpreview.CachingImagePreviewImageLoader
 import com.android.intentresolver.contentpreview.HeadlineGenerator
 import com.android.intentresolver.contentpreview.ImageLoader
@@ -58,6 +59,8 @@ data class ShareouselViewModel(
     val previews: Flow<PreviewsModel?>,
     /** List of action chips presented underneath Shareousel. */
     val actions: Flow<List<ActionChipViewModel>>,
+    /** Indicates whether there are any selected items */
+    val hasSelectedItems: Flow<Boolean>,
     /** Creates a [ShareouselPreviewViewModel] for a [PreviewModel] present in [previews]. */
     val preview:
         (
@@ -104,10 +107,14 @@ object ShareouselViewModelModule {
                 selectionInteractor.aggregateContentType.zip(selectionInteractor.amountSelected) {
                     contentType,
                     numItems ->
-                    when (contentType) {
-                        ContentType.Other -> headlineGenerator.getFilesHeadline(numItems)
-                        ContentType.Image -> headlineGenerator.getImagesHeadline(numItems)
-                        ContentType.Video -> headlineGenerator.getVideosHeadline(numItems)
+                    if (unselectFinalItem() && numItems == 0) {
+                        headlineGenerator.getNotItemsSelectedHeadline()
+                    } else {
+                        when (contentType) {
+                            ContentType.Other -> headlineGenerator.getFilesHeadline(numItems)
+                            ContentType.Image -> headlineGenerator.getImagesHeadline(numItems)
+                            ContentType.Video -> headlineGenerator.getVideosHeadline(numItems)
+                        }
                     }
                 },
             metadataText = chooserRequestInteractor.metadataText,
@@ -128,6 +135,7 @@ object ShareouselViewModelModule {
                         }
                     }
                 },
+            hasSelectedItems = selectionInteractor.selections.map { it.isNotEmpty() },
             preview = { key, previewHeight, index, previewScope ->
                 keySet.value?.maybeLoad(index)
                 val previewInteractor = interactor.preview(key)
