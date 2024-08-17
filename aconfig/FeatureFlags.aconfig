@@ -109,3 +109,10 @@ flag {
   description: "Allow Shareousel selection change callback to update Intent#EXTRA_EXCLUDE_COMPONENTS"
   bug: "352496527"
 }
+
+flag {
+  name: "unselect_final_item"
+  namespace: "intentresolver"
+  description: "Allow toggling of final Shareousel item"
+  bug: "349468879"
+}
