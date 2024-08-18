@@ -77,6 +77,26 @@ flag {
 }
 
 flag {
+  name: "fix_shortcut_loader_job_leak"
+  namespace: "intentresolver"
+  description: "User a nested coroutine scope for shortcut loader instances"
+  bug: "358135601"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_shortcuts_flashing"
+  namespace: "intentresolver"
+  description: "Do not flash shortcuts on payload selection change"
+  bug: "343300158"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "preview_image_loader"
   namespace: "intentresolver"
   description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
@@ -88,4 +108,11 @@ flag {
   namespace: "intentresolver"
   description: "Allow Shareousel selection change callback to update Intent#EXTRA_EXCLUDE_COMPONENTS"
   bug: "352496527"
+}
+
+flag {
+  name: "unselect_final_item"
+  namespace: "intentresolver"
+  description: "Allow toggling of final Shareousel item"
+  bug: "349468879"
 }
