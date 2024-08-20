@@ -32,7 +32,6 @@ import com.android.intentresolver.annotation.JavaInterop
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
-import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PreviewSelectionsRepository
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.platform.GlobalSettings
 import com.android.intentresolver.ui.viewmodel.ChooserViewModel
@@ -92,7 +91,6 @@ constructor(
     hostActivity: Activity,
     private val activityResultRepo: ActivityResultRepository,
     private val pendingSelectionCallbackRepo: PendingSelectionCallbackRepository,
-    private val selectionsRepo: PreviewSelectionsRepository,
     private val globalSettings: GlobalSettings,
 ) : DefaultLifecycleObserver {
     // This is guaranteed by Hilt, since only a ComponentActivity is injectable.
@@ -168,11 +166,10 @@ constructor(
                             viewModel.previewDataProvider.previewType ==
                                 CONTENT_PREVIEW_PAYLOAD_SELECTION
                     ) {
-                        selectionsRepo.selections
-                            .map { it.isNotEmpty() }
-                            .distinctUntilChanged()
-                            .stateIn(scope = this)
-                            .also { flow -> launch { flow.collect { onHasSelections.accept(it) } } }
+                        viewModel.shareouselViewModel.hasSelectedItems.stateIn(scope = this).also {
+                            flow ->
+                            launch { flow.collect { onHasSelections.accept(it) } }
+                        }
                     } else {
                         MutableStateFlow(true).asStateFlow()
                     }
