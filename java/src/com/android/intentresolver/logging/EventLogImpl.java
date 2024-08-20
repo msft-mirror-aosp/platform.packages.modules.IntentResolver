@@ -273,6 +273,11 @@ public class EventLogImpl implements EventLog {
         log(SharesheetStandardEvent.SHARESHEET_EMPTY_DIRECT_SHARE_ROW, mInstanceId);
     }
 
+    @Override
+    public void logPayloadSelectionChanged() {
+        log(SharesheetStandardEvent.SHARESHEET_PAYLOAD_TOGGLED, mInstanceId);
+    }
+
     /**
      * Logs a UiEventReported event for a given share activity
      * @param event
