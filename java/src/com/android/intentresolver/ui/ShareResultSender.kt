@@ -30,7 +30,6 @@ import android.service.chooser.ChooserResult.CHOOSER_RESULT_UNKNOWN
 import android.service.chooser.ChooserResult.ResultType
 import android.util.Log
 import com.android.intentresolver.inject.Background
-import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.inject.Main
 import com.android.intentresolver.ui.model.ShareAction
 import dagger.assisted.Assisted
@@ -64,7 +63,6 @@ fun interface IntentSenderDispatcher {
 }
 
 class ShareResultSenderImpl(
-    private val flags: ChooserServiceFlags,
     @Main private val scope: CoroutineScope,
     @Background val backgroundDispatcher: CoroutineDispatcher,
     private val callerUid: Int,
@@ -74,13 +72,11 @@ class ShareResultSenderImpl(
     @AssistedInject
     constructor(
         @ActivityContext context: Context,
-        flags: ChooserServiceFlags,
         @Main scope: CoroutineScope,
         @Background backgroundDispatcher: CoroutineDispatcher,
         @Assisted callerUid: Int,
         @Assisted chosenComponentSender: IntentSender,
     ) : this(
-        flags,
         scope,
         backgroundDispatcher,
         callerUid,
@@ -103,7 +99,7 @@ class ShareResultSenderImpl(
     override fun onActionSelected(action: ShareAction) {
         Log.i(TAG, "onActionSelected: $action")
         scope.launch {
-            if (flags.enableChooserResult() && chooserResultSupported(callerUid)) {
+            if (chooserResultSupported(callerUid)) {
                 @ResultType val chosenAction = shareActionToChooserResult(action)
                 val intent: Intent = createSelectedActionIntent(chosenAction)
                 intentDispatcher.dispatchIntent(resultSender, intent)
@@ -118,7 +114,7 @@ class ShareResultSenderImpl(
         direct: Boolean,
         crossProfile: Boolean,
     ): Intent? {
-        if (flags.enableChooserResult() && chooserResultSupported(callerUid)) {
+        if (chooserResultSupported(callerUid)) {
             if (crossProfile) {
                 Log.i(TAG, "Redacting package from cross-profile ${Intent.EXTRA_CHOOSER_RESULT}")
                 return Intent()
