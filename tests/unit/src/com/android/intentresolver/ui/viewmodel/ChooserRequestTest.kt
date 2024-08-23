@@ -25,6 +25,8 @@ import android.content.Intent.EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI
 import android.content.Intent.EXTRA_CHOOSER_FOCUSED_ITEM_POSITION
 import android.content.Intent.EXTRA_INTENT
 import android.content.Intent.EXTRA_REFERRER
+import android.content.Intent.EXTRA_TEXT
+import android.content.Intent.EXTRA_TITLE
 import android.net.Uri
 import android.service.chooser.Flags
 import androidx.core.net.toUri
@@ -270,5 +272,25 @@ class ChooserRequestTest {
         result as Valid<ChooserRequest>
 
         assertThat(result.value.metadataText).isEqualTo(metadataText)
+    }
+
+    @Test
+    fun textSharedTextAndTitle() {
+        val text: CharSequence = "Shared text"
+        val title: CharSequence = "Title"
+        val targetIntent =
+            Intent().apply {
+                putExtra(EXTRA_TITLE, title)
+                putExtra(EXTRA_TEXT, text)
+            }
+        val model = createActivityModel(targetIntent)
+
+        val result = readChooserRequest(model, fakeChooserServiceFlags)
+
+        assertThat(result).isInstanceOf(Valid::class.java)
+        (result as Valid<ChooserRequest>).value.let { request ->
+            assertThat(request.sharedText).isEqualTo(text)
+            assertThat(request.sharedTextTitle).isEqualTo(title)
+        }
     }
 }
