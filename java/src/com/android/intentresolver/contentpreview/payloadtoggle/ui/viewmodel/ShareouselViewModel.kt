@@ -41,6 +41,7 @@ import javax.inject.Provider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -135,7 +136,8 @@ object ShareouselViewModelModule {
                         }
                     }
                 },
-            hasSelectedItems = selectionInteractor.selections.map { it.isNotEmpty() },
+            hasSelectedItems =
+                selectionInteractor.selections.map { it.isNotEmpty() }.distinctUntilChanged(),
             preview = { key, previewHeight, index, previewScope ->
                 keySet.value?.maybeLoad(index)
                 val previewInteractor = interactor.preview(key)
