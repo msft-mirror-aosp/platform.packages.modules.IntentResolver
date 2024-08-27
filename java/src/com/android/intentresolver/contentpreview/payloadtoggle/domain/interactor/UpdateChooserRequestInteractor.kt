@@ -17,14 +17,13 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.content.Intent
-import com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.CustomAction
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.PendingIntentSender
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.toCustomActionModel
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ShareouselUpdate
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.onValue
 import com.android.intentresolver.data.repository.ChooserRequestRepository
+import com.android.intentresolver.domain.updateWith
 import javax.inject.Inject
 import kotlinx.coroutines.flow.update
 
@@ -36,28 +35,7 @@ constructor(
     @CustomAction private val pendingIntentSender: PendingIntentSender,
 ) {
     fun applyUpdate(targetIntent: Intent, update: ShareouselUpdate) {
-        repository.chooserRequest.update { current ->
-            current.copy(
-                targetIntent = targetIntent,
-                callerChooserTargets =
-                    update.callerTargets.getOrDefault(current.callerChooserTargets),
-                modifyShareAction =
-                    update.modifyShareAction.getOrDefault(current.modifyShareAction),
-                additionalTargets = update.alternateIntents.getOrDefault(current.additionalTargets),
-                chosenComponentSender =
-                    update.resultIntentSender.getOrDefault(current.chosenComponentSender),
-                refinementIntentSender =
-                    update.refinementIntentSender.getOrDefault(current.refinementIntentSender),
-                metadataText = update.metadataText.getOrDefault(current.metadataText),
-                chooserActions = update.customActions.getOrDefault(current.chooserActions),
-                filteredComponentNames =
-                    if (shareouselUpdateExcludeComponentsExtra()) {
-                        update.excludeComponents.getOrDefault(current.filteredComponentNames)
-                    } else {
-                        current.filteredComponentNames
-                    }
-            )
-        }
+        repository.chooserRequest.update { it.updateWith(targetIntent, update) }
         update.customActions.onValue { actions ->
             repository.customActions.value =
                 actions.map { it.toCustomActionModel(pendingIntentSender) }
