@@ -648,7 +648,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
                 mViewModel.getPreviewDataProvider(),
-                mRequest.getTargetIntent(),
+                mRequest,
                 mViewModel.getImageLoader(),
                 actionFactory,
                 createModifyShareActionFactory(),
