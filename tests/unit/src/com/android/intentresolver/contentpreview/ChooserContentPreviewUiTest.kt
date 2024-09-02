@@ -157,5 +157,7 @@ class ChooserContentPreviewUiTest {
             )
         assertThat(testSubject.mContentPreviewUi)
             .isInstanceOf(ShareouselContentPreviewUi::class.java)
+        assertThat(testSubject.preferredContentPreview)
+            .isEqualTo(ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION)
     }
 }
