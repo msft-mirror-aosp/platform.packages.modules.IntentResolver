@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Irudia partekatuko da}other{# irudi partekatuko dira}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Bideoa partekatzen}other{# bideo partekatzen}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# fitxategi partekatuko da}other{# fitxategi partekatuko dira}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Hautatu partekatu beharreko elementuak"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Irudi testudun bat partekatuko da}other{# irudi testudun partekatuko dira}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Irudi estekadun bat partekatuko da}other{# irudi estekadun partekatuko dira}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Bideo testudun bat partekatuko da}other{# bideo testudun partekatuko dira}}"</string>

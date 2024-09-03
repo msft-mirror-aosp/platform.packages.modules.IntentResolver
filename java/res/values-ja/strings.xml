@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{1 枚の画像を共有します}other{# 枚の画像を共有します}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{動画を共有中}other{# 個の動画を共有中}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# 個のファイルを共有中}other{# 個のファイルを共有中}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"共有するアイテムの選択"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{テキスト付き画像を共有しています}other{テキスト付き画像を # 件共有しています}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{リンク付き画像を共有しています}other{リンク付き画像を # 件共有しています}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{テキスト付き動画を共有中}other{テキスト付き動画を # 件共有中}}"</string>
