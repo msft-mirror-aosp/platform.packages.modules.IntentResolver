@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{កំពុងចែក​រំលែករូបភាព}other{កំពុងចែក​រំលែករូបភាព #}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{កំពុងចែករំលែកវីដេអូ}other{កំពុងចែករំលែកវីដេអូ #}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{កំពុង​ចែករំលែកឯកសារ #}other{កំពុង​ចែករំលែកឯកសារ #}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"ជ្រើសរើសធាតុដែលត្រូវចែករំលែក"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{ចែករំលែករូបភាពជាមួយអក្សរ}other{ចែករំលែករូបភាព # ជាមួយអក្សរ}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{ចែករំលែករូបភាពជាមួយតំណ}other{ចែករំលែករូបភាព # ជាមួយតំណ}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{ចែករំលែកវីដេអូជាមួយអក្សរ}other{ចែករំលែក # វីដេអូជាមួយអក្សរ}}"</string>
