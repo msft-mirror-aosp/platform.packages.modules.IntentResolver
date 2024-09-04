@@ -164,14 +164,22 @@ class FakeEventLog @Inject constructor(private val instanceId: InstanceId) : Eve
         log { "logSharesheetEmptyDirectShareRow()" }
     }
 
+    override fun logPayloadSelectionChanged() {
+        log { "logPayloadSelectionChanged" }
+    }
+
     data class ActionSelected(val targetType: Int)
+
     data class CustomActionSelected(val positionPicked: Int)
+
     data class ActionShareWithPreview(val previewType: Int)
+
     data class ChooserActivityShown(
         val isWorkProfile: Boolean,
         val targetMimeType: String?,
         val systemCost: Long
     )
+
     data class ShareStarted(
         val packageName: String?,
         val mimeType: String?,
@@ -183,6 +191,7 @@ class FakeEventLog @Inject constructor(private val instanceId: InstanceId) : Eve
         val customActionCount: Int,
         val modifyShareActionProvided: Boolean
     )
+
     data class ShareTargetSelected(
         val targetType: Int,
         val packageName: String?,

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Udostępniam obraz}few{Udostępniam # obrazy}many{Udostępniam # obrazów}other{Udostępniam # obrazu}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Udostępnianie filmu}few{Udostępnianie # filmów}many{Udostępnianie # filmów}other{Udostępnianie # filmu}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Udostępnianie # pliku}few{Udostępnianie # plików}many{Udostępnianie # plików}other{Udostępnianie # pliku}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Wybierz elementy do udostępnienia"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Udostępnianie obrazu przez SMS}few{Udostępnianie # obrazów przez SMS}many{Udostępnianie # obrazów przez SMS}other{Udostępnianie # obrazu przez SMS}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Udostępnianie obrazu przez link}few{Udostępnianie # obrazów przez link}many{Udostępnianie # obrazów przez link}other{Udostępnianie # obrazu przez link}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Udostępnianie filmu przez SMS}few{Udostępnianie # filmów przez SMS}many{Udostępnianie # filmów przez SMS}other{Udostępnianie # filmu przez SMS}}"</string>

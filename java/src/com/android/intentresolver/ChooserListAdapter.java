@@ -153,6 +153,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
             };
 
     private boolean mAnimateItems = true;
+    private boolean mTargetsEnabled = true;
+    private boolean mDirectTargetsEnabled = true;
 
     public ChooserListAdapter(
             Context context,
@@ -306,6 +308,28 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
+    /**
+     * Set the enabled state for all targets.
+     */
+    public void setTargetsEnabled(boolean isEnabled) {
+        if (mTargetsEnabled != isEnabled) {
+            mTargetsEnabled = isEnabled;
+            notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Set the enabled state for direct targets.
+     */
+    public void setDirectTargetsEnabled(boolean isEnabled) {
+        if (mDirectTargetsEnabled != isEnabled) {
+            mDirectTargetsEnabled = isEnabled;
+            if (!mServiceTargets.isEmpty() && !isDirectTargetRowEmptyState()) {
+                notifyDataSetChanged();
+            }
+        }
+    }
+
     public void setAnimateItems(boolean animateItems) {
         mAnimateItems = animateItems;
     }
@@ -353,7 +377,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
     @VisibleForTesting
     @Override
     public void onBindView(View view, TargetInfo info, int position) {
-        view.setEnabled(!isDestroyed());
+        final boolean isEnabled = !isDestroyed() && mTargetsEnabled;
+        view.setEnabled(isEnabled);
         final ViewHolder holder = (ViewHolder) view.getTag();
 
         resetViewHolder(holder);
@@ -378,6 +403,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
 
         if (info.isSelectableTargetInfo()) {
+            view.setEnabled(isEnabled && mDirectTargetsEnabled);
             // direct share targets should append the application name for a better readout
             DisplayResolveInfo rInfo = info.getDisplayResolveInfo();
             CharSequence appName =
@@ -412,7 +438,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             }
         }
 
-        holder.bindIcon(info);
+        holder.bindIcon(info, mTargetsEnabled);
         if (mAnimateItems && info.hasDisplayIcon()) {
             mAnimationTracker.animateIcon(holder.icon, info);
         }
@@ -732,7 +758,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             Map<ChooserTarget, ShortcutInfo> directShareToShortcutInfos,
             Map<ChooserTarget, AppTarget> directShareToAppTargets) {
         // Avoid inserting any potentially late results.
-        if ((mServiceTargets.size() == 1) && mServiceTargets.get(0).isEmptyTargetInfo()) {
+        if (isDirectTargetRowEmptyState()) {
             return;
         }
         boolean isShortcutResult = targetType == TARGET_TYPE_SHORTCUTS_FROM_SHORTCUT_MANAGER
@@ -752,6 +778,22 @@ public class ChooserListAdapter extends ResolverListAdapter {
         if (isUpdated) {
             notifyDataSetChanged();
         }
+    }
+
+    /**
+     * Copy direct targets from another ChooserListAdapter instance
+     */
+    public void copyDirectTargetsFrom(ChooserListAdapter adapter) {
+        if (adapter.isDirectTargetRowEmptyState()) {
+            return;
+        }
+
+        mServiceTargets.clear();
+        mServiceTargets.addAll(adapter.mServiceTargets);
+    }
+
+    private boolean isDirectTargetRowEmptyState() {
+        return (mServiceTargets.size() == 1) && mServiceTargets.get(0).isEmptyTargetInfo();
     }
 
     /**

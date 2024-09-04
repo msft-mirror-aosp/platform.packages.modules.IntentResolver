@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Sdílení obrázku}few{Sdílení # obrázků}many{Sdílení # obrázku}other{Sdílení # obrázků}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Sdílení videa}few{Sdílení # videí}many{Sdílení # videa}other{Sdílení # videí}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Sdílení # souboru}few{Sdílení # souborů}many{Sdílení # souboru}other{Sdílení # souborů}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Vyberte položky, které chcete sdílet"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Sdílení obrázku s textem}few{Sdílení # obrázků s textem}many{Sdílení # obrázku s textem}other{Sdílení # obrázků s textem}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Sdílení obrázku s odkazem}few{Sdílení # obrázků s odkazem}many{Sdílení # obrázku s odkazem}other{Sdílení # obrázků s odkazem}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Sdílení videa s textem}few{Sdílení # videí s textem}many{Sdílení # videa s textem}other{Sdílení # videí s textem}}"</string>
