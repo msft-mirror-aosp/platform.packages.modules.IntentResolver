@@ -19,7 +19,6 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.update
 import com.android.intentresolver.contentInterface
 import com.android.intentresolver.inject.additionalContentUri
 import com.android.intentresolver.inject.chooserIntent
-import com.android.intentresolver.inject.chooserServiceFlags
 import com.android.systemui.kosmos.Kosmos
 
 val Kosmos.selectionChangeCallbackImpl by
@@ -28,7 +27,6 @@ val Kosmos.selectionChangeCallbackImpl by
             additionalContentUri,
             chooserIntent,
             contentInterface,
-            chooserServiceFlags,
         )
     }
 var Kosmos.selectionChangeCallback: SelectionChangeCallback by

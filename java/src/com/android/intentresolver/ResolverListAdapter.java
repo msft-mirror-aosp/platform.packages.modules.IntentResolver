@@ -16,14 +16,15 @@
 
 package com.android.intentresolver;
 
+import static com.android.intentresolver.Flags.unselectFinalItem;
+import static com.android.intentresolver.util.graphics.SuspendedMatrixColorFilter.getSuspendedColorMatrix;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.RemoteException;
@@ -62,9 +63,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ResolverListAdapter extends BaseAdapter {
     private static final String TAG = "ResolverListAdapter";
-
-    @Nullable  // TODO: other model for lazy computation? Or just precompute?
-    private static ColorMatrixColorFilter sSuspendedMatrixColorFilter;
 
     protected final Context mContext;
     protected final LayoutInflater mInflater;
@@ -797,29 +795,6 @@ public class ResolverListAdapter extends BaseAdapter {
         return mDestroyed.get();
     }
 
-    private static ColorMatrixColorFilter getSuspendedColorMatrix() {
-        if (sSuspendedMatrixColorFilter == null) {
-
-            int grayValue = 127;
-            float scale = 0.5f; // half bright
-
-            ColorMatrix tempBrightnessMatrix = new ColorMatrix();
-            float[] mat = tempBrightnessMatrix.getArray();
-            mat[0] = scale;
-            mat[6] = scale;
-            mat[12] = scale;
-            mat[4] = grayValue;
-            mat[9] = grayValue;
-            mat[14] = grayValue;
-
-            ColorMatrix matrix = new ColorMatrix();
-            matrix.setSaturation(0.0f);
-            matrix.preConcat(tempBrightnessMatrix);
-            sSuspendedMatrixColorFilter = new ColorMatrixColorFilter(matrix);
-        }
-        return sSuspendedMatrixColorFilter;
-    }
-
     protected final Drawable loadIconPlaceholder() {
         return mContext.getDrawable(R.drawable.resolver_icon_placeholder);
     }
@@ -999,13 +974,26 @@ public class ResolverListAdapter extends BaseAdapter {
         /**
          * Bind view holder to a TargetInfo.
          */
-        public void bindIcon(TargetInfo info) {
+        public final void bindIcon(TargetInfo info) {
+            bindIcon(info, true);
+        }
+
+        /**
+         * Bind view holder to a TargetInfo.
+         */
+        public void bindIcon(TargetInfo info, boolean isEnabled) {
             Drawable displayIcon = info.getDisplayIconHolder().getDisplayIcon();
             icon.setImageDrawable(displayIcon);
-            if (info.isSuspended()) {
+            if (info.isSuspended() || !isEnabled) {
                 icon.setColorFilter(getSuspendedColorMatrix());
             } else {
                 icon.setColorFilter(null);
+                if (unselectFinalItem() && displayIcon != null) {
+                    // For some reason, ImageView.setColorFilter() not always propagate the call
+                    // to the drawable and the icon remains grayscale when rebound; reset the filter
+                    // explicitly.
+                    displayIcon.setColorFilter(null);
+                }
             }
         }
     }

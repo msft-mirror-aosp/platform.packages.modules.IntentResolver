@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ఈ ఇమేజ్‌ను షేర్ చేస్తున్నారు}other{ఈ # ఇమేజ్‌లను షేర్ చేస్తున్నారు}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{వీడియోను షేర్ చేయడం}other{# వీడియోలను షేర్ చేయడం}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# ఫైల్‌ను షేర్ చేస్తోంది}other{# ఫైళ్లను షేర్ చేస్తోంది}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"షేర్ చేయడానికి ఐటెమ్‌లను ఎంచుకోండి"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా ఇమేజ్‌ను షేర్ చేయడం}other{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా # ఇమేజ్‌లను షేర్ చేయడం}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{లింక్ చేయడం ద్వారా ఇమేజ్‌ను షేర్ చేయడం}other{లింక్ చేయడం ద్వారా # ఇమేజ్‌లను షేర్ చేయడం}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా వీడియోను షేర్ చేయడం}other{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా # వీడియోలను షేర్ చేయడం}}"</string>
