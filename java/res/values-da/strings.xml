@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Deler billede}one{Deler # billede}other{Deler # billeder}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Deler video}one{Deler # video}other{Deler # videoer}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Deler # fil}one{Deler # fil}other{Deler # filer}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Vælg elementer til deling"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Deler billede med tekst}one{Deler # billede med tekst}other{Deler # billeder med tekst}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Deler billede med et link}one{Deler # billede med et link}other{Deler # billeder med et link}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Deler video med tekst}one{Deler # video med tekst}other{Deler # videoer med tekst}}"</string>

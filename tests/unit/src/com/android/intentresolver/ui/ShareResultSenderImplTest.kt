@@ -68,7 +68,7 @@ class ShareResultSenderImplTest {
                 intentDispatcher = intentDispatcher
             )
 
-        resultSender.onComponentSelected(ComponentName("example.com", "Foo"), true)
+        resultSender.onComponentSelected(ComponentName("example.com", "Foo"), true, false)
         runCurrent()
 
         val intentReceived = deferred.await()
@@ -81,6 +81,43 @@ class ShareResultSenderImplTest {
         assertThat(chooserResult?.type).isEqualTo(ChooserResult.CHOOSER_RESULT_SELECTED_COMPONENT)
         assertThat(chooserResult?.selectedComponent).isEqualTo(ComponentName("example.com", "Foo"))
         assertThat(chooserResult?.isShortcut).isTrue()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @EnableCompatChanges(ChooserResult.SEND_CHOOSER_RESULT)
+    @Test
+    fun onComponentSelected_crossProfile_chooserResultEnabled() = runTest {
+        val pi = PendingIntent.getBroadcast(context, 0, Intent(), PendingIntent.FLAG_IMMUTABLE)
+        val deferred = CompletableDeferred<Intent>()
+        val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
+
+        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
+
+        val resultSender =
+            ShareResultSenderImpl(
+                flags = flags,
+                scope = this,
+                backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
+                callerUid = Process.myUid(),
+                resultSender = pi.intentSender,
+                intentDispatcher = intentDispatcher
+            )
+
+        // Invoke as in the previous test, but this time say that the selection was cross-profile.
+        resultSender.onComponentSelected(ComponentName("example.com", "Foo"), true, true)
+        runCurrent()
+
+        val intentReceived = deferred.await()
+        val chooserResult =
+            intentReceived.getParcelableExtra(
+                Intent.EXTRA_CHOOSER_RESULT,
+                ChooserResult::class.java
+            )
+        assertThat(chooserResult).isNotNull()
+        assertThat(chooserResult?.type).isEqualTo(ChooserResult.CHOOSER_RESULT_UNKNOWN)
+        assertThat(chooserResult?.selectedComponent).isNull()
+        assertThat(chooserResult?.isShortcut).isTrue()
+        assertThat(intentReceived.hasExtra(Intent.EXTRA_CHOSEN_COMPONENT)).isFalse()
     }
 
     @DisableCompatChanges(ChooserResult.SEND_CHOOSER_RESULT)
@@ -102,7 +139,7 @@ class ShareResultSenderImplTest {
                 intentDispatcher = intentDispatcher
             )
 
-        resultSender.onComponentSelected(ComponentName("example.com", "Foo"), true)
+        resultSender.onComponentSelected(ComponentName("example.com", "Foo"), true, false)
         runCurrent()
 
         val intentReceived = deferred.await()
@@ -119,6 +156,33 @@ class ShareResultSenderImplTest {
         assertWithMessage("received intent has EXTRA_CHOOSER_RESULT")
             .that(intentReceived.hasExtra(Intent.EXTRA_CHOOSER_RESULT))
             .isFalse()
+    }
+
+    @DisableCompatChanges(ChooserResult.SEND_CHOOSER_RESULT)
+    @Test
+    fun onComponentSelected_crossProfile_chooserResultDisabled() = runTest {
+        val pi = PendingIntent.getBroadcast(context, 0, Intent(), PendingIntent.FLAG_IMMUTABLE)
+        val deferred = CompletableDeferred<Intent>()
+        val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
+
+        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
+
+        val resultSender =
+            ShareResultSenderImpl(
+                flags = flags,
+                scope = this,
+                backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
+                callerUid = Process.myUid(),
+                resultSender = pi.intentSender,
+                intentDispatcher = intentDispatcher
+            )
+
+        // Invoke as in the previous test, but this time say that the selection was cross-profile.
+        resultSender.onComponentSelected(ComponentName("example.com", "Foo"), true, true)
+        runCurrent()
+
+        // In the pre-ChooserResult API, no callback intent is sent for cross-profile selections.
+        assertWithMessage("deferred result isComplete").that(deferred.isCompleted).isFalse()
     }
 
     @EnableCompatChanges(ChooserResult.SEND_CHOOSER_RESULT)
