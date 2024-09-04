@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Podijelite sliku}one{Podijelite # sliku}few{Podijelite # slike}other{Podijelite # slika}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Dijeli se videozapis}one{Dijeli se # videozapis}few{Dijele se # videozapisa}other{Dijeli se # videozapisa}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Dijeli se # datoteka}one{Dijeli se # datoteka}few{Dijele se # datoteke}other{Dijeli se # datoteka}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Odaberite stavke za dijeljenje"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Dijeli se slika s tekstom}one{Dijeli se # slika s tekstom}few{Dijele se # slike s tekstom}other{Dijeli se # slika s tekstom}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Dijeli se slika s vezom}one{Dijeli se # slika s vezom}few{Dijele se # slike s vezom}other{Dijeli se # slika s vezom}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Dijeli se videozapis s tekstom}one{Dijeli se # videozapis s tekstom}few{Dijele se # videozapisa s tekstom}other{Dijeli se # videozapisa s tekstom}}"</string>

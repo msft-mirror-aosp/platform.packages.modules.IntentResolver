@@ -25,6 +25,7 @@ import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
+import static com.android.intentresolver.Flags.unselectFinalItem;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
@@ -351,6 +352,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
             mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
             mChooserHelper.setOnPendingSelection(this::onPendingSelection);
+            if (unselectFinalItem()) {
+                mChooserHelper.setOnHasSelections(this::onHasSelections);
+            }
         }
     }
     private int mInitialProfile = -1;
@@ -644,7 +648,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
                 mViewModel.getPreviewDataProvider(),
-                mRequest.getTargetIntent(),
+                mRequest,
                 mViewModel.getImageLoader(),
                 actionFactory,
                 createModifyShareActionFactory(),
@@ -705,7 +709,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void onChooserRequestChanged(ChooserRequest chooserRequest) {
-        // intentional reference comparison
         if (mRequest == chooserRequest) {
             return;
         }
@@ -722,6 +725,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private void onPendingSelection() {
         setTabsViewEnabled(false);
+    }
+
+    private void onHasSelections(boolean hasSelections) {
+        mChooserMultiProfilePagerAdapter.setTargetsEnabled(hasSelections);
     }
 
     private void onAppTargetsLoaded(ResolverListAdapter listAdapter) {
