@@ -27,7 +27,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.annotation.JavaInterop
+import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.ActivityResultRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.PendingSelectionCallbackRepository
 import com.android.intentresolver.data.model.ChooserRequest
@@ -39,6 +41,8 @@ import com.android.intentresolver.validation.log
 import dagger.hilt.android.scopes.ActivityScoped
 import java.util.function.Consumer
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -46,6 +50,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 private const val TAG: String = "ChooserHelper"
@@ -98,6 +103,7 @@ constructor(
     var onChooserRequestChanged: Consumer<ChooserRequest> = Consumer {}
     /** Invoked when there are a new change to payload selection */
     var onPendingSelection: Runnable = Runnable {}
+    var onHasSelections: Consumer<Boolean> = Consumer {}
 
     init {
         activity.lifecycle.addObserver(this)
@@ -144,22 +150,39 @@ constructor(
         }
 
         activity.lifecycleScope.launch {
-            val hasPendingCallbackFlow =
+            val hasPendingIntentFlow =
                 pendingSelectionCallbackRepo.pendingTargetIntent
                     .map { it != null }
                     .distinctUntilChanged()
-                    .onEach { hasPendingCallback ->
-                        if (hasPendingCallback) {
+                    .onEach { hasPendingIntent ->
+                        if (hasPendingIntent) {
                             onPendingSelection.run()
                         }
                     }
             activity.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.request
-                    .combine(hasPendingCallbackFlow) { request, hasPendingCallback ->
-                        request to hasPendingCallback
+                val hasSelectionFlow =
+                    if (
+                        unselectFinalItem() &&
+                            viewModel.previewDataProvider.previewType ==
+                                CONTENT_PREVIEW_PAYLOAD_SELECTION
+                    ) {
+                        viewModel.shareouselViewModel.hasSelectedItems.stateIn(scope = this).also {
+                            flow ->
+                            launch { flow.collect { onHasSelections.accept(it) } }
+                        }
+                    } else {
+                        MutableStateFlow(true).asStateFlow()
                     }
+                val requestControlFlow =
+                    hasSelectionFlow
+                        .combine(hasPendingIntentFlow) { hasSelections, hasPendingIntent ->
+                            hasSelections && !hasPendingIntent
+                        }
+                        .distinctUntilChanged()
+                viewModel.request
+                    .combine(requestControlFlow) { request, isReady -> request to isReady }
                     // only take ChooserRequest if there are no pending callbacks
-                    .filter { !it.second }
+                    .filter { it.second }
                     .map { it.first }
                     .distinctUntilChanged(areEquivalent = { old, new -> old === new })
                     .collect { onChooserRequestChanged.accept(it) }
