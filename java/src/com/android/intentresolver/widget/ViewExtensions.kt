@@ -16,24 +16,36 @@
 
 package com.android.intentresolver.widget
 
+import android.graphics.Rect
 import android.util.Log
 import android.view.View
 import androidx.core.view.OneShotPreDrawListener
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 internal suspend fun View.waitForPreDraw(): Unit = suspendCancellableCoroutine { continuation ->
     val isResumed = AtomicBoolean(false)
-    val callback = OneShotPreDrawListener.add(
-        this,
-        Runnable {
-            if (isResumed.compareAndSet(false, true)) {
-                continuation.resumeWith(Result.success(Unit))
-            } else {
-                // it's not really expected but in some unknown corner-case let's not crash
-                Log.e("waitForPreDraw", "An attempt to resume a completed coroutine", Exception())
+    val callback =
+        OneShotPreDrawListener.add(
+            this,
+            Runnable {
+                if (isResumed.compareAndSet(false, true)) {
+                    continuation.resumeWith(Result.success(Unit))
+                } else {
+                    // it's not really expected but in some unknown corner-case let's not crash
+                    Log.e(
+                        "waitForPreDraw",
+                        "An attempt to resume a completed coroutine",
+                        Exception()
+                    )
+                }
             }
-        }
-    )
+        )
     continuation.invokeOnCancellation { callback.removeListener() }
+}
+
+internal fun View.isFullyVisible(): Boolean {
+    val rect = Rect()
+    val isVisible = getLocalVisibleRect(rect)
+    return isVisible && rect.width() == width && rect.height() == height
 }

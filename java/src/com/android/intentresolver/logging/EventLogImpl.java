@@ -379,7 +379,9 @@ public class EventLogImpl implements EventLog {
         @UiEvent(doc = "Sharesheet app share ranking timed out.")
         SHARESHEET_APP_SHARE_RANKING_TIMEOUT(831),
         @UiEvent(doc = "Sharesheet empty direct share row.")
-        SHARESHEET_EMPTY_DIRECT_SHARE_ROW(828);
+        SHARESHEET_EMPTY_DIRECT_SHARE_ROW(828),
+        @UiEvent(doc = "Shareousel payload item toggled")
+        SHARESHEET_PAYLOAD_TOGGLED(1662);
 
         private final int mId;
         SharesheetStandardEvent(int id) {

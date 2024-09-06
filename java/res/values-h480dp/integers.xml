@@ -15,5 +15,5 @@
   -->
 
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-    <integer name="text_preview_lines">3</integer>
+    <integer name="text_preview_lines">8</integer>
 </resources>

@@ -19,14 +19,14 @@ package com.android.intentresolver.emptystate
 import android.content.ContentResolver
 import android.content.Intent
 import android.content.pm.IPackageManager
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.mockito.Mockito.any
 import org.mockito.Mockito.anyInt
 import org.mockito.Mockito.eq
 import org.mockito.Mockito.nullable
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 class CrossProfileIntentsCheckerTest {
     private val PERSONAL_USER_ID = 10
@@ -38,15 +38,14 @@ class CrossProfileIntentsCheckerTest {
     fun testChecker_hasCrossProfileIntents() {
         val packageManager =
             mock<IPackageManager> {
-                whenever(
-                        canForwardTo(
-                            any(Intent::class.java),
-                            nullable(String::class.java),
-                            eq(PERSONAL_USER_ID),
-                            eq(WORK_USER_ID)
-                        )
+                on {
+                    canForwardTo(
+                        any(Intent::class.java),
+                        nullable(String::class.java),
+                        eq(PERSONAL_USER_ID),
+                        eq(WORK_USER_ID)
                     )
-                    .thenReturn(true)
+                } doReturn (true)
             }
         val checker = CrossProfileIntentsChecker(contentResolver, packageManager)
         val intents = listOf(Intent())
@@ -57,15 +56,14 @@ class CrossProfileIntentsCheckerTest {
     fun testChecker_noCrossProfileIntents() {
         val packageManager =
             mock<IPackageManager> {
-                whenever(
-                        canForwardTo(
-                            any(Intent::class.java),
-                            nullable(String::class.java),
-                            anyInt(),
-                            anyInt()
-                        )
+                on {
+                    canForwardTo(
+                        any(Intent::class.java),
+                        nullable(String::class.java),
+                        anyInt(),
+                        anyInt()
                     )
-                    .thenReturn(false)
+                } doReturn (false)
             }
         val checker = CrossProfileIntentsChecker(contentResolver, packageManager)
         val intents = listOf(Intent())

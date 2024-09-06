@@ -57,7 +57,7 @@
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{eta beste # fitxategi}other{eta beste # fitxategi}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"Partekatuko den testua"</string>
     <string name="sharing_link" msgid="2307694372813942916">"Esteka partekatzen"</string>
-    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Irudia partekatzen}other{# irudi partekatzen}}"</string>
+    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Irudia partekatuko da}other{# irudi partekatuko dira}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Bideoa partekatzen}other{# bideo partekatzen}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# fitxategi partekatuko da}other{# fitxategi partekatuko dira}}"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Irudi testudun bat partekatuko da}other{# irudi testudun partekatuko dira}}"</string>
@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Eduki hau ezin da laneko aplikazioekin ireki"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Eduki hau ezin da aplikazio pertsonalekin partekatu"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Eduki hau ezin da aplikazio pertsonalekin ireki"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Eduki hau ezin da aplikazio pribatuekin partekatu"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Eduki hau ezin da aplikazio pribatuekin ireki"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Pausatuta daude laneko aplikazioak"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Berraktibatu"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Ez dago laneko aplikaziorik"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Ez dago aplikazio pertsonalik"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Aplikazio pribaturik ez"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Profil pertsonalean ireki nahi duzu <xliff:g id="APP">%s</xliff:g>?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Laneko profilean ireki nahi duzu <xliff:g id="APP">%s</xliff:g>?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Erabili arakatzaile pertsonala"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Utzi kanpoan esteka"</string>
     <string name="include_link" msgid="827855767220339802">"Sartu esteka"</string>
     <string name="pinned" msgid="7623664001331394139">"Ainguratuta"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Hauta daitekeen irudia"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Hauta daitekeen bideoa"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Hauta daitekeen elementua"</string>
 </resources>

@@ -17,13 +17,19 @@ package com.android.intentresolver.inject
 
 import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
+import android.app.prediction.AppPredictionManager
 import android.content.ClipboardManager
+import android.content.ContentInterface
+import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutManager
 import android.os.UserManager
 import android.view.WindowManager
 import androidx.core.content.getSystemService
+import com.android.intentresolver.data.repository.UserScopedService
+import com.android.intentresolver.data.repository.UserScopedServiceImpl
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -52,9 +58,13 @@ class ClipboardManagerModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-class ContentResolverModule {
-    @Provides
-    fun contentResolver(@ApplicationContext ctx: Context) = requireNotNull(ctx.contentResolver)
+interface ContentResolverModule {
+    @Binds fun bindContentInterface(cr: ContentResolver): ContentInterface
+
+    companion object {
+        @Provides
+        fun contentResolver(@ApplicationContext ctx: Context) = requireNotNull(ctx.contentResolver)
+    }
 }
 
 @Module
@@ -81,10 +91,29 @@ class PackageManagerModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
+class PredictionManagerModule {
+    @Provides
+    fun scopedPredictionManager(
+        @ApplicationContext ctx: Context,
+    ): UserScopedService<AppPredictionManager> {
+        return UserScopedServiceImpl(ctx, AppPredictionManager::class)
+    }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
 class ShortcutManagerModule {
     @Provides
-    fun shortcutManager(@ApplicationContext ctx: Context): ShortcutManager =
-        ctx.requireSystemService()
+    fun shortcutManager(@ApplicationContext ctx: Context): ShortcutManager {
+        return ctx.requireSystemService()
+    }
+
+    @Provides
+    fun scopedShortcutManager(
+        @ApplicationContext ctx: Context,
+    ): UserScopedService<ShortcutManager> {
+        return UserScopedServiceImpl(ctx, ShortcutManager::class)
+    }
 }
 
 @Module
@@ -92,6 +121,11 @@ class ShortcutManagerModule {
 class UserManagerModule {
     @Provides
     fun userManager(@ApplicationContext ctx: Context): UserManager = ctx.requireSystemService()
+
+    @Provides
+    fun scopedUserManager(@ApplicationContext ctx: Context): UserScopedService<UserManager> {
+        return UserScopedServiceImpl(ctx, UserManager::class)
+    }
 }
 
 @Module

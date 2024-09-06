@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"මෙම අන්තර්ගතය කාර්යාල යෙදුම් සමඟ විවෘත කළ නොහැකිය"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"මෙම අන්තර්ගතය පුද්ගලික යෙදුම් සමඟ බෙදා ගත නොහැකිය"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"මෙම අන්තර්ගතය පුද්ගලික යෙදුම් සමඟ විවෘත කළ නොහැකිය"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"මෙම අන්තර්ගතය පුද්ගලික යෙදුම් මගින් බෙදා ගත නොහැක"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"මෙම අන්තර්ගතය පුද්ගලික යෙදුම් මගින් විවෘත කළ නොහැක"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"කාර්යාල යෙදුම් විරාම කර ඇත"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"විරාම නොකරන්න"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"කාර්යාල යෙදුම් නැත"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"පුද්ගලික යෙදුම් නැත"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"පුද්ගලික යෙදුම් නැත"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> ඔබගේ පුද්ගලික පැතිකඩ තුළ විවෘත කරන්නද?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> ඔබගේ කාර්යාල පැතිකඩ තුළ විවෘත කරන්නද?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"පුද්ගලික බ්‍රව්සරය භාවිත කරන්න"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"සබැඳිය බැහැර කරන්න"</string>
     <string name="include_link" msgid="827855767220339802">"සබැඳිය ඇතුළත් කරන්න"</string>
     <string name="pinned" msgid="7623664001331394139">"අමුණා ඇත"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"තෝරා ගත හැකි රූපය"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"තෝරා ගත හැකි වීඩියෝව"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"තෝරා ගත හැකි අයිතමය"</string>
 </resources>

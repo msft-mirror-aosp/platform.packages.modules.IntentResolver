@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Това съдържание не може да се отваря със служебни приложения"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Това съдържание не може да се споделя с лични приложения"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Това съдържание не може да се отваря с лични приложения"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Това съдържание не може да се споделя с частни приложения"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Това съдържание не може да се отваря с частни приложения"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Служебните приложения са поставени на пауза"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Отмяна на паузата"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Няма подходящи служебни приложения"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Няма подходящи лични приложения"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Няма частни приложения"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Искате ли да отворите <xliff:g id="APP">%s</xliff:g> в личния си потребителски профил?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Искате ли да отворите <xliff:g id="APP">%s</xliff:g> в служебния си потребителски профил?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Използване на личния браузър"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Изключване на връзката"</string>
     <string name="include_link" msgid="827855767220339802">"Включване на връзката"</string>
     <string name="pinned" msgid="7623664001331394139">"Фиксирано"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Избираемо изображение"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Избираем видеоклип"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Избираем елемент"</string>
 </resources>

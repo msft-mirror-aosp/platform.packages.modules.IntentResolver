@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"ഇനിപ്പറയുന്നതിൽ ചിത്രം എടുക്കുക:"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"<xliff:g id="APP">%1$s</xliff:g> ഉപയോഗിച്ച് ചിത്രം എടുക്കുക"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"ചിത്രം എടുക്കുക"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"മറ്റൊരു അപ്ലിക്കേഷൻ ഉപയോഗിക്കുക"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"മറ്റൊരു ആപ്പ് ഉപയോഗിക്കുക"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"ഒരു പ്രവർത്തനം തിരഞ്ഞെടുക്കുക"</string>
     <string name="noApplications" msgid="1139487441772284671">"അപ്ലിക്കേഷനുകൾക്കൊന്നും ഈ പ്രവർത്തനം നിർവഹിക്കാനാവില്ല."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"നിങ്ങളുടെ ഔദ്യോഗിക പ്രൊഫൈലിന് പുറത്ത് ഈ അപ്ലിക്കേഷൻ ഉപയോഗിക്കുന്നു"</string>
@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ഔദ്യോഗിക ആപ്പുകൾ ഉപയോഗിച്ച് ഈ ഉള്ളടക്കം തുറക്കാനാകില്ല"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"വ്യക്തിപര ആപ്പുകൾ ഉപയോഗിച്ച് ഈ ഉള്ളടക്കം പങ്കിടാനാകില്ല"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"വ്യക്തിപര ആപ്പുകൾ ഉപയോഗിച്ച് ഈ ഉള്ളടക്കം തുറക്കാനാകില്ല"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"സ്വകാര്യ ആപ്പുകൾ ഉപയോഗിച്ച് ഈ ഉള്ളടക്കം പങ്കിടാനാകില്ല"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"സ്വകാര്യ ആപ്പുകൾ ഉപയോഗിച്ച് ഈ ഉള്ളടക്കം തുറക്കാനാകില്ല"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"ഔദ്യോഗിക ആപ്പുകൾ തൽക്കാലം നിർത്തിയിരിക്കുന്നു"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"താൽക്കാലികമായി നിർത്തിയത് മാറ്റുക"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"ഔദ്യോഗിക ആപ്പുകൾ ഇല്ല"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"വ്യക്തിപര ആപ്പുകൾ ഇല്ല"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"സ്വകാര്യ ആപ്പുകൾ ഇല്ല"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g>, നിങ്ങളുടെ വ്യക്തിപരമായ പ്രൊഫൈലിൽ തുറക്കണോ?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g>, നിങ്ങളുടെ ഔദ്യോഗിക പ്രൊഫൈലിൽ തുറക്കണോ?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"വ്യക്തിപരമായ ബ്രൗസർ ഉപയോഗിക്കുക"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"ലിങ്ക് ഒഴിവാക്കുക"</string>
     <string name="include_link" msgid="827855767220339802">"ലിങ്ക് ഉൾപ്പെടുത്തുക"</string>
     <string name="pinned" msgid="7623664001331394139">"പിൻ ചെയ്‌തത്"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"തിരഞ്ഞെടുക്കാവുന്ന ചിത്രം"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"തിരഞ്ഞെടുക്കാവുന്ന വീഡിയോ"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"തിരഞ്ഞെടുക്കാവുന്ന ഇനം"</string>
 </resources>
