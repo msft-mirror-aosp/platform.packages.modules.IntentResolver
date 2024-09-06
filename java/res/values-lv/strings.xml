@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Tiek kopīgots attēls}zero{Tiek kopīgoti # attēli}one{Tiek kopīgots # attēls}other{Tiek kopīgoti # attēli}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Tiek kopīgots video}zero{Tiek kopīgoti # video}one{Tiek kopīgots # video}other{Tiek kopīgoti # video}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Notiek # faila kopīgošana}zero{Notiek # failu kopīgošana}one{Notiek # faila kopīgošana}other{Notiek # failu kopīgošana}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Atlasiet kopīgojamos vienumus"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Tiek kopīgots attēls ar tekstu}zero{Tiek kopīgoti # attēli ar tekstu}one{Tiek kopīgots # attēls ar tekstu}other{Tiek kopīgoti # attēli ar tekstu}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Tiek kopīgots attēls ar saiti}zero{Tiek kopīgoti # attēli ar saitēm}one{Tiek kopīgots # attēls ar saitēm}other{Tiek kopīgoti # attēli ar saitēm}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Tiek kopīgots videoklips ar tekstu}zero{Tiek kopīgoti # videoklipi ar tekstu}one{Tiek kopīgots # videoklips ar tekstu}other{Tiek kopīgoti # videoklipi ar tekstu}}"</string>

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Delar bild}other{Delar # bilder}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Delar video}other{Delar # videor}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Delar # fil}other{Delar # filer}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Välj objekt att dela"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Delar bild med text}other{Delar # bilder med text}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Delar bild med länk}other{Delar # bilder med länk}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Delar video med text}other{Delar # videor med text}}"</string>

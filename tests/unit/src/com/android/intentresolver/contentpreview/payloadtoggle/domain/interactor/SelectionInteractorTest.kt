@@ -18,16 +18,24 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.content.Intent
 import android.net.Uri
+import android.platform.test.annotations.DisableFlags
+import android.platform.test.annotations.EnableFlags
+import android.platform.test.flag.junit.SetFlagsRule
+import com.android.intentresolver.Flags
 import com.android.intentresolver.contentpreview.mimetypeClassifier
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.flow.first
+import org.junit.Rule
 import org.junit.Test
 
 class SelectionInteractorTest {
+    @get:Rule val flagsRule = SetFlagsRule()
+
     @Test
+    @DisableFlags(Flags.FLAG_UNSELECT_FINAL_ITEM)
     fun singleSelection_removalPrevented() = runKosmosTest {
         val initialPreview =
             PreviewModel(
@@ -51,6 +59,33 @@ class SelectionInteractorTest {
         underTest.unselect(initialPreview)
 
         assertThat(underTest.selections.first()).containsExactly(initialPreview.uri)
+    }
+
+    @Test
+    @EnableFlags(Flags.FLAG_UNSELECT_FINAL_ITEM)
+    fun singleSelection_itemRemovedNoPendingIntentUpdates() = runKosmosTest {
+        val initialPreview =
+            PreviewModel(
+                uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                mimeType = null,
+                order = 0
+            )
+        previewSelectionsRepository.selections.value = mapOf(initialPreview.uri to initialPreview)
+
+        val underTest =
+            SelectionInteractor(
+                previewSelectionsRepository,
+                { Intent() },
+                updateTargetIntentInteractor,
+                mimetypeClassifier,
+            )
+
+        assertThat(underTest.selections.first()).containsExactly(initialPreview.uri)
+
+        underTest.unselect(initialPreview)
+
+        assertThat(underTest.selections.first()).isEmpty()
+        assertThat(previewSelectionsRepository.selections.value).isEmpty()
     }
 
     @Test
