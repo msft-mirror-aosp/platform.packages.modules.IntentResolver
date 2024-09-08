@@ -36,6 +36,9 @@
     <dimen name="chooser_direct_share_label_placeholder_max_width">72dp</dimen>
     <dimen name="chooser_icon_size">56dp</dimen>
     <dimen name="chooser_badge_size">22dp</dimen>
+    <dimen name="chooser_headline_text_size">18sp</dimen>
+    <dimen name="chooser_grid_target_name_text_size">12sp</dimen>
+    <dimen name="chooser_grid_activity_name_text_size">12sp</dimen>
     <dimen name="resolver_icon_size">32dp</dimen>
     <dimen name="resolver_button_bar_spacing">0dp</dimen>
     <dimen name="resolver_badge_size">18dp</dimen>
@@ -53,6 +56,7 @@
     <dimen name="resolver_empty_state_container_padding_bottom">8dp</dimen>
     <dimen name="resolver_profile_tab_margin">4dp</dimen>
     <dimen name="chooser_action_view_icon_size">22dp</dimen>
+    <dimen name="chooser_action_view_text_size">12sp</dimen>
     <dimen name="chooser_action_margin">0dp</dimen>
     <dimen name="modify_share_text_toggle_max_width">150dp</dimen>
     <dimen name="chooser_view_spacing">16dp</dimen>

@@ -56,6 +56,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.storage.StorageManager;
+import android.provider.Settings;
 import android.service.chooser.ChooserTarget;
 import android.util.Log;
 import android.util.Slog;
@@ -233,6 +234,12 @@ public class ChooserActivity extends ResolverActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Settings.Global.getInt(getContentResolver(), Settings.Global.SECURE_FRP_MODE, 0) == 1) {
+            Log.e(TAG, "Sharing disabled due to active FRP lock.");
+            super.onCreate(savedInstanceState);
+            finish();
+            return;
+        }
         Tracer.INSTANCE.markLaunched();
         final long intentReceivedTime = System.currentTimeMillis();
         mLatencyTracker.onActionStart(ACTION_LOAD_SHARE_SHEET);
@@ -1761,18 +1768,23 @@ public class ChooserActivity extends ResolverActivity implements
 
     @Override
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
-        if (shouldShowTabs()) {
-            mChooserMultiProfilePagerAdapter
-                    .setEmptyStateBottomOffset(insets.getSystemWindowInsetBottom());
-            mChooserMultiProfilePagerAdapter.setupContainerPadding(
-                    getActiveEmptyStateView().findViewById(com.android.internal.R.id.resolver_empty_state_container));
-        }
+        mSystemWindowInsets = insets.getInsets(WindowInsets.Type.systemBars());
+        mChooserMultiProfilePagerAdapter.setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
+        mChooserMultiProfilePagerAdapter.setupContainerPadding(
+                getActiveEmptyStateView().findViewById(
+                        com.android.internal.R.id.resolver_empty_state_container));
 
-        WindowInsets result = super.onApplyWindowInsets(v, insets);
+        mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
+                mSystemWindowInsets.right, 0);
+
+        // Need extra padding so the list can fully scroll up
+        // To accommodate for window insets
+        applyFooterView(mSystemWindowInsets.bottom);
+
         if (mResolverDrawerLayout != null) {
             mResolverDrawerLayout.requestLayout();
         }
-        return result;
+        return WindowInsets.CONSUMED;
     }
 
     private void setHorizontalScrollingEnabled(boolean enabled) {
