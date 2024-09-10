@@ -46,7 +46,7 @@
     <string name="chooseActivity" msgid="6659724877523973446">"Aktion auswählen"</string>
     <string name="noApplications" msgid="1139487441772284671">"Diese Aktion kann von keiner App ausgeführt werden."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Du verwendest diese App außerhalb deines Arbeitsprofils"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"Du verwendest diese App in deinem Arbeitsprofil."</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"Du verwendest diese App in deinem Arbeitsprofil"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"Immer"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"Nur diesmal"</string>
     <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"<xliff:g id="APP">%1$s</xliff:g> unterstützt das Arbeitsprofil nicht"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Bild wird geteilt}other{# Bilder werden geteilt}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Video wird geteilt}other{# Videos werden geteilt}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# Datei wird freigegeben}other{# Dateien werden freigegeben}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Elemente zum Teilen auswählen"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Bild wird mit Text geteilt}other{# Bilder werden mit Text geteilt}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Bild wird per Link geteilt}other{# Bilder werden per Link geteilt}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Video wird per SMS geteilt}other{# Videos werden per SMS geteilt}}"</string>
@@ -81,7 +82,7 @@
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Private Ansicht"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Geschäftliche Ansicht"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Private Ansicht"</string>
-    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Von deinem IT-Administrator blockiert"</string>
+    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Vom IT‑Administrator blockiert"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Diese Art von Inhalt kann nicht über geschäftliche Apps geteilt werden"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Diese Art von Inhalt kann nicht mit geschäftlichen Apps geöffnet werden"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Diese Art von Inhalt kann nicht über private Apps geteilt werden"</string>

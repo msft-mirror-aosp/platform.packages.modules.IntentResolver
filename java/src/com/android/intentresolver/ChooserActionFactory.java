@@ -133,8 +133,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             ActionActivityStarter activityStarter,
             @Nullable ShareResultSender shareResultSender,
             Consumer</* @Nullable */ Integer> finishCallback,
-            ClipboardManager clipboardManager,
-            FeatureFlags featureFlags) {
+            ClipboardManager clipboardManager) {
         this(
                 context,
                 makeCopyButtonRunnable(
@@ -150,8 +149,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                                 imageEditor),
                         firstVisibleImageQuery,
                         activityStarter,
-                        log,
-                        featureFlags.fixPartialImageEditTransition()),
+                        log),
                 chooserActions,
                 onUpdateSharedTextIsExcluded,
                 log,
@@ -340,8 +338,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
             @Nullable TargetInfo editSharingTarget,
             Callable</* @Nullable */ View> firstVisibleImageQuery,
             ActionActivityStarter activityStarter,
-            EventLog log,
-            boolean requireFullVisibility) {
+            EventLog log) {
         if (editSharingTarget == null) return null;
         return () -> {
             // Log share completion via edit.
@@ -352,8 +349,7 @@ public final class ChooserActionFactory implements ChooserContentPreviewUi.Actio
                 firstImageView = firstVisibleImageQuery.call();
             } catch (Exception e) { /* ignore */ }
             // Action bar is user-independent; always start as primary.
-            if (firstImageView == null
-                    || (requireFullVisibility && !isFullyVisible(firstImageView))) {
+            if (firstImageView == null || !isFullyVisible(firstImageView)) {
                 activityStarter.safelyStartActivityAsPersonalProfileUser(editSharingTarget);
             } else {
                 activityStarter.safelyStartActivityAsPersonalProfileUserWithSharedElementTransition(

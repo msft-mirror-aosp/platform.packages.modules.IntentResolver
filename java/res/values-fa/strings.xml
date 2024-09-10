@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{هم‌رسانی تصویر}one{هم‌رسانی ‍# تصویر}other{هم‌رسانی ‍# تصویر}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{درحال هم‌رسانی ویدیو}one{درحال هم‌رسانی # ویدیو}other{درحال هم‌رسانی # ویدیو}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{هم‌رسانی # فایل}one{هم‌رسانی # فایل}other{هم‌رسانی # فایل}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"انتخاب کردن موارد برای هم‌رسانی"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{درحال هم‌رسانی تصویر با نوشتار}one{درحال هم‌رسانی # تصویر با نوشتار}other{درحال هم‌رسانی # تصویر با نوشتار}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{درحال هم‌رسانی تصویر با پیوند}one{درحال هم‌رسانی # تصویر با پیوند}other{درحال هم‌رسانی # تصویر با پیوند}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{درحال هم‌رسانی ویدیو با نوشتار}one{درحال هم‌رسانی # ویدیو با نوشتار}other{درحال هم‌رسانی # ویدیو با نوشتار}}"</string>
@@ -98,9 +99,9 @@
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"استفاده از مرورگر شخصی"</string>
     <string name="miniresolver_use_work_browser" msgid="7892699758493230342">"استفاده از مرورگر کاری"</string>
     <string name="exclude_text" msgid="5508128757025928034">"مستثنی کردن نوشتار"</string>
-    <string name="include_text" msgid="642280283268536140">"لحاظ کردن نوشتار"</string>
+    <string name="include_text" msgid="642280283268536140">"گنجاندن نوشتار"</string>
     <string name="exclude_link" msgid="1332778255031992228">"مستثنی کردن پیوند"</string>
-    <string name="include_link" msgid="827855767220339802">"لحاظ کردن پیوند"</string>
+    <string name="include_link" msgid="827855767220339802">"گنجاندن پیوند"</string>
     <string name="pinned" msgid="7623664001331394139">"سنجاق‌شده"</string>
     <string name="selectable_image" msgid="3157858923437182271">"تصویر قابل‌انتخاب"</string>
     <string name="selectable_video" msgid="1271768647699300826">"ویدیو قابل‌انتخاب"</string>

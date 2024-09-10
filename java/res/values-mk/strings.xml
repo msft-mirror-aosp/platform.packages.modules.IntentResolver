@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Споделување слика}one{Споделување # слика}other{Споделување # слики}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Се споделува видео}one{Се споделува # видео}other{Се споделуваат # видеа}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Се споделува # датотека}one{Се споделуваат # датотека}other{Се споделуваат # датотеки}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Изберете ставки за споделување"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Се споделува слика со SMS}one{Се споделуваат # слика со SMS}other{Се споделуваат # слики со SMS}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Се споделува слика со линк}one{Се споделуваат # слика со линк}other{Се споделуваат # слики со линк}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Се споделува видео со SMS}one{Се споделуваат # видео со SMS}other{Се споделуваат # видеа со SMS}}"</string>

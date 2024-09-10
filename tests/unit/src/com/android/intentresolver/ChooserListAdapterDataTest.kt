@@ -66,8 +66,6 @@ class ChooserListAdapterDataTest {
     private val immediateExecutor = TestExecutor(immediate = true)
     private val referrerFillInIntent =
         Intent().putExtra(Intent.EXTRA_REFERRER, "org.referrer.package")
-    private val featureFlags =
-        FakeFeatureFlagsImpl().apply { setFlag(Flags.FLAG_BESPOKE_LABEL_VIEW, false) }
 
     @Test
     fun test_twoTargetsWithNonOverlappingInitialIntent_threeTargetsInResolverAdapter() {
@@ -119,7 +117,6 @@ class ChooserListAdapterDataTest {
                 null,
                 backgroundExecutor,
                 immediateExecutor,
-                featureFlags,
             )
         val doPostProcessing = true
 
@@ -183,7 +180,6 @@ class ChooserListAdapterDataTest {
                 null,
                 backgroundExecutor,
                 immediateExecutor,
-                featureFlags,
             )
         val doPostProcessing = true
 

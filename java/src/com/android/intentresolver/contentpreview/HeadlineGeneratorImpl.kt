@@ -93,6 +93,9 @@ constructor(
         return getPluralString(R.string.sharing_files, count)
     }
 
+    override fun getNotItemsSelectedHeadline(): String =
+        context.getString(R.string.select_items_to_share)
+
     private fun getPluralString(@StringRes templateResource: Int, count: Int): String {
         return PluralsMessageFormatter.format(
             context.resources,

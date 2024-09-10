@@ -25,7 +25,7 @@ java_library {
         "src/**/*.kt",
     ],
     libs: [
-        "android.test.mock",
+        "android.test.mock.stubs.system",
         "framework",
     ],
     static_libs: [

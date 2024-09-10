@@ -156,6 +156,8 @@ data class ChooserRequest(
      * TODO: Constrain length?
      */
     val sharedText: CharSequence? = null,
+    /** Contains title to the text content to share supplied by the source app. */
+    val sharedTextTitle: CharSequence? = null,
 
     /**
      * Supplied to

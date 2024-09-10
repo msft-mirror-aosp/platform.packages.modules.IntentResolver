@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Comparteix una imatge}many{Comparteix # d\'imatges}other{Comparteix # imatges}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{S\'està compartint un vídeo}many{S\'estan compartint # de vídeos}other{S\'estan compartint # vídeos}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{S\'està compartint # fitxer}many{S\'estan compartint # de fitxers}other{S\'estan compartint # fitxers}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Selecciona els elements que vols compartir"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{S\'està compartint la imatge amb text}many{S\'estan compartint # d\'imatges amb text}other{S\'estan compartint # imatges amb text}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{S\'està compartint la imatge amb un enllaç}many{S\'estan compartint # d\'imatges amb un enllaç}other{S\'estan compartint # imatges amb un enllaç}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{S\'està compartint el vídeo amb un enllaç}many{S\'estan compartint # de vídeos amb un enllaç}other{S\'estan compartint # vídeos amb un enllaç}}"</string>
