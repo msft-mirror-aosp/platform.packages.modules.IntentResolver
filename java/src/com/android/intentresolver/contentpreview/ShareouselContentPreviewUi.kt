@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ShareouselContentPreviewUi : ContentPreviewUi() {
 
-    override fun getType(): Int = ContentPreviewType.CONTENT_PREVIEW_IMAGE
+    override fun getType(): Int = ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
 
     override fun display(
         resources: Resources,

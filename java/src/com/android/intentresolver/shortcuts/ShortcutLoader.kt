@@ -35,16 +35,23 @@ import androidx.annotation.MainThread
 import androidx.annotation.OpenForTesting
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.WorkerThread
+import com.android.intentresolver.Flags.fixShortcutLoaderJobLeak
+import com.android.intentresolver.Flags.fixShortcutsFlashing
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.measurements.Tracer
 import com.android.intentresolver.measurements.runTracing
 import java.util.concurrent.Executor
 import java.util.function.Consumer
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -65,7 +72,7 @@ open class ShortcutLoader
 @VisibleForTesting
 constructor(
     private val context: Context,
-    private val scope: CoroutineScope,
+    parentScope: CoroutineScope,
     private val appPredictor: AppPredictorProxy?,
     private val userHandle: UserHandle,
     private val isPersonalProfile: Boolean,
@@ -73,8 +80,11 @@ constructor(
     private val dispatcher: CoroutineDispatcher,
     private val callback: Consumer<Result>
 ) {
+    private val scope =
+        if (fixShortcutLoaderJobLeak()) parentScope.createChildScope() else parentScope
     private val shortcutToChooserTargetConverter = ShortcutToChooserTargetConverter()
     private val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
+    private val appPredictorWatchdog = atomic<Job?>(null)
     private val appPredictorCallback =
         ScopedAppTargetListCallback(scope) { onAppPredictorCallback(it) }.toAppPredictorCallback()
 
@@ -87,6 +97,9 @@ constructor(
         MutableSharedFlow<ShortcutData?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val isDestroyed
         get() = !scope.isActive
+
+    private val id
+        get() = System.identityHashCode(this).toString(Character.MAX_RADIX)
 
     @MainThread
     constructor(
@@ -132,7 +145,7 @@ constructor(
             }
             .invokeOnCompletion {
                 runCatching { appPredictor?.unregisterPredictionUpdates(appPredictorCallback) }
-                Log.d(TAG, "destroyed, user: $userHandle")
+                Log.d(TAG, "[$id] destroyed, user: $userHandle")
             }
         reset()
     }
@@ -140,7 +153,7 @@ constructor(
     /** Clear application targets (see [updateAppTargets] and initiate shortcuts loading. */
     @OpenForTesting
     open fun reset() {
-        Log.d(TAG, "reset shortcut loader for user $userHandle")
+        Log.d(TAG, "[$id] reset shortcut loader for user $userHandle")
         appTargetSource.tryEmit(null)
         shortcutSource.tryEmit(null)
         scope.launch(dispatcher) { loadShortcuts() }
@@ -155,14 +168,21 @@ constructor(
         appTargetSource.tryEmit(appTargets)
     }
 
+    @OpenForTesting
+    open fun destroy() {
+        if (fixShortcutLoaderJobLeak()) {
+            scope.cancel()
+        }
+    }
+
     @WorkerThread
     private fun loadShortcuts() {
         // no need to query direct share for work profile when its locked or disabled
         if (!shouldQueryDirectShareTargets()) {
-            Log.d(TAG, "skip shortcuts loading for user $userHandle")
+            Log.d(TAG, "[$id] skip shortcuts loading for user $userHandle")
             return
         }
-        Log.d(TAG, "querying direct share targets for user $userHandle")
+        Log.d(TAG, "[$id] querying direct share targets for user $userHandle")
         queryDirectShareTargets(false)
     }
 
@@ -170,9 +190,30 @@ constructor(
     private fun queryDirectShareTargets(skipAppPredictionService: Boolean) {
         if (!skipAppPredictionService && appPredictor != null) {
             try {
-                Log.d(TAG, "query AppPredictor for user $userHandle")
+                Log.d(TAG, "[$id] query AppPredictor for user $userHandle")
+
+                val watchdogJob =
+                    if (fixShortcutsFlashing()) {
+                        scope
+                            .launch(start = CoroutineStart.LAZY) {
+                                delay(APP_PREDICTOR_RESPONSE_TIMEOUT_MS)
+                                Log.w(TAG, "AppPredictor response timeout for user: $userHandle")
+                                appPredictorCallback.onTargetsAvailable(emptyList())
+                            }
+                            .also { job ->
+                                appPredictorWatchdog.getAndSet(job)?.cancel()
+                                job.invokeOnCompletion {
+                                    appPredictorWatchdog.compareAndSet(job, null)
+                                }
+                            }
+                    } else {
+                        null
+                    }
+
                 Tracer.beginAppPredictorQueryTrace(userHandle)
                 appPredictor.requestPredictionUpdate()
+
+                watchdogJob?.start()
                 return
             } catch (e: Throwable) {
                 endAppPredictorQueryTrace(userHandle)
@@ -180,12 +221,12 @@ constructor(
                 if (isDestroyed) {
                     return
                 }
-                Log.e(TAG, "Failed to query AppPredictor for user $userHandle", e)
+                Log.e(TAG, "[$id] failed to query AppPredictor for user $userHandle", e)
             }
         }
         // Default to just querying ShortcutManager if AppPredictor not present.
         if (targetIntentFilter == null) {
-            Log.d(TAG, "skip querying ShortcutManager for $userHandle")
+            Log.d(TAG, "[$id] skip querying ShortcutManager for $userHandle")
             sendShareShortcutInfoList(
                 emptyList(),
                 isFromAppPredictor = false,
@@ -193,12 +234,12 @@ constructor(
             )
             return
         }
-        Log.d(TAG, "query ShortcutManager for user $userHandle")
+        Log.d(TAG, "[$id] query ShortcutManager for user $userHandle")
         val shortcuts =
             runTracing("shortcut-mngr-${userHandle.identifier}") {
                 queryShortcutManager(targetIntentFilter)
             }
-        Log.d(TAG, "receive shortcuts from ShortcutManager for user $userHandle")
+        Log.d(TAG, "[$id] receive shortcuts from ShortcutManager for user $userHandle")
         sendShareShortcutInfoList(shortcuts, false, null)
     }
 
@@ -210,14 +251,14 @@ constructor(
         val pm = context.createContextAsUser(userHandle, 0 /* flags */).packageManager
         return sm?.getShareTargets(targetIntentFilter)?.filter {
             pm.isPackageEnabled(it.targetComponent.packageName)
-        }
-            ?: emptyList()
+        } ?: emptyList()
     }
 
     @WorkerThread
     private fun onAppPredictorCallback(appPredictorTargets: List<AppTarget>) {
+        appPredictorWatchdog.value?.cancel()
         endAppPredictorQueryTrace(userHandle)
-        Log.d(TAG, "receive app targets from AppPredictor")
+        Log.d(TAG, "[$id] receive app targets from AppPredictor")
         if (appPredictorTargets.isEmpty() && shouldQueryDirectShareTargets()) {
             // APS may be disabled, so try querying targets ourselves.
             queryDirectShareTargets(true)
@@ -330,6 +371,11 @@ constructor(
         val directShareShortcutInfoCache: Map<ChooserTarget, ShortcutInfo>
     )
 
+    private fun endAppPredictorQueryTrace(userHandle: UserHandle) {
+        val duration = Tracer.endAppPredictorQueryTrace(userHandle)
+        Log.d(TAG, "[$id] AppPredictor query duration for user $userHandle: $duration ms")
+    }
+
     /** Shortcuts grouped by app. */
     class ShortcutResultInfo(
         val appTarget: DisplayResolveInfo,
@@ -359,6 +405,7 @@ constructor(
     }
 
     companion object {
+        @VisibleForTesting const val APP_PREDICTOR_RESPONSE_TIMEOUT_MS = 2_000L
         private const val TAG = "ShortcutLoader"
 
         private fun PackageManager.isPackageEnabled(packageName: String): Boolean {
@@ -378,9 +425,12 @@ constructor(
                 .getOrDefault(false)
         }
 
-        private fun endAppPredictorQueryTrace(userHandle: UserHandle) {
-            val duration = Tracer.endAppPredictorQueryTrace(userHandle)
-            Log.d(TAG, "AppPredictor query duration for user $userHandle: $duration ms")
-        }
+        /**
+         * Creates a new coroutine scope and makes its job a child of the given, `this`, coroutine
+         * scope's job. This ensures that the new scope will be canceled when the parent scope is
+         * canceled (but not vice versa).
+         */
+        private fun CoroutineScope.createChildScope() =
+            CoroutineScope(coroutineContext + Job(parent = coroutineContext[Job]))
     }
 }

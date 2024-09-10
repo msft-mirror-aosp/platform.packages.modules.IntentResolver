@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Jaetaan kuvaa}other{Jaetaan # kuvaa}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Jaetaan videota}other{Jaetaan # videota}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Jaetaan # tiedosto}other{Jaetaan # tiedostoa}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Valitse jaettavat kohteet"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Kuvaa ja tekstiä jaetaan}other{# kuvaa ja tekstiä jaetaan}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Kuvaa ja linkkiä jaetaan}other{# kuvaa ja linkkiä jaetaan}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Videota ja tekstiä jaetaan}other{# videota ja tekstiä jaetaan}}"</string>

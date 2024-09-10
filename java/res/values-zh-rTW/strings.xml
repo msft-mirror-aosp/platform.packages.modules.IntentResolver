@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{分享圖片}other{分享 # 張圖片}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{正在分享影片}other{正在分享 # 部影片}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{正在分享 # 個檔案}other{正在分享 # 個檔案}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"選取要分享的項目"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{分享含有文字的圖片}other{分享 # 張含有文字的圖片}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{分享含有連結的圖片}other{分享 # 張含有連結的圖片}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{分享含有文字的影片}other{分享 # 部含有文字的影片}}"</string>

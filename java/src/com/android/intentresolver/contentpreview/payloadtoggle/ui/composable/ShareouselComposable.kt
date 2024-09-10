@@ -64,6 +64,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.intentresolver.Flags.shareouselScrollOffscreenSelections
+import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
@@ -73,6 +75,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.Shar
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 import kotlin.math.abs
 import kotlin.math.min
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -187,6 +190,45 @@ private fun PreviewCarousel(
                     firstSelectedIndex = min(index, firstSelectedIndex ?: Int.MAX_VALUE)
                 }
 
+                if (shareouselScrollOffscreenSelections()) {
+                    LaunchedEffect(index, model.uri) {
+                        var current: Boolean? = null
+                        previewModel.isSelected.collect { selected ->
+                            when {
+                                // First update will always be the current state, so we just want to
+                                // record the state and do nothing else.
+                                current == null -> current = selected
+
+                                // We only want to act when the state changes
+                                current != selected -> {
+                                    current = selected
+                                    with(carouselState.layoutInfo) {
+                                        visibleItemsInfo
+                                            .firstOrNull { it.index == index }
+                                            ?.let { item ->
+                                                when {
+                                                    // Item is partially past start of viewport
+                                                    item.offset < viewportStartOffset ->
+                                                        -viewportStartOffset
+                                                    // Item is partially past end of viewport
+                                                    (item.offset + item.size) > viewportEndOffset ->
+                                                        item.size - viewportEndOffset
+                                                    // Item is fully within viewport
+                                                    else -> null
+                                                }?.let { scrollOffset ->
+                                                    carouselState.animateScrollToItem(
+                                                        index = index,
+                                                        scrollOffset = scrollOffset,
+                                                    )
+                                                }
+                                            }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 ShareouselCard(
                     viewModel.preview(
                         model,
@@ -286,30 +328,46 @@ private fun ActionCarousel(viewModel: ShareouselViewModel) {
     val actions by viewModel.actions.collectAsStateWithLifecycle(initialValue = emptyList())
     if (actions.isNotEmpty()) {
         Spacer(Modifier.height(16.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.height(32.dp),
-        ) {
-            itemsIndexed(actions) { idx, actionViewModel ->
-                if (idx == 0) {
-                    Spacer(Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal)))
-                }
-                ShareouselAction(
-                    label = actionViewModel.label,
-                    onClick = { actionViewModel.onClicked() },
-                ) {
-                    actionViewModel.icon?.let {
-                        Image(
-                            icon = it,
-                            modifier = Modifier.size(16.dp),
-                            colorFilter = ColorFilter.tint(LocalContentColor.current)
+        val visibilityFlow =
+            if (unselectFinalItem()) {
+                viewModel.hasSelectedItems
+            } else {
+                MutableStateFlow(true)
+            }
+        val visibility by visibilityFlow.collectAsStateWithLifecycle(true)
+        val height = 32.dp
+        if (visibility) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.height(height),
+            ) {
+                itemsIndexed(actions) { idx, actionViewModel ->
+                    if (idx == 0) {
+                        Spacer(
+                            Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal))
+                        )
+                    }
+                    ShareouselAction(
+                        label = actionViewModel.label,
+                        onClick = { actionViewModel.onClicked() },
+                    ) {
+                        actionViewModel.icon?.let {
+                            Image(
+                                icon = it,
+                                modifier = Modifier.size(16.dp),
+                                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                            )
+                        }
+                    }
+                    if (idx == actions.size - 1) {
+                        Spacer(
+                            Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal))
                         )
                     }
                 }
-                if (idx == actions.size - 1) {
-                    Spacer(Modifier.width(dimensionResource(R.dimen.chooser_edge_margin_normal)))
-                }
             }
+        } else {
+            Spacer(modifier = Modifier.height(height))
         }
     }
 }
