@@ -79,13 +79,13 @@
             android:layout_centerHorizontal="true"
             android:layout_below="@androidprv:id/resolver_empty_state_subtitle"
             android:indeterminateTint="?android:attr/colorAccent"/>
+        <TextView
+            android:id="@android:id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/noApplications"
+            android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
+            android:padding="@dimen/chooser_edge_margin_normal"
+            android:gravity="center"/>
     </RelativeLayout>
-    <TextView android:id="@android:id/empty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?android:attr/colorBackground"
-        android:text="@string/noApplications"
-        android:padding="@dimen/chooser_edge_margin_normal"
-        android:layout_marginBottom="56dp"
-        android:gravity="center"/>
 </RelativeLayout>

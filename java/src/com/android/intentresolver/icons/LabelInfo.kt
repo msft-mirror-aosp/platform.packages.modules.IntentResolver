@@ -16,4 +16,4 @@
 
 package com.android.intentresolver.icons
 
-class LabelInfo(val label: CharSequence?, val subLabel: CharSequence?)
+data class LabelInfo(val label: CharSequence?, val subLabel: CharSequence?)

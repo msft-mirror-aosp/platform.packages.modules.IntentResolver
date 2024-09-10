@@ -25,25 +25,17 @@ import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager.ShareShortcutInfo
 import android.os.Bundle
 import android.service.chooser.ChooserTarget
-import org.mockito.Mockito.`when` as whenever
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 internal fun createShareShortcutInfo(
     id: String,
     componentName: ComponentName,
     rank: Int
-): ShareShortcutInfo =
-    ShareShortcutInfo(
-        createShortcutInfo(id, componentName, rank),
-        componentName
-    )
+): ShareShortcutInfo = ShareShortcutInfo(createShortcutInfo(id, componentName, rank), componentName)
 
-internal fun createShortcutInfo(
-    id: String,
-    componentName: ComponentName,
-    rank: Int
-): ShortcutInfo {
-    val context = mock<Context>()
-    whenever(context.packageName).thenReturn(componentName.packageName)
+internal fun createShortcutInfo(id: String, componentName: ComponentName, rank: Int): ShortcutInfo {
+    val context = mock<Context> { on { packageName } doReturn componentName.packageName }
     return ShortcutInfo.Builder(context, id)
         .setShortLabel("Short Label $id")
         .setLongLabel("Long Label $id")
@@ -60,7 +52,10 @@ internal fun createAppTarget(shortcutInfo: ShortcutInfo) =
     )
 
 fun createChooserTarget(
-    title: String, score: Float, componentName: ComponentName, shortcutId: String
+    title: String,
+    score: Float,
+    componentName: ComponentName,
+    shortcutId: String
 ): ChooserTarget =
     ChooserTarget(
         title,

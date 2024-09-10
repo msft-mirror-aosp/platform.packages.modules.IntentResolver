@@ -15,6 +15,7 @@
 //
 
 package {
+    default_team: "trendy_team_capture_and_share",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -53,6 +54,7 @@ android_test {
         "junit",
         "kotlinx_coroutines_test",
         "mockito-target-minus-junit4",
+        "mockito-kotlin-nodeps",
         "testables",
         "truth",
         "truth-java8-extension",

@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"تصویربرداری با"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"گرفتن عکس با <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"تصویربرداری"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"استتفاده از یک برنامه دیگر"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"استفاده از یک برنامه دیگر"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"انتخاب کنش"</string>
     <string name="noApplications" msgid="1139487441772284671">"‏هیچ برنامه‌ای نمی‌‎تواند این کار را انجام دهد."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"شما از این برنامه در خارج از نمایه کاری‌تان استفاده می‌کنید"</string>
@@ -73,7 +73,7 @@
     <string name="image_preview_a11y_description" msgid="297102643932491797">"تصویر کوچک پیش‌نمای تصویر"</string>
     <string name="video_preview_a11y_description" msgid="683440858811095990">"تصویر کوچک پیش‌نمای ویدیو"</string>
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"تصویر کوچک پیش‌نمای فایل"</string>
-    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"هیچ فردی توصیه نشده است که با او هم‌رسانی کنید"</string>
+    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"هیچ فردی که با او هم‌رسانی کنید توصیه نشده است"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏مجوز ضبط به این برنامه داده نشده است اما می‌تواند صدا را ازطریق این دستگاه USB ضبط کند."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"شخصی"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"کاری"</string>
@@ -86,17 +86,23 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"نمی‌توان این محتوا را با برنامه‌های کاری باز کرد"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"نمی‌توان این محتوا را با برنامه‌های شخصی هم‌رسانی کرد"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"نمی‌توان این محتوا را با برنامه‌های شخصی باز کرد"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"نمی‌توان این محتوا را با برنامه‌های خصوصی هم‌رسانی کرد"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"نمی‌توان این محتوا را با برنامه‌های خصوصی باز کرد"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"برنامه‌های کاری موقتاً متوقف شده‌اند"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"لغو مکث"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"برنامه کاری‌ای وجود ندارد"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"برنامه شخصی‌ای وجود ندارد"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"بدون برنامه خصوصی"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> در نمایه شخصی باز شود؟"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> در نمایه کاری باز شود؟"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"استفاده از مرورگر شخصی"</string>
     <string name="miniresolver_use_work_browser" msgid="7892699758493230342">"استفاده از مرورگر کاری"</string>
     <string name="exclude_text" msgid="5508128757025928034">"مستثنی کردن نوشتار"</string>
-    <string name="include_text" msgid="642280283268536140">"لحاظ کردن نوشتار"</string>
+    <string name="include_text" msgid="642280283268536140">"گنجاندن نوشتار"</string>
     <string name="exclude_link" msgid="1332778255031992228">"مستثنی کردن پیوند"</string>
-    <string name="include_link" msgid="827855767220339802">"لحاظ کردن پیوند"</string>
+    <string name="include_link" msgid="827855767220339802">"گنجاندن پیوند"</string>
     <string name="pinned" msgid="7623664001331394139">"سنجاق‌شده"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"تصویر قابل‌انتخاب"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"ویدیو قابل‌انتخاب"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"مورد قابل‌انتخاب"</string>
 </resources>

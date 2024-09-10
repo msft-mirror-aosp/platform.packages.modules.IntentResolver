@@ -48,7 +48,7 @@ public abstract class ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent);
+            View headlineViewParent);
 
     protected static void updateViewWithImage(ImageView imageView, Bitmap image) {
         if (image == null) {
@@ -98,16 +98,19 @@ public abstract class ContentPreviewUi {
         }
     }
 
-    protected static void displayModifyShareAction(
-            View layout, ChooserContentPreviewUi.ActionFactory actionFactory) {
-        ActionRow.Action modifyShareAction = actionFactory.getModifyShareAction();
-        if (modifyShareAction != null && layout != null) {
-            TextView modifyShareView = layout.findViewById(R.id.reselection_action);
-            if (modifyShareView != null) {
-                modifyShareView.setText(modifyShareAction.getLabel());
-                modifyShareView.setVisibility(View.VISIBLE);
-                modifyShareView.setOnClickListener(view -> modifyShareAction.getOnClicked().run());
-            }
+    static void displayModifyShareAction(
+            View layout, @Nullable ActionRow.Action modifyShareAction) {
+        TextView modifyShareView =
+                layout == null ? null : layout.findViewById(R.id.reselection_action);
+        if (modifyShareView == null) {
+            return;
+        }
+        if (modifyShareAction != null) {
+            modifyShareView.setText(modifyShareAction.getLabel());
+            modifyShareView.setVisibility(View.VISIBLE);
+            modifyShareView.setOnClickListener(view -> modifyShareAction.getOnClicked().run());
+        } else {
+            modifyShareView.setVisibility(View.GONE);
         }
     }
 

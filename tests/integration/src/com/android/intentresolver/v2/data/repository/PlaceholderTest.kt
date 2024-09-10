@@ -21,7 +21,5 @@ import org.junit.Test
 class PlaceholderTest {
 
     /** Allows this test target to function while tests are being developed. */
-    @Test
-    fun placeHolder() {
-    }
+    @Test fun placeHolder() {}
 }

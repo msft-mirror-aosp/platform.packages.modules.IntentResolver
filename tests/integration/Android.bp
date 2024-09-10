@@ -15,6 +15,7 @@
 //
 
 package {
+    default_team: "trendy_team_capture_and_share",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -40,5 +41,5 @@ android_test {
         "truth",
         "truth-java8-extension",
     ],
-    test_suites: ["general-tests"]
+    test_suites: ["general-tests"],
 }

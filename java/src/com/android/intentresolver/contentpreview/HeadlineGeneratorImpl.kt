@@ -20,6 +20,12 @@ import android.content.Context
 import android.util.PluralsMessageFormatter
 import androidx.annotation.StringRes
 import com.android.intentresolver.R
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
 
 private const val PLURALS_COUNT = "count"
 
@@ -27,7 +33,11 @@ private const val PLURALS_COUNT = "count"
  * HeadlineGenerator generates the text to show at the top of the sharesheet as a brief description
  * of the content being shared.
  */
-class HeadlineGeneratorImpl(private val context: Context) : HeadlineGenerator {
+class HeadlineGeneratorImpl
+@Inject
+constructor(
+    @ApplicationContext private val context: Context,
+) : HeadlineGenerator {
     override fun getTextHeadline(text: CharSequence): String {
         return context.getString(
             getTemplateResource(text, R.string.sharing_link, R.string.sharing_text)
@@ -99,4 +109,10 @@ class HeadlineGeneratorImpl(private val context: Context) : HeadlineGenerator {
     ): Int {
         return if (text.toString().isHttpUri()) linkResource else nonLinkResource
     }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+interface HeadlineGeneratorModule {
+    @Binds fun bind(impl: HeadlineGeneratorImpl): HeadlineGenerator
 }

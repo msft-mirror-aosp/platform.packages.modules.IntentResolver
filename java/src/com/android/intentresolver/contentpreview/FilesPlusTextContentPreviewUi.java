@@ -36,11 +36,11 @@ import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
 
+import kotlinx.coroutines.CoroutineScope;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
-
-import kotlinx.coroutines.CoroutineScope;
 
 /**
  * FilesPlusTextContentPreviewUi is shown when the user is sending 1 or more files along with
@@ -108,11 +108,8 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
-        ViewGroup layout = displayInternal(layoutInflater, parent, headlineViewParent);
-        displayModifyShareAction(
-                headlineViewParent == null ? layout : headlineViewParent, mActionFactory);
-        return layout;
+            View headlineViewParent) {
+        return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
     public void updatePreviewMetadata(List<FileInfo> files) {
@@ -136,10 +133,10 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
     private ViewGroup displayInternal(
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         mContentPreviewView = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_files_text, parent, false);
-        mHeadliveView = headlineViewParent == null ? mContentPreviewView : headlineViewParent;
+        mHeadliveView = headlineViewParent;
         inflateHeadline(mHeadliveView);
 
         final ActionRow actionRow =

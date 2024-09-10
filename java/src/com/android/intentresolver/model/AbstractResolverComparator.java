@@ -20,6 +20,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.BadParcelableException;
@@ -37,7 +38,6 @@ import com.android.intentresolver.ResolverListController;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.logging.EventLog;
 
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -135,7 +135,7 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
                     user,
                     (UsageStatsManager) userContext.getSystemService(Context.USAGE_STATS_SERVICE));
         }
-        mAzComparator = new AzInfoComparator(launchedFromContext);
+        mAzComparator = new ResolveInfoAzInfoComparator(launchedFromContext);
         mPromoteToFirst = promoteToFirst;
     }
 
@@ -203,8 +203,8 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
         }
 
         if (mHttp) {
-            final boolean lhsSpecific = ResolverActivity.isSpecificUriMatch(lhs.match);
-            final boolean rhsSpecific = ResolverActivity.isSpecificUriMatch(rhs.match);
+            final boolean lhsSpecific = isSpecificUriMatch(lhs.match);
+            final boolean rhsSpecific = isSpecificUriMatch(rhs.match);
             if (lhsSpecific != rhsSpecific) {
                 return lhsSpecific ? -1 : 1;
             }
@@ -224,6 +224,13 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
         }
 
         return compare(lhs, rhs);
+    }
+
+    /** Determine whether a given match result is considered "specific" in our application. */
+    public static final boolean isSpecificUriMatch(int match) {
+        match = (match & IntentFilter.MATCH_CATEGORY_MASK);
+        return match >= IntentFilter.MATCH_CATEGORY_HOST
+                && match <= IntentFilter.MATCH_CATEGORY_PATH;
     }
 
     /**
@@ -304,26 +311,6 @@ public abstract class AbstractResolverComparator implements Comparator<ResolvedC
         mHandler.removeMessages(RANKER_RESULT_TIMEOUT);
         afterCompute();
         mAfterCompute = null;
-    }
-
-    /**
-     * Sort intents alphabetically based on package name.
-     */
-    class AzInfoComparator implements Comparator<ResolveInfo> {
-        Collator mCollator;
-        AzInfoComparator(Context context) {
-            mCollator = Collator.getInstance(context.getResources().getConfiguration().locale);
-        }
-
-        @Override
-        public int compare(ResolveInfo lhsp, ResolveInfo rhsp) {
-            if (lhsp == null) {
-                return -1;
-            } else if (rhsp == null) {
-                return 1;
-            }
-            return mCollator.compare(lhsp.activityInfo.packageName, rhsp.activityInfo.packageName);
-        }
     }
 
 }

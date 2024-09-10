@@ -21,14 +21,14 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback
 import com.android.internal.annotations.VisibleForTesting
+import java.util.function.Supplier
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.function.Supplier
 
 /**
- * A helper class to track app's readiness for the scene transition animation.
- * The app is ready when both the image is laid out and the drawer offset is calculated.
+ * A helper class to track app's readiness for the scene transition animation. The app is ready when
+ * both the image is laid out and the drawer offset is calculated.
  */
 @VisibleForTesting(visibility = VisibleForTesting.Visibility.PACKAGE)
 class EnterTransitionAnimationDelegate(
@@ -45,21 +45,22 @@ class EnterTransitionAnimationDelegate(
         activity.setEnterSharedElementCallback(
             object : SharedElementCallback() {
                 override fun onMapSharedElements(
-                    names: MutableList<String>, sharedElements: MutableMap<String, View>
+                    names: MutableList<String>,
+                    sharedElements: MutableMap<String, View>
                 ) {
-                    this@EnterTransitionAnimationDelegate.onMapSharedElements(
-                        names, sharedElements
-                    )
+                    this@EnterTransitionAnimationDelegate.onMapSharedElements(names, sharedElements)
                 }
-            })
+            }
+        )
     }
 
     fun postponeTransition() {
         activity.postponeEnterTransition()
-        timeoutJob = activity.lifecycleScope.launch {
-            delay(activity.resources.getInteger(R.integer.config_shortAnimTime).toLong())
-            onTimeout()
-        }
+        timeoutJob =
+            activity.lifecycleScope.launch {
+                delay(activity.resources.getInteger(R.integer.config_shortAnimTime).toLong())
+                onTimeout()
+            }
     }
 
     private fun onTimeout() {
@@ -110,8 +111,14 @@ class EnterTransitionAnimationDelegate(
 
     override fun onLayoutChange(
         v: View,
-        left: Int, top: Int, right: Int, bottom: Int,
-        oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int,
+        oldLeft: Int,
+        oldTop: Int,
+        oldRight: Int,
+        oldBottom: Int
     ) {
         v.removeOnLayoutChangeListener(this)
         startPostponedEnterTransition()

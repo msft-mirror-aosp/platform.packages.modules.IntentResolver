@@ -15,13 +15,16 @@
  */
 
 @file:JvmName("HttpUriMatcher")
+
 package com.android.intentresolver.contentpreview
 
 import java.net.URI
 
 internal fun String.isHttpUri() =
-    kotlin.runCatching {
-        URI(this).scheme.takeIf { scheme ->
-            "http".compareTo(scheme, true) == 0 || "https".compareTo(scheme, true) == 0
+    kotlin
+        .runCatching {
+            URI(this).scheme.takeIf { scheme ->
+                "http".compareTo(scheme, true) == 0 || "https".compareTo(scheme, true) == 0
+            }
         }
-    }.getOrNull() != null
+        .getOrNull() != null

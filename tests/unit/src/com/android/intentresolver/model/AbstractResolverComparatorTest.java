@@ -25,7 +25,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 import android.os.Message;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.intentresolver.ResolvedComponentInfo;
 import com.android.intentresolver.chooser.TargetInfo;
@@ -47,7 +47,7 @@ public class AbstractResolverComparatorTest {
         ResolvedComponentInfo r2 = createResolvedComponentInfo(
                 new ComponentName("zackage", "zlass"));
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AbstractResolverComparator comparator = getTestComparator(context, null);
 
         assertEquals("Pinned ranks over unpinned", -1, comparator.compare(r1, r2));
@@ -64,7 +64,7 @@ public class AbstractResolverComparatorTest {
                 new ComponentName("zackage", "zlass"));
         r2.setPinned(true);
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AbstractResolverComparator comparator = getTestComparator(context, null);
 
         assertEquals("Both pinned should rank alphabetically", -1, comparator.compare(r1, r2));
@@ -78,7 +78,7 @@ public class AbstractResolverComparatorTest {
         ResolvedComponentInfo r2 = createResolvedComponentInfo(
                 new ComponentName("package", "class"));
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AbstractResolverComparator comparator = getTestComparator(context, promoteToFirst);
 
         assertEquals("PromoteToFirst ranks over non-cemented", -1, comparator.compare(r1, r2));
@@ -94,7 +94,7 @@ public class AbstractResolverComparatorTest {
                 new ComponentName("package", "class"));
         r2.setPinned(true);
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AbstractResolverComparator comparator = getTestComparator(context, cementedComponent);
 
         assertEquals("PromoteToFirst ranks over pinned", -1, comparator.compare(r1, r2));

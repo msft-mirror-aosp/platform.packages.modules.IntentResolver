@@ -37,9 +37,7 @@ internal class ItemRevealAnimationTracker {
     fun animateLabel(view: View, info: TargetInfo) = animateView(view, info, labelProgress)
 
     private fun animateView(view: View, info: TargetInfo, map: MutableMap<TargetInfo, Record>) {
-        val record = map.getOrPut(info) {
-            Record()
-        }
+        val record = map.getOrPut(info) { Record() }
         if ((view.animation as? RevealAnimation)?.record === record) return
 
         view.clearAnimation()

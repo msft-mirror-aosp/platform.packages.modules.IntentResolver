@@ -32,9 +32,9 @@ private const val PACKAGE = "org.package"
 
 class ShortcutToChooserTargetConverterTest {
     private val testSubject = ShortcutToChooserTargetConverter()
-    private val ranks = arrayOf(3 ,7, 1 ,3)
-    private val shortcuts = ranks
-        .foldIndexed(ArrayList<ShareShortcutInfo>(ranks.size)) { i, acc, rank ->
+    private val ranks = arrayOf(3, 7, 1, 3)
+    private val shortcuts =
+        ranks.foldIndexed(ArrayList<ShareShortcutInfo>(ranks.size)) { i, acc, rank ->
             val id = i + 1
             acc.add(
                 createShareShortcutInfo(
@@ -54,13 +54,14 @@ class ShortcutToChooserTargetConverterTest {
         val appTargetCache = HashMap<ChooserTarget, AppTarget>()
         val shortcutInfoCache = HashMap<ChooserTarget, ShortcutInfo>()
 
-        var chooserTargets = testSubject.convertToChooserTarget(
-            shortcuts,
-            shortcuts,
-            appTargets,
-            appTargetCache,
-            shortcutInfoCache,
-        )
+        var chooserTargets =
+            testSubject.convertToChooserTarget(
+                shortcuts,
+                shortcuts,
+                appTargets,
+                appTargetCache,
+                shortcutInfoCache,
+            )
 
         assertCorrectShortcutToChooserTargetConversion(
             shortcuts,
@@ -77,13 +78,14 @@ class ShortcutToChooserTargetConverterTest {
         appTargetCache.clear()
         shortcutInfoCache.clear()
 
-        chooserTargets = testSubject.convertToChooserTarget(
-            subset,
-            shortcuts,
-            appTargets,
-            appTargetCache,
-            shortcutInfoCache,
-        )
+        chooserTargets =
+            testSubject.convertToChooserTarget(
+                subset,
+                shortcuts,
+                appTargets,
+                appTargetCache,
+                shortcutInfoCache,
+            )
 
         assertCorrectShortcutToChooserTargetConversion(
             shortcuts,
@@ -102,17 +104,20 @@ class ShortcutToChooserTargetConverterTest {
         val expectedScoreAllShortcuts = floatArrayOf(1.0f, 0.99f, 0.99f, 0.98f)
         val shortcutInfoCache = HashMap<ChooserTarget, ShortcutInfo>()
 
-        var chooserTargets = testSubject.convertToChooserTarget(
-            shortcuts,
-            shortcuts,
-            null,
-            null,
-            shortcutInfoCache,
-        )
+        var chooserTargets =
+            testSubject.convertToChooserTarget(
+                shortcuts,
+                shortcuts,
+                null,
+                null,
+                shortcutInfoCache,
+            )
 
         assertCorrectShortcutToChooserTargetConversion(
-            shortcuts, chooserTargets,
-            expectedOrderAllShortcuts, expectedScoreAllShortcuts
+            shortcuts,
+            chooserTargets,
+            expectedOrderAllShortcuts,
+            expectedScoreAllShortcuts
         )
         assertShortcutInfoCache(chooserTargets, shortcutInfoCache)
 
@@ -124,17 +129,20 @@ class ShortcutToChooserTargetConverterTest {
         val expectedScoreSubset = floatArrayOf(1.0f, 0.99f, 0.98f)
         shortcutInfoCache.clear()
 
-        chooserTargets = testSubject.convertToChooserTarget(
-            subset,
-            shortcuts,
-            null,
-            null,
-            shortcutInfoCache,
-        )
+        chooserTargets =
+            testSubject.convertToChooserTarget(
+                subset,
+                shortcuts,
+                null,
+                null,
+                shortcutInfoCache,
+            )
 
         assertCorrectShortcutToChooserTargetConversion(
-            shortcuts, chooserTargets,
-            expectedOrderSubset, expectedScoreSubset
+            shortcuts,
+            chooserTargets,
+            expectedOrderSubset,
+            expectedScoreSubset
         )
         assertShortcutInfoCache(chooserTargets, shortcutInfoCache)
     }
@@ -158,7 +166,8 @@ class ShortcutToChooserTargetConverterTest {
     }
 
     private fun assertAppTargetCache(
-        chooserTargets: List<ChooserTarget>, cache: Map<ChooserTarget, AppTarget>
+        chooserTargets: List<ChooserTarget>,
+        cache: Map<ChooserTarget, AppTarget>
     ) {
         for (ct in chooserTargets) {
             val target = cache[ct]
@@ -167,7 +176,8 @@ class ShortcutToChooserTargetConverterTest {
     }
 
     private fun assertShortcutInfoCache(
-        chooserTargets: List<ChooserTarget>, cache: Map<ChooserTarget, ShortcutInfo>
+        chooserTargets: List<ChooserTarget>,
+        cache: Map<ChooserTarget, ShortcutInfo>
     ) {
         for (ct in chooserTargets) {
             val si = cache[ct]

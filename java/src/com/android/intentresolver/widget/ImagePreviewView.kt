@@ -24,15 +24,16 @@ interface ImagePreviewView {
 
     /**
      * [ImagePreviewView] progressively prepares views for shared element transition and reports
-     * each successful preparation with [onTransitionElementReady] call followed by
-     * closing [onAllTransitionElementsReady] invocation. Thus the overall invocation pattern is
-     * zero or more [onTransitionElementReady] calls followed by the final
-     * [onAllTransitionElementsReady] call.
+     * each successful preparation with [onTransitionElementReady] call followed by closing
+     * [onAllTransitionElementsReady] invocation. Thus the overall invocation pattern is zero or
+     * more [onTransitionElementReady] calls followed by the final [onAllTransitionElementsReady]
+     * call.
      */
     interface TransitionElementStatusCallback {
         /**
-         * Invoked when a view for a shared transition animation element is ready i.e. the image
-         * is loaded and the view is laid out.
+         * Invoked when a view for a shared transition animation element is ready i.e. the image is
+         * loaded and the view is laid out.
+         *
          * @param name shared element name.
          */
         fun onTransitionElementReady(name: String)

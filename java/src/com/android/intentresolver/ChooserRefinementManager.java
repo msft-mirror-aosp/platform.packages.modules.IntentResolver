@@ -41,7 +41,6 @@ import java.util.function.Consumer;
 
 import javax.inject.Inject;
 
-
 /**
  * Helper class to manage Sharesheet's "refinement" flow, where callers supply a "refinement
  * activity" that will be invoked when a target is selected, allowing the calling app to add
@@ -60,22 +59,58 @@ public final class ChooserRefinementManager extends ViewModel {
     private boolean mConfigurationChangeInProgress = false;
 
     /**
+     * The types of selections that may be sent to refinement.
+     *
+     * The refinement flow results in a refined intent, but the interpretation of that intent
+     * depends on the type of selection that prompted the refinement.
+     */
+    public enum RefinementType {
+        TARGET_INFO,  // A normal (`TargetInfo`) target.
+
+        // System actions derived from the refined intent (from `ChooserActionFactory`).
+        COPY_ACTION,
+        EDIT_ACTION
+    }
+
+    /**
      * A token for the completion of a refinement process that can be consumed exactly once.
      */
     public static class RefinementCompletion {
         private TargetInfo mTargetInfo;
         private boolean mConsumed;
+        private final RefinementType mType;
 
-        RefinementCompletion(TargetInfo targetInfo) {
-            mTargetInfo = targetInfo;
+        @Nullable
+        private final TargetInfo mOriginalTargetInfo;
+
+        @Nullable
+        private final Intent mRefinedIntent;
+
+        RefinementCompletion(
+                @Nullable RefinementType type,
+                @Nullable TargetInfo originalTargetInfo,
+                @Nullable Intent refinedIntent) {
+            mType = type;
+            mOriginalTargetInfo = originalTargetInfo;
+            mRefinedIntent = refinedIntent;
+        }
+
+        public RefinementType getType() {
+            return mType;
+        }
+
+        @Nullable
+        public TargetInfo getOriginalTargetInfo() {
+            return mOriginalTargetInfo;
         }
 
         /**
          * @return The output of the completed refinement process. Null if the process was aborted
          *         or failed.
          */
-        public TargetInfo getTargetInfo() {
-            return mTargetInfo;
+        @Nullable
+        public Intent getRefinedIntent() {
+            return mRefinedIntent;
         }
 
         /**
@@ -106,14 +141,11 @@ public final class ChooserRefinementManager extends ViewModel {
      * @return true if the selection should wait for a now-started refinement flow, or false if it
      * can proceed by the default (non-refinement) logic.
      */
-    public boolean maybeHandleSelection(TargetInfo selectedTarget,
-            IntentSender refinementIntentSender, Application application, Handler mainHandler) {
-        if (refinementIntentSender == null) {
-            return false;
-        }
-        if (selectedTarget.getAllSourceIntents().isEmpty()) {
-            return false;
-        }
+    public boolean maybeHandleSelection(
+            TargetInfo selectedTarget,
+            IntentSender refinementIntentSender,
+            Application application,
+            Handler mainHandler) {
         if (selectedTarget.isSuspended()) {
             // We expect all launches to fail for this target, so don't make the user go through the
             // refinement flow first. Besides, the default (non-refinement) handling displays a
@@ -122,27 +154,57 @@ public final class ChooserRefinementManager extends ViewModel {
             return false;
         }
 
+        return maybeHandleSelection(
+                RefinementType.TARGET_INFO,
+                selectedTarget.getAllSourceIntents(),
+                selectedTarget,
+                refinementIntentSender,
+                application,
+                mainHandler);
+    }
+
+    /**
+     * Delegate the user's selection of targets (with one or more matching {@code sourceIntents} to
+     * the refinement flow, if possible.
+     * @return true if the selection should wait for a now-started refinement flow, or false if it
+     * can proceed by the default (non-refinement) logic.
+     */
+    public boolean maybeHandleSelection(
+            RefinementType refinementType,
+            List<Intent> sourceIntents,
+            @Nullable TargetInfo originalTargetInfo,
+            IntentSender refinementIntentSender,
+            Application application,
+            Handler mainHandler) {
+        // Our requests have a non-null `originalTargetInfo` in exactly the
+        // cases when `refinementType == TARGET_INFO`.
+        assert ((originalTargetInfo == null) == (refinementType == RefinementType.TARGET_INFO));
+
+        if (refinementIntentSender == null) {
+            return false;
+        }
+        if (sourceIntents.isEmpty()) {
+            return false;
+        }
+
         destroy();  // Terminate any prior sessions.
         mRefinementResultReceiver = new RefinementResultReceiver(
+                refinementType,
                 refinedIntent -> {
                     destroy();
-
-                    TargetInfo refinedTarget =
-                            selectedTarget.tryToCloneWithAppliedRefinement(refinedIntent);
-                    if (refinedTarget != null) {
-                        mRefinementCompletion.setValue(new RefinementCompletion(refinedTarget));
-                    } else {
-                        Log.e(TAG, "Failed to apply refinement to any matching source intent");
-                        mRefinementCompletion.setValue(new RefinementCompletion(null));
-                    }
+                    mRefinementCompletion.setValue(
+                            new RefinementCompletion(
+                                    refinementType, originalTargetInfo, refinedIntent));
                 },
                 () -> {
                     destroy();
-                    mRefinementCompletion.setValue(new RefinementCompletion(null));
+                    mRefinementCompletion.setValue(
+                            new RefinementCompletion(
+                                    refinementType, originalTargetInfo, null));
                 },
                 mainHandler);
 
-        Intent refinementRequest = makeRefinementRequest(mRefinementResultReceiver, selectedTarget);
+        Intent refinementRequest = makeRefinementRequest(mRefinementResultReceiver, sourceIntents);
         try {
             refinementIntentSender.sendIntent(application, 0, refinementRequest, null, null);
             return true;
@@ -168,7 +230,7 @@ public final class ChooserRefinementManager extends ViewModel {
                 // into a valid Chooser session, so we'll treat it as a cancellation instead.
                 Log.w(TAG, "Chooser resumed while awaiting refinement result; aborting");
                 destroy();
-                mRefinementCompletion.setValue(new RefinementCompletion(null));
+                mRefinementCompletion.setValue(new RefinementCompletion(null, null, null));
             }
         }
     }
@@ -188,9 +250,8 @@ public final class ChooserRefinementManager extends ViewModel {
     }
 
     private static Intent makeRefinementRequest(
-            RefinementResultReceiver resultReceiver, TargetInfo originalTarget) {
+            RefinementResultReceiver resultReceiver, List<Intent> sourceIntents) {
         final Intent fillIn = new Intent();
-        final List<Intent> sourceIntents = originalTarget.getAllSourceIntents();
         fillIn.putExtra(Intent.EXTRA_INTENT, sourceIntents.get(0));
         final int sourceIntentCount = sourceIntents.size();
         if (sourceIntentCount > 1) {
@@ -205,16 +266,19 @@ public final class ChooserRefinementManager extends ViewModel {
     }
 
     private static class RefinementResultReceiver extends ResultReceiver {
+        private final RefinementType mType;
         private final Consumer<Intent> mOnSelectionRefined;
         private final Runnable mOnRefinementCancelled;
 
         private boolean mDestroyed;
 
         RefinementResultReceiver(
+                RefinementType type,
                 Consumer<Intent> onSelectionRefined,
                 Runnable onRefinementCancelled,
                 Handler handler) {
             super(handler);
+            mType = type;
             mOnSelectionRefined = onSelectionRefined;
             mOnRefinementCancelled = onRefinementCancelled;
         }

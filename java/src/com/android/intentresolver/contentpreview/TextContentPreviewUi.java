@@ -82,22 +82,16 @@ class TextContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
-        ViewGroup layout = displayInternal(layoutInflater, parent, headlineViewParent);
-        displayModifyShareAction(
-                headlineViewParent == null ? layout : headlineViewParent, mActionFactory);
-        return layout;
+            View headlineViewParent) {
+        return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
     private ViewGroup displayInternal(
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         ViewGroup contentPreviewLayout = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_text, parent, false);
-        if (headlineViewParent == null) {
-            headlineViewParent = contentPreviewLayout;
-        }
         inflateHeadline(headlineViewParent);
 
         final ActionRow actionRow =
