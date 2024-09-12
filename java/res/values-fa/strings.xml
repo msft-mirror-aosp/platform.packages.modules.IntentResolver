@@ -98,9 +98,9 @@
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"استفاده از مرورگر شخصی"</string>
     <string name="miniresolver_use_work_browser" msgid="7892699758493230342">"استفاده از مرورگر کاری"</string>
     <string name="exclude_text" msgid="5508128757025928034">"مستثنی کردن نوشتار"</string>
-    <string name="include_text" msgid="642280283268536140">"گنجاندن نوشتار"</string>
+    <string name="include_text" msgid="642280283268536140">"لحاظ کردن نوشتار"</string>
     <string name="exclude_link" msgid="1332778255031992228">"مستثنی کردن پیوند"</string>
-    <string name="include_link" msgid="827855767220339802">"گنجاندن پیوند"</string>
+    <string name="include_link" msgid="827855767220339802">"لحاظ کردن پیوند"</string>
     <string name="pinned" msgid="7623664001331394139">"سنجاق‌شده"</string>
     <string name="selectable_image" msgid="3157858923437182271">"تصویر قابل‌انتخاب"</string>
     <string name="selectable_video" msgid="1271768647699300826">"ویدیو قابل‌انتخاب"</string>
