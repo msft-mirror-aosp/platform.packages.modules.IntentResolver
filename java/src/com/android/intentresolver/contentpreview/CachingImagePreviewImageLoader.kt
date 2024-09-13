@@ -87,7 +87,7 @@ constructor(
 
     private suspend fun loadUncachedImage(uri: Uri): Bitmap? =
         withContext(bgDispatcher) {
-            runCatching { semaphore.withPermit { thumbnailLoader.invoke(uri) } }
+            runCatching { semaphore.withPermit { thumbnailLoader.loadThumbnail(uri) } }
                 .onFailure {
                     ensureActive()
                     Log.d(TAG, "Failed to load preview for $uri", it)

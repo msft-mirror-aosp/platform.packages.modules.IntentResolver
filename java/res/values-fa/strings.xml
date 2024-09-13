@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{هم‌رسانی تصویر}one{هم‌رسانی ‍# تصویر}other{هم‌رسانی ‍# تصویر}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{درحال هم‌رسانی ویدیو}one{درحال هم‌رسانی # ویدیو}other{درحال هم‌رسانی # ویدیو}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{هم‌رسانی # فایل}one{هم‌رسانی # فایل}other{هم‌رسانی # فایل}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"انتخاب کردن موارد برای هم‌رسانی"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{درحال هم‌رسانی تصویر با نوشتار}one{درحال هم‌رسانی # تصویر با نوشتار}other{درحال هم‌رسانی # تصویر با نوشتار}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{درحال هم‌رسانی تصویر با پیوند}one{درحال هم‌رسانی # تصویر با پیوند}other{درحال هم‌رسانی # تصویر با پیوند}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{درحال هم‌رسانی ویدیو با نوشتار}one{درحال هم‌رسانی # ویدیو با نوشتار}other{درحال هم‌رسانی # ویدیو با نوشتار}}"</string>
@@ -70,9 +71,9 @@
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{فقط تصویر}one{فقط تصویر}other{فقط تصویر}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{فقط ویدیو}one{فقط ویدیو}other{فقط ویدیو}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{فقط فایل}one{فقط فایل}other{فقط فایل}}"</string>
-    <string name="image_preview_a11y_description" msgid="297102643932491797">"تصویر کوچک پیش‌نمای تصویر"</string>
-    <string name="video_preview_a11y_description" msgid="683440858811095990">"تصویر کوچک پیش‌نمای ویدیو"</string>
-    <string name="file_preview_a11y_description" msgid="7397224827802410602">"تصویر کوچک پیش‌نمای فایل"</string>
+    <string name="image_preview_a11y_description" msgid="297102643932491797">"ریزعکس پیش‌نمای تصویر"</string>
+    <string name="video_preview_a11y_description" msgid="683440858811095990">"ریزعکس پیش‌نمای ویدیو"</string>
+    <string name="file_preview_a11y_description" msgid="7397224827802410602">"ریزعکس پیش‌نمای فایل"</string>
     <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"هیچ فردی که با او هم‌رسانی کنید توصیه نشده است"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏مجوز ضبط به این برنامه داده نشده است اما می‌تواند صدا را ازطریق این دستگاه USB ضبط کند."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"شخصی"</string>

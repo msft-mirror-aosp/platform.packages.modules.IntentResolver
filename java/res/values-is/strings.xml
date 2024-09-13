@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Deilir mynd}one{Deilir # mynd}other{Deilir # myndum}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Deilir myndskeiði}one{Deilir # myndskeiði}other{Deilir # myndskeiðum}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Deilir # skrá}one{Deilir # skrá}other{Deilir # skrám}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Veldu atriði til að deila"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Deilir mynd með texta}one{Deilir # mynd með texta}other{Deilir # myndum með texta}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Deilir mynd með tengli}one{Deilir # mynd með tengli}other{Deilir # myndum með tengli}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Deilir myndskeiði með texta}one{Deilir # myndskeiði með texta}other{Deilir # myndskeiðum með texta}}"</string>

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ምስልን በማጋራት ላይ}one{# ምስልን በማጋራት ላይ}other{# ምስሎችን በማጋራት ላይ}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{ቪድዮ በማጋራት ላይ}one{# ቪድዮ በማጋራት ላይ}other{# ቪድዮዎችን በማጋራት ላይ}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# ፋይልን በማጋራት ላይ}one{# ፋይልን በማጋራት ላይ}other{# ፋይሎችን በማጋራት ላይ}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"ለማጋራት ንጥሎችን ምረጥ"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{ምስልን ከጽሑፍ ጋር በማጋራት ላይ}one{# ምስልን ከጽሑፍ ጋር በማጋራት ላይ}other{# ምስሎችን ከጽሑፍ ጋር በማጋራት ላይ}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{ምስልን ከአገናኝ ጋር በማጋራት ላይ}one{# ምስልን ከአገናኝ ጋር በማጋራት ላይ}other{# ምስሎችን ከአገናኝ ጋር በማጋራት ላይ}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{ቪድዮ ከጽሑፍ ጋር በማጋራት ላይ}one{# ቪድዮ ከጽሑፍ ጋር በማጋራት ላይ}other{# ቪድዮዎችን ከጽሑፍ ጋር በማጋራት ላይ}}"</string>

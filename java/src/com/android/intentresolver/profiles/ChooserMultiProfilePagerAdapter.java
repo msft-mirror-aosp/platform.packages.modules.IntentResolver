@@ -112,6 +112,15 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
         }
     }
 
+    /**
+     * Set enabled status for all targets in all profiles.
+     */
+    public void setTargetsEnabled(boolean isEnabled) {
+        for (int i = 0, size = getItemCount(); i < size; i++) {
+            getPageAdapterForIndex(i).getListAdapter().setTargetsEnabled(isEnabled);
+        }
+    }
+
     private static ViewGroup makeProfileView(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         ViewGroup rootView =

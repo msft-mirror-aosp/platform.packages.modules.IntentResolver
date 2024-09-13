@@ -6,13 +6,6 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
-  name: "target_data_caching"
-  namespace: "intentresolver"
-  description: "Enables caching target icons and labels in a local DB"
-  bug: "285314844"
-}
-
-flag {
   name: "modular_framework"
   namespace: "intentresolver"
   description: "Enables the new modular framework"
@@ -31,6 +24,16 @@ flag {
   namespace: "intentresolver"
   description: "This flag enables sending system actions to the caller refinement flow"
   bug: "331206205"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_drawer_offset_on_config_change"
+  namespace: "intentresolver"
+  description: "Fix drawer offset calculation after rotating when in a non-initial tab"
+  bug: "344057117"
   metadata {
     purpose: PURPOSE_BUGFIX
   }
@@ -71,4 +74,52 @@ flag {
   metadata {
     purpose: PURPOSE_BUGFIX
   }
+}
+
+flag {
+  name: "fix_shortcut_loader_job_leak"
+  namespace: "intentresolver"
+  description: "User a nested coroutine scope for shortcut loader instances"
+  bug: "358135601"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_shortcuts_flashing"
+  namespace: "intentresolver"
+  description: "Do not flash shortcuts on payload selection change"
+  bug: "343300158"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "preview_image_loader"
+  namespace: "intentresolver"
+  description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
+  bug: "348665058"
+}
+
+flag {
+  name: "shareousel_update_exclude_components_extra"
+  namespace: "intentresolver"
+  description: "Allow Shareousel selection change callback to update Intent#EXTRA_EXCLUDE_COMPONENTS"
+  bug: "352496527"
+}
+
+flag {
+  name: "unselect_final_item"
+  namespace: "intentresolver"
+  description: "Allow toggling of final Shareousel item"
+  bug: "349468879"
+}
+
+flag {
+  name: "shareousel_scroll_offscreen_selections"
+  namespace: "intentresolver"
+  description: "Whether to scroll items onscreen when they are partially offscreen and selected/unselected."
+  bug: "351883537"
 }

@@ -18,12 +18,12 @@ package com.android.intentresolver.contentpreview.payloadtoggle.data.repository
 
 import android.net.Uri
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
-import dagger.hilt.android.scopes.ViewModelScoped
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** Stores set of selected previews. */
-@ViewModelScoped
+@ActivityRetainedScoped
 class PreviewSelectionsRepository @Inject constructor() {
     val selections = MutableStateFlow(emptyMap<Uri, PreviewModel>())
 }

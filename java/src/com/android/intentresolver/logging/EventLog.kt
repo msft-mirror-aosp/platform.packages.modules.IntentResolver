@@ -47,6 +47,7 @@ interface EventLog {
     )
 
     fun logCustomActionSelected(positionPicked: Int)
+
     fun logShareTargetSelected(
         targetType: Int,
         packageName: String?,
@@ -60,15 +61,29 @@ interface EventLog {
     )
 
     fun logDirectShareTargetReceived(category: Int, latency: Int)
+
     fun logActionShareWithPreview(previewType: Int)
+
     fun logActionSelected(targetType: Int)
+
     fun logContentPreviewWarning(uri: Uri?)
+
     fun logSharesheetTriggered()
+
     fun logSharesheetAppLoadComplete()
+
     fun logSharesheetDirectLoadComplete()
+
     fun logSharesheetDirectLoadTimeout()
+
     fun logSharesheetProfileChanged()
+
     fun logSharesheetExpansionChanged(isCollapsed: Boolean)
+
     fun logSharesheetAppShareRankingTimeout()
+
     fun logSharesheetEmptyDirectShareRow()
+
+    /** Log payload selection */
+    fun logPayloadSelectionChanged()
 }
