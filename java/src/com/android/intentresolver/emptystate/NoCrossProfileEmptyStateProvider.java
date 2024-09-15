@@ -16,124 +16,103 @@
 
 package com.android.intentresolver.emptystate;
 
-import android.app.admin.DevicePolicyEventLogger;
-import android.app.admin.DevicePolicyManager;
-import android.content.Context;
-import android.os.UserHandle;
+import static android.stats.devicepolicy.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL;
+import static android.stats.devicepolicy.DevicePolicyEnums.RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK;
 
-import androidx.annotation.NonNull;
+import static com.android.intentresolver.ChooserActivity.METRICS_CATEGORY_CHOOSER;
+
+import static java.util.Objects.requireNonNull;
+
+import android.content.Intent;
+
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 
+import com.android.intentresolver.ProfileHelper;
 import com.android.intentresolver.ResolverListAdapter;
+import com.android.intentresolver.data.repository.DevicePolicyResources;
+import com.android.intentresolver.shared.model.Profile;
+
+import java.util.List;
 
 /**
- * Empty state provider that does not allow cross profile sharing, it will return a blocker
- * in case if the profile of the current tab is not the same as the profile of the calling app.
+ * Empty state provider that informs about a lack of cross profile sharing. It will return
+ * an empty state in case there are no intents which can be forwarded to another profile.
  */
 public class NoCrossProfileEmptyStateProvider implements EmptyStateProvider {
 
-    private final UserHandle mPersonalProfileUserHandle;
-    private final EmptyState mNoWorkToPersonalEmptyState;
-    private final EmptyState mNoPersonalToWorkEmptyState;
+    private final ProfileHelper mProfileHelper;
+    private final DevicePolicyResources mDevicePolicyResources;
+    private final boolean mIsShare;
     private final CrossProfileIntentsChecker mCrossProfileIntentsChecker;
-    private final UserHandle mTabOwnerUserHandleForLaunch;
 
-    public NoCrossProfileEmptyStateProvider(UserHandle personalUserHandle,
-            EmptyState noWorkToPersonalEmptyState,
-            EmptyState noPersonalToWorkEmptyState,
+    public NoCrossProfileEmptyStateProvider(
+            ProfileHelper profileHelper,
+            DevicePolicyResources devicePolicyResources,
             CrossProfileIntentsChecker crossProfileIntentsChecker,
-            UserHandle tabOwnerUserHandleForLaunch) {
-        mPersonalProfileUserHandle = personalUserHandle;
-        mNoWorkToPersonalEmptyState = noWorkToPersonalEmptyState;
-        mNoPersonalToWorkEmptyState = noPersonalToWorkEmptyState;
+            boolean isShare) {
+        mProfileHelper = profileHelper;
+        mDevicePolicyResources = devicePolicyResources;
+        mIsShare = isShare;
         mCrossProfileIntentsChecker = crossProfileIntentsChecker;
-        mTabOwnerUserHandleForLaunch = tabOwnerUserHandleForLaunch;
+    }
+
+    private boolean hasCrossProfileIntents(List<Intent> intents, Profile source, Profile target) {
+        if (source.getPrimary().getHandle().equals(target.getPrimary().getHandle())) {
+            return true;
+        }
+        // Note: Use of getPrimary() here also handles delegation of CLONE profile to parent.
+        return mCrossProfileIntentsChecker.hasCrossProfileIntents(intents,
+                source.getPrimary().getId(), target.getPrimary().getId());
     }
 
     @Nullable
     @Override
-    public EmptyState getEmptyState(ResolverListAdapter resolverListAdapter) {
-        boolean shouldShowBlocker =
-                !mTabOwnerUserHandleForLaunch.equals(resolverListAdapter.getUserHandle())
-                        && !mCrossProfileIntentsChecker
-                        .hasCrossProfileIntents(resolverListAdapter.getIntents(),
-                                mTabOwnerUserHandleForLaunch.getIdentifier(),
-                                resolverListAdapter.getUserHandle().getIdentifier());
+    public EmptyState getEmptyState(ResolverListAdapter adapter) {
+        Profile launchedBy = mProfileHelper.getLaunchedAsProfile();
+        Profile tabOwner = requireNonNull(mProfileHelper.findProfile(adapter.getUserHandle()));
 
-        if (!shouldShowBlocker) {
+        // When sharing into or out of Private profile, perform the check using the parent profile
+        // instead. (Hard-coded application of CROSS_PROFILE_CONTENT_SHARING_DELEGATE_FROM_PARENT)
+
+        Profile effectiveSource = launchedBy;
+        Profile effectiveTarget = tabOwner;
+
+        // Assumption baked into design: "Personal" profile is the parent of all other profiles.
+        if (launchedBy.getType() == Profile.Type.PRIVATE) {
+            effectiveSource = mProfileHelper.getPersonalProfile();
+        }
+
+        if (tabOwner.getType() == Profile.Type.PRIVATE) {
+            effectiveTarget = mProfileHelper.getPersonalProfile();
+        }
+
+        // Allow access to the tab when there is at least one target permitted to cross profiles.
+        if (hasCrossProfileIntents(adapter.getIntents(), effectiveSource, effectiveTarget)) {
             return null;
         }
 
-        if (resolverListAdapter.getUserHandle().equals(mPersonalProfileUserHandle)) {
-            return mNoWorkToPersonalEmptyState;
-        } else {
-            return mNoPersonalToWorkEmptyState;
+        switch (tabOwner.getType()) {
+            case PERSONAL:
+                return new DevicePolicyBlockerEmptyState(
+                        mDevicePolicyResources.getCrossProfileBlocked(),
+                        mDevicePolicyResources.toPersonalBlockedByPolicyMessage(mIsShare),
+                        RESOLVER_EMPTY_STATE_NO_SHARING_TO_PERSONAL,
+                        METRICS_CATEGORY_CHOOSER);
+
+            case WORK:
+                return new DevicePolicyBlockerEmptyState(
+                        mDevicePolicyResources.getCrossProfileBlocked(),
+                        mDevicePolicyResources.toWorkBlockedByPolicyMessage(mIsShare),
+                        RESOLVER_EMPTY_STATE_NO_SHARING_TO_WORK,
+                        METRICS_CATEGORY_CHOOSER);
+
+            case PRIVATE:
+                return new DevicePolicyBlockerEmptyState(
+                        mDevicePolicyResources.getCrossProfileBlocked(),
+                        mDevicePolicyResources.toPrivateBlockedByPolicyMessage(mIsShare),
+                        /* Suppress log event. TODO: Define a new metrics event for this? */ -1,
+                        METRICS_CATEGORY_CHOOSER);
         }
-    }
-
-
-    /**
-     * Empty state that gets strings from the device policy manager and tracks events into
-     * event logger of the device policy events.
-     */
-    public static class DevicePolicyBlockerEmptyState implements EmptyState {
-
-        @NonNull
-        private final Context mContext;
-        private final String mDevicePolicyStringTitleId;
-        @StringRes
-        private final int mDefaultTitleResource;
-        private final String mDevicePolicyStringSubtitleId;
-        @StringRes
-        private final int mDefaultSubtitleResource;
-        private final int mEventId;
-        @NonNull
-        private final String mEventCategory;
-
-        public DevicePolicyBlockerEmptyState(
-                @NonNull Context context,
-                String devicePolicyStringTitleId,
-                @StringRes int defaultTitleResource,
-                String devicePolicyStringSubtitleId,
-                @StringRes int defaultSubtitleResource,
-                int devicePolicyEventId,
-                @NonNull String devicePolicyEventCategory) {
-            mContext = context;
-            mDevicePolicyStringTitleId = devicePolicyStringTitleId;
-            mDefaultTitleResource = defaultTitleResource;
-            mDevicePolicyStringSubtitleId = devicePolicyStringSubtitleId;
-            mDefaultSubtitleResource = defaultSubtitleResource;
-            mEventId = devicePolicyEventId;
-            mEventCategory = devicePolicyEventCategory;
-        }
-
-        @Nullable
-        @Override
-        public String getTitle() {
-            return mContext.getSystemService(DevicePolicyManager.class).getResources().getString(
-                    mDevicePolicyStringTitleId,
-                    () -> mContext.getString(mDefaultTitleResource));
-        }
-
-        @Nullable
-        @Override
-        public String getSubtitle() {
-            return mContext.getSystemService(DevicePolicyManager.class).getResources().getString(
-                    mDevicePolicyStringSubtitleId,
-                    () -> mContext.getString(mDefaultSubtitleResource));
-        }
-
-        @Override
-        public void onEmptyStateShown() {
-            DevicePolicyEventLogger.createEvent(mEventId)
-                    .setStrings(mEventCategory)
-                    .write();
-        }
-
-        @Override
-        public boolean shouldSkipDataRebuild() {
-            return true;
-        }
+        return null;
     }
 }

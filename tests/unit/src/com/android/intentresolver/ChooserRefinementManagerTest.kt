@@ -29,16 +29,19 @@ import androidx.lifecycle.Observer
 import androidx.test.annotation.UiThreadTest
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.intentresolver.ChooserRefinementManager.RefinementCompletion
+import com.android.intentresolver.ChooserRefinementManager.RefinementType
 import com.android.intentresolver.chooser.ImmutableTargetInfo
-import com.android.intentresolver.chooser.TargetInfo
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentCaptor
-import org.mockito.Mockito
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 
 @RunWith(AndroidJUnit4::class)
 @UiThreadTest
@@ -55,15 +58,15 @@ class ChooserRefinementManagerTest {
         object : Observer<RefinementCompletion> {
             val failureCountDown = CountDownLatch(1)
             val successCountDown = CountDownLatch(1)
-            var latestTargetInfo: TargetInfo? = null
+            var latestRefinedIntent: Intent? = null
 
             override fun onChanged(completion: RefinementCompletion) {
                 if (completion.consume()) {
-                    val targetInfo = completion.targetInfo
-                    if (targetInfo == null) {
+                    val refinedIntent = completion.refinedIntent
+                    if (refinedIntent == null) {
                         failureCountDown.countDown()
                     } else {
-                        latestTargetInfo = targetInfo
+                        latestRefinedIntent = refinedIntent
                         successCountDown.countDown()
                     }
                 }
@@ -95,28 +98,26 @@ class ChooserRefinementManagerTest {
             )
             .isTrue()
 
-        val intentCaptor = ArgumentCaptor.forClass(Intent::class.java)
-        Mockito.verify(intentSender)
-            .sendIntent(any(), eq(0), intentCaptor.capture(), eq(null), eq(null))
+        val intentCaptor = argumentCaptor<Intent>()
+        verify(intentSender).sendIntent(any(), eq(0), intentCaptor.capture(), eq(null), eq(null))
 
-        val intent = intentCaptor.value
-        assertThat(intent?.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java))
+        val intent = intentCaptor.firstValue
+        assertThat(intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java))
             .isEqualTo(exampleSourceIntents[0])
 
         val alternates =
-            intent?.getParcelableArrayExtra(Intent.EXTRA_ALTERNATE_INTENTS, Intent::class.java)
+            intent.getParcelableArrayExtra(Intent.EXTRA_ALTERNATE_INTENTS, Intent::class.java)
         assertThat(alternates?.size).isEqualTo(1)
         assertThat(alternates?.get(0)).isEqualTo(exampleSourceIntents[1])
 
         // Complete the refinement
         val receiver =
-            intent?.getParcelableExtra(Intent.EXTRA_RESULT_RECEIVER, ResultReceiver::class.java)
+            intent.getParcelableExtra(Intent.EXTRA_RESULT_RECEIVER, ResultReceiver::class.java)
         val bundle = Bundle().apply { putParcelable(Intent.EXTRA_INTENT, exampleSourceIntents[0]) }
         receiver?.send(Activity.RESULT_OK, bundle)
 
         assertThat(completionObserver.successCountDown.await(1000, TimeUnit.MILLISECONDS)).isTrue()
-        assertThat(completionObserver.latestTargetInfo?.resolvedIntent?.action)
-            .isEqualTo(Intent.ACTION_VIEW)
+        assertThat(completionObserver.latestRefinedIntent?.action).isEqualTo(Intent.ACTION_VIEW)
     }
 
     @Test
@@ -131,11 +132,10 @@ class ChooserRefinementManagerTest {
             )
             .isTrue()
 
-        val intentCaptor = ArgumentCaptor.forClass(Intent::class.java)
-        Mockito.verify(intentSender)
-            .sendIntent(any(), eq(0), intentCaptor.capture(), eq(null), eq(null))
+        val intentCaptor = argumentCaptor<Intent>()
+        verify(intentSender).sendIntent(any(), eq(0), intentCaptor.capture(), eq(null), eq(null))
 
-        val intent = intentCaptor.value
+        val intent = intentCaptor.firstValue
 
         // Complete the refinement
         val receiver =
@@ -231,10 +231,11 @@ class ChooserRefinementManagerTest {
 
     @Test
     fun testRefinementCompletion() {
-        val refinementCompletion = RefinementCompletion(exampleTargetInfo)
-        assertThat(refinementCompletion.targetInfo).isEqualTo(exampleTargetInfo)
+        val refinementCompletion =
+            RefinementCompletion(RefinementType.TARGET_INFO, exampleTargetInfo, null)
+        assertThat(refinementCompletion.originalTargetInfo).isEqualTo(exampleTargetInfo)
         assertThat(refinementCompletion.consume()).isTrue()
-        assertThat(refinementCompletion.targetInfo).isEqualTo(exampleTargetInfo)
+        assertThat(refinementCompletion.originalTargetInfo).isEqualTo(exampleTargetInfo)
 
         // can only consume once.
         assertThat(refinementCompletion.consume()).isFalse()

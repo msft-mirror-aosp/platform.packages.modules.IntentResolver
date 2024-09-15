@@ -35,6 +35,9 @@ interface ImageLoader : suspend (Uri) -> Bitmap?, suspend (Uri, Boolean) -> Bitm
     /** Prepopulate the image loader cache. */
     fun prePopulate(uris: List<Uri>)
 
+    /** Returns a bitmap for the given URI if it's already cached, otherwise null */
+    fun getCachedBitmap(uri: Uri): Bitmap? = null
+
     /** Load preview image; caching is allowed. */
     override suspend fun invoke(uri: Uri) = invoke(uri, true)
 

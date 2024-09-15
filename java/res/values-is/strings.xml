@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Ekki er hægt að opna þetta efni með vinnuforritum"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Ekki er hægt að deila þessu efni með forritum til einkanota"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Ekki er hægt að opna þetta efni með forritum til einkanota"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Ekki er hægt að deila þessu efni með einkaforritum"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Ekki er hægt að opna þetta efni með einkaforritum"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Hlé gert á vinnuforritum"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Ljúka hléi"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Engin vinnuforrit"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Engin forrit til einkanota"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Engin einkaforrit"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Opna <xliff:g id="APP">%s</xliff:g> í þínu eigin sniði?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Opna <xliff:g id="APP">%s</xliff:g> í vinnusniðinu þínu?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Nota einkavafra"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Útiloka tengil"</string>
     <string name="include_link" msgid="827855767220339802">"Hafa tengil með"</string>
     <string name="pinned" msgid="7623664001331394139">"Fest"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Mynd sem hægt er að velja"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Vídeó sem hægt er að velja"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Atriði sem hægt er að velja"</string>
 </resources>

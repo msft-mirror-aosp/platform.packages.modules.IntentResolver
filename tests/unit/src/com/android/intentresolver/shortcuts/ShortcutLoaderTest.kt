@@ -27,15 +27,10 @@ import android.content.pm.ShortcutManager
 import android.os.UserHandle
 import android.os.UserManager
 import androidx.test.filters.SmallTest
-import com.android.intentresolver.any
-import com.android.intentresolver.argumentCaptor
-import com.android.intentresolver.capture
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.createAppTarget
 import com.android.intentresolver.createShareShortcutInfo
 import com.android.intentresolver.createShortcutInfo
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertWithMessage
 import java.util.function.Consumer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,11 +43,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.mockito.Mockito.anyInt
-import org.mockito.Mockito.atLeastOnce
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.atLeastOnce
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @SmallTest
@@ -64,19 +63,19 @@ class ShortcutLoaderTest {
         }
     private val pm =
         mock<PackageManager> {
-            whenever(getApplicationInfo(any(), any<ApplicationInfoFlags>())).thenReturn(appInfo)
+            on { getApplicationInfo(any(), any<ApplicationInfoFlags>()) } doReturn appInfo
         }
     private val userManager =
         mock<UserManager> {
-            whenever(isUserRunning(any<UserHandle>())).thenReturn(true)
-            whenever(isUserUnlocked(any<UserHandle>())).thenReturn(true)
-            whenever(isQuietModeEnabled(any<UserHandle>())).thenReturn(false)
+            on { isUserRunning(any<UserHandle>()) } doReturn true
+            on { isUserUnlocked(any<UserHandle>()) } doReturn true
+            on { isQuietModeEnabled(any<UserHandle>()) } doReturn false
         }
     private val context =
         mock<Context> {
-            whenever(packageManager).thenReturn(pm)
-            whenever(createContextAsUser(any(), anyInt())).thenReturn(this)
-            whenever(getSystemService(Context.USER_SERVICE)).thenReturn(userManager)
+            on { packageManager } doReturn pm
+            on { createContextAsUser(any(), any()) } doReturn mock
+            on { getSystemService(Context.USER_SERVICE) } doReturn userManager
         }
     private val scheduler = TestCoroutineScheduler()
     private val dispatcher = UnconfinedTestDispatcher(scheduler)
@@ -86,7 +85,7 @@ class ShortcutLoaderTest {
     private val callback = mock<Consumer<ShortcutLoader.Result>>()
     private val componentName = ComponentName("pkg", "Class")
     private val appTarget =
-        mock<DisplayResolveInfo> { whenever(resolvedComponentName).thenReturn(componentName) }
+        mock<DisplayResolveInfo> { on { resolvedComponentName } doReturn componentName }
     private val appTargets = arrayOf(appTarget)
     private val matchingShortcutInfo = createShortcutInfo("id-0", componentName, 1)
 
@@ -119,13 +118,13 @@ class ShortcutLoaderTest {
                 )
             val appPredictorCallbackCaptor = argumentCaptor<AppPredictor.Callback>()
             verify(appPredictor, atLeastOnce())
-                .registerPredictionUpdates(any(), capture(appPredictorCallbackCaptor))
-            appPredictorCallbackCaptor.value.onTargetsAvailable(shortcuts)
+                .registerPredictionUpdates(any(), appPredictorCallbackCaptor.capture())
+            appPredictorCallbackCaptor.firstValue.onTargetsAvailable(shortcuts)
 
             val resultCaptor = argumentCaptor<ShortcutLoader.Result>()
-            verify(callback, times(1)).accept(capture(resultCaptor))
+            verify(callback, times(1)).accept(resultCaptor.capture())
 
-            val result = resultCaptor.value
+            val result = resultCaptor.firstValue
             assertTrue("An app predictor result is expected", result.isFromAppPredictor)
             assertArrayEquals(
                 "Wrong input app targets in the result",
@@ -159,7 +158,7 @@ class ShortcutLoaderTest {
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
-                    whenever(getShareTargets(intentFilter)).thenReturn(shortcutManagerResult)
+                    on { getShareTargets(intentFilter) } doReturn shortcutManagerResult
                 }
             whenever(context.getSystemService(Context.SHORTCUT_SERVICE)).thenReturn(shortcutManager)
             val testSubject =
@@ -177,9 +176,9 @@ class ShortcutLoaderTest {
             testSubject.updateAppTargets(appTargets)
 
             val resultCaptor = argumentCaptor<ShortcutLoader.Result>()
-            verify(callback, times(1)).accept(capture(resultCaptor))
+            verify(callback, times(1)).accept(resultCaptor.capture())
 
-            val result = resultCaptor.value
+            val result = resultCaptor.firstValue
             assertFalse("An ShortcutManager result is expected", result.isFromAppPredictor)
             assertArrayEquals(
                 "Wrong input app targets in the result",
@@ -212,7 +211,7 @@ class ShortcutLoaderTest {
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
-                    whenever(getShareTargets(intentFilter)).thenReturn(shortcutManagerResult)
+                    on { getShareTargets(intentFilter) } doReturn (shortcutManagerResult)
                 }
             whenever(context.getSystemService(Context.SHORTCUT_SERVICE)).thenReturn(shortcutManager)
             val testSubject =
@@ -232,13 +231,13 @@ class ShortcutLoaderTest {
             verify(appPredictor, times(1)).requestPredictionUpdate()
             val appPredictorCallbackCaptor = argumentCaptor<AppPredictor.Callback>()
             verify(appPredictor, times(1))
-                .registerPredictionUpdates(any(), capture(appPredictorCallbackCaptor))
-            appPredictorCallbackCaptor.value.onTargetsAvailable(emptyList())
+                .registerPredictionUpdates(any(), appPredictorCallbackCaptor.capture())
+            appPredictorCallbackCaptor.firstValue.onTargetsAvailable(emptyList())
 
             val resultCaptor = argumentCaptor<ShortcutLoader.Result>()
-            verify(callback, times(1)).accept(capture(resultCaptor))
+            verify(callback, times(1)).accept(resultCaptor.capture())
 
-            val result = resultCaptor.value
+            val result = resultCaptor.firstValue
             assertFalse("An ShortcutManager result is expected", result.isFromAppPredictor)
             assertArrayEquals(
                 "Wrong input app targets in the result",
@@ -271,7 +270,7 @@ class ShortcutLoaderTest {
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
-                    whenever(getShareTargets(intentFilter)).thenReturn(shortcutManagerResult)
+                    on { getShareTargets(intentFilter) } doReturn shortcutManagerResult
                 }
             whenever(context.getSystemService(Context.SHORTCUT_SERVICE)).thenReturn(shortcutManager)
             whenever(appPredictor.requestPredictionUpdate())
@@ -293,9 +292,9 @@ class ShortcutLoaderTest {
             verify(appPredictor, times(1)).requestPredictionUpdate()
 
             val resultCaptor = argumentCaptor<ShortcutLoader.Result>()
-            verify(callback, times(1)).accept(capture(resultCaptor))
+            verify(callback, times(1)).accept(resultCaptor.capture())
 
-            val result = resultCaptor.value
+            val result = resultCaptor.firstValue
             assertFalse("An ShortcutManager result is expected", result.isFromAppPredictor)
             assertArrayEquals(
                 "Wrong input app targets in the result",
@@ -346,7 +345,7 @@ class ShortcutLoaderTest {
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
-                    whenever(getShareTargets(intentFilter)).thenReturn(shortcutManagerResult)
+                    on { getShareTargets(intentFilter) } doReturn shortcutManagerResult
                 }
             whenever(context.getSystemService(Context.SHORTCUT_SERVICE)).thenReturn(shortcutManager)
             val testSubject =
@@ -417,14 +416,14 @@ class ShortcutLoaderTest {
             verify(appPredictor, times(1)).requestPredictionUpdate()
             val appPredictorCallbackCaptor = argumentCaptor<AppPredictor.Callback>()
             verify(appPredictor, times(1))
-                .registerPredictionUpdates(any(), capture(appPredictorCallbackCaptor))
-            appPredictorCallbackCaptor.value.onTargetsAvailable(emptyList())
+                .registerPredictionUpdates(any(), appPredictorCallbackCaptor.capture())
+            appPredictorCallbackCaptor.firstValue.onTargetsAvailable(emptyList())
 
             verify(shortcutManager, never()).getShareTargets(any())
             val resultCaptor = argumentCaptor<ShortcutLoader.Result>()
-            verify(callback, times(1)).accept(capture(resultCaptor))
+            verify(callback, times(1)).accept(resultCaptor.capture())
 
-            val result = resultCaptor.value
+            val result = resultCaptor.firstValue
             assertWithMessage("A ShortcutManager result is expected")
                 .that(result.isFromAppPredictor)
                 .isFalse()

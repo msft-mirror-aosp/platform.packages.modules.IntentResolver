@@ -23,9 +23,12 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL
 import android.provider.Downloads
+import android.provider.MediaStore.MediaColumns.HEIGHT
+import android.provider.MediaStore.MediaColumns.WIDTH
 import android.provider.OpenableColumns
 import android.text.TextUtils
 import android.util.Log
+import android.util.Size
 import com.android.intentresolver.measurements.runTracing
 
 internal fun ContentInterface.getTypeSafe(uri: Uri): String? =
@@ -82,6 +85,25 @@ internal fun Cursor.readPreviewUri(): Uri? =
                 ?.let { getString(it)?.let(Uri::parse) }
         }
         .getOrNull()
+
+fun Cursor.readSize(): Size? {
+    val widthIdx = columnNames.indexOf(WIDTH)
+    val heightIdx = columnNames.indexOf(HEIGHT)
+    return if (widthIdx < 0 || heightIdx < 0 || isNull(widthIdx) || isNull(heightIdx)) {
+        null
+    } else {
+        runCatching {
+                val width = getInt(widthIdx)
+                val height = getInt(heightIdx)
+                if (width >= 0 && height > 0) {
+                    Size(width, height)
+                } else {
+                    null
+                }
+            }
+            .getOrNull()
+    }
+}
 
 internal fun Cursor.readTitle(): String =
     runCatching {

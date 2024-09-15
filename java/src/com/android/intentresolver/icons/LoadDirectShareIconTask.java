@@ -57,7 +57,7 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
 
     @Override
     protected Drawable doInBackground(Void... voids) {
-        Drawable drawable;
+        Drawable drawable = null;
         Trace.beginSection("shortcut-icon");
         try {
             final Icon icon = mTargetInfo.getChooserTargetIcon();
@@ -70,6 +70,8 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
             } else {
                 Log.e(TAG, "Failed to load shortcut icon for "
                         + mTargetInfo.getChooserTargetComponentName() + "; no access");
+            }
+            if (drawable == null) {
                 drawable = loadIconPlaceholder();
             }
         } catch (Exception e) {
@@ -86,6 +88,7 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
     }
 
     @WorkerThread
+    @Nullable
     private Drawable getChooserTargetIconDrawable(
             Context context,
             @Nullable Icon icon,

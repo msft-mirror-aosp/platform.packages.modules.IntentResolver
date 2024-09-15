@@ -21,16 +21,16 @@ import com.android.internal.logging.InstanceIdSequence
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import dagger.hilt.android.components.ActivityComponent
-import dagger.hilt.android.scopes.ActivityScoped
+import dagger.hilt.android.components.ActivityRetainedComponent
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import dagger.hilt.testing.TestInstallIn
 
 /** Binds a [FakeEventLog] as [EventLog] in tests. */
 @Module
-@TestInstallIn(components = [ActivityComponent::class], replaces = [EventLogModule::class])
+@TestInstallIn(components = [ActivityRetainedComponent::class], replaces = [EventLogModule::class])
 interface TestEventLogModule {
 
-    @Binds @ActivityScoped fun fakeEventLog(impl: FakeEventLog): EventLog
+    @Binds @ActivityRetainedScoped fun fakeEventLog(impl: FakeEventLog): EventLog
 
     companion object {
         @Provides

@@ -32,43 +32,8 @@
         android:requiredForAllUsers="true"
         android:supportsRtl="true">
 
-        <!-- This alias needs to be maintained until there are no more devices that could be
-             upgrading from T QPR3. (b/283722356) -->
-        <activity-alias
-            android:name=".ChooserActivityLauncher"
-            android:targetActivity=".ChooserActivity"
-            android:exported="true">
-
-            <!-- This intent filter is assigned a priority greater than 100 so
-                 that it will take precedence over the framework ChooserActivity
-                 in the process of resolving implicit action.CHOOSER intents
-                 whenever this activity is enabled by the experiment flag. -->
-            <intent-filter android:priority="500">
-                <action android:name="android.intent.action.CHOOSER" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.VOICE" />
-            </intent-filter>
-        </activity-alias>
-
         <activity android:name=".ChooserActivity"
-                android:theme="@style/Theme.DeviceDefault.Chooser"
-                android:finishOnCloseSystemDialogs="true"
-                android:excludeFromRecents="true"
-                android:documentLaunchMode="never"
-                android:relinquishTaskIdentity="true"
-                android:configChanges="screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden"
-                android:visibleToInstantApps="true"
-                android:exported="false"/>
-
-        <receiver android:name="com.android.intentresolver.v2.ChooserSelector"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <activity android:name="com.android.intentresolver.v2.ChooserActivity"
-            android:enabled="false"
+            android:enabled="true"
             android:theme="@style/Theme.DeviceDefault.Chooser"
             android:finishOnCloseSystemDialogs="true"
             android:excludeFromRecents="true"
@@ -76,19 +41,22 @@
             android:relinquishTaskIdentity="true"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden"
             android:visibleToInstantApps="true"
+            android:exported="false" />
+
+        <!-- This alias needs to be maintained until there are no more devices that could be
+             upgrading from T QPR3. (b/283722356) -->
+        <activity-alias
+            android:name=".ChooserActivityLauncher"
+            android:targetActivity=".ChooserActivity"
             android:exported="true">
 
-            <!-- This intent filter is assigned a priority greater than 500 so
-                 that it will take precedence over the ChooserActivity
-                 in the process of resolving implicit action.CHOOSER intents
-                 whenever this activity is enabled by the experiment flag. -->
-            <intent-filter android:priority="501">
+            <intent-filter android:priority="500">
                 <action android:name="android.intent.action.CHOOSER" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.VOICE" />
             </intent-filter>
 
-        </activity>
+        </activity-alias>
 
         <provider android:name="androidx.startup.InitializationProvider"
                 android:authorities="${applicationId}.androidx-startup"

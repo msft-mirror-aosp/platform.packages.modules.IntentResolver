@@ -31,12 +31,13 @@ private const val SHARED_TEXT_KEY = "shared_text"
 
 /**
  * A factory to create an AppPredictor instance for a profile, if available.
+ *
  * @param context, application context
- * @param sharedText, a shared text associated with the Chooser's target intent
- * (see [android.content.Intent.EXTRA_TEXT]).
- * Will be mapped to app predictor's "shared_text" parameter.
- * @param targetIntentFilter, an IntentFilter to match direct share targets against.
- * Will be mapped app predictor's "intent_filter" parameter.
+ * @param sharedText, a shared text associated with the Chooser's target intent (see
+ *   [android.content.Intent.EXTRA_TEXT]). Will be mapped to app predictor's "shared_text"
+ *   parameter.
+ * @param targetIntentFilter, an IntentFilter to match direct share targets against. Will be mapped
+ *   app predictor's "intent_filter" parameter.
  */
 class AppPredictorFactory(
     private val context: Context,
@@ -50,16 +51,19 @@ class AppPredictorFactory(
     fun create(userHandle: UserHandle): AppPredictor? {
         if (!appPredictionAvailable) return null
         val contextAsUser = context.createContextAsUser(userHandle, 0 /* flags */)
-        val extras = Bundle().apply {
-            putParcelable(APP_PREDICTION_INTENT_FILTER_KEY, targetIntentFilter)
-            putString(SHARED_TEXT_KEY, sharedText)
-        }
-        val appPredictionContext = AppPredictionContext.Builder(contextAsUser)
-            .setUiSurface(APP_PREDICTION_SHARE_UI_SURFACE)
-            .setPredictedTargetCount(APP_PREDICTION_SHARE_TARGET_QUERY_PACKAGE_LIMIT)
-            .setExtras(extras)
-            .build()
-        return contextAsUser.getSystemService(AppPredictionManager::class.java)
+        val extras =
+            Bundle().apply {
+                putParcelable(APP_PREDICTION_INTENT_FILTER_KEY, targetIntentFilter)
+                putString(SHARED_TEXT_KEY, sharedText)
+            }
+        val appPredictionContext =
+            AppPredictionContext.Builder(contextAsUser)
+                .setUiSurface(APP_PREDICTION_SHARE_UI_SURFACE)
+                .setPredictedTargetCount(APP_PREDICTION_SHARE_TARGET_QUERY_PACKAGE_LIMIT)
+                .setExtras(extras)
+                .build()
+        return contextAsUser
+            .getSystemService(AppPredictionManager::class.java)
             ?.createAppPredictionSession(appPredictionContext)
     }
 }

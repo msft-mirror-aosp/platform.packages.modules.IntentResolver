@@ -35,7 +35,7 @@
         app:layout_constrainedWidth="true"
         style="@style/TextAppearance.ChooserDefault"
         android:fontFamily="@androidprv:string/config_headlineFontFamily"
-        android:textSize="18sp"
+        android:textSize="@dimen/chooser_headline_text_size"
         />
 
     <TextView
@@ -65,13 +65,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:maxWidth="@dimen/modify_share_text_toggle_max_width"
+        android:background="@drawable/chooser_action_button_bg"
         app:layout_constraintEnd_toEndOf="parent"
         android:maxLines="2"
         android:ellipsize="end"
         android:visibility="gone"
-        android:paddingTop="3dp"
-        style="@style/TextAppearance.ChooserDefault"
+        android:paddingVertical="3dp"
+        android:paddingHorizontal="@dimen/chooser_edge_margin_normal_half"
+        style="?android:attr/borderlessButtonStyle"
         android:drawableEnd="@drawable/chevron_right"
+        android:textColor="?androidprv:attr/materialColorOnSurface"
+        android:textSize="12sp"
         />
 
     <!-- This is only relevant for image+text preview, but needs to be in this layout so it can

@@ -23,7 +23,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.android.intentresolver.contentpreview.BasePreviewViewModel
 import com.android.intentresolver.contentpreview.ImageLoader
-import com.android.intentresolver.contentpreview.PayloadToggleInteractor
 
 /** A test content preview model that supports image loader override. */
 class TestContentPreviewViewModel(
@@ -34,23 +33,12 @@ class TestContentPreviewViewModel(
     override val previewDataProvider
         get() = viewModel.previewDataProvider
 
-    override val payloadToggleInteractor: PayloadToggleInteractor?
-        get() = viewModel.payloadToggleInteractor
-
     override fun init(
         targetIntent: Intent,
-        chooserIntent: Intent,
         additionalContentUri: Uri?,
-        focusedItemIdx: Int,
         isPayloadTogglingEnabled: Boolean,
     ) {
-        viewModel.init(
-            targetIntent,
-            chooserIntent,
-            additionalContentUri,
-            focusedItemIdx,
-            isPayloadTogglingEnabled
-        )
+        viewModel.init(targetIntent, additionalContentUri, isPayloadTogglingEnabled)
     }
 
     companion object {

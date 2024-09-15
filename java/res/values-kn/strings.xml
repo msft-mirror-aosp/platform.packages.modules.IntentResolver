@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ಕೆಲಸಕ್ಕೆ ಸಂಬಂಧಿಸಿದ ಆ್ಯಪ್‌ಗಳ ಈ ವಿಷಯವನ್ನು ತೆರೆಯಲಾಗುವುದಿಲ್ಲ"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"ವೈಯಕ್ತಿಕ ಆ್ಯಪ್‌ಗಳ ಮೂಲಕ ಈ ವಿಷಯವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ವೈಯಕ್ತಿಕ ಆ್ಯಪ್‌ಗಳ ಮೂಲಕ ಈ ವಿಷಯವನ್ನು ತೆರೆಯಲಾಗುವುದಿಲ್ಲ"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"ಈ ಕಂಟೆಂಟ್‌ ಅನ್ನು ಖಾಸಗಿ ಆ್ಯಪ್‌ಗಳ ಜೊತೆಗೆ ಹಂಚಿಕೊಳ್ಳಲು ಸಾಧ್ಯವಿಲ್ಲ"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"ಈ ಕಂಟೆಂಟ್‌ ಅನ್ನು ಖಾಸಗಿ ಆ್ಯಪ್‌ಗಳ ಮೂಲಕ ತೆರೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"ಕೆಲಸಕ್ಕೆ ಸಂಬಂಧಿಸಿದ ಆ್ಯಪ್‌ಗಳನ್ನು ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ವಿರಾಮವನ್ನು ರದ್ದುಗೊಳಿಸಿ"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"ಯಾವುದೇ ಕೆಲಸಕ್ಕೆ ಸಂಬಂಧಿಸಿದ ಆ್ಯಪ್‌ಗಳಿಲ್ಲ"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಆ್ಯಪ್‌ಗಳಿಲ್ಲ"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"ಯಾವುದೇ ಖಾಸಗಿ ಆ್ಯಪ್‍‍ಗಳಿಲ್ಲ"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ <xliff:g id="APP">%s</xliff:g> ಅನ್ನು ತೆರೆಯಬೇಕೆ?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"ನಿಮ್ಮ ಉದ್ಯೋಗದ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ <xliff:g id="APP">%s</xliff:g> ಅನ್ನು ತೆರೆಯಬೇಕೆ?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ವೈಯಕ್ತಿಕ ಬ್ರೌಸರ್ ಬಳಸಿ"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"ಲಿಂಕ್ ಹೊರತುಪಡಿಸಿ"</string>
     <string name="include_link" msgid="827855767220339802">"ಲಿಂಕ್ ಸೇರಿಸಿ"</string>
     <string name="pinned" msgid="7623664001331394139">"ಪಿನ್‌ ಮಾಡಲಾಗಿದೆ"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"ಆಯ್ಕೆಮಾಡಬಹುದಾದ ಚಿತ್ರ"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"ಆಯ್ಕೆ ಮಾಡಬಹುದಾದ ವೀಡಿಯೊ"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"ಆಯ್ಕೆ ಮಾಡಬಹುದಾದ ಐಟಂ"</string>
 </resources>

@@ -77,7 +77,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Tətbiqə qeydə almaq icazəsi verilməsə də, bu USB vasitəsilə səsi qeydə ala bilər."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Şəxsi"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"İş"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"Şəxsi"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Məxfi"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Şəxsi məzmuna baxış"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"İş məzmununa baxış"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Şəxsi baxış"</string>
@@ -86,10 +86,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Bu kontenti iş tətbiqləri ilə açmaq mümkün deyil"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Bu kontenti şəxsi tətbiqlər ilə paylaşmaq mümkün deyil"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Bu kontenti şəxsi tətbiqlər ilə açmaq mümkün deyil"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Bu kontenti şəxsi tətbiqlərlə paylaşmaq mümkün deyil"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Bu kontenti şəxsi tətbiqlərlə açmaq mümkün deyil"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"İş tətbiqləri durdurulub"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Pauzanı bitirin"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"İş tətbiqi yoxdur"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Şəxsi tətbiq yoxdur"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Şəxsi tətbiq yoxdur"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Şəxsi profilinizdə <xliff:g id="APP">%s</xliff:g> tətbiqi açılsın?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"İş profilinizdə <xliff:g id="APP">%s</xliff:g> tətbiqi açılsın?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Şəxsi brauzerdən istifadə edin"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Keçidi istisna edin"</string>
     <string name="include_link" msgid="827855767220339802">"Keçid daxil edin"</string>
     <string name="pinned" msgid="7623664001331394139">"Bərkidilib"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Seçilə bilən şəkil"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Seçilə bilən video"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Seçilə bilən element"</string>
 </resources>

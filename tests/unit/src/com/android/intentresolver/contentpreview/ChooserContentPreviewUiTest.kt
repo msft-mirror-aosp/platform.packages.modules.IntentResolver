@@ -21,10 +21,8 @@ import android.net.Uri
 import android.platform.test.flag.junit.CheckFlagsRule
 import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import com.android.intentresolver.ContentTypeHint
-import com.android.intentresolver.TestPreviewImageLoader
+import com.android.intentresolver.FakeImageLoader
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi.ActionFactory
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.android.intentresolver.widget.ActionRow
 import com.android.intentresolver.widget.ImagePreviewView
 import com.google.common.truth.Truth.assertThat
@@ -38,12 +36,14 @@ import org.junit.Test
 import org.mockito.Mockito.never
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class ChooserContentPreviewUiTest {
     private val testScope = TestScope(EmptyCoroutineContext + UnconfinedTestDispatcher())
     private val previewData = mock<PreviewDataProvider>()
     private val headlineGenerator = mock<HeadlineGenerator>()
-    private val imageLoader = TestPreviewImageLoader(emptyMap())
+    private val imageLoader = FakeImageLoader(emptyMap())
     private val testMetadataText: CharSequence = "Test metadata text"
     private val actionFactory =
         object : ActionFactory {
@@ -70,6 +70,7 @@ class ChooserContentPreviewUiTest {
             targetIntent,
             imageLoader,
             actionFactory,
+            { null },
             transitionCallback,
             headlineGenerator,
             ContentTypeHint.NONE,

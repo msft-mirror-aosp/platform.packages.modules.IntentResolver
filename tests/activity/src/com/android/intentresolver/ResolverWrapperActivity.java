@@ -21,9 +21,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import android.annotation.Nullable;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -31,7 +31,6 @@ import android.os.UserHandle;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.test.espresso.idling.CountingIdlingResource;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
@@ -54,10 +53,6 @@ public class ResolverWrapperActivity extends ResolverActivity {
     private final CountingIdlingResource mLabelIdlingResource =
             new CountingIdlingResource("LoadLabelTask");
 
-    public ResolverWrapperActivity() {
-        super(/* isIntentPicker= */ true);
-    }
-
     public CountingIdlingResource getLabelIdlingResource() {
         return mLabelIdlingResource;
     }
@@ -69,8 +64,7 @@ public class ResolverWrapperActivity extends ResolverActivity {
             Intent[] initialIntents,
             List<ResolveInfo> rList,
             boolean filterLastUsed,
-            UserHandle userHandle,
-            TargetDataLoader targetDataLoader) {
+            UserHandle userHandle) {
         return new ResolverListAdapter(
                 context,
                 payloadIntents,
@@ -82,7 +76,7 @@ public class ResolverWrapperActivity extends ResolverActivity {
                 payloadIntents.get(0),  // TODO: extract upstream
                 this,
                 userHandle,
-                new TargetDataLoaderWrapper(targetDataLoader, mLabelIdlingResource));
+                new TargetDataLoaderWrapper(mTargetDataLoader, mLabelIdlingResource));
     }
 
     @Override
@@ -93,27 +87,16 @@ public class ResolverWrapperActivity extends ResolverActivity {
         return super.createCrossProfileIntentsChecker();
     }
 
-    @Override
-    protected WorkProfileAvailabilityManager createWorkProfileAvailabilityManager() {
-        if (sOverrides.mWorkProfileAvailability != null) {
-            return sOverrides.mWorkProfileAvailability;
-        }
-        return super.createWorkProfileAvailabilityManager();
-    }
-
     ResolverListAdapter getAdapter() {
         return mMultiProfilePagerAdapter.getActiveListAdapter();
     }
 
     ResolverListAdapter getPersonalListAdapter() {
-        return ((ResolverListAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(0));
+        return mMultiProfilePagerAdapter.getPersonalListAdapter();
     }
 
     ResolverListAdapter getWorkListAdapter() {
-        if (mMultiProfilePagerAdapter.getInactiveListAdapter() == null) {
-            return null;
-        }
-        return ((ResolverListAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(1));
+        return mMultiProfilePagerAdapter.getWorkListAdapter();
     }
 
     @Override
@@ -142,35 +125,13 @@ public class ResolverWrapperActivity extends ResolverActivity {
         return sOverrides.workResolverListController;
     }
 
-    @Override
-    public PackageManager getPackageManager() {
-        if (sOverrides.createPackageManager != null) {
-            return sOverrides.createPackageManager.apply(super.getPackageManager());
-        }
-        return super.getPackageManager();
-    }
-
     protected UserHandle getCurrentUserHandle() {
         return mMultiProfilePagerAdapter.getCurrentUserHandle();
     }
 
     @Override
-    protected AnnotatedUserHandles computeAnnotatedUserHandles() {
-        return sOverrides.annotatedUserHandles;
-    }
-    @Override
-    public void startActivityAsUser(
-            @NonNull Intent intent,
-            Bundle options,
-            @NonNull UserHandle user
-    ) {
+    public void startActivityAsUser(Intent intent, Bundle options, UserHandle user) {
         super.startActivityAsUser(intent, options, user);
-    }
-
-    @Override
-    protected List<UserHandle> getResolverRankerServiceUserHandleListInternal(UserHandle
-            userHandle) {
-        return super.getResolverRankerServiceUserHandleListInternal(userHandle);
     }
 
     /**
@@ -178,60 +139,21 @@ public class ResolverWrapperActivity extends ResolverActivity {
      * <p>
      * Instead, we use static instances of this object to modify behavior.
      */
-    static class OverrideData {
+    public static class OverrideData {
         @SuppressWarnings("Since15")
-        public Function<PackageManager, PackageManager> createPackageManager;
         public Function<Pair<TargetInfo, UserHandle>, Boolean> onSafelyStartInternalCallback;
         public ResolverListController resolverListController;
         public ResolverListController workResolverListController;
         public Boolean isVoiceInteraction;
-        public AnnotatedUserHandles annotatedUserHandles;
-        public Integer myUserId;
         public boolean hasCrossProfileIntents;
-        public boolean isQuietModeEnabled;
-        public WorkProfileAvailabilityManager mWorkProfileAvailability;
         public CrossProfileIntentsChecker mCrossProfileIntentsChecker;
 
         public void reset() {
             onSafelyStartInternalCallback = null;
             isVoiceInteraction = null;
-            createPackageManager = null;
             resolverListController = mock(ResolverListController.class);
             workResolverListController = mock(ResolverListController.class);
-            annotatedUserHandles = AnnotatedUserHandles.newBuilder()
-                    .setUserIdOfCallingApp(1234)  // Must be non-negative.
-                    .setUserHandleSharesheetLaunchedAs(UserHandle.SYSTEM)
-                    .setPersonalProfileUserHandle(UserHandle.SYSTEM)
-                    .build();
-            myUserId = null;
             hasCrossProfileIntents = true;
-            isQuietModeEnabled = false;
-
-            mWorkProfileAvailability = new WorkProfileAvailabilityManager(null, null, null) {
-                @Override
-                public boolean isQuietModeEnabled() {
-                    return isQuietModeEnabled;
-                }
-
-                @Override
-                public boolean isWorkProfileUserUnlocked() {
-                    return true;
-                }
-
-                @Override
-                public void requestQuietModeEnabled(boolean enabled) {
-                    isQuietModeEnabled = enabled;
-                }
-
-                @Override
-                public void markWorkProfileEnabledBroadcastReceived() {}
-
-                @Override
-                public boolean isWaitingToEnableWorkProfile() {
-                    return false;
-                }
-            };
-
             mCrossProfileIntentsChecker = mock(CrossProfileIntentsChecker.class);
             when(mCrossProfileIntentsChecker.hasCrossProfileIntents(any(), anyInt(), anyInt()))
                     .thenAnswer(invocation -> hasCrossProfileIntents);
@@ -249,19 +171,21 @@ public class ResolverWrapperActivity extends ResolverActivity {
         }
 
         @Override
-        public void loadAppTargetIcon(
+        @Nullable
+        public Drawable getOrLoadAppTargetIcon(
                 @NonNull DisplayResolveInfo info,
                 @NonNull UserHandle userHandle,
                 @NonNull Consumer<Drawable> callback) {
-            mTargetDataLoader.loadAppTargetIcon(info, userHandle, callback);
+            return mTargetDataLoader.getOrLoadAppTargetIcon(info, userHandle, callback);
         }
 
         @Override
-        public void loadDirectShareIcon(
+        @Nullable
+        public Drawable getOrLoadDirectShareIcon(
                 @NonNull SelectableTargetInfo info,
                 @NonNull UserHandle userHandle,
                 @NonNull Consumer<Drawable> callback) {
-            mTargetDataLoader.loadDirectShareIcon(info, userHandle, callback);
+            return mTargetDataLoader.getOrLoadDirectShareIcon(info, userHandle, callback);
         }
 
         @Override

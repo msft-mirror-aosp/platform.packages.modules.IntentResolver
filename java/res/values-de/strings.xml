@@ -46,7 +46,7 @@
     <string name="chooseActivity" msgid="6659724877523973446">"Aktion auswählen"</string>
     <string name="noApplications" msgid="1139487441772284671">"Diese Aktion kann von keiner App ausgeführt werden."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Du verwendest diese App außerhalb deines Arbeitsprofils"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"Du verwendest diese App in deinem Arbeitsprofil."</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"Du verwendest diese App in deinem Arbeitsprofil"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"Immer"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"Nur diesmal"</string>
     <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"<xliff:g id="APP">%1$s</xliff:g> unterstützt das Arbeitsprofil nicht"</string>
@@ -77,19 +77,22 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Diese App hat noch keine Berechtigung zum Aufnehmen erhalten, könnte aber Audioaufnahmen über dieses USB-Gerät machen."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Privat"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Geschäftlich"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"Privat"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Vertraulich"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Private Ansicht"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Geschäftliche Ansicht"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Private Ansicht"</string>
-    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Von deinem IT-Administrator blockiert"</string>
+    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Vom IT‑Administrator blockiert"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Diese Art von Inhalt kann nicht über geschäftliche Apps geteilt werden"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Diese Art von Inhalt kann nicht mit geschäftlichen Apps geöffnet werden"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Diese Art von Inhalt kann nicht über private Apps geteilt werden"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Diese Art von Inhalt kann nicht mit privaten Apps geöffnet werden"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Diese Art von Inhalt kann nicht über interne Apps geteilt werden"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Diese Art von Inhalt kann nicht mit internen Apps geöffnet werden"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Geschäftliche Apps sind pausiert"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Nicht mehr pausieren"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Keine geschäftlichen Apps"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Keine privaten Apps"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Keine internen Apps"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> in deinem privaten Profil öffnen?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> in deinem Arbeitsprofil öffnen?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Privaten Browser verwenden"</string>
@@ -99,4 +102,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Link ausschließen"</string>
     <string name="include_link" msgid="827855767220339802">"Link einschließen"</string>
     <string name="pinned" msgid="7623664001331394139">"Angepinnt"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Auswählbares Bild"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Auswählbares Video"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Auswählbares Element"</string>
 </resources>
