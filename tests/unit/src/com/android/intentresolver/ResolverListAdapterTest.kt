@@ -79,7 +79,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
             }
         val testSubject =
             ResolverListAdapter(
@@ -128,7 +128,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
             }
         val testSubject =
@@ -177,7 +177,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { lastChosen } doReturn createResolveInfo(PKG_NAME_TWO, CLASS_NAME, userHandle)
             }
         val testSubject =
@@ -228,7 +228,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
             }
         val testSubject =
@@ -302,7 +302,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 if (hasLastChosen) {
                     on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
                 }
@@ -379,7 +379,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { lastChosen } doReturn createResolveInfo(PKG_NAME, CLASS_NAME + "2", userHandle)
             }
         val testSubject =
@@ -434,7 +434,6 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
         resolvedTargets[1].getResolveInfoAt(0).targetUserId = 10
-        // whenever(resolvedTargets[1].getResolveInfoAt(0).loadLabel(any())).thenReturn("Label")
         val resolverListController =
             mock<ResolverListController> {
                 on { filterIneligibleActivities(any(), any()) } doReturn null
@@ -447,7 +446,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
             }
         val testSubject =
@@ -477,7 +476,9 @@ class ResolverListAdapterTest {
         assertThat(testSubject.hasFilteredItem()).isFalse()
         assertThat(testSubject.filteredItem).isNull()
         assertThat(testSubject.filteredPosition).isLessThan(0)
-        assertThat(testSubject.unfilteredResolveList).containsExactlyElementsIn(resolvedTargets)
+        // The following must be an old bug i.e. unfilteredResolveList should be equal to
+        // resolvedTargets. Also see comments in the code.
+        assertThat(testSubject.unfilteredResolveList).containsExactly(resolvedTargets[0])
         assertThat(testSubject.isTabLoaded).isTrue()
         assertThat(backgroundExecutor.pendingCommandCount).isEqualTo(0)
     }
@@ -502,7 +503,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { sort(any()) } doAnswer
                     {
                         val components = it.arguments[0] as MutableList<ResolvedComponentInfo>
@@ -532,11 +533,10 @@ class ResolverListAdapterTest {
 
         backgroundExecutor.runUntilIdle()
 
-        // we don't reset placeholder count (legacy logic, likely an oversight?)
         assertThat(testSubject.count).isEqualTo(resolvedTargets.size)
-        assertThat(resolvedTargets[0].getResolveInfoAt(0).activityInfo.packageName)
+        assertThat(testSubject.getDisplayResolveInfo(0).resolveInfo.activityInfo.packageName)
             .isEqualTo(PKG_NAME_TWO)
-        assertThat(resolvedTargets[1].getResolveInfoAt(0).activityInfo.packageName)
+        assertThat(testSubject.getDisplayResolveInfo(1).resolveInfo.activityInfo.packageName)
             .isEqualTo(PKG_NAME)
     }
 
@@ -560,7 +560,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { filterIneligibleActivities(any(), any()) } doAnswer
                     {
                         val components = it.arguments[0] as MutableList<ResolvedComponentInfo>
@@ -646,7 +646,6 @@ class ResolverListAdapterTest {
 
         backgroundExecutor.runUntilIdle()
 
-        // we don't reset placeholder count (legacy logic, likely an oversight?)
         assertThat(testSubject.count).isEqualTo(2)
         assertThat(testSubject.unfilteredResolveList).hasSize(2)
     }
@@ -670,7 +669,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
                 on { filterLowPriority(any(), any()) } doAnswer
                     {
                         val components = it.arguments[0] as MutableList<ResolvedComponentInfo>
@@ -730,7 +729,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
             }
         whenever(packageManager.getActivityInfo(eq(initialComponent), eq(0)))
             .thenReturn(createActivityInfo(initialComponent))
@@ -801,7 +800,7 @@ class ResolverListAdapterTest {
                         payloadIntents,
                         userHandle
                     )
-                } doReturn resolvedTargets
+                } doReturn ArrayList(resolvedTargets)
             }
         val initialComponent = ComponentName(PKG_NAME_TWO, CLASS_NAME)
         val initialIntents =
@@ -896,7 +895,7 @@ class ResolverListAdapterTest {
                 on { filterIneligibleActivities(any(), any()) } doReturn null
                 on { filterLowPriority(any(), any()) } doReturn null
                 on { getResolversForIntentAsUser(any(), any(), any(), any(), any()) } doReturn
-                    resolvedTargets
+                    ArrayList(resolvedTargets)
             }
         val communicator =
             mock<ResolverListCommunicator> {
@@ -944,7 +943,7 @@ class ResolverListAdapterTest {
                 on { filterIneligibleActivities(any(), any()) } doReturn null
                 on { filterLowPriority(any(), any()) } doReturn null
                 on { getResolversForIntentAsUser(any(), any(), any(), any(), any()) } doReturn
-                    resolvedTargets
+                    ArrayList(resolvedTargets)
             }
         val communicator =
             mock<ResolverListCommunicator> {
@@ -999,7 +998,7 @@ class ResolverListAdapterTest {
                 on { filterIneligibleActivities(any(), any()) } doReturn null
                 on { filterLowPriority(any(), any()) } doReturn null
                 on { getResolversForIntentAsUser(any(), any(), any(), any(), any()) } doReturn
-                    resolvedTargets
+                    ArrayList(resolvedTargets)
             }
         val communicator =
             mock<ResolverListCommunicator> {
