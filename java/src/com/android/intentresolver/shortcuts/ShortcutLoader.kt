@@ -41,8 +41,8 @@ import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.measurements.Tracer
 import com.android.intentresolver.measurements.runTracing
 import java.util.concurrent.Executor
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -78,20 +78,20 @@ constructor(
     private val isPersonalProfile: Boolean,
     private val targetIntentFilter: IntentFilter?,
     private val dispatcher: CoroutineDispatcher,
-    private val callback: Consumer<Result>
+    private val callback: Consumer<Result>,
 ) {
     private val scope =
         if (fixShortcutLoaderJobLeak()) parentScope.createChildScope() else parentScope
     private val shortcutToChooserTargetConverter = ShortcutToChooserTargetConverter()
     private val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
-    private val appPredictorWatchdog = atomic<Job?>(null)
+    private val appPredictorWatchdog = AtomicReference<Job?>(null)
     private val appPredictorCallback =
         ScopedAppTargetListCallback(scope) { onAppPredictorCallback(it) }.toAppPredictorCallback()
 
     private val appTargetSource =
         MutableSharedFlow<Array<DisplayResolveInfo>?>(
             replay = 1,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
     private val shortcutSource =
         MutableSharedFlow<ShortcutData?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -108,7 +108,7 @@ constructor(
         appPredictor: AppPredictor?,
         userHandle: UserHandle,
         targetIntentFilter: IntentFilter?,
-        callback: Consumer<Result>
+        callback: Consumer<Result>,
     ) : this(
         context,
         scope,
@@ -117,7 +117,7 @@ constructor(
         userHandle == UserHandle.of(ActivityManager.getCurrentUser()),
         targetIntentFilter,
         Dispatchers.IO,
-        callback
+        callback,
     )
 
     init {
@@ -134,7 +134,7 @@ constructor(
                                     appTargets,
                                     shortcutData.shortcuts,
                                     shortcutData.isFromAppPredictor,
-                                    shortcutData.appPredictorTargets
+                                    shortcutData.appPredictorTargets,
                                 )
                             }
                         }
@@ -230,7 +230,7 @@ constructor(
             sendShareShortcutInfoList(
                 emptyList(),
                 isFromAppPredictor = false,
-                appPredictorTargets = null
+                appPredictorTargets = null,
             )
             return
         }
@@ -256,7 +256,7 @@ constructor(
 
     @WorkerThread
     private fun onAppPredictorCallback(appPredictorTargets: List<AppTarget>) {
-        appPredictorWatchdog.value?.cancel()
+        appPredictorWatchdog.get()?.cancel()
         endAppPredictorQueryTrace(userHandle)
         Log.d(TAG, "[$id] receive app targets from AppPredictor")
         if (appPredictorTargets.isEmpty() && shouldQueryDirectShareTargets()) {
@@ -288,7 +288,7 @@ constructor(
     private fun sendShareShortcutInfoList(
         shortcuts: List<ShareShortcutInfo>,
         isFromAppPredictor: Boolean,
-        appPredictorTargets: List<AppTarget>?
+        appPredictorTargets: List<AppTarget>?,
     ) {
         shortcutSource.tryEmit(ShortcutData(shortcuts, isFromAppPredictor, appPredictorTargets))
     }
@@ -297,7 +297,7 @@ constructor(
         appTargets: Array<DisplayResolveInfo>,
         shortcuts: List<ShareShortcutInfo>,
         isFromAppPredictor: Boolean,
-        appPredictorTargets: List<AppTarget>?
+        appPredictorTargets: List<AppTarget>?,
     ): Result {
         if (appPredictorTargets != null && appPredictorTargets.size != shortcuts.size) {
             throw RuntimeException(
@@ -324,7 +324,7 @@ constructor(
                     shortcuts,
                     appPredictorTargets,
                     directShareAppTargetCache,
-                    directShareShortcutInfoCache
+                    directShareShortcutInfoCache,
                 )
             val resultRecord = ShortcutResultInfo(displayResolveInfo, chooserTargets)
             resultRecords.add(resultRecord)
@@ -334,7 +334,7 @@ constructor(
             appTargets,
             resultRecords.toTypedArray(),
             directShareAppTargetCache,
-            directShareShortcutInfoCache
+            directShareShortcutInfoCache,
         )
     }
 
@@ -354,7 +354,7 @@ constructor(
     private class ShortcutData(
         val shortcuts: List<ShareShortcutInfo>,
         val isFromAppPredictor: Boolean,
-        val appPredictorTargets: List<AppTarget>?
+        val appPredictorTargets: List<AppTarget>?,
     )
 
     /** Resolved shortcuts with corresponding app targets. */
@@ -368,7 +368,7 @@ constructor(
         /** Shortcuts grouped by app target. */
         val shortcutsByApp: Array<ShortcutResultInfo>,
         val directShareAppTargetCache: Map<ChooserTarget, AppTarget>,
-        val directShareShortcutInfoCache: Map<ChooserTarget, ShortcutInfo>
+        val directShareShortcutInfoCache: Map<ChooserTarget, ShortcutInfo>,
     )
 
     private fun endAppPredictorQueryTrace(userHandle: UserHandle) {
@@ -379,12 +379,12 @@ constructor(
     /** Shortcuts grouped by app. */
     class ShortcutResultInfo(
         val appTarget: DisplayResolveInfo,
-        val shortcuts: List<ChooserTarget?>
+        val shortcuts: List<ChooserTarget?>,
     )
 
     private class ShortcutsAppTargetsPair(
         val shortcuts: List<ShareShortcutInfo>,
-        val appTargets: List<AppTarget>?
+        val appTargets: List<AppTarget>?,
     )
 
     /** A wrapper around AppPredictor to facilitate unit-testing. */
@@ -393,7 +393,7 @@ constructor(
         /** [AppPredictor.registerPredictionUpdates] */
         open fun registerPredictionUpdates(
             callbackExecutor: Executor,
-            callback: AppPredictor.Callback
+            callback: AppPredictor.Callback,
         ) = mAppPredictor.registerPredictionUpdates(callbackExecutor, callback)
 
         /** [AppPredictor.unregisterPredictionUpdates] */
@@ -418,7 +418,7 @@ constructor(
                             packageName,
                             PackageManager.ApplicationInfoFlags.of(
                                 PackageManager.GET_META_DATA.toLong()
-                            )
+                            ),
                         )
                     appInfo.enabled && (appInfo.flags and ApplicationInfo.FLAG_SUSPENDED) == 0
                 }
