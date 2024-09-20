@@ -21,7 +21,6 @@ import android.net.Uri
 import android.util.Size
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.atomic.AtomicInteger
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -55,7 +54,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val b1 = testSubject.invoke(uri, Size(200, 100))
@@ -78,7 +77,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             testSubject.invoke(uri, Size(200, 100), caching = false)
@@ -105,7 +104,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val b1Deferred = async { testSubject.invoke(uri, Size(200, 100), caching = false) }
@@ -148,7 +147,7 @@ class PreviewImageLoaderTest {
                     cacheSize = 1,
                     defaultPreviewSize = 100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val jobOne = launch { testSubject.invoke(uriOne, Size(200, 100)) }
@@ -189,7 +188,7 @@ class PreviewImageLoaderTest {
                     cacheSize = 1,
                     defaultPreviewSize = 100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val job = launch { testSubject.invoke(uri, Size(200, 100), caching = false) }
@@ -214,7 +213,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val b1 = testSubject.invoke(uri, Size(100, 100))
@@ -240,7 +239,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val bitmap = testSubject.invoke(uri, Size(100, 100))
@@ -251,7 +250,7 @@ class PreviewImageLoaderTest {
     fun test_requestHigherResImage_cancelsLowerResLoading() =
         scope.runTest {
             val uri = createUri(0)
-            val cancelledRequestCount = atomic(0)
+            val cancelledRequestCount = AtomicInteger(0)
             val imageLoadingStarted = CompletableDeferred<Unit>()
             val bitmapDeferred = CompletableDeferred<Bitmap>()
             val thumbnailLoader =
@@ -272,7 +271,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val lowResSize = 100
@@ -283,7 +282,7 @@ class PreviewImageLoaderTest {
             imageLoadingStarted.await()
             val result = async { testSubject.invoke(uri, Size(highResSize, highResSize)) }
             runCurrent()
-            assertThat(cancelledRequestCount.value).isEqualTo(1)
+            assertThat(cancelledRequestCount.get()).isEqualTo(1)
 
             bitmapDeferred.complete(createBitmap(highResSize, highResSize))
             val bitmap = result.await()
@@ -308,7 +307,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val b1 = testSubject.invoke(uri, Size(highResSize, highResSize))
@@ -333,7 +332,7 @@ class PreviewImageLoaderTest {
                     cacheSize = 1,
                     defaultPreviewSize,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             val b1 = testSubject(uri, Size(0, 0))
@@ -349,7 +348,7 @@ class PreviewImageLoaderTest {
         scope.runTest {
             val previewSize = Size(100, 100)
             val uris = List(2) { createUri(it) }
-            val loadingCount = atomic(0)
+            val loadingCount = AtomicInteger(0)
             val thumbnailLoader =
                 FakeThumbnailLoader().apply {
                     for (uri in uris) {
@@ -365,19 +364,19 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             testSubject.prePopulate(uris.map { it to previewSize })
             runCurrent()
 
-            assertThat(loadingCount.value).isEqualTo(1)
+            assertThat(loadingCount.get()).isEqualTo(1)
             assertThat(thumbnailLoader.invokeCalls).containsExactly(uris[0])
 
             testSubject(uris[0], previewSize)
             runCurrent()
 
-            assertThat(loadingCount.value).isEqualTo(1)
+            assertThat(loadingCount.get()).isEqualTo(1)
         }
 
     @Test
@@ -402,7 +401,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             testSubject(uriOne, previewSize)
@@ -419,7 +418,7 @@ class PreviewImageLoaderTest {
         scope.runTest {
             val previewSize = Size(100, 100)
             val uri = createUri(1)
-            val loadingCount = atomic(0)
+            val loadingCount = AtomicInteger(0)
             val thumbnailLoader =
                 FakeThumbnailLoader().apply {
                     fakeInvoke[uri] = {
@@ -433,13 +432,13 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             testSubject(uri, previewSize)
             testSubject(uri, previewSize)
 
-            assertThat(loadingCount.value).isEqualTo(2)
+            assertThat(loadingCount.get()).isEqualTo(2)
         }
 
     @Test(expected = CancellationException::class)
@@ -454,7 +453,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
             imageLoaderScope.cancel()
             testSubject(uri, Size(200, 200))
@@ -480,7 +479,7 @@ class PreviewImageLoaderTest {
                     1,
                     100,
                     thumbnailLoader,
-                    StandardTestDispatcher(scope.testScheduler)
+                    StandardTestDispatcher(scope.testScheduler),
                 )
 
             launch {
