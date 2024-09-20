@@ -1566,6 +1566,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mShouldDisplayLandscape = shouldDisplayLandscape(newConfig.orientation);
         mMaxTargetsPerRow = getResources().getInteger(R.integer.config_chooser_max_targets_per_row);
         mChooserMultiProfilePagerAdapter.setMaxTargetsPerRow(mMaxTargetsPerRow);
+        adjustMaxPreviewWidth();
         adjustPreviewWidth(newConfig.orientation, null);
         updateStickyContentPreview();
         updateTabPadding();
@@ -1576,6 +1577,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         // when in the restricted size of multi-window mode. In the future, would be nice
         // to use minimum dp size requirements instead
         return orientation == Configuration.ORIENTATION_LANDSCAPE && !isInMultiWindowMode();
+    }
+
+    private void adjustMaxPreviewWidth() {
+        if (mResolverDrawerLayout == null) {
+            return;
+        }
+        mResolverDrawerLayout.setMaxWidth(
+                getResources().getDimensionPixelSize(R.dimen.chooser_width));
     }
 
     private void adjustPreviewWidth(int orientation, View parent) {
@@ -2283,8 +2292,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
 
         final int availableWidth = right - left - v.getPaddingLeft() - v.getPaddingRight();
+        final int maxChooserWidth = getResources().getDimensionPixelSize(R.dimen.chooser_width);
         boolean isLayoutUpdated =
-                gridAdapter.calculateChooserTargetWidth(availableWidth)
+                gridAdapter.calculateChooserTargetWidth(
+                        maxChooserWidth >= 0
+                                ? Math.min(maxChooserWidth, availableWidth)
+                                : availableWidth)
                 || recyclerView.getAdapter() == null
                 || availableWidth != mCurrAvailableWidth;
 
