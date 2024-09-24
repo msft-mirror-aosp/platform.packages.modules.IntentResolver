@@ -19,9 +19,8 @@ package com.android.intentresolver.inject
 import android.content.Intent
 import android.net.Uri
 import android.service.chooser.ChooserAction
-import androidx.lifecycle.SavedStateHandle
 import com.android.intentresolver.data.model.ChooserRequest
-import com.android.intentresolver.ui.model.ActivityModel
+import com.android.intentresolver.data.repository.ActivityModelRepository
 import com.android.intentresolver.ui.viewmodel.readChooserRequest
 import com.android.intentresolver.util.ownedByCurrentUser
 import com.android.intentresolver.validation.Valid
@@ -37,26 +36,19 @@ import javax.inject.Qualifier
 @InstallIn(ViewModelComponent::class)
 object ActivityModelModule {
     @Provides
-    fun provideActivityModel(savedStateHandle: SavedStateHandle): ActivityModel =
-        requireNotNull(savedStateHandle[ActivityModel.ACTIVITY_MODEL_KEY]) {
-            "ActivityModel missing in SavedStateHandle! (${ActivityModel.ACTIVITY_MODEL_KEY})"
-        }
-
-    @Provides
     @ChooserIntent
-    fun chooserIntent(activityModel: ActivityModel): Intent = activityModel.intent
+    fun chooserIntent(activityModelRepo: ActivityModelRepository): Intent =
+        activityModelRepo.value.intent
 
     @Provides
     @ViewModelScoped
     fun provideInitialRequest(
-        activityModel: ActivityModel,
+        activityModelRepo: ActivityModelRepository,
         flags: ChooserServiceFlags,
-    ): ValidationResult<ChooserRequest> = readChooserRequest(activityModel, flags)
+    ): ValidationResult<ChooserRequest> = readChooserRequest(activityModelRepo.value, flags)
 
     @Provides
-    fun provideChooserRequest(
-        initialRequest: ValidationResult<ChooserRequest>,
-    ): ChooserRequest =
+    fun provideChooserRequest(initialRequest: ValidationResult<ChooserRequest>): ChooserRequest =
         requireNotNull((initialRequest as? Valid)?.value) {
             "initialRequest is Invalid, no chooser request available"
         }
