@@ -34,7 +34,7 @@ import androidx.core.os.bundleOf
 import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.inject.FakeChooserServiceFlags
-import com.android.intentresolver.ui.model.ActivityModel
+import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.validation.Importance
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.NoValue
@@ -45,7 +45,7 @@ import org.junit.Test
 private fun createActivityModel(
     targetIntent: Intent?,
     referrer: Uri? = null,
-    additionalIntents: List<Intent>? = null
+    additionalIntents: List<Intent>? = null,
 ) =
     ActivityModel(
         Intent(ACTION_CHOOSER).apply {
@@ -54,7 +54,7 @@ private fun createActivityModel(
         },
         launchedFromUid = 10000,
         launchedFromPackage = "com.android.example",
-        referrer = referrer ?: "android-app://com.android.example".toUri()
+        referrer = referrer ?: "android-app://com.android.example".toUri(),
     )
 
 class ChooserRequestTest {
@@ -245,7 +245,7 @@ class ChooserRequestTest {
         val model = createActivityModel(Intent(ACTION_SEND))
         model.intent.putExtra(
             Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT,
-            Intent.CHOOSER_CONTENT_TYPE_ALBUM
+            Intent.CHOOSER_CONTENT_TYPE_ALBUM,
         )
 
         val result = readChooserRequest(model, fakeChooserServiceFlags)
