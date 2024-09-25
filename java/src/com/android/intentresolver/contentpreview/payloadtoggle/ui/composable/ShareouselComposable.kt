@@ -96,7 +96,7 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
     Column(
         modifier =
             Modifier.background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(vertical = 16.dp),
+                .padding(vertical = 16.dp)
     ) {
         PreviewCarousel(keySet, viewModel)
         ActionCarousel(viewModel)
@@ -105,10 +105,7 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PreviewCarousel(
-    previews: PreviewsModel,
-    viewModel: ShareouselViewModel,
-) {
+private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewModel) {
     var maxAspectRatio by remember { mutableStateOf(0f) }
     var viewportHeight by remember { mutableStateOf(0) }
     var viewportCenter by remember { mutableStateOf(0) }
@@ -128,7 +125,7 @@ private fun PreviewCarousel(
                             val maxAR =
                                 (maxItemWidth.toFloat() / placeable.height).coerceIn(
                                     0f,
-                                    MAX_ASPECT_RATIO
+                                    MAX_ASPECT_RATIO,
                                 )
                             minItemWidth to maxAR
                         }
@@ -137,7 +134,7 @@ private fun PreviewCarousel(
                     viewportHeight = placeable.height
                     horizontalPadding = ((placeable.width - minItemWidth) / 2).toDp()
                     layout(placeable.width, placeable.height) { placeable.place(0, 0) }
-                },
+                }
     ) {
         if (maxAspectRatio <= 0 && previews.previewModels.isNotEmpty()) {
             // Do not compose the list until we know the viewport size
@@ -148,7 +145,7 @@ private fun PreviewCarousel(
 
         val carouselState =
             rememberLazyListState(
-                prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() },
+                prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
             )
 
         LazyRow(
@@ -157,7 +154,10 @@ private fun PreviewCarousel(
             contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding),
             modifier = Modifier.fillMaxSize().systemGestureExclusion(),
         ) {
-            itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
+            itemsIndexed(
+                items = previews.previewModels,
+                key = { _, model -> model.key.key to model.key.isFinal },
+            ) { index, model ->
                 val visibleItem by remember {
                     derivedStateOf {
                         carouselState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
@@ -234,7 +234,7 @@ private fun PreviewCarousel(
                         model,
                         viewportHeight,
                         previewIndex,
-                        rememberCoroutineScope()
+                        rememberCoroutineScope(),
                     ),
                     maxAspectRatio,
                 )
@@ -279,7 +279,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio
                 .toggleable(
                     value = selected,
                     onValueChange = { scope.launch { viewModel.setSelected(it) } },
-                )
+                ),
     ) { state ->
         val aspectRatio = minOf(maxAspectRatio, maxOf(MIN_ASPECT_RATIO, viewModel.aspectRatio))
         if (state is ValueUpdate.Value) {
@@ -304,7 +304,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio
                                 color = borderColor,
                                 shape = RoundedCornerShape(size = 12.dp),
                             )
-                        }
+                        },
                 )
             }
         } else {
@@ -355,7 +355,7 @@ private fun ActionCarousel(viewModel: ShareouselViewModel) {
                             Image(
                                 icon = it,
                                 modifier = Modifier.size(16.dp),
-                                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                                colorFilter = ColorFilter.tint(LocalContentColor.current),
                             )
                         }
                     }
@@ -389,7 +389,7 @@ private fun ShareouselAction(
             AssistChipDefaults.assistChipColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 labelColor = MaterialTheme.colorScheme.onSurface,
-                leadingIconContentColor = MaterialTheme.colorScheme.onSurface
+                leadingIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
         modifier = modifier,
     )

@@ -42,6 +42,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.selectionInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.data.model.ChooserRequest
@@ -84,15 +85,17 @@ class ShareouselViewModelTest {
         previewSelectionsRepository.selections.value =
             listOf(
                     PreviewModel(
+                        key = PreviewKey.final(0),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = "image/png",
                         order = 0,
                     ),
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                         mimeType = "image/jpeg",
                         order = 1,
-                    )
+                    ),
                 )
                 .associateBy { it.uri }
         runCurrent()
@@ -104,15 +107,17 @@ class ShareouselViewModelTest {
         previewSelectionsRepository.selections.value =
             listOf(
                     PreviewModel(
+                        key = PreviewKey.final(0),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = "video/mpeg",
                         order = 0,
                     ),
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                         mimeType = "video/mpeg",
                         order = 1,
-                    )
+                    ),
                 )
                 .associateBy { it.uri }
         runCurrent()
@@ -124,15 +129,17 @@ class ShareouselViewModelTest {
         previewSelectionsRepository.selections.value =
             listOf(
                     PreviewModel(
+                        key = PreviewKey.final(0),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = "image/jpeg",
                         order = 0,
                     ),
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                         mimeType = "video/mpeg",
                         order = 1,
-                    )
+                    ),
                 )
                 .associateBy { it.uri }
         runCurrent()
@@ -145,7 +152,7 @@ class ShareouselViewModelTest {
             ChooserRequest(
                 targetIntent = Intent(),
                 launchedFromPackage = "",
-                metadataText = "Hello"
+                metadataText = "Hello",
             )
         chooserRequestRepository.chooserRequest.value = request
 
@@ -162,15 +169,17 @@ class ShareouselViewModelTest {
                     previewModels =
                         listOf(
                             PreviewModel(
+                                key = PreviewKey.final(0),
                                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                                 mimeType = "image/png",
                                 order = 0,
                             ),
                             PreviewModel(
+                                key = PreviewKey.final(1),
                                 uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                                 mimeType = "video/mpeg",
                                 order = 1,
-                            )
+                            ),
                         ),
                     startIdx = 1,
                     loadMoreLeft = null,
@@ -194,6 +203,7 @@ class ShareouselViewModelTest {
             val previewVm =
                 shareouselViewModel.preview.invoke(
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                         mimeType = "video/mpeg",
                         order = 0,
@@ -225,15 +235,17 @@ class ShareouselViewModelTest {
                     previewModels =
                         listOf(
                             PreviewModel(
+                                key = PreviewKey.final(0),
                                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                                 mimeType = "image/png",
                                 order = 0,
                             ),
                             PreviewModel(
+                                key = PreviewKey.final(1),
                                 uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                                 mimeType = "video/mpeg",
                                 order = 1,
-                            )
+                            ),
                         ),
                     startIdx = 1,
                     loadMoreLeft = null,
@@ -246,6 +258,7 @@ class ShareouselViewModelTest {
             val previewVm =
                 shareouselViewModel.preview.invoke(
                     PreviewModel(
+                        key = PreviewKey.final(0),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = "video/mpeg",
                         order = 1,
@@ -314,6 +327,7 @@ class ShareouselViewModelTest {
         this.targetIntentModifier = targetIntentModifier
         previewSelectionsRepository.selections.value =
             PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = null,
                     order = 0,
