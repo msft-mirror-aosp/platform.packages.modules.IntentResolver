@@ -2174,6 +2174,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             @Override
             @Nullable
             public Runnable getCopyButtonRunnable() {
+                if (originalFactory.getCopyButtonRunnable() == null) return null;
                 return () -> {
                     if (!mRefinementManager.maybeHandleSelection(
                             RefinementType.COPY_ACTION,
