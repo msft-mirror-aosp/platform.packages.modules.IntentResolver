@@ -78,6 +78,7 @@
     </FrameLayout>
 
     <com.android.intentresolver.widget.ChooserNestedScrollView
+        android:id="@+id/chooser_scrollable_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
