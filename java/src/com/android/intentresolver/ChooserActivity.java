@@ -24,6 +24,7 @@ import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
+import static com.android.intentresolver.Flags.keyboardNavigationFix;
 import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.Flags.unselectFinalItem;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.replaceDefaultArgs;
@@ -137,6 +138,7 @@ import com.android.intentresolver.ui.ShareResultSender;
 import com.android.intentresolver.ui.ShareResultSenderFactory;
 import com.android.intentresolver.ui.viewmodel.ChooserViewModel;
 import com.android.intentresolver.widget.ActionRow;
+import com.android.intentresolver.widget.ChooserNestedScrollView;
 import com.android.intentresolver.widget.ImagePreviewView;
 import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
@@ -1284,6 +1286,18 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mTabHost = findViewById(com.android.internal.R.id.profile_tabhost);
         mViewPager = requireViewById(com.android.internal.R.id.profile_pager);
         mChooserMultiProfilePagerAdapter.setupViewPager(mViewPager);
+        ChooserNestedScrollView scrollableContainer =
+                requireViewById(R.id.chooser_scrollable_container);
+        if (keyboardNavigationFix()) {
+            scrollableContainer.setRequestChildFocusPredicate((child, focused) ->
+                    // TabHost view will request focus on the newly activated tab. The RecyclerView
+                    // from the tab gets focused and  notifies its parents (including
+                    // NestedScrollView) about it through #requestChildFocus method call.
+                    // NestedScrollView's view implementation of the method  will  scroll to the
+                    // focused view. As we don't want to change drawer's position upon tab change,
+                    // ignore focus requests from tab RecyclerViews.
+                    focused == null || focused.getId() != com.android.internal.R.id.resolver_list);
+        }
         boolean result = postRebuildList(rebuildCompleted);
         Trace.endSection();
         return result;
