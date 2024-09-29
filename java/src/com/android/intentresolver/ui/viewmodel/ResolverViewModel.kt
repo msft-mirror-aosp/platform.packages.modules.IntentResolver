@@ -17,10 +17,9 @@
 package com.android.intentresolver.ui.viewmodel
 
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.android.intentresolver.ui.model.ActivityModel
-import com.android.intentresolver.ui.model.ActivityModel.Companion.ACTIVITY_MODEL_KEY
+import com.android.intentresolver.data.repository.ActivityModelRepository
+import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.ui.model.ResolverRequest
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.Valid
@@ -33,13 +32,11 @@ import kotlinx.coroutines.flow.asStateFlow
 private const val TAG = "ResolverViewModel"
 
 @HiltViewModel
-class ResolverViewModel @Inject constructor(args: SavedStateHandle) : ViewModel() {
+class ResolverViewModel @Inject constructor(activityModelrepo: ActivityModelRepository) :
+    ViewModel() {
 
     /** Parcelable-only references provided from the creating Activity */
-    val activityModel: ActivityModel =
-        requireNotNull(args[ACTIVITY_MODEL_KEY]) {
-            "ActivityModel missing in SavedStateHandle! ($ACTIVITY_MODEL_KEY)"
-        }
+    val activityModel: ActivityModel = activityModelrepo.value
 
     /**
      * Provided only for the express purpose of early exit in the event of an invalid request.
