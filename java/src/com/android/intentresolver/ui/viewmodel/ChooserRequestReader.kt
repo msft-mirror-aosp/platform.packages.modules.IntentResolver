@@ -49,7 +49,7 @@ import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.ext.hasSendAction
 import com.android.intentresolver.ext.ifMatch
 import com.android.intentresolver.inject.ChooserServiceFlags
-import com.android.intentresolver.ui.model.ActivityModel
+import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.util.hasValidIcon
 import com.android.intentresolver.validation.Validation
 import com.android.intentresolver.validation.ValidationResult
@@ -69,7 +69,7 @@ internal fun Intent.maybeAddSendActionFlags() =
 
 fun readChooserRequest(
     model: ActivityModel,
-    flags: ChooserServiceFlags
+    flags: ChooserServiceFlags,
 ): ValidationResult<ChooserRequest> {
     val extras = model.intent.extras ?: Bundle()
     @Suppress("DEPRECATION")
@@ -87,7 +87,7 @@ fun readChooserRequest(
                 ignored(
                     value<CharSequence>(EXTRA_TITLE),
                     "deprecated in P. You may wish to set a preview title by using EXTRA_TITLE " +
-                        "property of the wrapped EXTRA_INTENT."
+                        "property of the wrapped EXTRA_INTENT.",
                 )
                 null to R.string.chooseActivity
             } else {

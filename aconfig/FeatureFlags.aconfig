@@ -97,6 +97,16 @@ flag {
 }
 
 flag {
+  name: "keyboard_navigation_fix"
+  namespace: "intentresolver"
+  description: "Enable Chooser keyboard navigation bugfix"
+  bug: "325259478"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "preview_image_loader"
   namespace: "intentresolver"
   description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
