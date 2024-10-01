@@ -27,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.android.intentresolver.Flags.interactiveSession
 import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.annotation.JavaInterop
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
@@ -186,6 +187,14 @@ constructor(
                     .map { it.first }
                     .distinctUntilChanged(areEquivalent = { old, new -> old === new })
                     .collect { onChooserRequestChanged.accept(it) }
+            }
+        }
+
+        if (interactiveSession()) {
+            activity.lifecycleScope.launch {
+                viewModel.interactiveSessionInteractor.isSessionActive
+                    .filter { !it }
+                    .collect { activity.finish() }
             }
         }
     }
