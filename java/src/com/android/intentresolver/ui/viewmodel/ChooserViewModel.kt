@@ -95,7 +95,6 @@ constructor(
             chooserRequest.targetIntent,
             chooserRequest.additionalContentUri,
             contentResolver,
-            flags,
         )
     }
 
