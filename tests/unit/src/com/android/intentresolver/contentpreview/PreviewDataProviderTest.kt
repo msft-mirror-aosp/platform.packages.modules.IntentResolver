@@ -21,9 +21,15 @@ import android.content.Intent
 import android.database.MatrixCursor
 import android.media.MediaMetadata
 import android.net.Uri
+import android.platform.test.annotations.DisableFlags
+import android.platform.test.annotations.EnableFlags
+import android.platform.test.flag.junit.FlagsParameterization
+import android.platform.test.flag.junit.SetFlagsRule
 import android.provider.DocumentsContract
-import android.service.chooser.FakeFeatureFlagsImpl
-import android.service.chooser.Flags
+import android.provider.Downloads
+import android.provider.OpenableColumns
+import android.service.chooser.Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING
+import com.android.intentresolver.Flags.FLAG_INDIVIDUAL_METADATA_TITLE_READ
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -32,21 +38,26 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
+@RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-class PreviewDataProviderTest {
+class PreviewDataProviderTest(flags: FlagsParameterization) {
     private val contentResolver = mock<ContentInterface>()
     private val mimeTypeClassifier = DefaultMimeTypeClassifier
     private val testScope = TestScope(EmptyCoroutineContext + UnconfinedTestDispatcher())
-    private val featureFlags =
-        FakeFeatureFlagsImpl().apply { setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false) }
+    @get:Rule val setFlagsRule = SetFlagsRule(flags)
 
     private fun createDataProvider(
         targetIntent: Intent,
@@ -54,15 +65,7 @@ class PreviewDataProviderTest {
         additionalContentUri: Uri? = null,
         resolver: ContentInterface = contentResolver,
         typeClassifier: MimeTypeClassifier = mimeTypeClassifier,
-    ) =
-        PreviewDataProvider(
-            scope,
-            targetIntent,
-            additionalContentUri,
-            resolver,
-            featureFlags,
-            typeClassifier,
-        )
+    ) = PreviewDataProvider(scope, targetIntent, additionalContentUri, resolver, typeClassifier)
 
     @Test
     fun test_nonSendIntentAction_resolvesToTextPreviewUiSynchronously() {
@@ -74,21 +77,49 @@ class PreviewDataProviderTest {
     }
 
     @Test
-    fun test_sendSingleTextFileWithoutPreview_resolvesToFilePreviewUi() {
-        val uri = Uri.parse("content://org.pkg.app/notes.txt")
-        val targetIntent =
-            Intent(Intent.ACTION_SEND).apply {
-                putExtra(Intent.EXTRA_STREAM, uri)
-                type = "text/plain"
-            }
-        whenever(contentResolver.getType(uri)).thenReturn("text/plain")
-        val testSubject = createDataProvider(targetIntent)
+    fun test_sendSingleTextFileWithoutPreview_resolvesToFilePreviewUi() =
+        testScope.runTest {
+            val fileName = "notes.txt"
+            val uri = Uri.parse("content://org.pkg.app/$fileName")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    type = "text/plain"
+                }
+            whenever(contentResolver.getType(uri)).thenReturn("text/plain")
+            val testSubject = createDataProvider(targetIntent)
 
-        assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
-        assertThat(testSubject.uriCount).isEqualTo(1)
-        assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
-        verify(contentResolver, times(1)).getType(any())
-    }
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(1)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
+            assertThat(testSubject.getFirstFileName()).isEqualTo(fileName)
+            verify(contentResolver, times(1)).getType(any())
+        }
+
+    @Test
+    fun test_sendSingleTextFileWithDisplayNameAndTitle_displayNameTakesPrecedenceOverTitle() =
+        testScope.runTest {
+            val uri = Uri.parse("content://org.pkg.app/1234")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    type = "text/plain"
+                }
+            whenever(contentResolver.getType(uri)).thenReturn("text/plain")
+            val title = "Notes"
+            val displayName = "Notes.txt"
+            whenever(contentResolver.query(eq(uri), anyOrNull(), anyOrNull(), anyOrNull()))
+                .thenReturn(
+                    MatrixCursor(arrayOf(Downloads.Impl.COLUMN_TITLE, OpenableColumns.DISPLAY_NAME))
+                        .apply { addRow(arrayOf(title, displayName)) }
+                )
+            contentResolver.setTitle(uri, title)
+            contentResolver.setDisplayName(uri, displayName)
+            val testSubject = createDataProvider(targetIntent)
+
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.getFirstFileName()).isEqualTo(displayName)
+        }
 
     @Test
     fun test_sendIntentWithoutUris_resolvesToTextPreviewUiSynchronously() {
@@ -114,60 +145,145 @@ class PreviewDataProviderTest {
     }
 
     @Test
-    fun test_sendSingleNonImage_resolvesToFilePreviewUi() {
-        val uri = Uri.parse("content://org.pkg.app/paper.pdf")
-        val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
-        whenever(contentResolver.getType(uri)).thenReturn("application/pdf")
-        val testSubject = createDataProvider(targetIntent)
+    fun test_sendSingleFile_resolvesToFilePreviewUi() =
+        testScope.runTest {
+            val fileName = "paper.pdf"
+            val uri = Uri.parse("content://org.pkg.app/$fileName")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
+            whenever(contentResolver.getType(uri)).thenReturn("application/pdf")
+            val testSubject = createDataProvider(targetIntent)
 
-        assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
-        assertThat(testSubject.uriCount).isEqualTo(1)
-        assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
-        assertThat(testSubject.firstFileInfo?.previewUri).isNull()
-        verify(contentResolver, times(1)).getType(any())
-    }
-
-    @Test
-    fun test_sendSingleImageWithFailingGetType_resolvesToFilePreviewUi() {
-        val uri = Uri.parse("content://org.pkg.app/image.png")
-        val targetIntent =
-            Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, uri)
-            }
-        whenever(contentResolver.getType(uri)).thenThrow(SecurityException("test failure"))
-        val testSubject = createDataProvider(targetIntent)
-
-        assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
-        assertThat(testSubject.uriCount).isEqualTo(1)
-        assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
-        assertThat(testSubject.firstFileInfo?.previewUri).isNull()
-        verify(contentResolver, times(1)).getType(any())
-    }
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(1)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
+            assertThat(testSubject.firstFileInfo?.previewUri).isNull()
+            assertThat(testSubject.getFirstFileName()).isEqualTo(fileName)
+            verify(contentResolver, times(1)).getType(any())
+        }
 
     @Test
-    fun test_sendSingleImageWithFailingMetadata_resolvesToFilePreviewUi() {
-        val uri = Uri.parse("content://org.pkg.app/image.png")
-        val targetIntent =
-            Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, uri)
-            }
-        whenever(contentResolver.getStreamTypes(uri, "*/*"))
-            .thenThrow(SecurityException("test failure"))
-        whenever(contentResolver.query(uri, METADATA_COLUMNS, null, null))
-            .thenThrow(SecurityException("test failure"))
-        val testSubject = createDataProvider(targetIntent)
+    fun test_sendSingleImageWithFailingGetType_resolvesToFilePreviewUi() =
+        testScope.runTest {
+            val fileName = "image.png"
+            val uri = Uri.parse("content://org.pkg.app/$fileName")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                }
+            whenever(contentResolver.getType(uri)).thenThrow(SecurityException("test failure"))
+            val testSubject = createDataProvider(targetIntent)
 
-        assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
-        assertThat(testSubject.uriCount).isEqualTo(1)
-        assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
-        assertThat(testSubject.firstFileInfo?.previewUri).isNull()
-        verify(contentResolver, times(1)).getType(any())
-    }
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(1)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
+            assertThat(testSubject.firstFileInfo?.previewUri).isNull()
+            assertThat(testSubject.getFirstFileName()).isEqualTo(fileName)
+            verify(contentResolver, times(1)).getType(any())
+        }
 
     @Test
-    fun test_SingleNonImageUriWithImageTypeInGetStreamTypes_useImagePreviewUi() {
+    fun test_sendSingleFileWithFailingMetadata_resolvesToFilePreviewUi() =
+        testScope.runTest {
+            val fileName = "manual.pdf"
+            val uri = Uri.parse("content://org.pkg.app/$fileName")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/pdf"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                }
+            whenever(contentResolver.getType(uri)).thenReturn("application/pdf")
+            whenever(contentResolver.getStreamTypes(uri, "*/*"))
+                .thenThrow(SecurityException("test failure"))
+            whenever(contentResolver.query(eq(uri), anyOrNull(), anyOrNull(), anyOrNull()))
+                .thenThrow(SecurityException("test failure"))
+            val testSubject = createDataProvider(targetIntent)
+
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(1)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
+            assertThat(testSubject.firstFileInfo?.previewUri).isNull()
+            assertThat(testSubject.getFirstFileName()).isEqualTo(fileName)
+            verify(contentResolver, times(1)).getType(any())
+        }
+
+    @Test
+    @EnableFlags(FLAG_INDIVIDUAL_METADATA_TITLE_READ)
+    fun test_sendSingleImageWithFailingGetTypeDisjointTitleRead_resolvesToFilePreviewUi() =
+        testScope.runTest {
+            val uri = Uri.parse("content://org.pkg.app/image.png")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                }
+            whenever(contentResolver.getType(uri)).thenThrow(SecurityException("test failure"))
+            val title = "Image Title"
+            contentResolver.setTitle(uri, title)
+            val testSubject = createDataProvider(targetIntent)
+
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(1)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
+            assertThat(testSubject.firstFileInfo?.previewUri).isNull()
+            assertThat(testSubject.getFirstFileName()).isEqualTo(title)
+            verify(contentResolver, times(1)).getType(any())
+        }
+
+    @Test
+    fun test_sendSingleFileWithFailingImageMetadata_resolvesToFilePreviewUi() =
+        testScope.runTest {
+            val fileName = "notes.pdf"
+            val uri = Uri.parse("content://org.pkg.app/$fileName")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/pdf"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                }
+            whenever(contentResolver.getType(uri)).thenReturn("application/pdf")
+            whenever(contentResolver.getStreamTypes(uri, "*/*"))
+                .thenThrow(SecurityException("test failure"))
+            whenever(contentResolver.query(eq(uri), anyOrNull(), anyOrNull(), anyOrNull()))
+                .thenThrow(SecurityException("test failure"))
+            val testSubject = createDataProvider(targetIntent)
+
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(1)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
+            assertThat(testSubject.firstFileInfo?.previewUri).isNull()
+            assertThat(testSubject.getFirstFileName()).isEqualTo(fileName)
+            verify(contentResolver, times(1)).getType(any())
+        }
+
+    @Test
+    @EnableFlags(FLAG_INDIVIDUAL_METADATA_TITLE_READ)
+    fun test_sendSingleFileWithFailingImageMetadataIndividualTitleRead_resolvesToFilePreviewUi() =
+        testScope.runTest {
+            val uri = Uri.parse("content://org.pkg.app/image.png")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                }
+            whenever(contentResolver.getStreamTypes(uri, "*/*"))
+                .thenThrow(SecurityException("test failure"))
+            whenever(contentResolver.query(uri, ICON_METADATA_COLUMNS, null, null))
+                .thenThrow(SecurityException("test failure"))
+            val displayName = "display name"
+            contentResolver.setDisplayName(uri, displayName)
+            val testSubject = createDataProvider(targetIntent)
+
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(1)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
+            assertThat(testSubject.firstFileInfo?.previewUri).isNull()
+            assertThat(testSubject.getFirstFileName()).isEqualTo(displayName)
+            verify(contentResolver, times(1)).getType(any())
+        }
+
+    @Test
+    fun test_SingleFileUriWithImageTypeInGetStreamTypes_useImagePreviewUi() {
         val uri = Uri.parse("content://org.pkg.app/paper.pdf")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getStreamTypes(uri, "*/*"))
@@ -189,7 +305,7 @@ class PreviewDataProviderTest {
                 arrayOf(
                     DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL or
                         DocumentsContract.Document.FLAG_SUPPORTS_METADATA
-                )
+                ),
         )
     }
 
@@ -206,7 +322,8 @@ class PreviewDataProviderTest {
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getType(uri)).thenReturn("application/pdf")
         val cursor = MatrixCursor(columns).apply { addRow(values) }
-        whenever(contentResolver.query(uri, METADATA_COLUMNS, null, null)).thenReturn(cursor)
+        whenever(contentResolver.query(eq(uri), anyOrNull(), anyOrNull(), anyOrNull()))
+            .thenReturn(cursor)
 
         val testSubject = createDataProvider(targetIntent)
 
@@ -224,12 +341,13 @@ class PreviewDataProviderTest {
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getType(uri)).thenReturn("application/pdf")
         val cursor = MatrixCursor(emptyArray())
-        whenever(contentResolver.query(uri, METADATA_COLUMNS, null, null)).thenReturn(cursor)
+        whenever(contentResolver.query(eq(uri), anyOrNull(), anyOrNull(), anyOrNull()))
+            .thenReturn(cursor)
 
         val testSubject = createDataProvider(targetIntent)
 
         assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
-        verify(contentResolver, times(1)).query(uri, METADATA_COLUMNS, null, null)
+        verify(contentResolver, times(1)).query(eq(uri), anyOrNull(), anyOrNull(), anyOrNull())
         assertThat(cursor.isClosed).isTrue()
     }
 
@@ -244,7 +362,7 @@ class PreviewDataProviderTest {
                     ArrayList<Uri>().apply {
                         add(uri1)
                         add(uri2)
-                    }
+                    },
                 )
             }
         whenever(contentResolver.getType(uri1)).thenReturn("image/png")
@@ -272,7 +390,7 @@ class PreviewDataProviderTest {
                     ArrayList<Uri>().apply {
                         add(uri1)
                         add(uri2)
-                    }
+                    },
                 )
             }
         val testSubject = createDataProvider(targetIntent)
@@ -286,7 +404,7 @@ class PreviewDataProviderTest {
     }
 
     @Test
-    fun test_someNonImageUriWithPreview_useImagePreviewUi() {
+    fun test_someFileUrisWithPreview_useImagePreviewUi() {
         val uri1 = Uri.parse("content://org.pkg.app/test.mp4")
         val uri2 = Uri.parse("content://org.pkg.app/test.pdf")
         val targetIntent =
@@ -296,7 +414,7 @@ class PreviewDataProviderTest {
                     ArrayList<Uri>().apply {
                         add(uri1)
                         add(uri2)
-                    }
+                    },
                 )
             }
         whenever(contentResolver.getType(uri1)).thenReturn("video/mpeg4")
@@ -312,29 +430,32 @@ class PreviewDataProviderTest {
     }
 
     @Test
-    fun test_allNonImageUrisWithoutPreview_useFilePreviewUi() {
-        val uri1 = Uri.parse("content://org.pkg.app/test.html")
-        val uri2 = Uri.parse("content://org.pkg.app/test.pdf")
-        val targetIntent =
-            Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-                putExtra(
-                    Intent.EXTRA_STREAM,
-                    ArrayList<Uri>().apply {
-                        add(uri1)
-                        add(uri2)
-                    }
-                )
-            }
-        whenever(contentResolver.getType(uri1)).thenReturn("text/html")
-        whenever(contentResolver.getType(uri2)).thenReturn("application/pdf")
-        val testSubject = createDataProvider(targetIntent)
+    fun test_allFileUrisWithoutPreview_useFilePreviewUi() =
+        testScope.runTest {
+            val firstFileName = "test.html"
+            val uri1 = Uri.parse("content://org.pkg.app/$firstFileName")
+            val uri2 = Uri.parse("content://org.pkg.app/test.pdf")
+            val targetIntent =
+                Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                    putExtra(
+                        Intent.EXTRA_STREAM,
+                        ArrayList<Uri>().apply {
+                            add(uri1)
+                            add(uri2)
+                        },
+                    )
+                }
+            whenever(contentResolver.getType(uri1)).thenReturn("text/html")
+            whenever(contentResolver.getType(uri2)).thenReturn("application/pdf")
+            val testSubject = createDataProvider(targetIntent)
 
-        assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
-        assertThat(testSubject.uriCount).isEqualTo(2)
-        assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri1)
-        assertThat(testSubject.firstFileInfo?.previewUri).isNull()
-        verify(contentResolver, times(2)).getType(any())
-    }
+            assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_FILE)
+            assertThat(testSubject.uriCount).isEqualTo(2)
+            assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri1)
+            assertThat(testSubject.firstFileInfo?.previewUri).isNull()
+            assertThat(testSubject.getFirstFileName()).isEqualTo(firstFileName)
+            verify(contentResolver, times(2)).getType(any())
+        }
 
     @Test
     fun test_imagePreviewFileInfoFlow_dataLoadedOnce() =
@@ -348,7 +469,7 @@ class PreviewDataProviderTest {
                         ArrayList<Uri>().apply {
                             add(uri1)
                             add(uri2)
-                        }
+                        },
                     )
                 }
             whenever(contentResolver.getType(uri1)).thenReturn("text/html")
@@ -372,11 +493,11 @@ class PreviewDataProviderTest {
         }
 
     @Test
-    fun sendItemsWithAdditionalContentUri_showPayloadTogglingUi() {
+    @EnableFlags(FLAG_CHOOSER_PAYLOAD_TOGGLING)
+    fun sendImageWithAdditionalContentUri_showPayloadTogglingUi() {
         val uri = Uri.parse("content://org.pkg.app/image.png")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getType(uri)).thenReturn("image/png")
-        featureFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val testSubject =
             createDataProvider(
                 targetIntent,
@@ -392,7 +513,8 @@ class PreviewDataProviderTest {
     }
 
     @Test
-    fun sendItemsWithAdditionalContentUri_showImagePreviewUi() {
+    @DisableFlags(FLAG_CHOOSER_PAYLOAD_TOGGLING)
+    fun sendImageWithAdditionalContentUriAndDisabledFlag_showImagePreviewUi() {
         val uri = Uri.parse("content://org.pkg.app/image.png")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getType(uri)).thenReturn("image/png")
@@ -410,11 +532,11 @@ class PreviewDataProviderTest {
     }
 
     @Test
+    @EnableFlags(FLAG_CHOOSER_PAYLOAD_TOGGLING)
     fun sendItemsWithAdditionalContentUriWithSameAuthority_showImagePreviewUi() {
         val uri = Uri.parse("content://org.pkg.app/image.png")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getType(uri)).thenReturn("image/png")
-        featureFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val testSubject =
             createDataProvider(
                 targetIntent,
@@ -434,10 +556,28 @@ class PreviewDataProviderTest {
         val testSubject =
             createDataProvider(
                 targetIntent,
-                additionalContentUri = Uri.parse("content://org.pkg.app/extracontent")
+                additionalContentUri = Uri.parse("content://org.pkg.app/extracontent"),
             )
 
         assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_TEXT)
         verify(contentResolver, never()).getType(any())
     }
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun parameters(): List<FlagsParameterization> =
+            FlagsParameterization.allCombinationsOf(FLAG_INDIVIDUAL_METADATA_TITLE_READ)
+    }
+}
+
+private fun ContentInterface.setDisplayName(uri: Uri, displayName: String) =
+    setMetadata(uri, arrayOf(OpenableColumns.DISPLAY_NAME), arrayOf(displayName))
+
+private fun ContentInterface.setTitle(uri: Uri, title: String) =
+    setMetadata(uri, arrayOf(Downloads.Impl.COLUMN_TITLE), arrayOf(title))
+
+private fun ContentInterface.setMetadata(uri: Uri, columns: Array<String>, values: Array<String>) {
+    whenever(query(uri, columns, null, null))
+        .thenReturn(MatrixCursor(columns).apply { addRow(values) })
 }
