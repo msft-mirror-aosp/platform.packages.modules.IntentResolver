@@ -20,6 +20,16 @@ flag {
 }
 
 flag {
+  name: "individual_metadata_title_read"
+  namespace: "intentresolver"
+  description: "Enables separate title URI metadata calls"
+  bug: "304686417"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "refine_system_actions"
   namespace: "intentresolver"
   description: "This flag enables sending system actions to the caller refinement flow"
