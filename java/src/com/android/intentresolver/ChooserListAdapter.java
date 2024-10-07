@@ -18,7 +18,6 @@ package com.android.intentresolver;
 
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_PREDICTION_SERVICE;
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_SHORTCUT_MANAGER;
-import static com.android.intentresolver.util.graphics.SuspendedMatrixColorFilter.getSuspendedColorMatrix;
 
 import android.app.ActivityManager;
 import android.app.prediction.AppTarget;
@@ -439,10 +438,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             }
         }
 
-        holder.bindIcon(info);
-        if (info.hasDisplayIcon() && !mTargetsEnabled) {
-            holder.icon.setColorFilter(getSuspendedColorMatrix());
-        }
+        holder.bindIcon(info, mTargetsEnabled);
         if (mAnimateItems && info.hasDisplayIcon()) {
             mAnimationTracker.animateIcon(holder.icon, info);
         }

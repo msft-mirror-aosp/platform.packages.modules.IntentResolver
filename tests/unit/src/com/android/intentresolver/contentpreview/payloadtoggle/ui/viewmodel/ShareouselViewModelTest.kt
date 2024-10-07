@@ -347,6 +347,8 @@ class ShareouselViewModelTest {
                 override fun getVideosHeadline(count: Int): String = "VIDEOS: $count"
 
                 override fun getFilesHeadline(count: Int): String = "FILES: $count"
+
+                override fun getNotItemsSelectedHeadline() = "Select items to share"
             }
         // instantiate the view model, and then runCurrent() so that it is fully hydrated before
         // starting the test

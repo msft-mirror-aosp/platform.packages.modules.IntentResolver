@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{جارٍ مشاركة صورة واحدة}zero{جارٍ مشاركة # صورة}two{جارٍ مشاركة صورتَين}few{جارٍ مشاركة # صور}many{جارٍ مشاركة # صورة}other{جارٍ مشاركة # صورة}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{جارٍ مشاركة فيديو واحد}zero{جارٍ مشاركة # فيديو}two{جارٍ مشاركة فيديوهَين}few{جارٍ مشاركة # فيديوهات}many{جارٍ مشاركة # فيديو}other{جارٍ مشاركة # فيديو}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{مشاركة ملف واحد}zero{مشاركة # ملف}two{مشاركة ملفَّين}few{مشاركة # ملفات}many{مشاركة # ملفًّا}other{مشاركة # ملف}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"اختيار العناصر المراد مشاركتها"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{مشاركة صورة واحدة ونص}zero{مشاركة # صورة ونص}two{مشاركة صورتَين ونص}few{مشاركة # صور ونص}many{مشاركة # صورة ونص}other{مشاركة # صورة ونص}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{مشاركة صورة واحدة ورابط}zero{مشاركة # صورة ورابط}two{مشاركة # صورتَين ورابط}few{مشاركة # صور ورابط}many{مشاركة # صورة ورابط}other{مشاركة # صورة ورابط}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{مشاركة فيديو واحد ونص}zero{مشاركة # فيديو ونص}two{مشاركة فيديوهَين ونص}few{مشاركة # فيديوهات ونص}many{مشاركة # فيديو ونص}other{مشاركة # فيديو ونص}}"</string>
@@ -75,7 +76,7 @@
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"صورة مصغّرة لمعاينة ملف"</string>
     <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"ما مِن أشخاص مقترحين للمشاركة معهم"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏لم يتم منح هذا التطبيق إذن تسجيل، ولكن يمكنه تسجيل الصوت من خلال جهاز USB هذا."</string>
-    <string name="resolver_personal_tab" msgid="1381052735324320565">"مساحة شخصية"</string>
+    <string name="resolver_personal_tab" msgid="1381052735324320565">"المساحة الشخصية"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"مساحة العمل"</string>
     <string name="resolver_private_tab" msgid="3707548826254095157">"المساحة الخاصّة"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"عرض المحتوى الشخصي"</string>

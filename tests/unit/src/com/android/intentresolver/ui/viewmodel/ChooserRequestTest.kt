@@ -25,6 +25,8 @@ import android.content.Intent.EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI
 import android.content.Intent.EXTRA_CHOOSER_FOCUSED_ITEM_POSITION
 import android.content.Intent.EXTRA_INTENT
 import android.content.Intent.EXTRA_REFERRER
+import android.content.Intent.EXTRA_TEXT
+import android.content.Intent.EXTRA_TITLE
 import android.net.Uri
 import android.service.chooser.Flags
 import androidx.core.net.toUri
@@ -32,7 +34,7 @@ import androidx.core.os.bundleOf
 import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.inject.FakeChooserServiceFlags
-import com.android.intentresolver.ui.model.ActivityModel
+import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.validation.Importance
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.NoValue
@@ -43,7 +45,7 @@ import org.junit.Test
 private fun createActivityModel(
     targetIntent: Intent?,
     referrer: Uri? = null,
-    additionalIntents: List<Intent>? = null
+    additionalIntents: List<Intent>? = null,
 ) =
     ActivityModel(
         Intent(ACTION_CHOOSER).apply {
@@ -52,7 +54,7 @@ private fun createActivityModel(
         },
         launchedFromUid = 10000,
         launchedFromPackage = "com.android.example",
-        referrer = referrer ?: "android-app://com.android.example".toUri()
+        referrer = referrer ?: "android-app://com.android.example".toUri(),
     )
 
 class ChooserRequestTest {
@@ -243,7 +245,7 @@ class ChooserRequestTest {
         val model = createActivityModel(Intent(ACTION_SEND))
         model.intent.putExtra(
             Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT,
-            Intent.CHOOSER_CONTENT_TYPE_ALBUM
+            Intent.CHOOSER_CONTENT_TYPE_ALBUM,
         )
 
         val result = readChooserRequest(model, fakeChooserServiceFlags)
@@ -270,5 +272,25 @@ class ChooserRequestTest {
         result as Valid<ChooserRequest>
 
         assertThat(result.value.metadataText).isEqualTo(metadataText)
+    }
+
+    @Test
+    fun textSharedTextAndTitle() {
+        val text: CharSequence = "Shared text"
+        val title: CharSequence = "Title"
+        val targetIntent =
+            Intent().apply {
+                putExtra(EXTRA_TITLE, title)
+                putExtra(EXTRA_TEXT, text)
+            }
+        val model = createActivityModel(targetIntent)
+
+        val result = readChooserRequest(model, fakeChooserServiceFlags)
+
+        assertThat(result).isInstanceOf(Valid::class.java)
+        (result as Valid<ChooserRequest>).value.let { request ->
+            assertThat(request.sharedText).isEqualTo(text)
+            assertThat(request.sharedTextTitle).isEqualTo(title)
+        }
     }
 }

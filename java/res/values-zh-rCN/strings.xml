@@ -60,13 +60,14 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{分享图片}other{分享 # 张图片}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{正在分享视频}other{正在分享 # 个视频}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{正在分享 # 个文件}other{正在分享 # 个文件}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"选择要分享的内容"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{正在分享带有文本的图片}other{正在分享带有文本的 # 个图片}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{正在分享带有链接的图片}other{正在分享带有链接的 # 个图片}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{正在分享带有文本的视频}other{正在分享带有文本的 # 个视频}}"</string>
     <string name="sharing_videos_with_link" msgid="6383290441403042321">"{count,plural, =1{正在分享带有链接的视频}other{正在分享带有链接的 # 个视频}}"</string>
     <string name="sharing_files_with_text" msgid="7331187260405018080">"{count,plural, =1{正在分享带有文本的文件}other{正在分享带有文本的 # 个文件}}"</string>
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{正在分享带有链接的文件}other{正在分享带有链接的 # 个文件}}"</string>
-    <string name="sharing_album" msgid="191743129899503345">"分享影集"</string>
+    <string name="sharing_album" msgid="191743129899503345">"分享相册"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{仅限图片}other{仅限图片}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{仅限视频}other{仅限视频}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{仅限文件}other{仅限文件}}"</string>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The Android Open Source Project
+ * Copyright 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-package com.android.intentresolver.contentpreview.payloadtoggle.data.repository
+package com.android.intentresolver.data.repository
 
-import android.net.Uri
-import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
+import com.android.intentresolver.shared.model.ActivityModel
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.atomicfu.atomic
 
-/** Stores set of selected previews. */
+/** An [ActivityModel] repository that captures the first value. */
 @ActivityRetainedScoped
-class PreviewSelectionsRepository @Inject constructor() {
-    val selections = MutableStateFlow(emptyMap<Uri, PreviewModel>())
+class ActivityModelRepository @Inject constructor() {
+    private val _value = atomic<ActivityModel?>(null)
+
+    val value: ActivityModel
+        get() = requireNotNull(_value.value) { "Repository has not been initialized" }
+
+    fun initialize(block: () -> ActivityModel) {
+        if (_value.value == null) {
+            _value.compareAndSet(null, block())
+        }
+    }
 }

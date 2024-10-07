@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Chia sẻ hình ảnh}other{Chia sẻ # hình ảnh}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Đang chia sẻ video}other{Đang chia sẻ # video}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Đang chia sẻ # tệp}other{Đang chia sẻ # tệp}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Chọn mục muốn chia sẻ"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Đang chia sẻ hình ảnh có văn bản}other{Đang chia sẻ # hình ảnh có văn bản}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Đang chia sẻ hình ảnh có đường liên kết}other{Đang chia sẻ # hình ảnh có đường liên kết}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Đang chia sẻ video có văn bản}other{Đang chia sẻ # video có văn bản}}"</string>
@@ -88,7 +89,7 @@
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Bạn không thể mở nội dung này bằng ứng dụng cá nhân"</string>
     <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Không chia sẻ được nội dung này bằng ứng dụng riêng tư"</string>
     <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Không mở được nội dung này bằng ứng dụng riêng tư"</string>
-    <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Các ứng dụng công việc đã bị tạm dừng"</string>
+    <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Các ứng dụng trong hồ sơ Công việc đã bị tạm dừng"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Tiếp tục"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Không có ứng dụng công việc"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Không có ứng dụng cá nhân"</string>

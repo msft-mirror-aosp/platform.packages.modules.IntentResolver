@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{රූපය බෙදා ගැනීම}one{රූප #ක් බෙදා ගැනීම}other{රූප #ක් බෙදා ගැනීම}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{වීඩියෝව බෙදා ගැනීම}one{වීඩියෝ #ක් බෙදා ගැනීම}other{වීඩියෝ #ක් බෙදා ගැනීම}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# ගොනුවක් බෙදා ගැනීම}one{ගොනු #ක් බෙදා ගැනීම}other{ගොනු #ක් බෙදා ගැනීම}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"බෙදා ගැනීමට අයිතම තෝරන්න"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{පෙළ සමග රූපය බෙදා ගැනීම}one{පෙළ සමග රූප #ක් බෙදා ගැනීම}other{පෙළ සමග රූප #ක් බෙදා ගැනීම}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{සබැඳිය සමග රූපය බෙදා ගැනීම}one{සබැඳිය සමග රූප #ක් බෙදා ගැනීම}other{සබැඳිය සමග රූප #ක් බෙදා ගැනීම}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{පෙළ සමග වීඩියෝව බෙදා ගැනීම}one{පෙළ සමග වීඩියෝ #ක් බෙදා ගැනීම}other{පෙළ සමග වීඩියෝ #ක් බෙදා ගැනීම}}"</string>

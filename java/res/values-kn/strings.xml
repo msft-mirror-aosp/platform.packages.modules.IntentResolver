@@ -45,8 +45,8 @@
     <string name="use_a_different_app" msgid="2062380818535918975">"ಬೇರೊಂದು ಆ್ಯಪ್ ಬಳಸಿ"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"ಕ್ರಿಯೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"</string>
     <string name="noApplications" msgid="1139487441772284671">"ಯಾವುದೇ ಅಪ್ಲಿಕೇಶನ್‌ಗಳು ಈ ಕ್ರಿಯೆಗಾಗಿ ಬದ್ಧತೆ ತೋರಿಸುವುದಿಲ್ಲ."</string>
-    <string name="forward_intent_to_owner" msgid="6454987608971162379">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನ ಹೊರಗೆ ನೀವು ಈ ಅಪ್ಲಿಕೇಶನ್‌ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ನೀವು ಈ ಅಪ್ಲಿಕೇಶನ್‌ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
+    <string name="forward_intent_to_owner" msgid="6454987608971162379">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನ ಹೊರಗೆ ನೀವು ಈ ಆ್ಯಪ್ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ನೀವು ಈ ಆ್ಯಪ್ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"ಯಾವಾಗಲೂ"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"ಒಮ್ಮೆ ಮಾತ್ರ"</string>
     <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"<xliff:g id="APP">%1$s</xliff:g> ಉದ್ಯೋಗದ ಪ್ರೊಫೈಲ್ ಅನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ಚಿತ್ರವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{# ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{# ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{ವೀಡಿಯೊವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{# ವೀಡಿಯೊಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{# ವೀಡಿಯೊಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# ಫೈಲ್ ಅನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{# ಫೈಲ್‌ಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{# ಫೈಲ್‌ಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"ಹಂಚಿಕೊಳ್ಳಲು ಐಟಂಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{ಪಠ್ಯದೊಂದಿಗೆ ಚಿತ್ರವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{ಪಠ್ಯದೊಂದಿಗೆ # ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{ಪಠ್ಯದೊಂದಿಗೆ # ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{ಲಿಂಕ್‌ನೊಂದಿಗೆ ಚಿತ್ರವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{ಲಿಂಕ್‌ನೊಂದಿಗೆ # ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{ಲಿಂಕ್‌ನೊಂದಿಗೆ # ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{ಪಠ್ಯದೊಂದಿಗೆ ವೀಡಿಯೊವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{ಪಠ್ಯದೊಂದಿಗೆ # ವೀಡಿಯೊಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{ಪಠ್ಯದೊಂದಿಗೆ # ವೀಡಿಯೊಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>

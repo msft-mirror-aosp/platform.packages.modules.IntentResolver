@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Delar bild}other{Delar # bilder}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Delar video}other{Delar # videor}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Delar # fil}other{Delar # filer}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Välj objekt att dela"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Delar bild med text}other{Delar # bilder med text}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Delar bild med länk}other{Delar # bilder med länk}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Delar video med text}other{Delar # videor med text}}"</string>
@@ -75,7 +76,7 @@
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"Miniatyr av förhandsgranskning av fil"</string>
     <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"Inga rekommenderade personer att dela med"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Appen har inte fått inspelningsbehörighet men kan spela in ljud via denna USB-enhet."</string>
-    <string name="resolver_personal_tab" msgid="1381052735324320565">"Privat"</string>
+    <string name="resolver_personal_tab" msgid="1381052735324320565">"Personlig"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Jobb"</string>
     <string name="resolver_private_tab" msgid="3707548826254095157">"Privat"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Personlig vy"</string>

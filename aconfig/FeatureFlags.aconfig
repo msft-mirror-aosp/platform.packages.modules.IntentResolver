@@ -20,6 +20,16 @@ flag {
 }
 
 flag {
+  name: "individual_metadata_title_read"
+  namespace: "intentresolver"
+  description: "Enables separate title URI metadata calls"
+  bug: "304686417"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "refine_system_actions"
   namespace: "intentresolver"
   description: "This flag enables sending system actions to the caller refinement flow"
@@ -97,6 +107,16 @@ flag {
 }
 
 flag {
+  name: "keyboard_navigation_fix"
+  namespace: "intentresolver"
+  description: "Enable Chooser keyboard navigation bugfix"
+  bug: "325259478"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "preview_image_loader"
   namespace: "intentresolver"
   description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
@@ -108,4 +128,18 @@ flag {
   namespace: "intentresolver"
   description: "Allow Shareousel selection change callback to update Intent#EXTRA_EXCLUDE_COMPONENTS"
   bug: "352496527"
+}
+
+flag {
+  name: "unselect_final_item"
+  namespace: "intentresolver"
+  description: "Allow toggling of final Shareousel item"
+  bug: "349468879"
+}
+
+flag {
+  name: "shareousel_scroll_offscreen_selections"
+  namespace: "intentresolver"
+  description: "Whether to scroll items onscreen when they are partially offscreen and selected/unselected."
+  bug: "351883537"
 }

@@ -26,13 +26,16 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.Tar
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.data.repository.chooserRequestRepository
+import com.android.intentresolver.logging.FakeEventLog
 import com.android.intentresolver.util.runKosmosTest
+import com.android.internal.logging.InstanceId
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import org.junit.Test
 
 class SelectablePreviewInteractorTest {
+    private val eventLog = FakeEventLog(InstanceId.fakeInstanceId(0))
 
     @Test
     fun reflectPreviewRepo_initState() = runKosmosTest {
@@ -46,6 +49,7 @@ class SelectablePreviewInteractorTest {
                         order = 0,
                     ),
                 selectionInteractor = selectionInteractor,
+                eventLog = eventLog,
             )
         runCurrent()
 
@@ -64,6 +68,7 @@ class SelectablePreviewInteractorTest {
                         order = 0,
                     ),
                 selectionInteractor = selectionInteractor,
+                eventLog = eventLog,
             )
 
         assertThat(underTest.isSelected.first()).isFalse()
@@ -93,6 +98,7 @@ class SelectablePreviewInteractorTest {
                         order = 0,
                     ),
                 selectionInteractor = selectionInteractor,
+                eventLog = eventLog,
             )
 
         underTest.setSelected(true)
