@@ -39,6 +39,8 @@ object TargetDataLoaderModule {
     @Provides
     @ActivityScoped
     @Caching
-    fun cachingTargetDataLoader(targetDataLoader: TargetDataLoader): TargetDataLoader =
-        CachingTargetDataLoader(targetDataLoader)
+    fun cachingTargetDataLoader(
+        @ActivityContext context: Context,
+        targetDataLoader: TargetDataLoader,
+    ): TargetDataLoader = CachingTargetDataLoader(context, targetDataLoader)
 }
