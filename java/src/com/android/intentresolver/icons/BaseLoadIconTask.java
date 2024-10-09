@@ -17,34 +17,31 @@
 package com.android.intentresolver.icons;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 
-import com.android.intentresolver.R;
+import androidx.annotation.Nullable;
+
 import com.android.intentresolver.TargetPresentationGetter;
 
 import java.util.function.Consumer;
 
-abstract class BaseLoadIconTask extends AsyncTask<Void, Void, Drawable> {
+abstract class BaseLoadIconTask extends AsyncTask<Void, Void, Bitmap> {
     protected final Context mContext;
     protected final TargetPresentationGetter.Factory mPresentationFactory;
-    private final Consumer<Drawable> mCallback;
+    private final Consumer<Bitmap> mCallback;
 
     BaseLoadIconTask(
             Context context,
             TargetPresentationGetter.Factory presentationFactory,
-            Consumer<Drawable> callback) {
+            Consumer<Bitmap> callback) {
         mContext = context;
         mPresentationFactory = presentationFactory;
         mCallback = callback;
     }
 
-    protected final Drawable loadIconPlaceholder() {
-        return mContext.getDrawable(R.drawable.resolver_icon_placeholder);
-    }
-
     @Override
-    protected final void onPostExecute(Drawable d) {
+    protected final void onPostExecute(@Nullable Bitmap d) {
         mCallback.accept(d);
     }
 }
