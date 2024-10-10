@@ -18,6 +18,7 @@ package com.android.intentresolver.icons
 
 import android.app.ActivityManager
 import android.content.Context
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.AsyncTask
 import android.os.UserHandle
@@ -26,6 +27,7 @@ import androidx.annotation.GuardedBy
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import com.android.intentresolver.R
 import com.android.intentresolver.TargetPresentationGetter
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
@@ -40,12 +42,12 @@ class DefaultTargetDataLoader(
     private val context: Context,
     private val lifecycle: Lifecycle,
     private val isAudioCaptureDevice: Boolean,
-) : TargetDataLoader() {
+) : TargetDataLoader {
     private val presentationFactory =
         TargetPresentationGetter.Factory(
             context,
             context.getSystemService(ActivityManager::class.java)?.launcherLargeIconDensity
-                ?: error("Unable to access ActivityManager")
+                ?: error("Unable to access ActivityManager"),
         )
     private val nextTaskId = AtomicInteger(0)
     @GuardedBy("self") private val activeTasks = SparseArray<AsyncTask<*, *, *>>()
@@ -68,9 +70,11 @@ class DefaultTargetDataLoader(
         callback: Consumer<Drawable>,
     ): Drawable? {
         val taskId = nextTaskId.getAndIncrement()
-        LoadIconTask(context, info, userHandle, presentationFactory) { result ->
+        LoadIconTask(context, info, presentationFactory) { bitmap ->
                 removeTask(taskId)
-                callback.accept(result)
+                callback.accept(
+                    bitmap?.let { BitmapDrawable(context.resources, it) } ?: loadIconPlaceholder()
+                )
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
@@ -87,9 +91,11 @@ class DefaultTargetDataLoader(
                 context.createContextAsUser(userHandle, 0),
                 info,
                 presentationFactory,
-            ) { result ->
+            ) { bitmap ->
                 removeTask(taskId)
-                callback.accept(result)
+                callback.accept(
+                    bitmap?.let { BitmapDrawable(context.resources, it) } ?: loadIconPlaceholder()
+                )
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
@@ -122,6 +128,9 @@ class DefaultTargetDataLoader(
     private fun removeTask(id: Int) {
         synchronized(activeTasks) { activeTasks.remove(id) }
     }
+
+    private fun loadIconPlaceholder(): Drawable =
+        requireNotNull(context.getDrawable(R.drawable.resolver_icon_placeholder))
 
     private fun destroy() {
         synchronized(activeTasks) {
