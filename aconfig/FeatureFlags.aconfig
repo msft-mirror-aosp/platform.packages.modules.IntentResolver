@@ -117,6 +117,13 @@ flag {
 }
 
 flag {
+  name: "target_hover_and_keyboard_focus_states"
+  namespace: "intentresolver"
+  description: "Adopt Launcher pointer hover and keyboard novigation focus effects for targets."
+  bug: "295175912"
+}
+
+flag {
   name: "preview_image_loader"
   namespace: "intentresolver"
   description: "Use the unified preview image loader for all preview variations; support variable preview sizes."

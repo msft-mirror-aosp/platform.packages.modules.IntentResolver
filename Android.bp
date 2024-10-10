@@ -54,6 +54,7 @@ android_library {
         "dagger2",
         "hilt_android",
         "IntentResolverFlagsLib",
+        "iconloader",
         "jsr330",
         "kotlin-stdlib",
         "kotlinx_coroutines",
