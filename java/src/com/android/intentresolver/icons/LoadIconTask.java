@@ -19,10 +19,11 @@ package com.android.intentresolver.icons;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ResolveInfo;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 import android.os.Trace;
-import android.os.UserHandle;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import com.android.intentresolver.TargetPresentationGetter;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
@@ -32,38 +33,36 @@ import java.util.function.Consumer;
 class LoadIconTask extends BaseLoadIconTask {
     private static final String TAG = "IconTask";
     protected final DisplayResolveInfo mDisplayResolveInfo;
-    private final UserHandle mUserHandle;
     private final ResolveInfo mResolveInfo;
 
     LoadIconTask(
             Context context, DisplayResolveInfo dri,
-            UserHandle userHandle,
             TargetPresentationGetter.Factory presentationFactory,
-            Consumer<Drawable> callback) {
+            Consumer<Bitmap> callback) {
         super(context, presentationFactory, callback);
-        mUserHandle = userHandle;
         mDisplayResolveInfo = dri;
         mResolveInfo = dri.getResolveInfo();
     }
 
     @Override
-    protected Drawable doInBackground(Void... params) {
+    @Nullable
+    protected Bitmap doInBackground(Void... params) {
         Trace.beginSection("app-icon");
         try {
             return loadIconForResolveInfo(mResolveInfo);
         } catch (Exception e) {
             ComponentName componentName = mDisplayResolveInfo.getResolvedComponentName();
             Log.e(TAG, "Failed to load app icon for " + componentName, e);
-            return loadIconPlaceholder();
+            return null;
         } finally {
             Trace.endSection();
         }
     }
 
-    protected final Drawable loadIconForResolveInfo(ResolveInfo ri) {
+    protected final Bitmap loadIconForResolveInfo(ResolveInfo ri) {
         // Load icons based on userHandle from ResolveInfo. If in work profile/clone profile, icons
         // should be badged.
-        return mPresentationFactory.makePresentationGetter(ri).getIcon(ri.userHandle);
+        return mPresentationFactory.makePresentationGetter(ri).getIconBitmap(ri.userHandle);
     }
 
 }
