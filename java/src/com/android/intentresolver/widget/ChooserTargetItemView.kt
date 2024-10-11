@@ -17,11 +17,16 @@
 package com.android.intentresolver.widget
 
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import com.android.intentresolver.R
 
 class ChooserTargetItemView(
     context: Context,
@@ -29,6 +34,14 @@ class ChooserTargetItemView(
     defStyleAttr: Int,
     defStyleRes: Int,
 ) : LinearLayout(context, attrs, defStyleAttr, defStyleRes) {
+    private val outlineRadius: Float
+    private val outlineWidth: Float
+    private val outlinePaint: Paint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val outlineInnerPaint: Paint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private var iconView: ImageView? = null
+
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -39,7 +52,28 @@ class ChooserTargetItemView(
         defStyleAttr: Int,
     ) : this(context, attrs, defStyleAttr, 0)
 
-    private var iconView: ImageView? = null
+    init {
+        val a = context.obtainStyledAttributes(attrs, R.styleable.ChooserTargetItemView)
+        val defaultWidth =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                2f,
+                context.resources.displayMetrics,
+            )
+        outlineRadius =
+            a.getDimension(R.styleable.ChooserTargetItemView_focusOutlineCornerRadius, 0f)
+        outlineWidth =
+            a.getDimension(R.styleable.ChooserTargetItemView_focusOutlineWidth, defaultWidth)
+
+        outlinePaint.strokeWidth = outlineWidth
+        outlinePaint.color =
+            a.getColor(R.styleable.ChooserTargetItemView_focusOutlineColor, Color.TRANSPARENT)
+
+        outlineInnerPaint.strokeWidth = outlineWidth
+        outlineInnerPaint.color =
+            a.getColor(R.styleable.ChooserTargetItemView_focusInnerOutlineColor, Color.TRANSPARENT)
+        a.recycle()
+    }
 
     override fun onViewAdded(child: View) {
         super.onViewAdded(child)
@@ -70,4 +104,38 @@ class ChooserTargetItemView(
     }
 
     override fun onInterceptHoverEvent(event: MotionEvent?) = true
+
+    override fun dispatchDraw(canvas: Canvas) {
+        super.dispatchDraw(canvas)
+        if (isFocused) {
+            drawFocusInnerOutline(canvas)
+            drawFocusOutline(canvas)
+        }
+    }
+
+    private fun drawFocusInnerOutline(canvas: Canvas) {
+        val outlineOffset = outlineWidth + outlineWidth / 2
+        canvas.drawRoundRect(
+            outlineOffset,
+            outlineOffset,
+            maxOf(0f, width - outlineOffset),
+            maxOf(0f, height - outlineOffset),
+            outlineRadius - outlineWidth,
+            outlineRadius - outlineWidth,
+            outlineInnerPaint,
+        )
+    }
+
+    private fun drawFocusOutline(canvas: Canvas) {
+        val outlineOffset = outlineWidth / 2
+        canvas.drawRoundRect(
+            outlineOffset,
+            outlineOffset,
+            maxOf(0f, width - outlineOffset),
+            maxOf(0f, height - outlineOffset),
+            outlineRadius,
+            outlineRadius,
+            outlinePaint,
+        )
+    }
 }
