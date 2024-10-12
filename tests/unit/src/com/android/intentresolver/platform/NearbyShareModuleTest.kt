@@ -23,7 +23,7 @@ import android.provider.Settings
 import android.testing.TestableResources
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.R
-import com.google.common.truth.Truth8.assertThat
+import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
 
@@ -34,7 +34,7 @@ class NearbyShareModuleTest {
     /** Create Resources with overridden values. */
     private fun Context.fakeResources(
         config: Configuration? = null,
-        block: TestableResources.() -> Unit
+        block: TestableResources.() -> Unit,
     ) =
         TestableResources(resources)
             .apply { config?.let { overrideConfiguration(it) } }
@@ -64,7 +64,7 @@ class NearbyShareModuleTest {
             context.fakeResources {
                 addOverride(
                     R.string.config_defaultNearbySharingComponent,
-                    "com.example/.ComponentName"
+                    "com.example/.ComponentName",
                 )
             }
 
@@ -83,7 +83,7 @@ class NearbyShareModuleTest {
             context.fakeResources {
                 addOverride(
                     R.string.config_defaultNearbySharingComponent,
-                    "com.example/.AComponent"
+                    "com.example/.AComponent",
                 )
             }
 
