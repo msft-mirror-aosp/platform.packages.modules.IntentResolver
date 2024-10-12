@@ -23,6 +23,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.UserHandle
 import androidx.collection.LruCache
+import com.android.intentresolver.Flags.targetHoverAndKeyboardFocusStates
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
 import java.util.function.Consumer
@@ -46,11 +47,9 @@ class CachingTargetDataLoader(
         callback: Consumer<Drawable>,
     ): Drawable? {
         val cacheKey = info.toCacheKey()
-        return getCachedAppIcon(cacheKey, userHandle)?.let { BitmapDrawable(context.resources, it) }
+        return getCachedAppIcon(cacheKey, userHandle)?.toDrawable()
             ?: targetDataLoader.getOrLoadAppTargetIcon(info, userHandle) { drawable ->
-                (drawable as? BitmapDrawable)?.bitmap?.let {
-                    getProfileIconCache(userHandle).put(cacheKey, it)
-                }
+                drawable.extractBitmap()?.let { getProfileIconCache(userHandle).put(cacheKey, it) }
                 callback.accept(drawable)
             }
     }
@@ -61,12 +60,10 @@ class CachingTargetDataLoader(
         callback: Consumer<Drawable>,
     ): Drawable? {
         val cacheKey = info.toCacheKey()
-        return cacheKey
-            ?.let { getCachedAppIcon(it, userHandle) }
-            ?.let { BitmapDrawable(context.resources, it) }
+        return cacheKey?.let { getCachedAppIcon(it, userHandle) }?.toDrawable()
             ?: targetDataLoader.getOrLoadDirectShareIcon(info, userHandle) { drawable ->
                 if (cacheKey != null) {
-                    (drawable as? BitmapDrawable)?.bitmap?.let {
+                    drawable.extractBitmap()?.let {
                         getProfileIconCache(userHandle).put(cacheKey, it)
                     }
                 }
@@ -102,4 +99,20 @@ class CachingTargetDataLoader(
                 append(directShareShortcutInfo?.id ?: "")
             }
         }
+
+    private fun Bitmap.toDrawable(): Drawable {
+        return if (targetHoverAndKeyboardFocusStates()) {
+            HoverBitmapDrawable(this)
+        } else {
+            BitmapDrawable(context.resources, this)
+        }
+    }
+
+    private fun Drawable.extractBitmap(): Bitmap? {
+        return when (this) {
+            is BitmapDrawable -> bitmap
+            is HoverBitmapDrawable -> bitmap
+            else -> null
+        }
+    }
 }

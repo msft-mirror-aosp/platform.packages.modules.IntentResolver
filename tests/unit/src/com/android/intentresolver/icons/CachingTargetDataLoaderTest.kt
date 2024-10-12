@@ -138,6 +138,12 @@ class CachingTargetDataLoaderTest {
                 createResolveInfo(2, userHandle.identifier),
                 Intent(),
             ) as DisplayResolveInfo
+        val hoverBitmapTargetInfo =
+            DisplayResolveInfo.newDisplayResolveInfo(
+                Intent(),
+                createResolveInfo(3, userHandle.identifier),
+                Intent(),
+            ) as DisplayResolveInfo
 
         val targetDataLoader = mock<TargetDataLoader>()
         doAnswer {
@@ -146,6 +152,8 @@ class CachingTargetDataLoaderTest {
                 val drawable =
                     if (target === bitmapTargetInfo) {
                         BitmapDrawable(createBitmap())
+                    } else if (target === hoverBitmapTargetInfo) {
+                        HoverBitmapDrawable(createBitmap())
                     } else {
                         ColorDrawable(Color.RED)
                     }
@@ -161,12 +169,17 @@ class CachingTargetDataLoaderTest {
         testSubject.getOrLoadAppTargetIcon(colorTargetInfo, userHandle, callback)
         testSubject.getOrLoadAppTargetIcon(bitmapTargetInfo, userHandle, callback)
         testSubject.getOrLoadAppTargetIcon(bitmapTargetInfo, userHandle, callback)
+        testSubject.getOrLoadAppTargetIcon(hoverBitmapTargetInfo, userHandle, callback)
+        testSubject.getOrLoadAppTargetIcon(hoverBitmapTargetInfo, userHandle, callback)
 
         verify(targetDataLoader) {
             2 * { getOrLoadAppTargetIcon(eq(colorTargetInfo), eq(userHandle), any()) }
         }
         verify(targetDataLoader) {
             1 * { getOrLoadAppTargetIcon(eq(bitmapTargetInfo), eq(userHandle), any()) }
+        }
+        verify(targetDataLoader) {
+            1 * { getOrLoadAppTargetIcon(eq(hoverBitmapTargetInfo), eq(userHandle), any()) }
         }
     }
 }
