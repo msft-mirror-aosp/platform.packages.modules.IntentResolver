@@ -18,6 +18,7 @@ package com.android.intentresolver.icons
 
 import android.app.ActivityManager
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.AsyncTask
@@ -27,6 +28,7 @@ import androidx.annotation.GuardedBy
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import com.android.intentresolver.Flags.targetHoverAndKeyboardFocusStates
 import com.android.intentresolver.R
 import com.android.intentresolver.TargetPresentationGetter
 import com.android.intentresolver.chooser.DisplayResolveInfo
@@ -72,9 +74,7 @@ class DefaultTargetDataLoader(
         val taskId = nextTaskId.getAndIncrement()
         LoadIconTask(context, info, presentationFactory) { bitmap ->
                 removeTask(taskId)
-                callback.accept(
-                    bitmap?.let { BitmapDrawable(context.resources, it) } ?: loadIconPlaceholder()
-                )
+                callback.accept(bitmap?.toDrawable() ?: loadIconPlaceholder())
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
@@ -93,9 +93,7 @@ class DefaultTargetDataLoader(
                 presentationFactory,
             ) { bitmap ->
                 removeTask(taskId)
-                callback.accept(
-                    bitmap?.let { BitmapDrawable(context.resources, it) } ?: loadIconPlaceholder()
-                )
+                callback.accept(bitmap?.toDrawable() ?: loadIconPlaceholder())
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
@@ -138,6 +136,14 @@ class DefaultTargetDataLoader(
                 activeTasks.valueAt(i).cancel(false)
             }
             activeTasks.clear()
+        }
+    }
+
+    private fun Bitmap.toDrawable(): Drawable {
+        return if (targetHoverAndKeyboardFocusStates()) {
+            HoverBitmapDrawable(this)
+        } else {
+            BitmapDrawable(context.resources, this)
         }
     }
 }
