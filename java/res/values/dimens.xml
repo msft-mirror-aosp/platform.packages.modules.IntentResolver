@@ -34,6 +34,10 @@
     <dimen name="chooser_max_collapsed_height">288dp</dimen>
     <dimen name="chooser_icon_size">56dp</dimen>
     <dimen name="chooser_badge_size">22dp</dimen>
+    <dimen name="chooser_icon_horizontal_padding">8dp</dimen>
+    <dimen name="chooser_icon_vertical_padding">7dp</dimen>
+    <dimen name="chooser_icon_width_with_padding">72dp</dimen> <!-- = chooser_icon_size + chooser_icon_horizontal_padding * 2 -->
+    <dimen name="chooser_icon_height_with_padding">70dp</dimen> <!-- = chooser_icon_size + chooser_icon_vertical_padding * 2 -->
     <dimen name="chooser_headline_text_size">18sp</dimen>
     <dimen name="chooser_grid_target_name_text_size">12sp</dimen>
     <dimen name="chooser_grid_activity_name_text_size">12sp</dimen>

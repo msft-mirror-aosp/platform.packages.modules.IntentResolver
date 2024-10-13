@@ -239,4 +239,11 @@ public class DisplayResolveInfo implements TargetInfo {
     public void setPinned(boolean pinned) {
         mPinned = pinned;
     }
+
+    /**
+     * Creates a copy of the object.
+     */
+    public DisplayResolveInfo copy() {
+        return new DisplayResolveInfo(this);
+    }
 }
