@@ -19,6 +19,7 @@
 <com.android.intentresolver.widget.ChooserTargetItemView
               xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:id="@androidprv:id/item"
               android:orientation="vertical"
               android:layout_width="match_parent"
@@ -28,7 +29,11 @@
               android:paddingVertical="1dp"
               android:paddingHorizontal="4dp"
               android:focusable="true"
-              android:background="?android:attr/selectableItemBackgroundBorderless">
+              android:defaultFocusHighlightEnabled="false"
+              app:focusOutlineWidth="@dimen/chooser_item_focus_outline_width"
+              app:focusOutlineCornerRadius="@dimen/chooser_item_focus_outline_corner_radius"
+              app:focusOutlineColor="?androidprv:attr/materialColorSecondaryFixed"
+              app:focusInnerOutlineColor="?androidprv:attr/materialColorOnSecondaryFixedVariant">
 
     <ImageView android:id="@android:id/icon"
                android:layout_width="@dimen/chooser_icon_width_with_padding"
