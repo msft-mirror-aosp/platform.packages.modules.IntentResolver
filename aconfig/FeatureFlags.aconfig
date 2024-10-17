@@ -131,6 +131,16 @@ flag {
 }
 
 flag {
+  name: "save_shareousel_state"
+  namespace: "intentresolver"
+  description: "Preserve Shareousel state over a system-initiated process death."
+  bug: "362347212"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "shareousel_update_exclude_components_extra"
   namespace: "intentresolver"
   description: "Allow Shareousel selection change callback to update Intent#EXTRA_EXCLUDE_COMPONENTS"
