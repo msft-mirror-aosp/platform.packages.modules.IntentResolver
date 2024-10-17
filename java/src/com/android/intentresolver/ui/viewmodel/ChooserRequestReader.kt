@@ -70,10 +70,10 @@ internal fun Intent.maybeAddSendActionFlags() =
 fun readChooserRequest(
     model: ActivityModel,
     flags: ChooserServiceFlags,
+    savedState: Bundle = model.intent.extras ?: Bundle(),
 ): ValidationResult<ChooserRequest> {
-    val extras = model.intent.extras ?: Bundle()
     @Suppress("DEPRECATION")
-    return validateFrom(extras::get) {
+    return validateFrom(savedState::get) {
         val targetIntent = required(IntentOrUri(EXTRA_INTENT)).maybeAddSendActionFlags()
 
         val isSendAction = targetIntent.hasSendAction()
