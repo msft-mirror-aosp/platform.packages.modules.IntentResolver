@@ -41,6 +41,8 @@
     <dimen name="chooser_headline_text_size">18sp</dimen>
     <dimen name="chooser_grid_target_name_text_size">12sp</dimen>
     <dimen name="chooser_grid_activity_name_text_size">12sp</dimen>
+    <dimen name="chooser_item_focus_outline_corner_radius">11dp</dimen>
+    <dimen name="chooser_item_focus_outline_width">2dp</dimen>
     <dimen name="resolver_icon_size">32dp</dimen>
     <dimen name="resolver_button_bar_spacing">0dp</dimen>
     <dimen name="resolver_badge_size">18dp</dimen>
