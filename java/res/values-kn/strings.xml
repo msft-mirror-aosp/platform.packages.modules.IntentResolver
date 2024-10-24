@@ -45,8 +45,8 @@
     <string name="use_a_different_app" msgid="2062380818535918975">"ಬೇರೊಂದು ಆ್ಯಪ್ ಬಳಸಿ"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"ಕ್ರಿಯೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"</string>
     <string name="noApplications" msgid="1139487441772284671">"ಯಾವುದೇ ಅಪ್ಲಿಕೇಶನ್‌ಗಳು ಈ ಕ್ರಿಯೆಗಾಗಿ ಬದ್ಧತೆ ತೋರಿಸುವುದಿಲ್ಲ."</string>
-    <string name="forward_intent_to_owner" msgid="6454987608971162379">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನ ಹೊರಗೆ ನೀವು ಈ ಅಪ್ಲಿಕೇಶನ್‌ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ನೀವು ಈ ಅಪ್ಲಿಕೇಶನ್‌ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
+    <string name="forward_intent_to_owner" msgid="6454987608971162379">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನ ಹೊರಗೆ ನೀವು ಈ ಆ್ಯಪ್ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"ನಿಮ್ಮ ಕೆಲಸದ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ನೀವು ಈ ಆ್ಯಪ್ ಅನ್ನು ಬಳಸುತ್ತಿರುವಿರಿ"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"ಯಾವಾಗಲೂ"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"ಒಮ್ಮೆ ಮಾತ್ರ"</string>
     <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"<xliff:g id="APP">%1$s</xliff:g> ಉದ್ಯೋಗದ ಪ್ರೊಫೈಲ್ ಅನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ"</string>

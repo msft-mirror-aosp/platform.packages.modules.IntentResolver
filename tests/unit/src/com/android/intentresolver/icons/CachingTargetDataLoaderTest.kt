@@ -21,11 +21,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.os.UserHandle
+import com.android.intentresolver.ResolverDataProvider.createResolveInfo
+import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
+import com.android.intentresolver.chooser.TargetInfo
 import java.util.function.Consumer
 import org.junit.Test
 import org.mockito.kotlin.any
@@ -37,6 +42,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class CachingTargetDataLoaderTest {
+    private val context = mock<Context>()
     private val userHandle = UserHandle.of(1)
 
     @Test
@@ -61,7 +67,7 @@ class CachingTargetDataLoaderTest {
                 on { getOrLoadDirectShareIcon(eq(callerTarget), eq(userHandle), any()) } doReturn
                     null
             }
-        val testSubject = CachingTargetDataLoader(targetDataLoader)
+        val testSubject = CachingTargetDataLoader(context, targetDataLoader)
         val callback = Consumer<Drawable> {}
 
         testSubject.getOrLoadDirectShareIcon(callerTarget, userHandle, callback)
@@ -102,7 +108,7 @@ class CachingTargetDataLoaderTest {
             }
             .whenever(targetDataLoader)
             .getOrLoadDirectShareIcon(eq(targetInfo), eq(userHandle), any())
-        val testSubject = CachingTargetDataLoader(targetDataLoader)
+        val testSubject = CachingTargetDataLoader(context, targetDataLoader)
         val callback = Consumer<Drawable> {}
 
         testSubject.getOrLoadDirectShareIcon(targetInfo, userHandle, callback)
@@ -110,6 +116,70 @@ class CachingTargetDataLoaderTest {
 
         verify(targetDataLoader) {
             1 * { getOrLoadDirectShareIcon(eq(targetInfo), eq(userHandle), any()) }
+        }
+    }
+
+    @Test
+    fun onlyBitmapsAreCached() {
+        val context =
+            mock<Context> {
+                on { userId } doReturn 1
+                on { packageName } doReturn "package"
+            }
+        val colorTargetInfo =
+            DisplayResolveInfo.newDisplayResolveInfo(
+                Intent(),
+                createResolveInfo(1, userHandle.identifier),
+                Intent(),
+            ) as DisplayResolveInfo
+        val bitmapTargetInfo =
+            DisplayResolveInfo.newDisplayResolveInfo(
+                Intent(),
+                createResolveInfo(2, userHandle.identifier),
+                Intent(),
+            ) as DisplayResolveInfo
+        val hoverBitmapTargetInfo =
+            DisplayResolveInfo.newDisplayResolveInfo(
+                Intent(),
+                createResolveInfo(3, userHandle.identifier),
+                Intent(),
+            ) as DisplayResolveInfo
+
+        val targetDataLoader = mock<TargetDataLoader>()
+        doAnswer {
+                val target = it.arguments[0] as TargetInfo
+                val callback = it.arguments[2] as Consumer<Drawable>
+                val drawable =
+                    if (target === bitmapTargetInfo) {
+                        BitmapDrawable(createBitmap())
+                    } else if (target === hoverBitmapTargetInfo) {
+                        HoverBitmapDrawable(createBitmap())
+                    } else {
+                        ColorDrawable(Color.RED)
+                    }
+                callback.accept(drawable)
+                null
+            }
+            .whenever(targetDataLoader)
+            .getOrLoadAppTargetIcon(any(), eq(userHandle), any())
+        val testSubject = CachingTargetDataLoader(context, targetDataLoader)
+        val callback = Consumer<Drawable> {}
+
+        testSubject.getOrLoadAppTargetIcon(colorTargetInfo, userHandle, callback)
+        testSubject.getOrLoadAppTargetIcon(colorTargetInfo, userHandle, callback)
+        testSubject.getOrLoadAppTargetIcon(bitmapTargetInfo, userHandle, callback)
+        testSubject.getOrLoadAppTargetIcon(bitmapTargetInfo, userHandle, callback)
+        testSubject.getOrLoadAppTargetIcon(hoverBitmapTargetInfo, userHandle, callback)
+        testSubject.getOrLoadAppTargetIcon(hoverBitmapTargetInfo, userHandle, callback)
+
+        verify(targetDataLoader) {
+            2 * { getOrLoadAppTargetIcon(eq(colorTargetInfo), eq(userHandle), any()) }
+        }
+        verify(targetDataLoader) {
+            1 * { getOrLoadAppTargetIcon(eq(bitmapTargetInfo), eq(userHandle), any()) }
+        }
+        verify(targetDataLoader) {
+            1 * { getOrLoadAppTargetIcon(eq(hoverBitmapTargetInfo), eq(userHandle), any()) }
         }
     }
 }
