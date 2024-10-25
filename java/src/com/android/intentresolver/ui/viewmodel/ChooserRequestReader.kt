@@ -48,7 +48,6 @@ import com.android.intentresolver.R
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.ext.hasSendAction
 import com.android.intentresolver.ext.ifMatch
-import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.util.hasValidIcon
 import com.android.intentresolver.validation.Validation
@@ -69,7 +68,6 @@ internal fun Intent.maybeAddSendActionFlags() =
 
 fun readChooserRequest(
     model: ActivityModel,
-    flags: ChooserServiceFlags,
     savedState: Bundle = model.intent.extras ?: Bundle(),
 ): ValidationResult<ChooserRequest> {
     @Suppress("DEPRECATION")
@@ -126,7 +124,7 @@ fun readChooserRequest(
 
         val additionalContentUri: Uri?
         val focusedItemPos: Int
-        if (isSendAction && flags.chooserPayloadToggling()) {
+        if (isSendAction) {
             additionalContentUri = optional(value<Uri>(EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI))
             focusedItemPos = optional(value<Int>(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION)) ?: 0
         } else {

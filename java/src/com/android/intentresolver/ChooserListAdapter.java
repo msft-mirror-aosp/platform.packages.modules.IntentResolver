@@ -518,13 +518,6 @@ public class ChooserListAdapter extends ResolverListAdapter {
     /**
      * Group application targets
      */
-    public void updateAlphabeticalList() {
-        updateAlphabeticalList(() -> {});
-    }
-
-    /**
-     * Group application targets
-     */
     public void updateAlphabeticalList(Runnable onCompleted) {
         final DisplayResolveInfoAzInfoComparator
                 comparator = new DisplayResolveInfoAzInfoComparator(mContext);

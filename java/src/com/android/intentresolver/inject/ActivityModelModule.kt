@@ -49,11 +49,10 @@ object ActivityModelModule {
     fun provideInitialRequest(
         activityModelRepo: ActivityModelRepository,
         savedStateHandle: SavedStateHandle,
-        flags: ChooserServiceFlags,
     ): ValidationResult<ChooserRequest> {
         val activityModel = activityModelRepo.value
         val extras = restoreChooserRequestExtras(activityModel.intent.extras, savedStateHandle)
-        return readChooserRequest(activityModel, flags, extras)
+        return readChooserRequest(activityModel, extras)
     }
 
     @Provides
