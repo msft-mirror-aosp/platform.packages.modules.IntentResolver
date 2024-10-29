@@ -171,7 +171,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * The Chooser Activity handles intent resolution specifically for sharing intents -
@@ -257,16 +256,13 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Inject @Background public CoroutineDispatcher mBackgroundDispatcher;
     @Inject public ChooserHelper mChooserHelper;
     @Inject public FeatureFlags mFeatureFlags;
-    @Inject public android.service.chooser.FeatureFlags mChooserServiceFeatureFlags;
     @Inject public EventLog mEventLog;
     @Inject @AppPredictionAvailable public boolean mAppPredictionAvailable;
     @Inject @ImageEditor public Optional<ComponentName> mImageEditor;
     @Inject @NearbyShare public Optional<ComponentName> mNearbyShare;
-    protected TargetDataLoader mTargetDataLoader;
-    @Inject public Provider<TargetDataLoader> mTargetDataLoaderProvider;
     @Inject
     @Caching
-    public Provider<TargetDataLoader> mCachingTargetDataLoaderProvider;
+    public TargetDataLoader mTargetDataLoader;
     @Inject public DevicePolicyResources mDevicePolicyResources;
     @Inject public ProfilePagerResources mProfilePagerResources;
     @Inject public PackageManager mPackageManager;
@@ -345,20 +341,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         Log.i(TAG, "onCreate");
         mActivityModelRepository.initialize(this::createActivityModel);
 
-        mTargetDataLoader = mChooserServiceFeatureFlags.chooserPayloadToggling()
-                ? mCachingTargetDataLoaderProvider.get()
-                : mTargetDataLoaderProvider.get();
-
         setTheme(R.style.Theme_DeviceDefault_Chooser);
 
         // Initializer is invoked when this function returns, via Lifecycle.
         mChooserHelper.setInitializer(this::initialize);
-        if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
-            mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
-            mChooserHelper.setOnPendingSelection(this::onPendingSelection);
-            if (unselectFinalItem()) {
-                mChooserHelper.setOnHasSelections(this::onHasSelections);
-            }
+        mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
+        mChooserHelper.setOnPendingSelection(this::onPendingSelection);
+        if (unselectFinalItem()) {
+            mChooserHelper.setOnHasSelections(this::onHasSelections);
         }
     }
     private int mInitialProfile = -1;
@@ -659,8 +649,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mEnterTransitionAnimationDelegate,
                 new HeadlineGeneratorImpl(this),
                 mRequest.getContentTypeHint(),
-                mRequest.getMetadataText(),
-                mChooserServiceFeatureFlags.chooserPayloadToggling());
+                mRequest.getMetadataText());
         updateStickyContentPreview();
         if (shouldShowStickyContentPreview()) {
             getEventLog().logActionShareWithPreview(
@@ -777,9 +766,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void recreatePagerAdapter() {
-        if (!mChooserServiceFeatureFlags.chooserPayloadToggling()) {
-            return;
-        }
         destroyProfileRecords();
         createProfileRecords(
                 new AppPredictorFactory(
@@ -2454,17 +2440,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         // ResolverListAdapter#mPostListReadyRunnable is executed.
         if (chooserListAdapter.getDisplayResolveInfoCount() == 0) {
             Log.d(TAG, "getDisplayResolveInfoCount() == 0");
-            if (rebuildComplete && mChooserServiceFeatureFlags.chooserPayloadToggling()) {
+            if (rebuildComplete) {
                 onAppTargetsLoaded(listAdapter);
             }
             chooserListAdapter.notifyDataSetChanged();
         } else {
-            if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
-                chooserListAdapter.updateAlphabeticalList(
-                        () -> onAppTargetsLoaded(listAdapter));
-            } else {
-                chooserListAdapter.updateAlphabeticalList();
-            }
+            chooserListAdapter.updateAlphabeticalList(() -> onAppTargetsLoaded(listAdapter));
         }
 
         if (rebuildComplete) {
