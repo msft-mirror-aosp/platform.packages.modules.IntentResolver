@@ -31,16 +31,13 @@ import dagger.hilt.android.scopes.ActivityScoped
 object TargetDataLoaderModule {
     @Provides
     @ActivityScoped
-    fun targetDataLoader(
-        @ActivityContext context: Context,
-        @ActivityOwned lifecycle: Lifecycle,
-    ): TargetDataLoader = DefaultTargetDataLoader(context, lifecycle, isAudioCaptureDevice = false)
-
-    @Provides
-    @ActivityScoped
     @Caching
     fun cachingTargetDataLoader(
         @ActivityContext context: Context,
-        targetDataLoader: TargetDataLoader,
-    ): TargetDataLoader = CachingTargetDataLoader(context, targetDataLoader)
+        @ActivityOwned lifecycle: Lifecycle,
+    ): TargetDataLoader =
+        CachingTargetDataLoader(
+            context,
+            DefaultTargetDataLoader(context, lifecycle, isAudioCaptureDevice = false),
+        )
 }
