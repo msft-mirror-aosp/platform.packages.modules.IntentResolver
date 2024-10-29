@@ -24,7 +24,6 @@ import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL
 import android.provider.Downloads
 import android.provider.OpenableColumns
-import android.service.chooser.Flags.chooserPayloadToggling
 import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.OpenForTesting
@@ -133,7 +132,7 @@ constructor(
              * IMAGE, FILE, TEXT. */
             if (!targetIntent.isSend || records.isEmpty()) {
                 CONTENT_PREVIEW_TEXT
-            } else if (chooserPayloadToggling() && shouldShowPayloadSelection()) {
+            } else if (shouldShowPayloadSelection()) {
                 // TODO: replace with the proper flags injection
                 CONTENT_PREVIEW_PAYLOAD_SELECTION
             } else {
