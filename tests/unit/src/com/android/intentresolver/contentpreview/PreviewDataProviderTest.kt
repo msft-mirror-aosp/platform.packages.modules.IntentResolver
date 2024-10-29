@@ -21,14 +21,12 @@ import android.content.Intent
 import android.database.MatrixCursor
 import android.media.MediaMetadata
 import android.net.Uri
-import android.platform.test.annotations.DisableFlags
 import android.platform.test.annotations.EnableFlags
 import android.platform.test.flag.junit.FlagsParameterization
 import android.platform.test.flag.junit.SetFlagsRule
 import android.provider.DocumentsContract
 import android.provider.Downloads
 import android.provider.OpenableColumns
-import android.service.chooser.Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING
 import com.android.intentresolver.Flags.FLAG_INDIVIDUAL_METADATA_TITLE_READ
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
@@ -493,7 +491,6 @@ class PreviewDataProviderTest(flags: FlagsParameterization) {
         }
 
     @Test
-    @EnableFlags(FLAG_CHOOSER_PAYLOAD_TOGGLING)
     fun sendImageWithAdditionalContentUri_showPayloadTogglingUi() {
         val uri = Uri.parse("content://org.pkg.app/image.png")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
@@ -513,26 +510,6 @@ class PreviewDataProviderTest(flags: FlagsParameterization) {
     }
 
     @Test
-    @DisableFlags(FLAG_CHOOSER_PAYLOAD_TOGGLING)
-    fun sendImageWithAdditionalContentUriAndDisabledFlag_showImagePreviewUi() {
-        val uri = Uri.parse("content://org.pkg.app/image.png")
-        val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
-        whenever(contentResolver.getType(uri)).thenReturn("image/png")
-        val testSubject =
-            createDataProvider(
-                targetIntent,
-                additionalContentUri = Uri.parse("content://org.pkg.app.extracontent"),
-            )
-
-        assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_IMAGE)
-        assertThat(testSubject.uriCount).isEqualTo(1)
-        assertThat(testSubject.firstFileInfo?.uri).isEqualTo(uri)
-        assertThat(testSubject.firstFileInfo?.previewUri).isEqualTo(uri)
-        verify(contentResolver, times(1)).getType(any())
-    }
-
-    @Test
-    @EnableFlags(FLAG_CHOOSER_PAYLOAD_TOGGLING)
     fun sendItemsWithAdditionalContentUriWithSameAuthority_showImagePreviewUi() {
         val uri = Uri.parse("content://org.pkg.app/image.png")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
