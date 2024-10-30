@@ -33,6 +33,11 @@ import com.android.intentresolver.R
 import com.android.intentresolver.TargetPresentationGetter
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
+import com.android.intentresolver.inject.ActivityOwned
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ActivityContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import kotlinx.coroutines.Dispatchers
@@ -40,10 +45,12 @@ import kotlinx.coroutines.asExecutor
 
 /** An actual [TargetDataLoader] implementation. */
 // TODO: replace async tasks with coroutines.
-class DefaultTargetDataLoader(
-    private val context: Context,
-    private val lifecycle: Lifecycle,
-    private val isAudioCaptureDevice: Boolean,
+class DefaultTargetDataLoader
+@AssistedInject
+constructor(
+    @ActivityContext private val context: Context,
+    @ActivityOwned private val lifecycle: Lifecycle,
+    @Assisted private val isAudioCaptureDevice: Boolean,
 ) : TargetDataLoader {
     private val presentationFactory =
         TargetPresentationGetter.Factory(
@@ -145,5 +152,10 @@ class DefaultTargetDataLoader(
         } else {
             BitmapDrawable(context.resources, this)
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(isAudioCaptureDevice: Boolean): DefaultTargetDataLoader
     }
 }
