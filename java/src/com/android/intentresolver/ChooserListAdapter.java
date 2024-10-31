@@ -18,6 +18,7 @@ package com.android.intentresolver;
 
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_PREDICTION_SERVICE;
 import static com.android.intentresolver.ChooserActivity.TARGET_TYPE_SHORTCUTS_FROM_SHORTCUT_MANAGER;
+import static com.android.intentresolver.Flags.targetHoverAndKeyboardFocusStates;
 
 import android.app.ActivityManager;
 import android.app.prediction.AppTarget;
@@ -58,6 +59,8 @@ import com.android.intentresolver.logging.EventLog;
 import com.android.intentresolver.widget.BadgeTextView;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.config.sysui.SystemUiDeviceConfigFlags;
+
+import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -365,7 +368,10 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     @Override
     View onCreateView(ViewGroup parent) {
-        return mInflater.inflate(R.layout.chooser_grid_item, parent, false);
+        int layout = targetHoverAndKeyboardFocusStates()
+                ? R.layout.chooser_grid_item_hover
+                : R.layout.chooser_grid_item;
+        return mInflater.inflate(layout, parent, false);
     }
 
     @Override
@@ -512,18 +518,13 @@ public class ChooserListAdapter extends ResolverListAdapter {
     /**
      * Group application targets
      */
-    public void updateAlphabeticalList() {
-        updateAlphabeticalList(() -> {});
-    }
-
-    /**
-     * Group application targets
-     */
     public void updateAlphabeticalList(Runnable onCompleted) {
         final DisplayResolveInfoAzInfoComparator
                 comparator = new DisplayResolveInfoAzInfoComparator(mContext);
-        final List<DisplayResolveInfo> allTargets = new ArrayList<>();
-        allTargets.addAll(getTargetsInCurrentDisplayList());
+        ImmutableList<DisplayResolveInfo> displayList = getTargetsInCurrentDisplayList();
+        final List<DisplayResolveInfo> allTargets =
+                new ArrayList<>(displayList.size() + mCallerTargets.size());
+        allTargets.addAll(displayList);
         allTargets.addAll(mCallerTargets);
 
         new AsyncTask<Void, Void, List<DisplayResolveInfo>>() {
@@ -543,6 +544,24 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 // Consolidate multiple targets from same app.
                 return allTargets
                         .stream()
+                        .map(appTarget -> {
+                            if (targetHoverAndKeyboardFocusStates()) {
+                                // Icon drawables are effectively cached per target info.
+                                // Without cloning target infos, the same target info could be used
+                                // for two different positions in the grid: once in the ranked
+                                // targets row (from ResolverListAdapter#mDisplayList or
+                                // #mCallerTargets, see #getItem()) and again in the all-app-target
+                                // grid (copied from #mDisplayList and #mCallerTargets to
+                                // #mSortedList).
+                                // Using the same drawable for two list items would result in visual
+                                // effects being applied to both simultaneously.
+                                DisplayResolveInfo copy = appTarget.copy();
+                                copy.getDisplayIconHolder().setDisplayIcon(null);
+                                return copy;
+                            } else {
+                                return appTarget;
+                            }
+                        })
                         .collect(Collectors.groupingBy(target ->
                                 target.getResolvedComponentName().getPackageName()
                                         + "#" + target.getDisplayLabel()
