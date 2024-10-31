@@ -1,0 +1,103 @@
+--- prebuilts/sdk/current/androidx/m2repository/androidx/core/core/1.13.0-beta01/core-1.13.0-beta01-sources.jar!/androidx/core/widget/NestedScrollView.java	1980-02-01 00:00:00.000000000 -0800
++++ packages/modules/IntentResolver/java/src/com/android/intentresolver/widget/NestedScrollView.java	2024-03-04 17:17:47.357059016 -0800
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2015 The Android Open Source Project
++ * Copyright 2024 The Android Open Source Project
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+@@ -15,10 +15,9 @@
+  */
+ 
+ 
+-package androidx.core.widget;
++package com.android.intentresolver.widget;
+ 
+ import static androidx.annotation.RestrictTo.Scope.LIBRARY;
+-import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX;
+ 
+ import android.content.Context;
+ import android.content.res.TypedArray;
+@@ -67,13 +66,19 @@
+ import androidx.core.view.ViewCompat;
+ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+ import androidx.core.view.accessibility.AccessibilityRecordCompat;
++import androidx.core.widget.EdgeEffectCompat;
+ 
+ import java.util.List;
+ 
+ /**
+- * NestedScrollView is just like {@link ScrollView}, but it supports acting
+- * as both a nested scrolling parent and child on both new and old versions of Android.
+- * Nested scrolling is enabled by default.
++ * A copy of the {@link androidx.core.widget.NestedScrollView} (from
++ * prebuilts/sdk/current/androidx/m2repository/androidx/core/core/1.13.0-beta01/core-1.13.0-beta01-sources.jar)
++ * without any functional changes with a pure refactoring of {@link #requestChildFocus(View, View)}:
++ * the method's body is extracted into the new protected method,
++ * {@link #onRequestChildFocus(View, View)}.
++ * <p>
++ * For the exact change see NestedScrollView.java.patch file.
++ * </p>
+  */
+ public class NestedScrollView extends FrameLayout implements NestedScrollingParent3,
+         NestedScrollingChild3, ScrollingView {
+@@ -1858,7 +1863,6 @@
+      * <p>The scroll range of a scroll view is the overall height of all of its
+      * children.</p>
+      */
+-    @RestrictTo(LIBRARY_GROUP_PREFIX)
+     @Override
+     public int computeVerticalScrollRange() {
+         final int count = getChildCount();
+@@ -1881,31 +1885,26 @@
+         return scrollRange;
+     }
+ 
+-    @RestrictTo(LIBRARY_GROUP_PREFIX)
+     @Override
+     public int computeVerticalScrollOffset() {
+         return Math.max(0, super.computeVerticalScrollOffset());
+     }
+ 
+-    @RestrictTo(LIBRARY_GROUP_PREFIX)
+     @Override
+     public int computeVerticalScrollExtent() {
+         return super.computeVerticalScrollExtent();
+     }
+ 
+-    @RestrictTo(LIBRARY_GROUP_PREFIX)
+     @Override
+     public int computeHorizontalScrollRange() {
+         return super.computeHorizontalScrollRange();
+     }
+ 
+-    @RestrictTo(LIBRARY_GROUP_PREFIX)
+     @Override
+     public int computeHorizontalScrollOffset() {
+         return super.computeHorizontalScrollOffset();
+     }
+ 
+-    @RestrictTo(LIBRARY_GROUP_PREFIX)
+     @Override
+     public int computeHorizontalScrollExtent() {
+         return super.computeHorizontalScrollExtent();
+@@ -2163,13 +2162,17 @@
+ 
+     @Override
+     public void requestChildFocus(View child, View focused) {
++        onRequestChildFocus(child, focused);
++        super.requestChildFocus(child, focused);
++    }
++
++    protected void onRequestChildFocus(View child, View focused) {
+         if (!mIsLayoutDirty) {
+             scrollToChild(focused);
+         } else {
+             // The child may not be laid out yet, we can't compute the scroll yet
+             mChildToScrollTo = focused;
+         }
+-        super.requestChildFocus(child, focused);
+     }
+ 
+ 

@@ -57,7 +57,6 @@ android_test {
         "mockito-kotlin-nodeps",
         "testables",
         "truth",
-        "truth-java8-extension",
         "flag-junit",
         "platform-test-annotations",
     ],

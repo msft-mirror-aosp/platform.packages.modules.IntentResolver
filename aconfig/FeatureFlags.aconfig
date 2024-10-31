@@ -20,6 +20,16 @@ flag {
 }
 
 flag {
+  name: "individual_metadata_title_read"
+  namespace: "intentresolver"
+  description: "Enables separate title URI metadata calls"
+  bug: "304686417"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "refine_system_actions"
   namespace: "intentresolver"
   description: "This flag enables sending system actions to the caller refinement flow"
@@ -97,10 +107,37 @@ flag {
 }
 
 flag {
+  name: "keyboard_navigation_fix"
+  namespace: "intentresolver"
+  description: "Enable Chooser keyboard navigation bugfix"
+  bug: "325259478"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "target_hover_and_keyboard_focus_states"
+  namespace: "intentresolver"
+  description: "Adopt Launcher pointer hover and keyboard novigation focus effects for targets."
+  bug: "295175912"
+}
+
+flag {
   name: "preview_image_loader"
   namespace: "intentresolver"
   description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
   bug: "348665058"
+}
+
+flag {
+  name: "save_shareousel_state"
+  namespace: "intentresolver"
+  description: "Preserve Shareousel state over a system-initiated process death."
+  bug: "362347212"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
 }
 
 flag {

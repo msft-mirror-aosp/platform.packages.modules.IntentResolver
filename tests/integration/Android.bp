@@ -39,7 +39,6 @@ android_test {
         "IntentResolver-tests-shared",
         "junit",
         "truth",
-        "truth-java8-extension",
     ],
     test_suites: ["general-tests"],
 }
