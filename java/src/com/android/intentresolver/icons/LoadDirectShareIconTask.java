@@ -23,7 +23,6 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Trace;
@@ -50,19 +49,20 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
             Context context,
             SelectableTargetInfo targetInfo,
             TargetPresentationGetter.Factory presentationFactory,
-            Consumer<Drawable> callback) {
+            Consumer<Bitmap> callback) {
         super(context, presentationFactory, callback);
         mTargetInfo = targetInfo;
     }
 
     @Override
-    protected Drawable doInBackground(Void... voids) {
-        Drawable drawable = null;
+    @Nullable
+    protected Bitmap doInBackground(Void... voids) {
+        Bitmap iconBitmap = null;
         Trace.beginSection("shortcut-icon");
         try {
             final Icon icon = mTargetInfo.getChooserTargetIcon();
             if (icon == null || UriFilters.hasValidIcon(icon)) {
-                drawable = getChooserTargetIconDrawable(
+                iconBitmap = getChooserTargetIconBitmap(
                         mContext,
                         icon,
                         mTargetInfo.getChooserTargetComponentName(),
@@ -71,25 +71,21 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
                 Log.e(TAG, "Failed to load shortcut icon for "
                         + mTargetInfo.getChooserTargetComponentName() + "; no access");
             }
-            if (drawable == null) {
-                drawable = loadIconPlaceholder();
-            }
         } catch (Exception e) {
             Log.e(
                     TAG,
                     "Failed to load shortcut icon for "
                             + mTargetInfo.getChooserTargetComponentName(),
                     e);
-            drawable = loadIconPlaceholder();
         } finally {
             Trace.endSection();
         }
-        return drawable;
+        return iconBitmap;
     }
 
     @WorkerThread
     @Nullable
-    private Drawable getChooserTargetIconDrawable(
+    private Bitmap getChooserTargetIconBitmap(
             Context context,
             @Nullable Icon icon,
             ComponentName targetComponentName,
@@ -129,6 +125,6 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
         Bitmap directShareBadgedIcon = sif.createAppBadgedIconBitmap(directShareIcon, appIcon);
         sif.recycle();
 
-        return new BitmapDrawable(context.getResources(), directShareBadgedIcon);
+        return directShareBadgedIcon;
     }
 }

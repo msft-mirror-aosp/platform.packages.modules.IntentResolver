@@ -22,9 +22,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Process
 import android.service.chooser.ChooserResult
-import android.service.chooser.Flags
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.android.intentresolver.ui.model.ShareAction
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -46,8 +44,6 @@ class ShareResultSenderImplTest {
 
     @get:Rule val compatChangeRule: TestRule = PlatformCompatChangeRule()
 
-    val flags = FakeChooserServiceFlags()
-
     @OptIn(ExperimentalCoroutinesApi::class)
     @EnableCompatChanges(ChooserResult.SEND_CHOOSER_RESULT)
     @Test
@@ -56,11 +52,8 @@ class ShareResultSenderImplTest {
         val deferred = CompletableDeferred<Intent>()
         val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
 
-        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
-
         val resultSender =
             ShareResultSenderImpl(
-                flags = flags,
                 scope = this,
                 backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
                 callerUid = Process.myUid(),
@@ -91,11 +84,8 @@ class ShareResultSenderImplTest {
         val deferred = CompletableDeferred<Intent>()
         val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
 
-        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
-
         val resultSender =
             ShareResultSenderImpl(
-                flags = flags,
                 scope = this,
                 backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
                 callerUid = Process.myUid(),
@@ -127,11 +117,8 @@ class ShareResultSenderImplTest {
         val deferred = CompletableDeferred<Intent>()
         val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
 
-        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
-
         val resultSender =
             ShareResultSenderImpl(
-                flags = flags,
                 scope = this,
                 backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
                 callerUid = Process.myUid(),
@@ -165,11 +152,8 @@ class ShareResultSenderImplTest {
         val deferred = CompletableDeferred<Intent>()
         val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
 
-        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
-
         val resultSender =
             ShareResultSenderImpl(
-                flags = flags,
                 scope = this,
                 backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
                 callerUid = Process.myUid(),
@@ -192,11 +176,8 @@ class ShareResultSenderImplTest {
         val deferred = CompletableDeferred<Intent>()
         val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
 
-        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
-
         val resultSender =
             ShareResultSenderImpl(
-                flags = flags,
                 scope = this,
                 backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
                 callerUid = Process.myUid(),
@@ -233,11 +214,8 @@ class ShareResultSenderImplTest {
         val deferred = CompletableDeferred<Intent>()
         val intentDispatcher = IntentSenderDispatcher { _, intent -> deferred.complete(intent) }
 
-        flags.setFlag(Flags.FLAG_ENABLE_CHOOSER_RESULT, true)
-
         val resultSender =
             ShareResultSenderImpl(
-                flags = flags,
                 scope = this,
                 backgroundDispatcher = UnconfinedTestDispatcher(testScheduler),
                 callerUid = Process.myUid(),

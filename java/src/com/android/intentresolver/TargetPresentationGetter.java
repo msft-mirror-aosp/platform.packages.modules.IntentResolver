@@ -23,7 +23,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.UserHandle;
 import android.text.TextUtils;
@@ -77,20 +76,12 @@ public abstract class TargetPresentationGetter {
     @Nullable
     protected abstract String getAppLabelForSubstitutePermission();
 
-    private Context mContext;
+    private final Context mContext;
     private final int mIconDpi;
     private final boolean mHasSubstitutePermission;
     private final ApplicationInfo mAppInfo;
 
     protected PackageManager mPm;
-
-    /**
-     * Retrieve the image that should be displayed as the icon when this target is presented to the
-     * specified {@code userHandle}.
-     */
-    public Drawable getIcon(UserHandle userHandle) {
-        return new BitmapDrawable(mContext.getResources(), getIconBitmap(userHandle));
-    }
 
     /**
      * Retrieve the image that should be displayed as the icon when this target is presented to the
