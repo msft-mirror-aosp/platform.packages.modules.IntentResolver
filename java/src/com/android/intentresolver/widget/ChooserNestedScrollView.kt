@@ -25,7 +25,7 @@ import androidx.core.view.marginBottom
 import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
-import androidx.core.widget.NestedScrollView
+import com.android.intentresolver.Flags.keyboardNavigationFix
 
 /**
  * A narrowly tailored [NestedScrollView] to be used inside [ResolverDrawerLayout] and help to
@@ -35,12 +35,16 @@ import androidx.core.widget.NestedScrollView
  */
 class ChooserNestedScrollView : NestedScrollView {
     constructor(context: Context) : super(context)
+
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+
     constructor(
         context: Context,
         attrs: AttributeSet?,
-        defStyleAttr: Int
+        defStyleAttr: Int,
     ) : super(context, attrs, defStyleAttr)
+
+    var requestChildFocusPredicate: (View?, View?) -> Boolean = DefaultChildFocusPredicate
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val content =
@@ -55,13 +59,13 @@ class ChooserNestedScrollView : NestedScrollView {
             getChildMeasureSpec(
                 widthMeasureSpec,
                 paddingLeft + content.marginLeft + content.marginRight + paddingRight,
-                lp.width
+                lp.width,
             )
         val contentHeightSpec =
             getChildMeasureSpec(
                 heightMeasureSpec,
                 paddingTop + content.marginTop + content.marginBottom + paddingBottom,
-                lp.height
+                lp.height,
             )
         content.measure(contentWidthSpec, contentHeightSpec)
 
@@ -76,7 +80,7 @@ class ChooserNestedScrollView : NestedScrollView {
 
             content.measure(
                 contentWidthSpec,
-                MeasureSpec.makeMeasureSpec(height, MeasureSpec.getMode(heightMeasureSpec))
+                MeasureSpec.makeMeasureSpec(height, MeasureSpec.getMode(heightMeasureSpec)),
             )
         }
         setMeasuredDimension(
@@ -87,8 +91,8 @@ class ChooserNestedScrollView : NestedScrollView {
                     content.marginTop +
                     content.measuredHeight +
                     content.marginBottom +
-                    paddingBottom
-            )
+                    paddingBottom,
+            ),
         )
     }
 
@@ -102,5 +106,19 @@ class ChooserNestedScrollView : NestedScrollView {
             scrollBy(0, delta)
             consumed[1] += scrollY - preScrollY
         }
+    }
+
+    override fun onRequestChildFocus(child: View?, focused: View?) {
+        if (keyboardNavigationFix()) {
+            if (requestChildFocusPredicate(child, focused)) {
+                super.onRequestChildFocus(child, focused)
+            }
+        } else {
+            super.onRequestChildFocus(child, focused)
+        }
+    }
+
+    companion object {
+        val DefaultChildFocusPredicate: (View?, View?) -> Boolean = { _, _ -> true }
     }
 }
