@@ -17,9 +17,13 @@
 package com.android.intentresolver.icons
 
 import android.content.ComponentName
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.UserHandle
 import androidx.collection.LruCache
+import com.android.intentresolver.Flags.targetHoverAndKeyboardFocusStates
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
 import java.util.function.Consumer
@@ -28,23 +32,24 @@ import javax.inject.Qualifier
 
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.BINARY) annotation class Caching
 
-private typealias IconCache = LruCache<String, Drawable>
+private typealias IconCache = LruCache<String, Bitmap>
 
 class CachingTargetDataLoader(
+    private val context: Context,
     private val targetDataLoader: TargetDataLoader,
     private val cacheSize: Int = 100,
-) : TargetDataLoader() {
+) : TargetDataLoader {
     @GuardedBy("self") private val perProfileIconCache = HashMap<UserHandle, IconCache>()
 
     override fun getOrLoadAppTargetIcon(
         info: DisplayResolveInfo,
         userHandle: UserHandle,
-        callback: Consumer<Drawable>
+        callback: Consumer<Drawable>,
     ): Drawable? {
         val cacheKey = info.toCacheKey()
-        return getCachedAppIcon(cacheKey, userHandle)
+        return getCachedAppIcon(cacheKey, userHandle)?.toDrawable()
             ?: targetDataLoader.getOrLoadAppTargetIcon(info, userHandle) { drawable ->
-                getProfileIconCache(userHandle).put(cacheKey, drawable)
+                drawable.extractBitmap()?.let { getProfileIconCache(userHandle).put(cacheKey, it) }
                 callback.accept(drawable)
             }
     }
@@ -52,13 +57,15 @@ class CachingTargetDataLoader(
     override fun getOrLoadDirectShareIcon(
         info: SelectableTargetInfo,
         userHandle: UserHandle,
-        callback: Consumer<Drawable>
+        callback: Consumer<Drawable>,
     ): Drawable? {
         val cacheKey = info.toCacheKey()
-        return cacheKey?.let { getCachedAppIcon(it, userHandle) }
+        return cacheKey?.let { getCachedAppIcon(it, userHandle) }?.toDrawable()
             ?: targetDataLoader.getOrLoadDirectShareIcon(info, userHandle) { drawable ->
                 if (cacheKey != null) {
-                    getProfileIconCache(userHandle).put(cacheKey, drawable)
+                    drawable.extractBitmap()?.let {
+                        getProfileIconCache(userHandle).put(cacheKey, it)
+                    }
                 }
                 callback.accept(drawable)
             }
@@ -69,7 +76,7 @@ class CachingTargetDataLoader(
 
     override fun getOrLoadLabel(info: DisplayResolveInfo) = targetDataLoader.getOrLoadLabel(info)
 
-    private fun getCachedAppIcon(component: String, userHandle: UserHandle): Drawable? =
+    private fun getCachedAppIcon(component: String, userHandle: UserHandle): Bitmap? =
         getProfileIconCache(userHandle)[component]
 
     private fun getProfileIconCache(userHandle: UserHandle): IconCache =
@@ -78,10 +85,7 @@ class CachingTargetDataLoader(
         }
 
     private fun DisplayResolveInfo.toCacheKey() =
-        ComponentName(
-                resolveInfo.activityInfo.packageName,
-                resolveInfo.activityInfo.name,
-            )
+        ComponentName(resolveInfo.activityInfo.packageName, resolveInfo.activityInfo.name)
             .flattenToString()
 
     private fun SelectableTargetInfo.toCacheKey(): String? =
@@ -95,4 +99,20 @@ class CachingTargetDataLoader(
                 append(directShareShortcutInfo?.id ?: "")
             }
         }
+
+    private fun Bitmap.toDrawable(): Drawable {
+        return if (targetHoverAndKeyboardFocusStates()) {
+            HoverBitmapDrawable(this)
+        } else {
+            BitmapDrawable(context.resources, this)
+        }
+    }
+
+    private fun Drawable.extractBitmap(): Bitmap? {
+        return when (this) {
+            is BitmapDrawable -> bitmap
+            is HoverBitmapDrawable -> bitmap
+            else -> null
+        }
+    }
 }

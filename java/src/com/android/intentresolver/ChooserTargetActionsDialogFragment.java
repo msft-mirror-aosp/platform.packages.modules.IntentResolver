@@ -33,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -136,7 +137,7 @@ public class ChooserTargetActionsDialogFragment extends DialogFragment
 
         final TargetPresentationGetter pg = getProvidingAppPresentationGetter();
         title.setText(isShortcutTarget() ? mShortcutTitle : pg.getLabel());
-        icon.setImageDrawable(pg.getIcon(mUserHandle));
+        icon.setImageDrawable(new BitmapDrawable(getResources(), pg.getIconBitmap(mUserHandle)));
         rv.setAdapter(new VHAdapter(items));
 
         return v;

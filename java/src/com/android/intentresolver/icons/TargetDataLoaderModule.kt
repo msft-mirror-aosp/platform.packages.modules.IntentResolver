@@ -17,8 +17,6 @@
 package com.android.intentresolver.icons
 
 import android.content.Context
-import androidx.lifecycle.Lifecycle
-import com.android.intentresolver.inject.ActivityOwned
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,14 +29,11 @@ import dagger.hilt.android.scopes.ActivityScoped
 object TargetDataLoaderModule {
     @Provides
     @ActivityScoped
-    fun targetDataLoader(
-        @ActivityContext context: Context,
-        @ActivityOwned lifecycle: Lifecycle,
-    ): TargetDataLoader = DefaultTargetDataLoader(context, lifecycle, isAudioCaptureDevice = false)
-
-    @Provides
-    @ActivityScoped
     @Caching
-    fun cachingTargetDataLoader(targetDataLoader: TargetDataLoader): TargetDataLoader =
-        CachingTargetDataLoader(targetDataLoader)
+    fun cachingTargetDataLoader(
+        @ActivityContext context: Context,
+        dataLoaderFactory: DefaultTargetDataLoader.Factory,
+    ): TargetDataLoader =
+        // Intended to be used in Chooser only thus the hardcoded isAudioCaptureDevice value.
+        CachingTargetDataLoader(context, dataLoaderFactory.create(isAudioCaptureDevice = false))
 }

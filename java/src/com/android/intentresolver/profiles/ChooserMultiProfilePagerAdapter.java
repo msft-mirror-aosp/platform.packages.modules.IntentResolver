@@ -16,6 +16,8 @@
 
 package com.android.intentresolver.profiles;
 
+import static com.android.intentresolver.Flags.keyboardNavigationFix;
+
 import android.content.Context;
 import android.os.UserHandle;
 import android.view.LayoutInflater;
@@ -125,6 +127,9 @@ public class ChooserMultiProfilePagerAdapter extends MultiProfilePagerAdapter<
         LayoutInflater inflater = LayoutInflater.from(context);
         ViewGroup rootView =
                 (ViewGroup) inflater.inflate(R.layout.chooser_list_per_profile_wrap, null, false);
+        if (!keyboardNavigationFix()) {
+            rootView.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        }
         RecyclerView recyclerView = rootView.findViewById(com.android.internal.R.id.resolver_list);
         recyclerView.setAccessibilityDelegateCompat(
                 new ChooserRecyclerViewAccessibilityDelegate(recyclerView));

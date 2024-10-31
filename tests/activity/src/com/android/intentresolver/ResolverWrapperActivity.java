@@ -160,7 +160,7 @@ public class ResolverWrapperActivity extends ResolverActivity {
         }
     }
 
-    private static class TargetDataLoaderWrapper extends TargetDataLoader {
+    private static class TargetDataLoaderWrapper implements TargetDataLoader {
         private final TargetDataLoader mTargetDataLoader;
         private final CountingIdlingResource mLabelIdlingResource;
 
