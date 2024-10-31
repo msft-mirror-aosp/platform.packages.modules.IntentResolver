@@ -22,11 +22,8 @@ import android.media.MediaMetadata
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL
-import android.provider.Downloads
 import android.provider.MediaStore.MediaColumns.HEIGHT
 import android.provider.MediaStore.MediaColumns.WIDTH
-import android.provider.OpenableColumns
-import android.text.TextUtils
 import android.util.Log
 import android.util.Size
 import com.android.intentresolver.measurements.runTracing
@@ -78,12 +75,7 @@ internal fun Cursor.readSupportsThumbnail(): Boolean =
         .getOrDefault(false)
 
 internal fun Cursor.readPreviewUri(): Uri? =
-    runCatching {
-            columnNames
-                .indexOf(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
-                .takeIf { it >= 0 }
-                ?.let { getString(it)?.let(Uri::parse) }
-        }
+    runCatching { readString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)?.let(Uri::parse) }
         .getOrNull()
 
 fun Cursor.readSize(): Size? {
@@ -105,34 +97,15 @@ fun Cursor.readSize(): Size? {
     }
 }
 
-internal fun Cursor.readTitle(): String =
-    runCatching {
-            var nameColIndex = -1
-            var titleColIndex = -1
-            // TODO: double-check why Cursor#getColumnInded didn't work
-            columnNames.forEachIndexed { i, columnName ->
-                when (columnName) {
-                    OpenableColumns.DISPLAY_NAME -> nameColIndex = i
-                    Downloads.Impl.COLUMN_TITLE -> titleColIndex = i
-                }
-            }
-
-            var title = ""
-            if (nameColIndex >= 0) {
-                title = getString(nameColIndex) ?: ""
-            }
-            if (TextUtils.isEmpty(title) && titleColIndex >= 0) {
-                title = getString(titleColIndex) ?: ""
-            }
-            title
-        }
-        .getOrDefault("")
+internal fun Cursor.readString(columnName: String): String? =
+    runCatching { columnNames.indexOf(columnName).takeIf { it >= 0 }?.let { getString(it) } }
+        .getOrNull()
 
 private fun logProviderPermissionWarning(uri: Uri, dataName: String) {
     // The ContentResolver already logs the exception. Log something more informative.
     Log.w(
         ContentPreviewUi.TAG,
         "Could not read $uri $dataName. If a preview is desired, call Intent#setClipData() to" +
-            " ensure that the sharesheet is given permission."
+            " ensure that the sharesheet is given permission.",
     )
 }

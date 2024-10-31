@@ -20,4 +20,5 @@
 <resources>
     <dimen name="chooser_width">624dp</dimen>
     <dimen name="modify_share_text_toggle_max_width">250dp</dimen>
+    <dimen name="chooser_item_focus_outline_corner_radius">16dp</dimen>
 </resources>
