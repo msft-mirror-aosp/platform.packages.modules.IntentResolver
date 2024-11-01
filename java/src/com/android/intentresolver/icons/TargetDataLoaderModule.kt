@@ -16,17 +16,38 @@
 
 package com.android.intentresolver.icons
 
+import android.app.ActivityManager
 import android.content.Context
+import android.content.pm.PackageManager
+import com.android.intentresolver.SimpleIconFactory
+import com.android.intentresolver.TargetPresentationGetter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import javax.inject.Provider
 
 @Module
 @InstallIn(ActivityComponent::class)
 object TargetDataLoaderModule {
+    @Provides
+    fun simpleIconFactory(@ActivityContext context: Context): SimpleIconFactory =
+        SimpleIconFactory.obtain(context)
+
+    @Provides
+    fun presentationGetterFactory(
+        iconFactoryProvider: Provider<SimpleIconFactory>,
+        packageManager: PackageManager,
+        activityManager: ActivityManager,
+    ): TargetPresentationGetter.Factory =
+        TargetPresentationGetter.Factory(
+            iconFactoryProvider,
+            packageManager,
+            activityManager.launcherLargeIconDensity,
+        )
+
     @Provides
     @ActivityScoped
     @Caching
