@@ -338,4 +338,6 @@
     <!-- Accessibility content description for an item that the user may select for sharing.
          [CHAR LIMIT=NONE] -->
     <string name="selectable_item">Selectable item</string>
+    <!-- Accessibility role description for a11y on button. [CHAR LIMIT=NONE] -->
+    <string name="role_description_button">Button</string>
 </resources>
