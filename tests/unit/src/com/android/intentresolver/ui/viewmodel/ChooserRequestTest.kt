@@ -28,12 +28,10 @@ import android.content.Intent.EXTRA_REFERRER
 import android.content.Intent.EXTRA_TEXT
 import android.content.Intent.EXTRA_TITLE
 import android.net.Uri
-import android.service.chooser.Flags
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import com.android.intentresolver.ContentTypeHint
 import com.android.intentresolver.data.model.ChooserRequest
-import com.android.intentresolver.inject.FakeChooserServiceFlags
 import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.validation.Importance
 import com.android.intentresolver.validation.Invalid
@@ -59,13 +57,10 @@ private fun createActivityModel(
 
 class ChooserRequestTest {
 
-    private val fakeChooserServiceFlags =
-        FakeChooserServiceFlags().apply { setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false) }
-
     @Test
     fun missingIntent() {
         val model = createActivityModel(targetIntent = null)
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Invalid::class.java)
         result as Invalid<ChooserRequest>
@@ -80,7 +75,7 @@ class ChooserRequestTest {
         val model = createActivityModel(targetIntent = Intent(ACTION_SEND), referrer)
         model.intent.putExtras(bundleOf(EXTRA_REFERRER to referrer))
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -97,7 +92,7 @@ class ChooserRequestTest {
 
         val model = createActivityModel(targetIntent = intent, referrer = referrer)
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -112,7 +107,7 @@ class ChooserRequestTest {
 
         model.intent.putExtras(bundleOf(EXTRA_REFERRER to referrer))
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -126,7 +121,7 @@ class ChooserRequestTest {
         val intent2 = Intent(ACTION_SEND_MULTIPLE)
         val model = createActivityModel(targetIntent = intent1, additionalIntents = listOf(intent2))
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -139,7 +134,7 @@ class ChooserRequestTest {
         val intent = Intent().putExtras(bundleOf(EXTRA_INTENT to Intent(ACTION_SEND)))
         val model = createActivityModel(targetIntent = intent)
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -149,7 +144,6 @@ class ChooserRequestTest {
 
     @Test
     fun testRequest_actionSendWithAdditionalContentUri() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val uri = Uri.parse("content://org.pkg/path")
         val position = 10
         val model =
@@ -158,7 +152,7 @@ class ChooserRequestTest {
                 intent.putExtra(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION, position)
             }
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -168,35 +162,14 @@ class ChooserRequestTest {
     }
 
     @Test
-    fun testRequest_actionSendWithAdditionalContentUri_parametersIgnoredWhenFlagDisabled() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false)
-        val uri = Uri.parse("content://org.pkg/path")
-        val position = 10
-        val model =
-            createActivityModel(targetIntent = Intent(ACTION_SEND)).apply {
-                intent.putExtra(EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI, uri)
-                intent.putExtra(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION, position)
-            }
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
-
-        assertThat(result).isInstanceOf(Valid::class.java)
-        result as Valid<ChooserRequest>
-
-        assertThat(result.value.additionalContentUri).isNull()
-        assertThat(result.value.focusedItemPosition).isEqualTo(0)
-        assertThat(result.warnings).isEmpty()
-    }
-
-    @Test
     fun testRequest_actionSendWithInvalidAdditionalContentUri() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val model =
             createActivityModel(targetIntent = Intent(ACTION_SEND)).apply {
                 intent.putExtra(EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI, "__invalid__")
                 intent.putExtra(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION, "__invalid__")
             }
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -207,10 +180,9 @@ class ChooserRequestTest {
 
     @Test
     fun testRequest_actionSendWithoutAdditionalContentUri() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val model = createActivityModel(targetIntent = Intent(ACTION_SEND))
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -221,7 +193,6 @@ class ChooserRequestTest {
 
     @Test
     fun testRequest_actionViewWithAdditionalContentUri() {
-        fakeChooserServiceFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val uri = Uri.parse("content://org.pkg/path")
         val position = 10
         val model =
@@ -230,7 +201,7 @@ class ChooserRequestTest {
                 intent.putExtra(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION, position)
             }
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -248,7 +219,7 @@ class ChooserRequestTest {
             Intent.CHOOSER_CONTENT_TYPE_ALBUM,
         )
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -266,7 +237,7 @@ class ChooserRequestTest {
                 intent.putExtra(Intent.EXTRA_METADATA_TEXT, metadataText)
             }
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         result as Valid<ChooserRequest>
@@ -285,7 +256,7 @@ class ChooserRequestTest {
             }
         val model = createActivityModel(targetIntent)
 
-        val result = readChooserRequest(model, fakeChooserServiceFlags)
+        val result = readChooserRequest(model)
 
         assertThat(result).isInstanceOf(Valid::class.java)
         (result as Valid<ChooserRequest>).value.let { request ->
