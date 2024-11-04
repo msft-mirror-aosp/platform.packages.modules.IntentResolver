@@ -23,24 +23,24 @@ import com.android.intentresolver.chooser.SelectableTargetInfo
 import java.util.function.Consumer
 
 /** A target data loader contract. Added to support testing. */
-abstract class TargetDataLoader {
+interface TargetDataLoader {
     /** Load an app target icon */
-    abstract fun getOrLoadAppTargetIcon(
+    fun getOrLoadAppTargetIcon(
         info: DisplayResolveInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
     ): Drawable?
 
     /** Load a shortcut icon */
-    abstract fun getOrLoadDirectShareIcon(
+    fun getOrLoadDirectShareIcon(
         info: SelectableTargetInfo,
         userHandle: UserHandle,
         callback: Consumer<Drawable>,
     ): Drawable?
 
     /** Load target label */
-    abstract fun loadLabel(info: DisplayResolveInfo, callback: Consumer<LabelInfo>)
+    fun loadLabel(info: DisplayResolveInfo, callback: Consumer<LabelInfo>)
 
     /** Loads DisplayResolveInfo's display label synchronously, if needed */
-    abstract fun getOrLoadLabel(info: DisplayResolveInfo)
+    fun getOrLoadLabel(info: DisplayResolveInfo)
 }

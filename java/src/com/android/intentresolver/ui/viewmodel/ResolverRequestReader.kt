@@ -20,8 +20,8 @@ import android.os.Bundle
 import android.os.UserHandle
 import com.android.intentresolver.ResolverActivity.PROFILE_PERSONAL
 import com.android.intentresolver.ResolverActivity.PROFILE_WORK
+import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.shared.model.Profile
-import com.android.intentresolver.ui.model.ActivityModel
 import com.android.intentresolver.ui.model.ResolverRequest
 import com.android.intentresolver.validation.Validation
 import com.android.intentresolver.validation.ValidationResult

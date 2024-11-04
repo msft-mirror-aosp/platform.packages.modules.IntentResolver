@@ -51,4 +51,19 @@ class CreationExtrasExtTest {
         assertThat(defaultArgs).parcelable<Point>("POINT1").marshallsEquallyTo(Point(1, 1))
         assertThat(defaultArgs).parcelable<Point>("POINT2").marshallsEquallyTo(Point(2, 2))
     }
+
+    @Test
+    fun replaceDefaultArgs_replacesExisting() {
+        val creationExtras: CreationExtras =
+            MutableCreationExtras().apply {
+                set(DEFAULT_ARGS_KEY, bundleOf("POINT1" to Point(1, 1)))
+            }
+
+        val updated = creationExtras.replaceDefaultArgs("POINT2" to Point(2, 2))
+
+        val defaultArgs = updated[DEFAULT_ARGS_KEY]
+        assertThat(defaultArgs).doesNotContainKey("POINT1")
+        assertThat(defaultArgs).containsKey("POINT2")
+        assertThat(defaultArgs).parcelable<Point>("POINT2").marshallsEquallyTo(Point(2, 2))
+    }
 }
