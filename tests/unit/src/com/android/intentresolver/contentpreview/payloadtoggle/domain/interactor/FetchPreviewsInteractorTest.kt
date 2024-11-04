@@ -167,7 +167,7 @@ class FetchPreviewsInteractorTest {
 
             with(cursorPreviewsRepository) {
                 assertThat(previewsModel.value).isNotNull()
-                assertThat(previewsModel.value!!.startIdx).isEqualTo(0)
+                assertThat(previewsModel.value!!.startIdx).isEqualTo(2)
                 assertThat(previewsModel.value!!.loadMoreLeft).isNull()
                 assertThat(previewsModel.value!!.loadMoreRight).isNull()
                 assertThat(previewsModel.value!!.previewModels)
