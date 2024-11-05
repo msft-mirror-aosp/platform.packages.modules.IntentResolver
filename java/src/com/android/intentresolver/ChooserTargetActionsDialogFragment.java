@@ -281,7 +281,11 @@ public class ChooserTargetActionsDialogFragment extends DialogFragment
         final int iconDpi = am.getLauncherLargeIconDensity();
 
         // Use the matching application icon and label for the title, any TargetInfo will do
-        return new TargetPresentationGetter.Factory(getContext(), iconDpi)
+        final Context context = getContext();
+        return new TargetPresentationGetter.Factory(
+                () -> SimpleIconFactory.obtain(context),
+                context.getPackageManager(),
+                iconDpi)
                 .makePresentationGetter(mTargetInfos.get(0).getResolveInfo());
     }
 
