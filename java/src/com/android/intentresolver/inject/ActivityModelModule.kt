@@ -18,9 +18,13 @@ package com.android.intentresolver.inject
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.service.chooser.ChooserAction
+import androidx.lifecycle.SavedStateHandle
+import com.android.intentresolver.Flags.saveShareouselState
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.data.repository.ActivityModelRepository
+import com.android.intentresolver.ui.viewmodel.CHOOSER_REQUEST_KEY
 import com.android.intentresolver.ui.viewmodel.readChooserRequest
 import com.android.intentresolver.util.ownedByCurrentUser
 import com.android.intentresolver.validation.Valid
@@ -44,8 +48,12 @@ object ActivityModelModule {
     @ViewModelScoped
     fun provideInitialRequest(
         activityModelRepo: ActivityModelRepository,
-        flags: ChooserServiceFlags,
-    ): ValidationResult<ChooserRequest> = readChooserRequest(activityModelRepo.value, flags)
+        savedStateHandle: SavedStateHandle,
+    ): ValidationResult<ChooserRequest> {
+        val activityModel = activityModelRepo.value
+        val extras = restoreChooserRequestExtras(activityModel.intent.extras, savedStateHandle)
+        return readChooserRequest(activityModel, extras)
+    }
 
     @Provides
     fun provideChooserRequest(initialRequest: ValidationResult<ChooserRequest>): ChooserRequest =
@@ -117,3 +125,18 @@ private val Intent.contentUris: Sequence<Uri>
             }
         }
     }
+
+private fun restoreChooserRequestExtras(
+    initialExtras: Bundle?,
+    savedStateHandle: SavedStateHandle,
+): Bundle =
+    if (saveShareouselState()) {
+        savedStateHandle.get<Bundle>(CHOOSER_REQUEST_KEY)?.let { savedSateBundle ->
+            Bundle().apply {
+                initialExtras?.let { putAll(it) }
+                putAll(savedSateBundle)
+            }
+        } ?: initialExtras
+    } else {
+        initialExtras
+    } ?: Bundle()

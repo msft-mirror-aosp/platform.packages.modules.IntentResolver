@@ -16,29 +16,45 @@
 
 package com.android.intentresolver.icons
 
+import android.app.ActivityManager
 import android.content.Context
-import androidx.lifecycle.Lifecycle
-import com.android.intentresolver.inject.ActivityOwned
+import android.content.pm.PackageManager
+import com.android.intentresolver.SimpleIconFactory
+import com.android.intentresolver.TargetPresentationGetter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
+import javax.inject.Provider
 
 @Module
 @InstallIn(ActivityComponent::class)
 object TargetDataLoaderModule {
     @Provides
-    @ActivityScoped
-    fun targetDataLoader(
-        @ActivityContext context: Context,
-        @ActivityOwned lifecycle: Lifecycle,
-    ): TargetDataLoader = DefaultTargetDataLoader(context, lifecycle, isAudioCaptureDevice = false)
+    fun simpleIconFactory(@ActivityContext context: Context): SimpleIconFactory =
+        SimpleIconFactory.obtain(context)
+
+    @Provides
+    fun presentationGetterFactory(
+        iconFactoryProvider: Provider<SimpleIconFactory>,
+        packageManager: PackageManager,
+        activityManager: ActivityManager,
+    ): TargetPresentationGetter.Factory =
+        TargetPresentationGetter.Factory(
+            iconFactoryProvider,
+            packageManager,
+            activityManager.launcherLargeIconDensity,
+        )
 
     @Provides
     @ActivityScoped
     @Caching
-    fun cachingTargetDataLoader(targetDataLoader: TargetDataLoader): TargetDataLoader =
-        CachingTargetDataLoader(targetDataLoader)
+    fun cachingTargetDataLoader(
+        @ActivityContext context: Context,
+        dataLoaderFactory: DefaultTargetDataLoader.Factory,
+    ): TargetDataLoader =
+        // Intended to be used in Chooser only thus the hardcoded isAudioCaptureDevice value.
+        CachingTargetDataLoader(context, dataLoaderFactory.create(isAudioCaptureDevice = false))
 }

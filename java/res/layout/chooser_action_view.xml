@@ -14,7 +14,7 @@
   ~ limitations under the License
   -->
 
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<Button xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     style="?android:attr/borderlessButtonStyle"
     android:background="@drawable/chooser_action_button_bg"

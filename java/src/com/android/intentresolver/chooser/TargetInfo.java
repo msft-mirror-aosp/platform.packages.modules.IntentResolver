@@ -65,7 +65,7 @@ public interface TargetInfo {
          * @param icon the icon to return on subsequent calls to {@link #getDisplayIcon()}.
          * Implementations may discard this request as a no-op if they don't support setting.
          */
-        void setDisplayIcon(Drawable icon);
+        void setDisplayIcon(@Nullable Drawable icon);
     }
 
     /** A simple mutable-container implementation of {@link IconHolder}. */
@@ -78,7 +78,7 @@ public interface TargetInfo {
             return mDisplayIcon;
         }
 
-        public void setDisplayIcon(Drawable icon) {
+        public void setDisplayIcon(@Nullable Drawable icon) {
             mDisplayIcon = icon;
         }
     }

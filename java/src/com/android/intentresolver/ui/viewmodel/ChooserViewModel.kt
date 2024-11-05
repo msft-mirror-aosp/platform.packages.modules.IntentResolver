@@ -16,9 +16,12 @@
 package com.android.intentresolver.ui.viewmodel
 
 import android.content.ContentInterface
+import android.os.Bundle
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.intentresolver.Flags.saveShareouselState
 import com.android.intentresolver.contentpreview.ImageLoader
 import com.android.intentresolver.contentpreview.PreviewDataProvider
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.FetchPreviewsInteractor
@@ -27,8 +30,8 @@ import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.Shar
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.data.repository.ActivityModelRepository
 import com.android.intentresolver.data.repository.ChooserRequestRepository
+import com.android.intentresolver.domain.saveUpdates
 import com.android.intentresolver.inject.Background
-import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.Valid
@@ -43,17 +46,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
 private const val TAG = "ChooserViewModel"
+const val CHOOSER_REQUEST_KEY = "chooser-request"
 
 @HiltViewModel
 class ChooserViewModel
 @Inject
 constructor(
+    savedStateHandle: SavedStateHandle,
     activityModelRepository: ActivityModelRepository,
     private val shareouselViewModelProvider: Lazy<ShareouselViewModel>,
     private val processUpdatesInteractor: Lazy<ProcessTargetIntentUpdatesInteractor>,
     private val fetchPreviewsInteractor: Lazy<FetchPreviewsInteractor>,
     @Background private val bgDispatcher: CoroutineDispatcher,
-    private val flags: ChooserServiceFlags,
     /**
      * Provided only for the express purpose of early exit in the event of an invalid request.
      *
@@ -71,10 +75,6 @@ constructor(
     val shareouselViewModel: ShareouselViewModel by lazy {
         // TODO: consolidate this logic, this would require a consolidated preview view model but
         //  for now just postpone starting the payload selection preview machinery until it's needed
-        assert(flags.chooserPayloadToggling()) {
-            "An attempt to use payload selection preview with the disabled flag"
-        }
-
         viewModelScope.launch(bgDispatcher) { processUpdatesInteractor.get().activate() }
         viewModelScope.launch(bgDispatcher) { fetchPreviewsInteractor.get().activate() }
         shareouselViewModelProvider.get()
@@ -99,8 +99,24 @@ constructor(
     }
 
     init {
-        if (initialRequest is Invalid) {
-            Log.w(TAG, "initialRequest is Invalid, initialization failed")
+        when (initialRequest) {
+            is Invalid -> {
+                Log.w(TAG, "initialRequest is Invalid, initialization failed")
+            }
+            is Valid<ChooserRequest> -> {
+                if (saveShareouselState()) {
+                    val isRestored =
+                        savedStateHandle.get<Bundle>(CHOOSER_REQUEST_KEY)?.takeIf { !it.isEmpty } !=
+                            null
+                    savedStateHandle.setSavedStateProvider(CHOOSER_REQUEST_KEY) {
+                        Bundle().also { result ->
+                            request.value
+                                .takeIf { isRestored || it != initialRequest.value }
+                                ?.saveUpdates(result)
+                        }
+                    }
+                }
+            }
         }
     }
 }

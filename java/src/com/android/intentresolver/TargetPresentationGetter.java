@@ -16,20 +16,20 @@
 
 package com.android.intentresolver;
 
-import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+
+import javax.inject.Provider;
 
 /**
  * Loads the icon and label for the provided ApplicationInfo. Defaults to using the application icon
@@ -49,22 +49,29 @@ public abstract class TargetPresentationGetter {
 
     /** Helper to build appropriate type-specific {@link TargetPresentationGetter} instances. */
     public static class Factory {
-        private final Context mContext;
+        private final Provider<SimpleIconFactory> mIconFactoryProvider;
+        private final PackageManager mPackageManager;
         private final int mIconDpi;
 
-        public Factory(Context context, int iconDpi) {
-            mContext = context;
+        public Factory(
+                Provider<SimpleIconFactory> iconfactoryProvider,
+                PackageManager packageManager,
+                int iconDpi) {
+            mIconFactoryProvider = iconfactoryProvider;
+            mPackageManager = packageManager;
             mIconDpi = iconDpi;
         }
 
         /** Make a {@link TargetPresentationGetter} for an {@link ActivityInfo}. */
         public TargetPresentationGetter makePresentationGetter(ActivityInfo activityInfo) {
-            return new ActivityInfoPresentationGetter(mContext, mIconDpi, activityInfo);
+            return new ActivityInfoPresentationGetter(
+                    mIconFactoryProvider, mPackageManager, mIconDpi, activityInfo);
         }
 
         /** Make a {@link TargetPresentationGetter} for a {@link ResolveInfo}. */
         public TargetPresentationGetter makePresentationGetter(ResolveInfo resolveInfo) {
-            return new ResolveInfoPresentationGetter(mContext, mIconDpi, resolveInfo);
+            return new ResolveInfoPresentationGetter(
+                    mIconFactoryProvider, mPackageManager, mIconDpi, resolveInfo);
         }
     }
 
@@ -77,20 +84,12 @@ public abstract class TargetPresentationGetter {
     @Nullable
     protected abstract String getAppLabelForSubstitutePermission();
 
-    private Context mContext;
+    private final Provider<SimpleIconFactory> mIconFactoryProvider;
     private final int mIconDpi;
     private final boolean mHasSubstitutePermission;
     private final ApplicationInfo mAppInfo;
 
     protected PackageManager mPm;
-
-    /**
-     * Retrieve the image that should be displayed as the icon when this target is presented to the
-     * specified {@code userHandle}.
-     */
-    public Drawable getIcon(UserHandle userHandle) {
-        return new BitmapDrawable(mContext.getResources(), getIconBitmap(userHandle));
-    }
 
     /**
      * Retrieve the image that should be displayed as the icon when this target is presented to the
@@ -116,9 +115,10 @@ public abstract class TargetPresentationGetter {
             drawable = mAppInfo.loadIcon(mPm);
         }
 
-        SimpleIconFactory iconFactory = SimpleIconFactory.obtain(mContext);
-        Bitmap icon = iconFactory.createUserBadgedIconBitmap(drawable, userHandle);
-        iconFactory.recycle();
+        Bitmap icon;
+        try (SimpleIconFactory iconFactory = mIconFactoryProvider.get()) {
+            icon = iconFactory.createUserBadgedIconBitmap(drawable, userHandle);
+        }
 
         return icon;
     }
@@ -168,9 +168,13 @@ public abstract class TargetPresentationGetter {
         return res.getDrawableForDensity(resId, mIconDpi);
     }
 
-    private TargetPresentationGetter(Context context, int iconDpi, ApplicationInfo appInfo) {
-        mContext = context;
-        mPm = context.getPackageManager();
+    private TargetPresentationGetter(
+            Provider<SimpleIconFactory> iconfactoryProvider,
+            PackageManager packageManager,
+            int iconDpi,
+            ApplicationInfo appInfo) {
+        mIconFactoryProvider = iconfactoryProvider;
+        mPm = packageManager;
         mAppInfo = appInfo;
         mIconDpi = iconDpi;
         mHasSubstitutePermission = (PackageManager.PERMISSION_GRANTED == mPm.checkPermission(
@@ -183,8 +187,11 @@ public abstract class TargetPresentationGetter {
         private final ResolveInfo mResolveInfo;
 
         ResolveInfoPresentationGetter(
-                Context context, int iconDpi, ResolveInfo resolveInfo) {
-            super(context, iconDpi, resolveInfo.activityInfo);
+                Provider<SimpleIconFactory> iconfactoryProvider,
+                PackageManager packageManager,
+                int iconDpi,
+                ResolveInfo resolveInfo) {
+            super(iconfactoryProvider, packageManager, iconDpi, resolveInfo.activityInfo);
             mResolveInfo = resolveInfo;
         }
 
@@ -230,8 +237,11 @@ public abstract class TargetPresentationGetter {
         private final ActivityInfo mActivityInfo;
 
         ActivityInfoPresentationGetter(
-                Context context, int iconDpi, ActivityInfo activityInfo) {
-            super(context, iconDpi, activityInfo.applicationInfo);
+                Provider<SimpleIconFactory> iconfactoryProvider,
+                PackageManager packageManager,
+                int iconDpi,
+                ActivityInfo activityInfo) {
+            super(iconfactoryProvider, packageManager, iconDpi, activityInfo.applicationInfo);
             mActivityInfo = activityInfo;
         }
 
