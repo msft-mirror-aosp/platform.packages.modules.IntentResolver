@@ -16,7 +16,6 @@
 
 package com.android.intentresolver.icons
 
-import android.app.ActivityManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -30,6 +29,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.android.intentresolver.Flags.targetHoverAndKeyboardFocusStates
 import com.android.intentresolver.R
+import com.android.intentresolver.SimpleIconFactory
 import com.android.intentresolver.TargetPresentationGetter
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
@@ -40,6 +40,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ActivityContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
+import javax.inject.Provider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 
@@ -50,14 +51,10 @@ class DefaultTargetDataLoader
 constructor(
     @ActivityContext private val context: Context,
     @ActivityOwned private val lifecycle: Lifecycle,
+    private val iconFactoryProvider: Provider<SimpleIconFactory>,
+    private val presentationFactory: TargetPresentationGetter.Factory,
     @Assisted private val isAudioCaptureDevice: Boolean,
 ) : TargetDataLoader {
-    private val presentationFactory =
-        TargetPresentationGetter.Factory(
-            context,
-            context.getSystemService(ActivityManager::class.java)?.launcherLargeIconDensity
-                ?: error("Unable to access ActivityManager"),
-        )
     private val nextTaskId = AtomicInteger(0)
     @GuardedBy("self") private val activeTasks = SparseArray<AsyncTask<*, *, *>>()
     private val executor = Dispatchers.IO.asExecutor()
@@ -98,6 +95,7 @@ constructor(
                 context.createContextAsUser(userHandle, 0),
                 info,
                 presentationFactory,
+                iconFactoryProvider,
             ) { bitmap ->
                 removeTask(taskId)
                 callback.accept(bitmap?.toDrawable() ?: loadIconPlaceholder())

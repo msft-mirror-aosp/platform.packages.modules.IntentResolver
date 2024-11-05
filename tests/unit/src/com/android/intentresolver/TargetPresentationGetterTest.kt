@@ -32,32 +32,42 @@ class TargetPresentationGetterTest {
         withSubstitutePermission: Boolean,
         appLabel: String,
         activityLabel: String,
-        resolveInfoLabel: String
+        resolveInfoLabel: String,
     ): TargetPresentationGetter {
         val testPackageInfo =
             ResolverDataProvider.createPackageManagerMockedInfo(
                 withSubstitutePermission,
                 appLabel,
                 activityLabel,
-                resolveInfoLabel
+                resolveInfoLabel,
             )
-        val factory = TargetPresentationGetter.Factory(testPackageInfo.ctx, 100)
+        val factory =
+            TargetPresentationGetter.Factory(
+                { SimpleIconFactory.obtain(testPackageInfo.ctx) },
+                testPackageInfo.ctx.packageManager,
+                100,
+            )
         return factory.makePresentationGetter(testPackageInfo.resolveInfo)
     }
 
     fun makeActivityInfoPresentationGetter(
         withSubstitutePermission: Boolean,
         appLabel: String?,
-        activityLabel: String?
+        activityLabel: String?,
     ): TargetPresentationGetter {
         val testPackageInfo =
             ResolverDataProvider.createPackageManagerMockedInfo(
                 withSubstitutePermission,
                 appLabel,
                 activityLabel,
-                ""
+                "",
             )
-        val factory = TargetPresentationGetter.Factory(testPackageInfo.ctx, 100)
+        val factory =
+            TargetPresentationGetter.Factory(
+                { SimpleIconFactory.obtain(testPackageInfo.ctx) },
+                testPackageInfo.ctx.packageManager,
+                100,
+            )
         return factory.makePresentationGetter(testPackageInfo.activityInfo)
     }
 
@@ -158,7 +168,7 @@ class TargetPresentationGetterTest {
                 false,
                 "app_label",
                 "activity_label",
-                "resolve_info_label"
+                "resolve_info_label",
             )
         assertThat(presentationGetter.getLabel()).isEqualTo("app_label")
         assertThat(presentationGetter.getSubLabel()).isEqualTo("resolve_info_label")
@@ -192,7 +202,7 @@ class TargetPresentationGetterTest {
                 true,
                 "app_label",
                 "activity_label",
-                "resolve_info_label"
+                "resolve_info_label",
             )
         assertThat(presentationGetter.getLabel()).isEqualTo("activity_label")
         assertThat(presentationGetter.getSubLabel()).isEqualTo("resolve_info_label")
