@@ -21,6 +21,7 @@ import android.content.Intent.ACTION_CHOOSER
 import android.content.Intent.EXTRA_TEXT
 import android.net.Uri
 import com.android.intentresolver.ext.toParcelAndBack
+import com.android.intentresolver.shared.model.ActivityModel
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
@@ -54,7 +55,7 @@ class ActivityModelTest {
                 intent = Intent(),
                 launchedFromUid = 1000,
                 launchedFromPackage = "other.example.com",
-                referrer = Uri.parse("android-app://app.example.com")
+                referrer = Uri.parse("android-app://app.example.com"),
             )
 
         assertThat(launch1.referrerPackage).isEqualTo("app.example.com")
@@ -67,7 +68,7 @@ class ActivityModelTest {
                 intent = Intent(),
                 launchedFromUid = 1000,
                 launchedFromPackage = "example.com",
-                referrer = Uri.parse("http://some.other.value")
+                referrer = Uri.parse("http://some.other.value"),
             )
 
         assertThat(launch.referrerPackage).isNull()
@@ -80,7 +81,7 @@ class ActivityModelTest {
                 intent = Intent(),
                 launchedFromUid = 1000,
                 launchedFromPackage = "example.com",
-                referrer = null
+                referrer = null,
             )
 
         assertThat(launch.referrerPackage).isNull()

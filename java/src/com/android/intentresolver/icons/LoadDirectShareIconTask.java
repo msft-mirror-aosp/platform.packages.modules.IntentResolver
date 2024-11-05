@@ -23,7 +23,6 @@ import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Trace;
@@ -39,30 +38,36 @@ import com.android.intentresolver.util.UriFilters;
 
 import java.util.function.Consumer;
 
+import javax.inject.Provider;
+
 /**
  * Loads direct share targets icons.
  */
 class LoadDirectShareIconTask extends BaseLoadIconTask {
     private static final String TAG = "DirectShareIconTask";
     private final SelectableTargetInfo mTargetInfo;
+    private final Provider<SimpleIconFactory> mIconFactoryProvider;
 
     LoadDirectShareIconTask(
             Context context,
             SelectableTargetInfo targetInfo,
             TargetPresentationGetter.Factory presentationFactory,
-            Consumer<Drawable> callback) {
+            Provider<SimpleIconFactory> iconFactoryProvider,
+            Consumer<Bitmap> callback) {
         super(context, presentationFactory, callback);
+        mIconFactoryProvider = iconFactoryProvider;
         mTargetInfo = targetInfo;
     }
 
     @Override
-    protected Drawable doInBackground(Void... voids) {
-        Drawable drawable = null;
+    @Nullable
+    protected Bitmap doInBackground(Void... voids) {
+        Bitmap iconBitmap = null;
         Trace.beginSection("shortcut-icon");
         try {
             final Icon icon = mTargetInfo.getChooserTargetIcon();
             if (icon == null || UriFilters.hasValidIcon(icon)) {
-                drawable = getChooserTargetIconDrawable(
+                iconBitmap = getChooserTargetIconBitmap(
                         mContext,
                         icon,
                         mTargetInfo.getChooserTargetComponentName(),
@@ -71,25 +76,21 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
                 Log.e(TAG, "Failed to load shortcut icon for "
                         + mTargetInfo.getChooserTargetComponentName() + "; no access");
             }
-            if (drawable == null) {
-                drawable = loadIconPlaceholder();
-            }
         } catch (Exception e) {
             Log.e(
                     TAG,
                     "Failed to load shortcut icon for "
                             + mTargetInfo.getChooserTargetComponentName(),
                     e);
-            drawable = loadIconPlaceholder();
         } finally {
             Trace.endSection();
         }
-        return drawable;
+        return iconBitmap;
     }
 
     @WorkerThread
     @Nullable
-    private Drawable getChooserTargetIconDrawable(
+    private Bitmap getChooserTargetIconBitmap(
             Context context,
             @Nullable Icon icon,
             ComponentName targetComponentName,
@@ -125,10 +126,11 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
         Bitmap appIcon = mPresentationFactory.makePresentationGetter(info).getIconBitmap(null);
 
         // Raster target drawable with appIcon as a badge
-        SimpleIconFactory sif = SimpleIconFactory.obtain(context);
-        Bitmap directShareBadgedIcon = sif.createAppBadgedIconBitmap(directShareIcon, appIcon);
-        sif.recycle();
+        Bitmap directShareBadgedIcon;
+        try (SimpleIconFactory sif = mIconFactoryProvider.get()) {
+            directShareBadgedIcon = sif.createAppBadgedIconBitmap(directShareIcon, appIcon);
+        }
 
-        return new BitmapDrawable(context.getResources(), directShareBadgedIcon);
+        return directShareBadgedIcon;
     }
 }

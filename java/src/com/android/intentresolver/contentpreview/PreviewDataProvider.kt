@@ -28,11 +28,11 @@ import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.OpenForTesting
 import androidx.annotation.VisibleForTesting
+import com.android.intentresolver.Flags.individualMetadataTitleRead
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_FILE
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_IMAGE
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION
 import com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT
-import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.measurements.runTracing
 import com.android.intentresolver.util.ownedByCurrentUser
 import java.util.concurrent.atomic.AtomicInteger
@@ -55,14 +55,19 @@ import kotlinx.coroutines.withTimeoutOrNull
  * A set of metadata columns we read for a content URI (see
  * [PreviewDataProvider.UriRecord.readQueryResult] method).
  */
-@VisibleForTesting
-val METADATA_COLUMNS =
+private val METADATA_COLUMNS =
     arrayOf(
         DocumentsContract.Document.COLUMN_FLAGS,
         MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI,
         OpenableColumns.DISPLAY_NAME,
-        Downloads.Impl.COLUMN_TITLE
+        Downloads.Impl.COLUMN_TITLE,
     )
+
+/** Preview-related metadata columns. */
+@VisibleForTesting
+val ICON_METADATA_COLUMNS =
+    arrayOf(DocumentsContract.Document.COLUMN_FLAGS, MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
+
 private const val TIMEOUT_MS = 1_000L
 
 /**
@@ -77,7 +82,6 @@ constructor(
     private val targetIntent: Intent,
     private val additionalContentUri: Uri?,
     private val contentResolver: ContentInterface,
-    private val featureFlags: ChooserServiceFlags,
     private val typeClassifier: MimeTypeClassifier = DefaultMimeTypeClassifier,
 ) {
 
@@ -128,7 +132,7 @@ constructor(
              * IMAGE, FILE, TEXT. */
             if (!targetIntent.isSend || records.isEmpty()) {
                 CONTENT_PREVIEW_TEXT
-            } else if (featureFlags.chooserPayloadToggling() && shouldShowPayloadSelection()) {
+            } else if (shouldShowPayloadSelection()) {
                 // TODO: replace with the proper flags injection
                 CONTENT_PREVIEW_PAYLOAD_SELECTION
             } else {
@@ -141,7 +145,7 @@ constructor(
                     Log.w(
                         ContentPreviewUi.TAG,
                         "An attempt to read preview type from a cancelled scope",
-                        e
+                        e,
                     )
                     CONTENT_PREVIEW_FILE
                 }
@@ -159,7 +163,7 @@ constructor(
                 Log.w(
                     ContentPreviewUi.TAG,
                     "Failed to check URI authorities; no payload toggling",
-                    it
+                    it,
                 )
             }
             .getOrDefault(false)
@@ -183,7 +187,7 @@ constructor(
                     Log.w(
                         ContentPreviewUi.TAG,
                         "An attempt to read first file info from a cancelled scope",
-                        e
+                        e,
                     )
                 }
                 builder.build()
@@ -212,14 +216,20 @@ constructor(
         if (records.isEmpty()) {
             throw IndexOutOfBoundsException("There are no shared URIs")
         }
-        callerScope.launch {
-            val result = scope.async { getFirstFileName() }.await()
-            callback.accept(result)
-        }
+        callerScope.launch { callback.accept(getFirstFileName()) }
+    }
+
+    /**
+     * Returns a title for the first shared URI which is read from URI metadata or, if the metadata
+     * is not provided, derived from the URI.
+     */
+    @Throws(IndexOutOfBoundsException::class)
+    suspend fun getFirstFileName(): String {
+        return scope.async { getFirstFileNameInternal() }.await()
     }
 
     @Throws(IndexOutOfBoundsException::class)
-    private fun getFirstFileName(): String {
+    private fun getFirstFileNameInternal(): String {
         if (records.isEmpty()) throw IndexOutOfBoundsException("There are no shared URIs")
 
         val record = records[0]
@@ -282,16 +292,23 @@ constructor(
             get() = query.supportsThumbnail
 
         val title: String
-            get() = query.title
+            get() = if (individualMetadataTitleRead()) titleFromQuery else query.title
 
         val iconUri: Uri?
             get() = query.iconUri
 
-        private val query by lazy { readQueryResult() }
+        private val query by lazy {
+            readQueryResult(
+                if (individualMetadataTitleRead()) ICON_METADATA_COLUMNS else METADATA_COLUMNS
+            )
+        }
 
-        private fun readQueryResult(): QueryResult =
-            // TODO: rewrite using methods from UiMetadataHelpers.kt
-            contentResolver.querySafe(uri, METADATA_COLUMNS)?.use { cursor ->
+        private val titleFromQuery by lazy {
+            readDisplayNameFromQuery().takeIf { !TextUtils.isEmpty(it) } ?: readTitleFromQuery()
+        }
+
+        private fun readQueryResult(columns: Array<String>): QueryResult =
+            contentResolver.querySafe(uri, columns)?.use { cursor ->
                 if (!cursor.moveToFirst()) return@use null
 
                 var flagColIdx = -1
@@ -329,12 +346,23 @@ constructor(
 
                 QueryResult(supportsThumbnail, title, iconUri)
             } ?: QueryResult()
+
+        private fun readTitleFromQuery(): String = readStringColumn(Downloads.Impl.COLUMN_TITLE)
+
+        private fun readDisplayNameFromQuery(): String =
+            readStringColumn(OpenableColumns.DISPLAY_NAME)
+
+        private fun readStringColumn(column: String): String =
+            contentResolver.querySafe(uri, arrayOf(column))?.use { cursor ->
+                if (!cursor.moveToFirst()) return@use null
+                cursor.readString(column)
+            } ?: ""
     }
 
     private class QueryResult(
         val supportsThumbnail: Boolean = false,
         val title: String = "",
-        val iconUri: Uri? = null
+        val iconUri: Uri? = null,
     )
 }
 

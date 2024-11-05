@@ -61,7 +61,7 @@ public class ResolverDrawerLayout extends ViewGroup {
     /**
      * Max width of the whole drawer layout
      */
-    private final int mMaxWidth;
+    private int mMaxWidth;
 
     /**
      * Max total visible height of views not marked always-show when in the closed/initial state
@@ -262,6 +262,16 @@ public class ResolverDrawerLayout extends ViewGroup {
         }
 
         invalidate();
+    }
+
+    /**
+     * Sets max drawer width.
+     */
+    public void setMaxWidth(int maxWidth) {
+        if (mMaxWidth != maxWidth) {
+            mMaxWidth = maxWidth;
+            requestLayout();
+        }
     }
 
     public void setDismissLocked(boolean locked) {
