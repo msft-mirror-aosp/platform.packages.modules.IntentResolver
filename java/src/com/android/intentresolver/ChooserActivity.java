@@ -23,6 +23,9 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
+import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
+import static com.android.intentresolver.Flags.fixShortcutsFlashing;
+import static com.android.intentresolver.Flags.unselectFinalItem;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
@@ -96,10 +99,8 @@ import com.android.intentresolver.ChooserRefinementManager.RefinementType;
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
-import com.android.intentresolver.contentpreview.BasePreviewViewModel;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.contentpreview.HeadlineGeneratorImpl;
-import com.android.intentresolver.contentpreview.PreviewViewModel;
 import com.android.intentresolver.data.model.ChooserRequest;
 import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
@@ -154,8 +155,10 @@ import kotlinx.coroutines.CoroutineDispatcher;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -206,7 +209,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private static final String TAB_TAG_PERSONAL = "personal";
     private static final String TAB_TAG_WORK = "work";
 
-    private static final String LAST_SHOWN_TAB_KEY = "last_shown_tab_key";
+    private static final String LAST_SHOWN_PROFILE = "last_shown_tab_key";
     public static final String METRICS_CATEGORY_CHOOSER = "intent_chooser";
 
     private int mLayoutId;
@@ -306,7 +309,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private final EnterTransitionAnimationDelegate mEnterTransitionAnimationDelegate =
             new EnterTransitionAnimationDelegate(this, () -> mResolverDrawerLayout);
 
-    private final Map<Integer, ProfileRecord> mProfileRecords = new HashMap<>();
+    private final Map<Integer, ProfileRecord> mProfileRecords = new LinkedHashMap<>();
 
     private boolean mExcludeSharedText = false;
     /**
@@ -349,8 +352,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
             mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
             mChooserHelper.setOnPendingSelection(this::onPendingSelection);
+            if (unselectFinalItem()) {
+                mChooserHelper.setOnHasSelections(this::onHasSelections);
+            }
         }
     }
+    private int mInitialProfile = -1;
 
     @Override
     protected final void onStart() {
@@ -412,7 +419,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     protected final void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (mViewPager != null) {
-            outState.putInt(LAST_SHOWN_TAB_KEY, mViewPager.getCurrentItem());
+            outState.putInt(
+                    LAST_SHOWN_PROFILE, mChooserMultiProfilePagerAdapter.getActiveProfile());
         }
     }
 
@@ -517,6 +525,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mProfilePagerResources,
                 mRequest,
                 mProfiles,
+                mProfileRecords.values(),
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
@@ -633,21 +642,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 finish();
             }
         });
-        BasePreviewViewModel previewViewModel =
-                new ViewModelProvider(this, createPreviewViewModelFactory())
-                        .get(BasePreviewViewModel.class);
-        previewViewModel.init(
-                mRequest.getTargetIntent(),
-                mRequest.getAdditionalContentUri(),
-                mChooserServiceFeatureFlags.chooserPayloadToggling());
         ChooserContentPreviewUi.ActionFactory actionFactory =
                 decorateActionFactoryWithRefinement(
                         createChooserActionFactory(mRequest.getTargetIntent()));
         mChooserContentPreviewUi = new ChooserContentPreviewUi(
                 getCoroutineScope(getLifecycle()),
-                previewViewModel.getPreviewDataProvider(),
-                mRequest.getTargetIntent(),
-                previewViewModel.getImageLoader(),
+                mViewModel.getPreviewDataProvider(),
+                mRequest,
+                mViewModel.getImageLoader(),
                 actionFactory,
                 createModifyShareActionFactory(),
                 mEnterTransitionAnimationDelegate,
@@ -688,6 +690,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mRequest.getModifyShareAction() != null
         );
         mEnterTransitionAnimationDelegate.postponeTransition();
+        mInitialProfile = findSelectedProfile();
         Tracer.INSTANCE.markLaunched();
     }
 
@@ -706,7 +709,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void onChooserRequestChanged(ChooserRequest chooserRequest) {
-        // intentional reference comparison
         if (mRequest == chooserRequest) {
             return;
         }
@@ -723,6 +725,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private void onPendingSelection() {
         setTabsViewEnabled(false);
+    }
+
+    private void onHasSelections(boolean hasSelections) {
+        mChooserMultiProfilePagerAdapter.setTargetsEnabled(hasSelections);
     }
 
     private void onAppTargetsLoaded(ResolverListAdapter listAdapter) {
@@ -755,10 +761,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         Intent newTargetIntent = newChooserRequest.getTargetIntent();
         List<Intent> oldAltIntents = oldChooserRequest.getAdditionalTargets();
         List<Intent> newAltIntents = newChooserRequest.getAdditionalTargets();
+        List<ComponentName> oldExcluded = oldChooserRequest.getFilteredComponentNames();
+        List<ComponentName> newExcluded = newChooserRequest.getFilteredComponentNames();
 
         // TODO: a workaround for the unnecessary target reloading caused by multiple flow updates -
         //  an artifact of the current implementation; revisit.
-        return !oldTargetIntent.equals(newTargetIntent) || !oldAltIntents.equals(newAltIntents);
+        return !oldTargetIntent.equals(newTargetIntent)
+                || !oldAltIntents.equals(newAltIntents)
+                || (shareouselUpdateExcludeComponentsExtra()
+                        && !oldExcluded.equals(newExcluded));
     }
 
     private void recreatePagerAdapter() {
@@ -782,11 +793,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
         // Update the pager adapter but do not attach it to the view till the targets are reloaded,
         // see onChooserAppTargetsLoaded method.
+        ChooserMultiProfilePagerAdapter oldPagerAdapter =
+                mChooserMultiProfilePagerAdapter;
         mChooserMultiProfilePagerAdapter = createMultiProfilePagerAdapter(
                 /* context = */ this,
                 mProfilePagerResources,
                 mRequest,
                 mProfiles,
+                mProfileRecords.values(),
                 mProfileAvailability,
                 mRequest.getInitialIntents(),
                 mMaxTargetsPerRow);
@@ -820,6 +834,19 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         postRebuildList(
                 mChooserMultiProfilePagerAdapter.rebuildTabs(
                     mProfiles.getWorkProfilePresent() || mProfiles.getPrivateProfilePresent()));
+        if (fixShortcutsFlashing() && oldPagerAdapter != null) {
+            for (int i = 0, count = mChooserMultiProfilePagerAdapter.getCount(); i < count; i++) {
+                ChooserListAdapter listAdapter =
+                        mChooserMultiProfilePagerAdapter.getPageAdapterForIndex(i)
+                                .getListAdapter();
+                ChooserListAdapter oldListAdapter =
+                        oldPagerAdapter.getListAdapterForUserHandle(listAdapter.getUserHandle());
+                if (oldListAdapter != null) {
+                    listAdapter.copyDirectTargetsFrom(oldListAdapter);
+                    listAdapter.setDirectTargetsEnabled(false);
+                }
+            }
+        }
         setTabsViewEnabled(false);
     }
 
@@ -837,7 +864,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         if (mViewPager != null) {
-            mViewPager.setCurrentItem(savedInstanceState.getInt(LAST_SHOWN_TAB_KEY));
+            int profile = savedInstanceState.getInt(LAST_SHOWN_PROFILE);
+            int profileNumber = mChooserMultiProfilePagerAdapter.getPageNumberForProfile(profile);
+            if (profileNumber != -1) {
+                mViewPager.setCurrentItem(profileNumber);
+                mInitialProfile = profile;
+            }
         }
         mChooserMultiProfilePagerAdapter.clearInactiveProfileCache();
     }
@@ -1088,7 +1120,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             if (cti.startAsCaller(this, options, user.getIdentifier())) {
                 // Prevent sending a second chooser result when starting the edit action intent.
                 if (!cti.getTargetIntent().hasExtra(EDIT_SOURCE)) {
-                    maybeSendShareResult(cti);
+                    maybeSendShareResult(cti, user);
                 }
                 maybeLogCrossProfileTargetLaunch(cti, user);
             }
@@ -1346,26 +1378,32 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private void createProfileRecords(
             AppPredictorFactory factory, IntentFilter targetIntentFilter) {
-        UserHandle mainUserHandle = mProfiles.getPersonalHandle();
-        ProfileRecord record = createProfileRecord(mainUserHandle, targetIntentFilter, factory);
-        if (record.shortcutLoader == null) {
-            Tracer.INSTANCE.endLaunchToShortcutTrace();
-        }
 
-        UserHandle workUserHandle = mProfiles.getWorkHandle();
-        if (workUserHandle != null) {
-            createProfileRecord(workUserHandle, targetIntentFilter, factory);
-        }
-
-        UserHandle privateUserHandle = mProfiles.getPrivateHandle();
-        if (privateUserHandle != null && mProfileAvailability.isAvailable(
-                requireNonNull(mProfiles.getPrivateProfile()))) {
-            createProfileRecord(privateUserHandle, targetIntentFilter, factory);
+        Profile launchedAsProfile = mProfiles.getLaunchedAsProfile();
+        for (Profile profile : mProfiles.getProfiles()) {
+            if (profile.getType() == Profile.Type.PRIVATE
+                    && !mProfileAvailability.isAvailable(profile)) {
+                continue;
+            }
+            ProfileRecord record = createProfileRecord(
+                    profile,
+                    targetIntentFilter,
+                    launchedAsProfile.equals(profile)
+                            ? mRequest.getCallerChooserTargets()
+                            : Collections.emptyList(),
+                    factory);
+            if (profile.equals(launchedAsProfile) && record.shortcutLoader == null) {
+                Tracer.INSTANCE.endLaunchToShortcutTrace();
+            }
         }
     }
 
     private ProfileRecord createProfileRecord(
-            UserHandle userHandle, IntentFilter targetIntentFilter, AppPredictorFactory factory) {
+            Profile profile,
+            IntentFilter targetIntentFilter,
+            List<ChooserTarget> callerTargets,
+            AppPredictorFactory factory) {
+        UserHandle userHandle = profile.getPrimary().getHandle();
         AppPredictor appPredictor = factory.create(userHandle);
         ShortcutLoader shortcutLoader = ActivityManager.isLowRamDeviceStatic()
                     ? null
@@ -1375,7 +1413,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                             userHandle,
                             targetIntentFilter,
                             shortcutsResult -> onShortcutsLoaded(userHandle, shortcutsResult));
-        ProfileRecord record = new ProfileRecord(appPredictor, shortcutLoader);
+        ProfileRecord record = new ProfileRecord(
+                profile, appPredictor, shortcutLoader, callerTargets);
         mProfileRecords.put(userHandle.getIdentifier(), record);
         return record;
     }
@@ -1410,6 +1449,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             ProfilePagerResources profilePagerResources,
             ChooserRequest request,
             ProfileHelper profileHelper,
+            Collection<ProfileRecord> profileRecords,
             ProfileAvailability profileAvailability,
             List<Intent> initialIntents,
             int maxTargetsPerRow) {
@@ -1421,11 +1461,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         List<Intent> payloadIntents = request.getPayloadIntents();
 
         List<TabConfig<ChooserGridAdapter>> tabs = new ArrayList<>();
-        for (Profile profile : profileHelper.getProfiles()) {
-            if (profile.getType() == Profile.Type.PRIVATE
-                    && !profileAvailability.isAvailable(profile)) {
-                continue;
-            }
+        for (ProfileRecord record : profileRecords) {
+            Profile profile = record.profile;
             ChooserGridAdapter adapter = createChooserGridAdapter(
                     context,
                     payloadIntents,
@@ -1640,26 +1677,29 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         return result;
     }
 
-    private void maybeSendShareResult(TargetInfo cti) {
+    private void maybeSendShareResult(TargetInfo cti, UserHandle launchedAsUser) {
         if (mShareResultSender != null) {
             final ComponentName target = cti.getResolvedComponentName();
             if (target != null) {
-                mShareResultSender.onComponentSelected(target, cti.isChooserTargetInfo());
+                boolean crossProfile = !UserHandle.of(UserHandle.myUserId()).equals(launchedAsUser);
+                mShareResultSender.onComponentSelected(
+                        target, cti.isChooserTargetInfo(), crossProfile);
             }
         }
     }
 
-    private void addCallerChooserTargets() {
-        if (!mRequest.getCallerChooserTargets().isEmpty()) {
-            // Send the caller's chooser targets only to the default profile.
-            if (mChooserMultiProfilePagerAdapter.getActiveProfile() == findSelectedProfile()) {
-                mChooserMultiProfilePagerAdapter.getActiveListAdapter().addServiceResults(
-                        /* origTarget */ null,
-                        new ArrayList<>(mRequest.getCallerChooserTargets()),
-                        TARGET_TYPE_DEFAULT,
-                        /* directShareShortcutInfoCache */ Collections.emptyMap(),
-                        /* directShareAppTargetCache */ Collections.emptyMap());
-            }
+    private void addCallerChooserTargets(ChooserListAdapter adapter) {
+        ProfileRecord record = getProfileRecord(adapter.getUserHandle());
+        List<ChooserTarget> callerTargets = record == null
+                ? Collections.emptyList()
+                : record.callerTargets;
+        if (!callerTargets.isEmpty()) {
+            adapter.addServiceResults(
+                    /* origTarget */ null,
+                    new ArrayList<>(mRequest.getCallerChooserTargets()),
+                    TARGET_TYPE_DEFAULT,
+                    /* directShareShortcutInfoCache */ Collections.emptyMap(),
+                    /* directShareAppTargetCache */ Collections.emptyMap());
         }
     }
 
@@ -2037,7 +2077,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 initialIntents,
                 rList,
                 filterLastUsed,
-                createListController(userHandle),
+                resolverListController,
                 userHandle,
                 targetIntent,
                 referrerFillInIntent,
@@ -2052,8 +2092,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                     if (record != null && record.shortcutLoader != null) {
                         record.shortcutLoader.reset();
                     }
-                },
-                mFeatureFlags);
+                });
     }
 
     private void onWorkProfileStatusUpdated() {
@@ -2108,11 +2147,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mPinnedSharedPrefs);
     }
 
-    @VisibleForTesting
-    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
-        return PreviewViewModel.Companion.getFactory();
-    }
-
     private ChooserContentPreviewUi.ActionFactory decorateActionFactoryWithRefinement(
             ChooserContentPreviewUi.ActionFactory originalFactory) {
         if (!mFeatureFlags.refineSystemActions()) {
@@ -2123,6 +2157,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             @Override
             @Nullable
             public Runnable getEditButtonRunnable() {
+                if (originalFactory.getEditButtonRunnable() == null) return null;
                 return () -> {
                     if (!mRefinementManager.maybeHandleSelection(
                             RefinementType.EDIT_ACTION,
@@ -2208,8 +2243,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 },
                 mShareResultSender,
                 this::finishWithStatus,
-                mClipboardManager,
-                mFeatureFlags);
+                mClipboardManager);
     }
 
     private Supplier<ActionRow.Action> createModifyShareActionFactory() {
@@ -2258,7 +2292,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         if (isLayoutUpdated
                 || insetsChanged
-                || mLastNumberOfChildren != recyclerView.getChildCount()) {
+                || mLastNumberOfChildren != recyclerView.getChildCount()
+                || mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
             mCurrAvailableWidth = availableWidth;
             if (isLayoutUpdated) {
                 // It is very important we call setAdapter from here. Otherwise in some cases
@@ -2272,12 +2307,15 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
 
             int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
-            int initialProfile = findSelectedProfile();
+            int initialProfile = Flags.fixDrawerOffsetOnConfigChange()
+                    ? mInitialProfile
+                    : findSelectedProfile();
             if (currentProfile != initialProfile) {
                 return;
             }
 
-            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged) {
+            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged
+                    && !mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
                 return;
             }
 
@@ -2404,7 +2442,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             if (duration >= 0) {
                 Log.d(TAG, "app target loading time " + duration + " ms");
             }
-            addCallerChooserTargets();
+            if (!fixShortcutsFlashing()) {
+                addCallerChooserTargets(chooserListAdapter);
+            }
             getEventLog().logSharesheetAppLoadComplete();
             maybeQueryAdditionalPostProcessingTargets(
                     listProfileUserHandle,
@@ -2434,6 +2474,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         ChooserListAdapter adapter =
                 mChooserMultiProfilePagerAdapter.getListAdapterForUserHandle(userHandle);
         if (adapter != null) {
+            if (fixShortcutsFlashing()) {
+                adapter.setDirectTargetsEnabled(true);
+                addCallerChooserTargets(adapter);
+            }
             for (ShortcutLoader.ShortcutResultInfo resultInfo : result.getShortcutsByApp()) {
                 adapter.addServiceResults(
                         resultInfo.getAppTarget(),
@@ -2675,6 +2719,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private static class ProfileRecord {
+        public final Profile profile;
+
         /** The {@link AppPredictor} for this profile, if any. */
         @Nullable
         public final AppPredictor appPredictor;
@@ -2683,18 +2729,26 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
          */
         @Nullable
         public final ShortcutLoader shortcutLoader;
+        public final List<ChooserTarget> callerTargets;
         public long loadingStartTime;
 
         private ProfileRecord(
+                Profile profile,
                 @Nullable AppPredictor appPredictor,
-                @Nullable ShortcutLoader shortcutLoader) {
+                @Nullable ShortcutLoader shortcutLoader,
+                List<ChooserTarget> callerTargets) {
+            this.profile = profile;
             this.appPredictor = appPredictor;
             this.shortcutLoader = shortcutLoader;
+            this.callerTargets = callerTargets;
         }
 
         public void destroy() {
             if (appPredictor != null) {
                 appPredictor.destroy();
+            }
+            if (shortcutLoader != null) {
+                shortcutLoader.destroy();
             }
         }
     }

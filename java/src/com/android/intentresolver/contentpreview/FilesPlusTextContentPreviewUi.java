@@ -23,6 +23,7 @@ import android.content.res.Resources;
 import android.net.Uri;
 import android.text.util.Linkify;
 import android.util.PluralsMessageFormatter;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,6 +69,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
     private Uri mFirstFilePreviewUri;
     private boolean mAllImages;
     private boolean mAllVideos;
+    private int mPreviewSize;
     // TODO(b/285309527): make this a flag
     private static final boolean SHOW_TOGGLE_CHECKMARK = false;
 
@@ -109,6 +111,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             LayoutInflater layoutInflater,
             ViewGroup parent,
             View headlineViewParent) {
+        mPreviewSize = resources.getDimensionPixelSize(R.dimen.width_text_image_preview_size);
         return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
@@ -164,12 +167,12 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
     private void updateUiWithMetadata(ViewGroup contentPreviewView, View headlineView) {
         prepareTextPreview(contentPreviewView, headlineView, mActionFactory);
         updateHeadline(headlineView, mFileCount, mAllImages, mAllVideos);
-
         ImageView imagePreview = mContentPreviewView.requireViewById(R.id.image_view);
         if (mIsSingleImage && mFirstFilePreviewUri != null) {
             mImageLoader.loadImage(
                     mScope,
                     mFirstFilePreviewUri,
+                    new Size(mPreviewSize, mPreviewSize),
                     bitmap -> {
                         if (bitmap == null) {
                             imagePreview.setVisibility(View.GONE);

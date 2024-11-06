@@ -30,9 +30,12 @@ import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.capture
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 
 class PayloadToggleCursorResolverTest {
     private val cursorUri = Uri.parse("content://org.pkg.app.extra")
@@ -101,6 +104,9 @@ class PayloadToggleCursorResolverTest {
             assertThat(row!!.uri).isEqualTo(uri)
             assertThat(row.previewSize).isEqualTo(Size(100, 50))
         }
+        val columnsCaptor = argumentCaptor<Array<String>>()
+        verify(fakeContentProvider).query(eq(cursorUri), columnsCaptor.capture(), any(), any())
+        assertThat(columnsCaptor.firstValue.toList()).containsExactly(URI, WIDTH, HEIGHT)
     }
 
     @Test

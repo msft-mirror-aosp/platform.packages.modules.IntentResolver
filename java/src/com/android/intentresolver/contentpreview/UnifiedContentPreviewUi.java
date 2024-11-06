@@ -20,6 +20,7 @@ import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTE
 
 import android.content.res.Resources;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +31,8 @@ import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
+
+import kotlin.Pair;
 
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.Flow;
@@ -55,6 +58,7 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     @Nullable
     private ViewGroup mContentPreviewView;
     private View mHeadlineView;
+    private int mPreviewSize;
 
     UnifiedContentPreviewUi(
             CoroutineScope scope,
@@ -93,14 +97,18 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             LayoutInflater layoutInflater,
             ViewGroup parent,
             View headlineViewParent) {
+        mPreviewSize = resources.getDimensionPixelSize(R.dimen.chooser_preview_image_max_dimen);
         return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
     private void setFiles(List<FileInfo> files) {
-        mImageLoader.prePopulate(files.stream()
-                .map(FileInfo::getPreviewUri)
-                .filter(Objects::nonNull)
-                .toList());
+        Size previewSize = new Size(mPreviewSize, mPreviewSize);
+        mImageLoader.prePopulate(
+                files.stream()
+                        .map(FileInfo::getPreviewUri)
+                        .filter(Objects::nonNull)
+                        .map((uri -> new Pair<>(uri, previewSize)))
+                        .toList());
         mFiles = files;
         if (mContentPreviewView != null) {
             updatePreviewWithFiles(mContentPreviewView, mHeadlineView, files);
@@ -121,6 +129,7 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
 
         ScrollableImagePreviewView imagePreview =
                 mContentPreviewView.requireViewById(R.id.scrollable_image_preview);
+        imagePreview.setPreviewHeight(mPreviewSize);
         imagePreview.setImageLoader(mImageLoader);
         imagePreview.setOnNoPreviewCallback(() -> imagePreview.setVisibility(View.GONE));
         imagePreview.setTransitionElementStatusCallback(mTransitionElementStatusCallback);

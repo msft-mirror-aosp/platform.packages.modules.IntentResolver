@@ -18,6 +18,7 @@ package com.android.intentresolver
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Size
 import com.android.intentresolver.contentpreview.ImageLoader
 import java.util.function.Consumer
 import kotlinx.coroutines.CoroutineScope
@@ -25,13 +26,18 @@ import kotlinx.coroutines.CoroutineScope
 class FakeImageLoader(initialBitmaps: Map<Uri, Bitmap> = emptyMap()) : ImageLoader {
     private val bitmaps = HashMap<Uri, Bitmap>().apply { putAll(initialBitmaps) }
 
-    override fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>) {
+    override fun loadImage(
+        callerScope: CoroutineScope,
+        uri: Uri,
+        size: Size,
+        callback: Consumer<Bitmap?>,
+    ) {
         callback.accept(bitmaps[uri])
     }
 
-    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? = bitmaps[uri]
+    override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap? = bitmaps[uri]
 
-    override fun prePopulate(uris: List<Uri>) = Unit
+    override fun prePopulate(uriSizePairs: List<Pair<Uri, Size>>) = Unit
 
     fun setBitmap(uri: Uri, bitmap: Bitmap) {
         bitmaps[uri] = bitmap

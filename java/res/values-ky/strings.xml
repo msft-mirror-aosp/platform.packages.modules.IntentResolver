@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Сүрөт бөлүшүү}other{# сүрөт бөлүшүлүүдө}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Видео бөлүшүлүүдө}other{# видео бөлүшүлүүдө}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# файл бөлүшүлүүдө}other{# файл бөлүшүлүүдө}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Бөлүшө турган нерселерди тандаңыз"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Сүрөттү текст менен жөнөтүү}other{# cүрөттү текст менен жөнөтүү}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Сүрөттү шилтеме менен жөнөтүү}other{# сүрөттү шилтеме менен жөнөтүү}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Видеону текст менен жөнөтүү}other{# видеону текст менен жөнөтүү}}"</string>
