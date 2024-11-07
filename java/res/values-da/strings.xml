@@ -106,4 +106,6 @@
     <string name="selectable_image" msgid="3157858923437182271">"Billede, der kan vælges"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Video, der kan vælges"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Element, der kan vælges"</string>
+    <!-- no translation found for role_description_button (4537198530568333649) -->
+    <skip />
 </resources>

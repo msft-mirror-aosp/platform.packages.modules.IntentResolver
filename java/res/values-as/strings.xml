@@ -106,4 +106,6 @@
     <string name="selectable_image" msgid="3157858923437182271">"বাছনি কৰিব পৰা প্ৰতিচ্ছবি"</string>
     <string name="selectable_video" msgid="1271768647699300826">"বাছনি কৰিব পৰা ভিডিঅ’"</string>
     <string name="selectable_item" msgid="7557320816744205280">"বাছনি কৰিব পৰা বস্তু"</string>
+    <!-- no translation found for role_description_button (4537198530568333649) -->
+    <skip />
 </resources>
