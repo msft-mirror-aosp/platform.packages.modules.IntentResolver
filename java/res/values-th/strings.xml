@@ -106,4 +106,6 @@
     <string name="selectable_image" msgid="3157858923437182271">"รูปภาพที่เลือกได้"</string>
     <string name="selectable_video" msgid="1271768647699300826">"วิดีโอที่เลือกได้"</string>
     <string name="selectable_item" msgid="7557320816744205280">"รายการที่เลือกได้"</string>
+    <!-- no translation found for role_description_button (4537198530568333649) -->
+    <skip />
 </resources>
