@@ -839,6 +839,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
         }
         setTabsViewEnabled(false);
+        if (mSystemWindowInsets != null) {
+            applyFooterView(mSystemWindowInsets.bottom);
+        }
     }
 
     private void setTabsViewEnabled(boolean isEnabled) {
