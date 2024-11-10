@@ -38,19 +38,24 @@ import com.android.intentresolver.util.UriFilters;
 
 import java.util.function.Consumer;
 
+import javax.inject.Provider;
+
 /**
  * Loads direct share targets icons.
  */
 class LoadDirectShareIconTask extends BaseLoadIconTask {
     private static final String TAG = "DirectShareIconTask";
     private final SelectableTargetInfo mTargetInfo;
+    private final Provider<SimpleIconFactory> mIconFactoryProvider;
 
     LoadDirectShareIconTask(
             Context context,
             SelectableTargetInfo targetInfo,
             TargetPresentationGetter.Factory presentationFactory,
+            Provider<SimpleIconFactory> iconFactoryProvider,
             Consumer<Bitmap> callback) {
         super(context, presentationFactory, callback);
+        mIconFactoryProvider = iconFactoryProvider;
         mTargetInfo = targetInfo;
     }
 
@@ -121,9 +126,10 @@ class LoadDirectShareIconTask extends BaseLoadIconTask {
         Bitmap appIcon = mPresentationFactory.makePresentationGetter(info).getIconBitmap(null);
 
         // Raster target drawable with appIcon as a badge
-        SimpleIconFactory sif = SimpleIconFactory.obtain(context);
-        Bitmap directShareBadgedIcon = sif.createAppBadgedIconBitmap(directShareIcon, appIcon);
-        sif.recycle();
+        Bitmap directShareBadgedIcon;
+        try (SimpleIconFactory sif = mIconFactoryProvider.get()) {
+            directShareBadgedIcon = sif.createAppBadgedIconBitmap(directShareIcon, appIcon);
+        }
 
         return directShareBadgedIcon;
     }

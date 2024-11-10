@@ -117,6 +117,16 @@ flag {
 }
 
 flag {
+  name: "rebuild_adapters_on_target_pinning"
+  namespace: "intentresolver"
+  description: "Rebuild and swap adapters when a target gets (un)pinned to avoid flickering."
+  bug: "230703572"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "target_hover_and_keyboard_focus_states"
   namespace: "intentresolver"
   description: "Adopt Launcher pointer hover and keyboard novigation focus effects for targets."
