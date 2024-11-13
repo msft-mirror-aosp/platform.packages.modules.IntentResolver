@@ -34,6 +34,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.p
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.readSize
 import com.android.intentresolver.contentpreview.uriMetadataReader
@@ -51,10 +52,10 @@ import org.junit.Test
 class CursorPreviewsInteractorTest {
 
     private fun runTestWithDeps(
-        initialSelection: Iterable<Int> = (1..2),
-        focusedItemIndex: Int = initialSelection.count() / 2,
-        cursor: Iterable<Int> = (0 until 4),
-        cursorStartPosition: Int = cursor.count() / 2,
+        initialSelection: Iterable<Int>,
+        focusedItemIndex: Int,
+        cursor: Iterable<Int>,
+        cursorStartPosition: Int,
         pageSize: Int = 16,
         maxLoadedPages: Int = 3,
         cursorSizes: Map<Int, Size> = emptyMap(),
@@ -81,6 +82,7 @@ class CursorPreviewsInteractorTest {
                 block(
                     TestDeps(
                         initialSelection,
+                        focusedItemIndex,
                         cursor,
                         cursorStartPosition,
                         cursorSizes,
@@ -92,6 +94,7 @@ class CursorPreviewsInteractorTest {
 
     private class TestDeps(
         initialSelectionRange: Iterable<Int>,
+        focusedItemIndex: Int,
         private val cursorRange: Iterable<Int>,
         private val cursorStartPosition: Int,
         private val cursorSizes: Map<Int, Size>,
@@ -117,14 +120,26 @@ class CursorPreviewsInteractorTest {
                     }
                 }
         val initialPreviews: List<PreviewModel> =
-            initialSelectionRange.map { i ->
-                PreviewModel(uri = uri(i), mimeType = "image/bitmap", order = i)
+            initialSelectionRange.mapIndexed { index, i ->
+                PreviewModel(
+                    key =
+                        if (index == focusedItemIndex) {
+                            PreviewKey.final(0)
+                        } else {
+                            PreviewKey.temp(index)
+                        },
+                    uri = uri(i),
+                    mimeType = "image/bitmap",
+                    order = i,
+                )
             }
     }
 
     @Test
     fun initialCursorLoad() =
         runTestWithDeps(
+            initialSelection = (1..2),
+            focusedItemIndex = 1,
             cursor = (0 until 10),
             cursorStartPosition = 2,
             cursorSizes = mapOf(0 to (200 x 100)),
@@ -143,6 +158,7 @@ class CursorPreviewsInteractorTest {
                     .containsExactlyElementsIn(
                         List(6) {
                             PreviewModel(
+                                key = PreviewKey.final((it - 2)),
                                 uri = Uri.fromParts("scheme$it", "ssp$it", "fragment$it"),
                                 mimeType = "image/bitmap",
                                 aspectRatio =
@@ -168,7 +184,9 @@ class CursorPreviewsInteractorTest {
     fun loadMoreLeft_evictRight() =
         runTestWithDeps(
             initialSelection = listOf(24),
+            focusedItemIndex = 0,
             cursor = (0 until 48),
+            cursorStartPosition = 24,
             pageSize = 16,
             maxLoadedPages = 1,
         ) { deps ->
@@ -201,7 +219,9 @@ class CursorPreviewsInteractorTest {
     fun loadMoreRight_evictLeft() =
         runTestWithDeps(
             initialSelection = listOf(24),
+            focusedItemIndex = 0,
             cursor = (0 until 48),
+            cursorStartPosition = 24,
             pageSize = 16,
             maxLoadedPages = 1,
         ) { deps ->
@@ -233,7 +253,9 @@ class CursorPreviewsInteractorTest {
     fun noMoreRight_appendUnclaimedFromInitialSelection() =
         runTestWithDeps(
             initialSelection = listOf(24, 50),
+            focusedItemIndex = 0,
             cursor = listOf(24),
+            cursorStartPosition = 0,
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
@@ -255,7 +277,9 @@ class CursorPreviewsInteractorTest {
     fun noMoreLeft_appendUnclaimedFromInitialSelection() =
         runTestWithDeps(
             initialSelection = listOf(0, 24),
+            focusedItemIndex = 1,
             cursor = listOf(24),
+            cursorStartPosition = 0,
             pageSize = 16,
             maxLoadedPages = 2,
         ) { deps ->
@@ -283,6 +307,7 @@ class CursorPreviewsInteractorTest {
         ) { deps ->
             previewSelectionsRepository.selections.value =
                 PreviewModel(
+                        key = PreviewKey.final(0),
                         uri = uri(1),
                         mimeType = "image/png",
                         order = 0,
@@ -296,6 +321,7 @@ class CursorPreviewsInteractorTest {
             assertThat(previewSelectionsRepository.selections.value.values)
                 .containsExactly(
                     PreviewModel(
+                        key = PreviewKey.final(0),
                         uri = uri(1),
                         mimeType = "image/bitmap",
                         order = 1,
@@ -307,6 +333,7 @@ class CursorPreviewsInteractorTest {
     fun testReadFailedPages() =
         runTestWithDeps(
             initialSelection = listOf(4),
+            focusedItemIndex = 0,
             cursor = emptyList(),
             cursorStartPosition = 0,
             pageSize = 2,
