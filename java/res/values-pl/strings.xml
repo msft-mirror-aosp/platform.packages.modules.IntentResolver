@@ -106,6 +106,5 @@
     <string name="selectable_image" msgid="3157858923437182271">"Obraz do wyboru"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Film do wyboru"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Element do wyboru"</string>
-    <!-- no translation found for role_description_button (4537198530568333649) -->
-    <skip />
+    <string name="role_description_button" msgid="4537198530568333649">"Przycisk"</string>
 </resources>

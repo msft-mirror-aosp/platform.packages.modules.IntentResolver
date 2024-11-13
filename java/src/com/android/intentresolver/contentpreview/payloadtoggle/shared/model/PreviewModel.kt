@@ -20,6 +20,8 @@ import android.net.Uri
 
 /** An individual preview presented in Shareousel. */
 data class PreviewModel(
+    /** Unique identifier for this model. */
+    val key: PreviewKey,
     /** Uri for this item; if this preview is selected, this will be shared with the target app. */
     val uri: Uri,
     /** Uri for the preview image. */
@@ -28,7 +30,8 @@ data class PreviewModel(
     val mimeType: String?,
     val aspectRatio: Float = 1f,
     /**
-     * Relative item position in the list that is used to determine items order in the target intent
+     * Relative item position in the list that is used to determine items order in the target
+     * intent.
      */
     val order: Int,
 )
