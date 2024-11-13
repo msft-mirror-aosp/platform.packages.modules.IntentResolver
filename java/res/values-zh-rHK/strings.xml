@@ -106,6 +106,5 @@
     <string name="selectable_image" msgid="3157858923437182271">"可以揀嘅圖片"</string>
     <string name="selectable_video" msgid="1271768647699300826">"可以揀嘅影片"</string>
     <string name="selectable_item" msgid="7557320816744205280">"可以揀嘅項目"</string>
-    <!-- no translation found for role_description_button (4537198530568333649) -->
-    <skip />
+    <string name="role_description_button" msgid="4537198530568333649">"按鈕"</string>
 </resources>
