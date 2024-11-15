@@ -106,7 +106,7 @@ constructor(
             val (leftTriggerIndex, rightTriggerIndex) = state.triggerIndices()
             interactor.setPreviews(
                 previews = state.merged.values.toList(),
-                startIndex = startPageNum,
+                startIndex = state.startIndex,
                 hasMoreLeft = state.hasMoreLeft,
                 hasMoreRight = state.hasMoreRight,
                 leftTriggerIndex = leftTriggerIndex,
@@ -144,7 +144,7 @@ constructor(
             val loadingState: Flow<LoadDirection?> =
                 interactor.setPreviews(
                     previews = state.merged.values.toList(),
-                    startIndex = 0, // TODO: actually track this as the window changes?
+                    startIndex = state.startIndex,
                     hasMoreLeft = state.hasMoreLeft,
                     hasMoreRight = state.hasMoreRight,
                     leftTriggerIndex = leftTriggerIndex,
@@ -215,6 +215,7 @@ constructor(
             }
         }
         return CursorWindow(
+            startIndex = startPosition % pageSize,
             firstLoadedPageNum = startPageIdx,
             lastLoadedPageNum = startPageIdx,
             pages = listOf(page.keys),

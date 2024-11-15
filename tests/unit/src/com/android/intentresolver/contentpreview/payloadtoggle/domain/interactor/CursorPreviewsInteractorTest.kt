@@ -172,7 +172,7 @@ class CursorPreviewsInteractorTest {
                         }
                     )
                     .inOrder()
-                assertThat(startIdx).isEqualTo(0)
+                assertThat(startIdx).isEqualTo(2)
                 assertThat(loadMoreLeft).isNull()
                 assertThat(loadMoreRight).isNotNull()
                 assertThat(leftTriggerIndex).isEqualTo(2)
