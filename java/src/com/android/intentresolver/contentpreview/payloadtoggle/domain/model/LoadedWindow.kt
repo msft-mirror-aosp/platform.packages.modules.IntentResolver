@@ -18,6 +18,8 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.model
 
 /** A window of data loaded from a cursor. */
 data class LoadedWindow<K, V>(
+    /** The index position of the item that should be displayed initially. */
+    val startIndex: Int,
     /** First cursor page index loaded within this window. */
     val firstLoadedPageNum: Int,
     /** Last cursor page index loaded within this window. */
@@ -42,6 +44,7 @@ fun <K, V> LoadedWindow<K, V>.shiftWindowRight(
     hasMore: Boolean,
 ): LoadedWindow<K, V> =
     LoadedWindow(
+        startIndex = startIndex - newPage.size,
         firstLoadedPageNum = firstLoadedPageNum + 1,
         lastLoadedPageNum = lastLoadedPageNum + 1,
         pages = pages.drop(1) + listOf(newPage.keys),
@@ -61,6 +64,7 @@ fun <K, V> LoadedWindow<K, V>.expandWindowRight(
     hasMore: Boolean,
 ): LoadedWindow<K, V> =
     LoadedWindow(
+        startIndex = startIndex,
         firstLoadedPageNum = firstLoadedPageNum,
         lastLoadedPageNum = lastLoadedPageNum + 1,
         pages = pages + listOf(newPage.keys),
@@ -75,6 +79,7 @@ fun <K, V> LoadedWindow<K, V>.shiftWindowLeft(
     hasMore: Boolean,
 ): LoadedWindow<K, V> =
     LoadedWindow(
+        startIndex = startIndex + newPage.size,
         firstLoadedPageNum = firstLoadedPageNum - 1,
         lastLoadedPageNum = lastLoadedPageNum - 1,
         pages = listOf(newPage.keys) + pages.dropLast(1),
@@ -93,6 +98,7 @@ fun <K, V> LoadedWindow<K, V>.expandWindowLeft(
     hasMore: Boolean,
 ): LoadedWindow<K, V> =
     LoadedWindow(
+        startIndex = startIndex + newPage.size,
         firstLoadedPageNum = firstLoadedPageNum - 1,
         lastLoadedPageNum = lastLoadedPageNum,
         pages = listOf(newPage.keys) + pages,
