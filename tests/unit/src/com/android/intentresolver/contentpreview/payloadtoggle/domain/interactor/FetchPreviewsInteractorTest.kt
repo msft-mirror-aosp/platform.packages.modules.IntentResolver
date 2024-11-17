@@ -30,6 +30,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.pay
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.contentpreview.uriMetadataReader
@@ -50,10 +51,10 @@ import org.junit.Test
 class FetchPreviewsInteractorTest {
 
     private fun runTest(
-        initialSelection: Iterable<Int> = (1..2),
-        focusedItemIndex: Int = initialSelection.count() / 2,
-        cursor: Iterable<Int> = (0 until 4),
-        cursorStartPosition: Int = cursor.count() / 2,
+        initialSelection: Iterable<Int>,
+        focusedItemIndex: Int,
+        cursor: Iterable<Int>,
+        cursorStartPosition: Int,
         pageSize: Int = 16,
         maxLoadedPages: Int = 8,
         previewSizes: Map<Int, Size> = emptyMap(),
@@ -110,7 +111,11 @@ class FetchPreviewsInteractorTest {
     fun setsInitialPreviews() =
         runTest(
             initialSelection = (1..3),
-            previewSizes = mapOf(1 to Size(100, 50))) {
+            focusedItemIndex = 1,
+            cursor = (0 until 4),
+            cursorStartPosition = 1,
+            previewSizes = mapOf(1 to Size(100, 50)),
+        ) {
             backgroundScope.launch { fetchPreviewsInteractor.activate() }
             runCurrent()
 
@@ -120,17 +125,20 @@ class FetchPreviewsInteractorTest {
                         previewModels =
                             listOf(
                                 PreviewModel(
+                                    key = PreviewKey.temp(0),
                                     uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
                                     mimeType = "image/bitmap",
                                     aspectRatio = 2f,
                                     order = Int.MIN_VALUE,
                                 ),
                                 PreviewModel(
+                                    key = PreviewKey.final(0),
                                     uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                                     mimeType = "image/bitmap",
                                     order = 0,
                                 ),
                                 PreviewModel(
+                                    key = PreviewKey.temp(2),
                                     uri = Uri.fromParts("scheme3", "ssp3", "fragment3"),
                                     mimeType = "image/bitmap",
                                     order = Int.MAX_VALUE,
@@ -146,48 +154,60 @@ class FetchPreviewsInteractorTest {
         }
 
     @Test
-    fun lookupCursorFromContentResolver() = runTest {
-        backgroundScope.launch { fetchPreviewsInteractor.activate() }
-        fakeCursorResolver.complete()
-        runCurrent()
+    fun lookupCursorFromContentResolver() =
+        runTest(
+            initialSelection = (1..2),
+            focusedItemIndex = 1,
+            cursor = (0 until 4),
+            cursorStartPosition = 2,
+        ) {
+            backgroundScope.launch { fetchPreviewsInteractor.activate() }
+            fakeCursorResolver.complete()
+            runCurrent()
 
-        with(cursorPreviewsRepository) {
-            assertThat(previewsModel.value).isNotNull()
-            assertThat(previewsModel.value!!.startIdx).isEqualTo(0)
-            assertThat(previewsModel.value!!.loadMoreLeft).isNull()
-            assertThat(previewsModel.value!!.loadMoreRight).isNull()
-            assertThat(previewsModel.value!!.previewModels)
-                .containsExactly(
-                    PreviewModel(
-                        uri = Uri.fromParts("scheme0", "ssp0", "fragment0"),
-                        mimeType = "image/bitmap",
-                        order = 0,
-                    ),
-                    PreviewModel(
-                        uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                        mimeType = "image/bitmap",
-                        order = 1,
-                    ),
-                    PreviewModel(
-                        uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
-                        mimeType = "image/bitmap",
-                        order = 2,
-                    ),
-                    PreviewModel(
-                        uri = Uri.fromParts("scheme3", "ssp3", "fragment3"),
-                        mimeType = "image/bitmap",
-                        order = 3,
-                    ),
-                )
-                .inOrder()
+            with(cursorPreviewsRepository) {
+                assertThat(previewsModel.value).isNotNull()
+                assertThat(previewsModel.value!!.startIdx).isEqualTo(2)
+                assertThat(previewsModel.value!!.loadMoreLeft).isNull()
+                assertThat(previewsModel.value!!.loadMoreRight).isNull()
+                assertThat(previewsModel.value!!.previewModels)
+                    .containsExactly(
+                        PreviewModel(
+                            key = PreviewKey.final(-2),
+                            uri = Uri.fromParts("scheme0", "ssp0", "fragment0"),
+                            mimeType = "image/bitmap",
+                            order = 0,
+                        ),
+                        PreviewModel(
+                            key = PreviewKey.final(-1),
+                            uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                            mimeType = "image/bitmap",
+                            order = 1,
+                        ),
+                        PreviewModel(
+                            key = PreviewKey.final(0),
+                            uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
+                            mimeType = "image/bitmap",
+                            order = 2,
+                        ),
+                        PreviewModel(
+                            key = PreviewKey.final(1),
+                            uri = Uri.fromParts("scheme3", "ssp3", "fragment3"),
+                            mimeType = "image/bitmap",
+                            order = 3,
+                        ),
+                    )
+                    .inOrder()
+            }
         }
-    }
 
     @Test
     fun loadMoreLeft_evictRight() =
         runTest(
             initialSelection = listOf(24),
+            focusedItemIndex = 0,
             cursor = (0 until 48),
+            cursorStartPosition = 24,
             pageSize = 16,
             maxLoadedPages = 1,
         ) {
@@ -223,7 +243,9 @@ class FetchPreviewsInteractorTest {
     fun loadMoreRight_evictLeft() =
         runTest(
             initialSelection = listOf(24),
+            focusedItemIndex = 0,
             cursor = (0 until 48),
+            cursorStartPosition = 24,
             pageSize = 16,
             maxLoadedPages = 1,
         ) {
@@ -254,7 +276,9 @@ class FetchPreviewsInteractorTest {
     fun noMoreRight_appendUnclaimedFromInitialSelection() =
         runTest(
             initialSelection = listOf(24, 50),
+            focusedItemIndex = 0,
             cursor = listOf(24),
+            cursorStartPosition = 0,
             pageSize = 16,
             maxLoadedPages = 2,
         ) {
@@ -275,7 +299,9 @@ class FetchPreviewsInteractorTest {
     fun noMoreLeft_appendUnclaimedFromInitialSelection() =
         runTest(
             initialSelection = listOf(0, 24),
+            focusedItemIndex = 1,
             cursor = listOf(24),
+            cursorStartPosition = 0,
             pageSize = 16,
             maxLoadedPages = 2,
         ) {

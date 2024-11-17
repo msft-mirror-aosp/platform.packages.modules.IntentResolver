@@ -36,7 +36,6 @@ import android.content.Intent.EXTRA_TEXT
 import android.content.Intent.EXTRA_TITLE
 import android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT
-import android.content.IntentFilter
 import android.content.IntentSender
 import android.net.Uri
 import android.os.Bundle
@@ -164,7 +163,7 @@ fun readChooserRequest(
             refinementIntentSender = refinementIntentSender,
             sharedText = sharedText,
             sharedTextTitle = sharedTextTitle,
-            shareTargetFilter = targetIntent.toShareTargetFilter(),
+            shareTargetFilter = targetIntent.createIntentFilter(),
             additionalContentUri = additionalContentUri,
             focusedItemPosition = focusedItemPos,
             contentTypeHint = contentTypeHint,
@@ -180,12 +179,3 @@ fun Validation.readChooserActions(): List<ChooserAction>? =
     optional(array<ChooserAction>(EXTRA_CHOOSER_CUSTOM_ACTIONS))
         ?.filter { hasValidIcon(it) }
         ?.take(MAX_CHOOSER_ACTIONS)
-
-private fun Intent.toShareTargetFilter(): IntentFilter? {
-    return type?.let {
-        IntentFilter().apply {
-            action?.also { addAction(it) }
-            addDataType(it)
-        }
-    }
-}
