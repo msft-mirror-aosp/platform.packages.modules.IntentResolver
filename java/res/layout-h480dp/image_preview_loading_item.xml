@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:indeterminate="true"
-        android:indeterminateTint="?androidprv:attr/materialColorPrimary"
+        android:indeterminateTint="@androidprv:color/materialColorPrimary"
         android:indeterminateTintMode="src_in" />
 
 </FrameLayout>
