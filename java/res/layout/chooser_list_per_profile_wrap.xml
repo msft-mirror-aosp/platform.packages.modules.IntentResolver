@@ -26,7 +26,7 @@
         app:layoutManager="com.android.intentresolver.ChooserGridLayoutManager"
         android:id="@androidprv:id/resolver_list"
         android:clipToPadding="false"
-        android:background="?androidprv:attr/materialColorSurfaceContainer"
+        android:background="@androidprv:color/materialColorSurfaceContainer"
         android:scrollbars="none"
         android:nestedScrollingEnabled="true" />
 
