@@ -22,7 +22,7 @@
         <inset android:inset="8dp">
             <shape android:shape="rectangle">
                 <corners android:radius="12dp" />
-                <solid android:color="?androidprv:attr/materialColorSecondaryFixed"/>
+                <solid android:color="@androidprv:color/materialColorSecondaryFixed"/>
             </shape>
         </inset>
     </item>
