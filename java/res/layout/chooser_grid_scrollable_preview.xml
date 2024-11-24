@@ -65,7 +65,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_alwaysShow="true"
-        android:background="?androidprv:attr/materialColorSurfaceContainer">
+        android:background="@androidprv:color/materialColorSurfaceContainer">
 
         <ViewStub
             android:id="@+id/chooser_headline_row_stub"
@@ -99,7 +99,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
-                android:background="?androidprv:attr/materialColorSurfaceContainer">
+                android:background="@androidprv:color/materialColorSurfaceContainer">
                 <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
