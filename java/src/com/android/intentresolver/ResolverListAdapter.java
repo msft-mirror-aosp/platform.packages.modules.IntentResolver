@@ -404,14 +404,18 @@ public class ResolverListAdapter extends BaseAdapter {
             );
         } else {
             mOtherProfile = null;
-            try {
-                mLastChosen = mResolverListController.getLastChosen();
-                // TODO: does this also somehow need to update mLastChosenPosition? If so, maybe
-                // the current method should also take responsibility for re-initializing
-                // mLastChosenPosition, where it's currently done at the start of rebuildList()?
-                // (Why is this related to the presence of mOtherProfile in fhe first place?)
-            } catch (RemoteException re) {
-                Log.d(TAG, "Error calling getLastChosenActivity\n" + re);
+            // If `mFilterLastUsed` is (`final`) false, we'll never read `mLastChosen`, so don't
+            // bother making the system query.
+            if (mFilterLastUsed) {
+                try {
+                    mLastChosen = mResolverListController.getLastChosen();
+                    // TODO: does this also somehow need to update mLastChosenPosition? If so, maybe
+                    // the current method should also take responsibility for re-initializing
+                    // mLastChosenPosition, where it's currently done at the start of rebuildList()?
+                    // (Why is this related to the presence of mOtherProfile in fhe first place?)
+                } catch (RemoteException re) {
+                    Log.d(TAG, "Error calling getLastChosenActivity\n" + re);
+                }
             }
         }
     }
