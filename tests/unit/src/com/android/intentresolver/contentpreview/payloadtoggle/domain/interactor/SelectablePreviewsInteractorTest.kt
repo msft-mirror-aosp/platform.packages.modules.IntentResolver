@@ -23,6 +23,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.c
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.util.runKosmosTest
@@ -41,11 +42,13 @@ class SelectablePreviewsInteractorTest {
                 previewModels =
                     listOf(
                         PreviewModel(
+                            key = PreviewKey.final(1),
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = "image/bitmap",
                             order = 0,
                         ),
                         PreviewModel(
+                            key = PreviewKey.final(2),
                             uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                             mimeType = "image/bitmap",
                             order = 1,
@@ -59,6 +62,7 @@ class SelectablePreviewsInteractorTest {
             )
         previewSelectionsRepository.selections.value =
             PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = null,
                     order = 0,
@@ -72,11 +76,13 @@ class SelectablePreviewsInteractorTest {
         assertThat(keySet.value!!.previewModels)
             .containsExactly(
                 PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = "image/bitmap",
                     order = 0,
                 ),
                 PreviewModel(
+                    key = PreviewKey.final(2),
                     uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                     mimeType = "image/bitmap",
                     order = 1,
@@ -90,6 +96,7 @@ class SelectablePreviewsInteractorTest {
         val firstModel =
             underTest.preview(
                 PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = null,
                     order = 0,
@@ -100,6 +107,7 @@ class SelectablePreviewsInteractorTest {
         val secondModel =
             underTest.preview(
                 PreviewModel(
+                    key = PreviewKey.final(2),
                     uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                     mimeType = null,
                     order = 1,
@@ -112,6 +120,7 @@ class SelectablePreviewsInteractorTest {
     fun keySet_reflectsRepositoryUpdate() = runKosmosTest {
         previewSelectionsRepository.selections.value =
             PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = null,
                     order = 0,
@@ -124,6 +133,7 @@ class SelectablePreviewsInteractorTest {
         val firstModel =
             underTest.preview(
                 PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = null,
                     order = 0,
@@ -140,11 +150,13 @@ class SelectablePreviewsInteractorTest {
                 previewModels =
                     listOf(
                         PreviewModel(
+                            key = PreviewKey.final(1),
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = "image/bitmap",
                             order = 0,
                         ),
                         PreviewModel(
+                            key = PreviewKey.final(2),
                             uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                             mimeType = "image/bitmap",
                             order = 1,
@@ -163,11 +175,13 @@ class SelectablePreviewsInteractorTest {
         assertThat(previews.value!!.previewModels)
             .containsExactly(
                 PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = "image/bitmap",
                     order = 0,
                 ),
                 PreviewModel(
+                    key = PreviewKey.final(2),
                     uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                     mimeType = "image/bitmap",
                     order = 1,
