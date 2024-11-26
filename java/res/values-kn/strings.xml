@@ -56,7 +56,7 @@
     <string name="other_files" msgid="4501185823517473875">"{count,plural, =1{+ # ಫೈಲ್‌}one{+ # ಫೈಲ್‌ಗಳು}other{+ # ಫೈಲ್‌ಗಳು}}"</string>
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{+ # ಇನ್ನಷ್ಟು ಫೈಲ್}one{+ # ಇನ್ನಷ್ಟು ಫೈಲ್‌ಗಳು}other{+ # ಇನ್ನಷ್ಟು ಫೈಲ್‌ಗಳು}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"ಪಠ್ಯ ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ"</string>
-    <string name="sharing_link" msgid="2307694372813942916">"ಲಿಂಕ್ ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ"</string>
+    <string name="sharing_link" msgid="2307694372813942916">"ಹಂಚಿಕೊಳ್ಳಬಹುದಾದ ಲಿಂಕ್"</string>
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ಚಿತ್ರವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{# ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{# ಚಿತ್ರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{ವೀಡಿಯೊವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{# ವೀಡಿಯೊಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{# ವೀಡಿಯೊಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# ಫೈಲ್ ಅನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}one{# ಫೈಲ್‌ಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}other{# ಫೈಲ್‌ಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ}}"</string>
