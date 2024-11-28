@@ -32,7 +32,6 @@ import com.android.intentresolver.data.repository.ActivityModelRepository
 import com.android.intentresolver.data.repository.ChooserRequestRepository
 import com.android.intentresolver.domain.saveUpdates
 import com.android.intentresolver.inject.Background
-import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.Valid
@@ -59,7 +58,6 @@ constructor(
     private val processUpdatesInteractor: Lazy<ProcessTargetIntentUpdatesInteractor>,
     private val fetchPreviewsInteractor: Lazy<FetchPreviewsInteractor>,
     @Background private val bgDispatcher: CoroutineDispatcher,
-    private val flags: ChooserServiceFlags,
     /**
      * Provided only for the express purpose of early exit in the event of an invalid request.
      *
@@ -77,10 +75,6 @@ constructor(
     val shareouselViewModel: ShareouselViewModel by lazy {
         // TODO: consolidate this logic, this would require a consolidated preview view model but
         //  for now just postpone starting the payload selection preview machinery until it's needed
-        assert(flags.chooserPayloadToggling()) {
-            "An attempt to use payload selection preview with the disabled flag"
-        }
-
         viewModelScope.launch(bgDispatcher) { processUpdatesInteractor.get().activate() }
         viewModelScope.launch(bgDispatcher) { fetchPreviewsInteractor.get().activate() }
         shareouselViewModelProvider.get()

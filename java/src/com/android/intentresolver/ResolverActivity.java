@@ -150,6 +150,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     @Inject public IntentForwarding mIntentForwarding;
     @Inject public FeatureFlags mFeatureFlags;
     @Inject public ActivityModelRepository mActivityModelRepository;
+    @Inject public DefaultTargetDataLoader.Factory mTargetDataLoaderFactory;
 
     private ResolverViewModel mViewModel;
     private ResolverRequest mRequest;
@@ -334,10 +335,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         mProfileAvailability.setOnProfileStatusChange(this::onWorkProfileStatusUpdated);
 
         mResolvingHome = mRequest.isResolvingHome();
-        mTargetDataLoader = new DefaultTargetDataLoader(
-                this,
-                getLifecycle(),
-                mRequest.isAudioCaptureDevice());
+        mTargetDataLoader = mTargetDataLoaderFactory.create(mRequest.isAudioCaptureDevice());
 
         // The last argument of createResolverListAdapter is whether to do special handling
         // of the last used choice to highlight it in the list.  We need to always

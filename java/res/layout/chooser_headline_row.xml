@@ -60,7 +60,7 @@
         app:barrierDirection="start"
         app:constraint_referenced_ids="reselection_action,include_text_action" />
 
-    <TextView
+    <Button
         android:id="@+id/reselection_action"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -74,7 +74,7 @@
         android:paddingHorizontal="@dimen/chooser_edge_margin_normal_half"
         style="?android:attr/borderlessButtonStyle"
         android:drawableEnd="@drawable/chevron_right"
-        android:textColor="?androidprv:attr/materialColorOnSurface"
+        android:textColor="@androidprv:color/materialColorOnSurface"
         android:textSize="12sp"
         />
 
@@ -90,7 +90,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/reselection_action"
         android:layout_alignWithParentIfMissing="true"
-        android:textColor="?androidprv:attr/materialColorOnSurface"
+        android:textColor="@androidprv:color/materialColorOnSurface"
         android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

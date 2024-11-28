@@ -36,7 +36,6 @@ import android.content.Intent.EXTRA_TEXT
 import android.content.Intent.EXTRA_TITLE
 import android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT
-import android.content.IntentFilter
 import android.content.IntentSender
 import android.net.Uri
 import android.os.Bundle
@@ -48,7 +47,6 @@ import com.android.intentresolver.R
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.ext.hasSendAction
 import com.android.intentresolver.ext.ifMatch
-import com.android.intentresolver.inject.ChooserServiceFlags
 import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.util.hasValidIcon
 import com.android.intentresolver.validation.Validation
@@ -69,7 +67,6 @@ internal fun Intent.maybeAddSendActionFlags() =
 
 fun readChooserRequest(
     model: ActivityModel,
-    flags: ChooserServiceFlags,
     savedState: Bundle = model.intent.extras ?: Bundle(),
 ): ValidationResult<ChooserRequest> {
     @Suppress("DEPRECATION")
@@ -126,7 +123,7 @@ fun readChooserRequest(
 
         val additionalContentUri: Uri?
         val focusedItemPos: Int
-        if (isSendAction && flags.chooserPayloadToggling()) {
+        if (isSendAction) {
             additionalContentUri = optional(value<Uri>(EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI))
             focusedItemPos = optional(value<Int>(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION)) ?: 0
         } else {
@@ -166,7 +163,7 @@ fun readChooserRequest(
             refinementIntentSender = refinementIntentSender,
             sharedText = sharedText,
             sharedTextTitle = sharedTextTitle,
-            shareTargetFilter = targetIntent.toShareTargetFilter(),
+            shareTargetFilter = targetIntent.createIntentFilter(),
             additionalContentUri = additionalContentUri,
             focusedItemPosition = focusedItemPos,
             contentTypeHint = contentTypeHint,
@@ -182,12 +179,3 @@ fun Validation.readChooserActions(): List<ChooserAction>? =
     optional(array<ChooserAction>(EXTRA_CHOOSER_CUSTOM_ACTIONS))
         ?.filter { hasValidIcon(it) }
         ?.take(MAX_CHOOSER_ACTIONS)
-
-private fun Intent.toShareTargetFilter(): IntentFilter? {
-    return type?.let {
-        IntentFilter().apply {
-            action?.also { addAction(it) }
-            addDataType(it)
-        }
-    }
-}

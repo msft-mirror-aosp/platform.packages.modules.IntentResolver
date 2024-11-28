@@ -61,11 +61,7 @@ class ChooserContentPreviewUiTest {
     private val transitionCallback = mock<ImagePreviewView.TransitionElementStatusCallback>()
     @get:Rule val checkFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
-    private fun createContentPreviewUi(
-        action: String,
-        sharedText: CharSequence? = null,
-        isPayloadTogglingEnabled: Boolean = false
-    ) =
+    private fun createContentPreviewUi(action: String, sharedText: CharSequence? = null) =
         ChooserContentPreviewUi(
             testScope,
             previewData,
@@ -81,7 +77,6 @@ class ChooserContentPreviewUiTest {
             headlineGenerator,
             ContentTypeHint.NONE,
             testMetadataText,
-            isPayloadTogglingEnabled,
         )
 
     @Test
@@ -114,10 +109,7 @@ class ChooserContentPreviewUiTest {
             .thenReturn(FileInfo.Builder(uri).withPreviewUri(uri).withMimeType("image/png").build())
         whenever(previewData.imagePreviewFileInfoFlow).thenReturn(MutableSharedFlow())
         val testSubject =
-            createContentPreviewUi(
-                action = Intent.ACTION_SEND,
-                sharedText = "Shared text",
-            )
+            createContentPreviewUi(action = Intent.ACTION_SEND, sharedText = "Shared text")
         assertThat(testSubject.mContentPreviewUi)
             .isInstanceOf(FilesPlusTextContentPreviewUi::class.java)
         verify(previewData, times(1)).imagePreviewFileInfoFlow
@@ -150,11 +142,7 @@ class ChooserContentPreviewUiTest {
         whenever(previewData.firstFileInfo)
             .thenReturn(FileInfo.Builder(uri).withPreviewUri(uri).withMimeType("image/png").build())
         whenever(previewData.imagePreviewFileInfoFlow).thenReturn(MutableSharedFlow())
-        val testSubject =
-            createContentPreviewUi(
-                action = Intent.ACTION_SEND,
-                isPayloadTogglingEnabled = true,
-            )
+        val testSubject = createContentPreviewUi(action = Intent.ACTION_SEND)
         assertThat(testSubject.mContentPreviewUi)
             .isInstanceOf(ShareouselContentPreviewUi::class.java)
         assertThat(testSubject.preferredContentPreview)
