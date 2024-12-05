@@ -106,4 +106,5 @@
     <string name="selectable_image" msgid="3157858923437182271">"ຮູບທີ່ເລືອກໄດ້"</string>
     <string name="selectable_video" msgid="1271768647699300826">"ວິດີໂອທີ່ເລືອກໄດ້"</string>
     <string name="selectable_item" msgid="7557320816744205280">"ລາຍການທີ່ເລືອກໄດ້"</string>
+    <string name="role_description_button" msgid="4537198530568333649">"ປຸ່ມ"</string>
 </resources>
