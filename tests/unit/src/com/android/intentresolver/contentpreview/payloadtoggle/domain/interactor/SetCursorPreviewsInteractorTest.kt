@@ -21,6 +21,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 import android.net.Uri
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.cursorPreviewsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.LoadDirection
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
@@ -37,6 +38,7 @@ class SetCursorPreviewsInteractorTest {
                 previews =
                     listOf(
                         PreviewModel(
+                            key = PreviewKey.final(1),
                             uri = Uri.fromParts("scheme", "ssp", "fragment"),
                             mimeType = null,
                             order = 0,
@@ -59,9 +61,10 @@ class SetCursorPreviewsInteractorTest {
             assertThat(it.previewModels)
                 .containsExactly(
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = null,
-                        order = 0
+                        order = 0,
                     )
                 )
                 .inOrder()
@@ -76,6 +79,7 @@ class SetCursorPreviewsInteractorTest {
                     previews =
                         listOf(
                             PreviewModel(
+                                key = PreviewKey.final(1),
                                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                                 mimeType = null,
                                 order = 0,
