@@ -71,38 +71,39 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
     constructor(
         context: Context,
         attrs: AttributeSet?,
-        defStyleAttr: Int
+        defStyleAttr: Int,
     ) : super(context, attrs, defStyleAttr) {
         layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
 
+        val editButtonRoleDescription: CharSequence?
         context
             .obtainStyledAttributes(attrs, R.styleable.ScrollableImagePreviewView, defStyleAttr, 0)
             .use { a ->
                 var innerSpacing =
                     a.getDimensionPixelSize(
                         R.styleable.ScrollableImagePreviewView_itemInnerSpacing,
-                        -1
+                        -1,
                     )
                 if (innerSpacing < 0) {
                     innerSpacing =
                         TypedValue.applyDimension(
                                 TypedValue.COMPLEX_UNIT_DIP,
                                 3f,
-                                context.resources.displayMetrics
+                                context.resources.displayMetrics,
                             )
                             .toInt()
                 }
                 outerSpacing =
                     a.getDimensionPixelSize(
                         R.styleable.ScrollableImagePreviewView_itemOuterSpacing,
-                        -1
+                        -1,
                     )
                 if (outerSpacing < 0) {
                     outerSpacing =
                         TypedValue.applyDimension(
                                 TypedValue.COMPLEX_UNIT_DIP,
                                 16f,
-                                context.resources.displayMetrics
+                                context.resources.displayMetrics,
                             )
                             .toInt()
                 }
@@ -110,10 +111,13 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
 
                 maxWidthHint =
                     a.getDimensionPixelSize(R.styleable.ScrollableImagePreviewView_maxWidthHint, -1)
+
+                editButtonRoleDescription =
+                    a.getText(R.styleable.ScrollableImagePreviewView_editButtonRoleDescription)
             }
         val itemAnimator = ItemAnimator()
         super.setItemAnimator(itemAnimator)
-        super.setAdapter(Adapter(context, itemAnimator.getAddDuration()))
+        super.setAdapter(Adapter(context, itemAnimator.getAddDuration(), editButtonRoleDescription))
     }
 
     private var batchLoader: BatchPreviewLoader? = null
@@ -125,7 +129,6 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
      */
     var maxWidthHint: Int = -1
 
-    private var requestedHeight: Int = 0
     private var isMeasured = false
     private var maxAspectRatio = MAX_ASPECT_RATIO
     private var maxAspectRatioString = MAX_ASPECT_RATIO_STRING
@@ -217,7 +220,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                         onNoPreviewCallback?.run()
                     }
                     previewAdapter.markLoaded()
-                }
+                },
             )
         maybeLoadAspectRatios()
     }
@@ -281,24 +284,25 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
         val type: PreviewType,
         val uri: Uri,
         val editAction: Runnable?,
-        internal var aspectRatioString: String
+        internal var aspectRatioString: String,
     ) {
         constructor(
             type: PreviewType,
             uri: Uri,
-            editAction: Runnable?
+            editAction: Runnable?,
         ) : this(type, uri, editAction, "1:1")
     }
 
     enum class PreviewType {
         Image,
         Video,
-        File
+        File,
     }
 
     private class Adapter(
         private val context: Context,
         private val fadeInDurationMs: Long,
+        private val editButtonRoleDescription: CharSequence?,
     ) : RecyclerView.Adapter<ViewHolder>() {
         private val previews = ArrayList<Preview>()
         private val imagePreviewDescription =
@@ -409,6 +413,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                         previewSize,
                         fadeInDurationMs,
                         isSharedTransitionElement = position == firstImagePos,
+                        editButtonRoleDescription,
                         previewReadyCallback =
                             if (
                                 position == firstImagePos && transitionStatusElementCallback != null
@@ -416,7 +421,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                                 this::onTransitionElementReady
                             } else {
                                 null
-                            }
+                            },
                     )
             }
         }
@@ -461,7 +466,8 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
             previewSize: Size,
             fadeInDurationMs: Long,
             isSharedTransitionElement: Boolean,
-            previewReadyCallback: ((String) -> Unit)?
+            editButtonRoleDescription: CharSequence?,
+            previewReadyCallback: ((String) -> Unit)?,
         ) {
             image.setImageDrawable(null)
             image.alpha = 1f
@@ -495,6 +501,12 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                 editActionContainer?.apply {
                     setOnClickListener { onClick.run() }
                     visibility = View.VISIBLE
+                    if (editButtonRoleDescription != null) {
+                        ViewCompat.setAccessibilityDelegate(
+                            this,
+                            ViewRoleDescriptionAccessibilityDelegate(editButtonRoleDescription),
+                        )
+                    }
                 }
             }
             resetScope().launch {
@@ -568,7 +580,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
                 PluralsMessageFormatter.format(
                     itemView.context.resources,
                     mapOf(PLURALS_COUNT to count),
-                    R.string.other_files
+                    R.string.other_files,
                 )
         }
 
@@ -611,7 +623,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
             state: State,
             viewHolder: RecyclerView.ViewHolder,
             changeFlags: Int,
-            payloads: MutableList<Any>
+            payloads: MutableList<Any>,
         ): ItemHolderInfo {
             return super.recordPreLayoutInformation(state, viewHolder, changeFlags, payloads).let {
                 holderInfo ->
@@ -626,7 +638,7 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
         override fun animateDisappearance(
             viewHolder: RecyclerView.ViewHolder,
             preLayoutInfo: ItemHolderInfo,
-            postLayoutInfo: ItemHolderInfo?
+            postLayoutInfo: ItemHolderInfo?,
         ): Boolean {
             if (viewHolder is LoadingItemViewHolder && preLayoutInfo is LoadingItemHolderInfo) {
                 val view = viewHolder.itemView
@@ -647,10 +659,8 @@ class ScrollableImagePreviewView : RecyclerView, ImagePreviewView {
             super.onRemoveFinished(viewHolder)
         }
 
-        private inner class LoadingItemHolderInfo(
-            holderInfo: ItemHolderInfo,
-            val parentLeft: Int,
-        ) : ItemHolderInfo() {
+        private inner class LoadingItemHolderInfo(holderInfo: ItemHolderInfo, val parentLeft: Int) :
+            ItemHolderInfo() {
             init {
                 left = holderInfo.left
                 top = holderInfo.top

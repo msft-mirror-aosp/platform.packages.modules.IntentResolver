@@ -78,7 +78,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏לאפליקציה זו לא ניתנה הרשאת הקלטה, אבל אפשר להקליט אודיו באמצעות התקן ה-USB הזה."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"אישי"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"עבודה"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"פרטי"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"מרחב פרטי"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"תצוגה אישית"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"תצוגת עבודה"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"תצוגה פרטית"</string>
@@ -106,4 +106,5 @@
     <string name="selectable_image" msgid="3157858923437182271">"תמונה שניתן לבחור"</string>
     <string name="selectable_video" msgid="1271768647699300826">"סרטון שניתן לבחור"</string>
     <string name="selectable_item" msgid="7557320816744205280">"פריט שניתן לבחור"</string>
+    <string name="role_description_button" msgid="4537198530568333649">"לחצן"</string>
 </resources>

@@ -51,7 +51,6 @@ import java.util.function.Supplier;
 public final class ChooserContentPreviewUi {
 
     private final CoroutineScope mScope;
-    private final boolean mIsPayloadTogglingEnabled;
 
     /**
      * Delegate to build the default system action buttons to display in the preview layout, if/when
@@ -109,11 +108,8 @@ public final class ChooserContentPreviewUi {
             TransitionElementStatusCallback transitionElementStatusCallback,
             HeadlineGenerator headlineGenerator,
             ContentTypeHint contentTypeHint,
-            @Nullable CharSequence metadata,
-            // TODO: replace with the FeatureFlag ref when v1 is gone
-            boolean isPayloadTogglingEnabled) {
+            @Nullable CharSequence metadata) {
         mScope = scope;
-        mIsPayloadTogglingEnabled = isPayloadTogglingEnabled;
         mModifyShareActionFactory = modifyShareActionFactory;
         mContentPreviewUi = createContentPreview(
                 previewData,
@@ -169,7 +165,7 @@ public final class ChooserContentPreviewUi {
             return fileContentPreviewUi;
         }
 
-        if (previewType == CONTENT_PREVIEW_PAYLOAD_SELECTION && mIsPayloadTogglingEnabled) {
+        if (previewType == CONTENT_PREVIEW_PAYLOAD_SELECTION) {
             transitionElementStatusCallback.onAllTransitionElementsReady(); // TODO
             return new ShareouselContentPreviewUi();
         }

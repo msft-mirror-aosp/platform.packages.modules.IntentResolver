@@ -24,6 +24,7 @@ import android.platform.test.flag.junit.SetFlagsRule
 import com.android.intentresolver.Flags
 import com.android.intentresolver.contentpreview.mimetypeClassifier
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.util.runKosmosTest
 import com.google.common.truth.Truth.assertThat
@@ -39,9 +40,10 @@ class SelectionInteractorTest {
     fun singleSelection_removalPrevented() = runKosmosTest {
         val initialPreview =
             PreviewModel(
+                key = PreviewKey.final(1),
                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                 mimeType = null,
-                order = 0
+                order = 0,
             )
         previewSelectionsRepository.selections.value = mapOf(initialPreview.uri to initialPreview)
 
@@ -66,9 +68,10 @@ class SelectionInteractorTest {
     fun singleSelection_itemRemovedNoPendingIntentUpdates() = runKosmosTest {
         val initialPreview =
             PreviewModel(
+                key = PreviewKey.final(1),
                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                 mimeType = null,
-                order = 0
+                order = 0,
             )
         previewSelectionsRepository.selections.value = mapOf(initialPreview.uri to initialPreview)
 
@@ -92,15 +95,17 @@ class SelectionInteractorTest {
     fun multipleSelections_removalAllowed() = runKosmosTest {
         val first =
             PreviewModel(
+                key = PreviewKey.final(1),
                 uri = Uri.fromParts("scheme", "ssp", "fragment"),
                 mimeType = null,
-                order = 0
+                order = 0,
             )
         val second =
             PreviewModel(
+                key = PreviewKey.final(2),
                 uri = Uri.fromParts("scheme2", "ssp2", "fragment2"),
                 mimeType = null,
-                order = 1
+                order = 1,
             )
         previewSelectionsRepository.selections.value = listOf(first, second).associateBy { it.uri }
 
@@ -109,7 +114,7 @@ class SelectionInteractorTest {
                 previewSelectionsRepository,
                 { Intent() },
                 updateTargetIntentInteractor,
-                mimetypeClassifier
+                mimetypeClassifier,
             )
 
         underTest.unselect(first)
