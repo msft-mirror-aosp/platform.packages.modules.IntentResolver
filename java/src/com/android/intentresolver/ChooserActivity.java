@@ -25,6 +25,7 @@ import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
+import static com.android.intentresolver.Flags.rebuildAdaptersOnTargetPinning;
 import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.Flags.unselectFinalItem;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.replaceDefaultArgs;
@@ -838,6 +839,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
         }
         setTabsViewEnabled(false);
+        if (mSystemWindowInsets != null) {
+            applyFooterView(mSystemWindowInsets.bottom);
+        }
     }
 
     private void setTabsViewEnabled(boolean isEnabled) {
@@ -1545,10 +1549,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private void handlePackagesChanged(@Nullable ResolverListAdapter listAdapter) {
         // Refresh pinned items
         mPinnedSharedPrefs = getPinnedSharedPrefs(this);
-        if (listAdapter == null) {
-            mChooserMultiProfilePagerAdapter.refreshPackagesInAllTabs();
+        if (rebuildAdaptersOnTargetPinning()) {
+            recreatePagerAdapter();
         } else {
-            listAdapter.handlePackagesChanged();
+            if (listAdapter == null) {
+                mChooserMultiProfilePagerAdapter.refreshPackagesInAllTabs();
+            } else {
+                listAdapter.handlePackagesChanged();
+            }
         }
     }
 
