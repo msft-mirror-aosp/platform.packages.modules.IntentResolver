@@ -6,13 +6,6 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
-  name: "enable_private_profile"
-  namespace: "intentresolver"
-  description: "Enable private profile support"
-  bug: "328029692"
-}
-
-flag {
   name: "individual_metadata_title_read"
   namespace: "intentresolver"
   description: "Enables separate title URI metadata calls"
