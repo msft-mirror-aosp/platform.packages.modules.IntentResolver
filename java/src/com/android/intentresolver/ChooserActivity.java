@@ -23,9 +23,14 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
+import static com.android.intentresolver.Flags.fixDrawerOffsetOnConfigChange;
+import static com.android.intentresolver.Flags.fixEmptyStatePaddingBug;
+import static com.android.intentresolver.Flags.fixMissingDrawerOffsetCalculation;
+import static com.android.intentresolver.Flags.fixPrivateSpaceLockedOnRestart;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
 import static com.android.intentresolver.Flags.rebuildAdaptersOnTargetPinning;
+import static com.android.intentresolver.Flags.refineSystemActions;
 import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.Flags.unselectFinalItem;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.replaceDefaultArgs;
@@ -256,7 +261,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Inject public UserInteractor mUserInteractor;
     @Inject @Background public CoroutineDispatcher mBackgroundDispatcher;
     @Inject public ChooserHelper mChooserHelper;
-    @Inject public FeatureFlags mFeatureFlags;
     @Inject public EventLog mEventLog;
     @Inject @AppPredictionAvailable public boolean mAppPredictionAvailable;
     @Inject @ImageEditor public Optional<ComponentName> mImageEditor;
@@ -422,7 +426,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected final void onRestart() {
         super.onRestart();
-        if (mFeatureFlags.fixPrivateSpaceLockedOnRestart()) {
+        if (fixPrivateSpaceLockedOnRestart()) {
             if (mChooserMultiProfilePagerAdapter.hasPageForProfile(Profile.Type.PRIVATE.ordinal())
                     && !mProfileAvailability.isAvailable(mProfiles.getPrivateProfile())) {
                 Log.d(TAG, "Exiting due to unavailable profile");
@@ -481,9 +485,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         mProfiles =  new ProfileHelper(
                 mUserInteractor,
-                getCoroutineScope(getLifecycle()),
-                mBackgroundDispatcher,
-                mFeatureFlags);
+                mBackgroundDispatcher);
 
         mProfileAvailability = new ProfileAvailability(
                 mUserInteractor,
@@ -2073,8 +2075,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 },
                 chooserListAdapter,
                 shouldShowContentPreview(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
+                mMaxTargetsPerRow);
     }
 
     @VisibleForTesting
@@ -2168,7 +2169,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private ChooserContentPreviewUi.ActionFactory decorateActionFactoryWithRefinement(
             ChooserContentPreviewUi.ActionFactory originalFactory) {
-        if (!mFeatureFlags.refineSystemActions()) {
+        if (!refineSystemActions()) {
             return originalFactory;
         }
 
@@ -2317,7 +2318,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         if (isLayoutUpdated
                 || insetsChanged
                 || mLastNumberOfChildren != recyclerView.getChildCount()
-                || mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
+                || fixMissingDrawerOffsetCalculation()) {
             mCurrAvailableWidth = availableWidth;
             if (isLayoutUpdated) {
                 // It is very important we call setAdapter from here. Otherwise in some cases
@@ -2331,7 +2332,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
 
             int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
-            int initialProfile = Flags.fixDrawerOffsetOnConfigChange()
+            int initialProfile = fixDrawerOffsetOnConfigChange()
                     ? mInitialProfile
                     : findSelectedProfile();
             if (currentProfile != initialProfile) {
@@ -2339,7 +2340,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
 
             if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged
-                    && !mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
+                    && !fixMissingDrawerOffsetCalculation()) {
                 return;
             }
 
@@ -2690,7 +2691,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
         mSystemWindowInsets = insets.getInsets(WindowInsets.Type.systemBars());
-        if (mFeatureFlags.fixEmptyStatePaddingBug() || mProfiles.getWorkProfilePresent()) {
+        if (fixEmptyStatePaddingBug() || mProfiles.getWorkProfilePresent()) {
             mChooserMultiProfilePagerAdapter
                     .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
         }
