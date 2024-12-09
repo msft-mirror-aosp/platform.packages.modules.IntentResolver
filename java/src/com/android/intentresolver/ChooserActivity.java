@@ -26,7 +26,6 @@ import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.Flags.fixDrawerOffsetOnConfigChange;
 import static com.android.intentresolver.Flags.fixEmptyStatePaddingBug;
 import static com.android.intentresolver.Flags.fixMissingDrawerOffsetCalculation;
-import static com.android.intentresolver.Flags.fixPrivateSpaceLockedOnRestart;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
 import static com.android.intentresolver.Flags.rebuildAdaptersOnTargetPinning;
@@ -426,13 +425,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected final void onRestart() {
         super.onRestart();
-        if (fixPrivateSpaceLockedOnRestart()) {
-            if (mChooserMultiProfilePagerAdapter.hasPageForProfile(Profile.Type.PRIVATE.ordinal())
-                    && !mProfileAvailability.isAvailable(mProfiles.getPrivateProfile())) {
-                Log.d(TAG, "Exiting due to unavailable profile");
-                finish();
-                return;
-            }
+        if (mChooserMultiProfilePagerAdapter.hasPageForProfile(Profile.Type.PRIVATE.ordinal())
+                && !mProfileAvailability.isAvailable(mProfiles.getPrivateProfile())) {
+            Log.d(TAG, "Exiting due to unavailable profile");
+            finish();
+            return;
         }
 
         if (!mRegistered) {

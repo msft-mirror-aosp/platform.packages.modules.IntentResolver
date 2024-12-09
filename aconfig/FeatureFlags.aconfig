@@ -63,16 +63,6 @@ flag {
 }
 
 flag {
-  name: "fix_private_space_locked_on_restart"
-  namespace: "intentresolver"
-  description: "Dismiss Share sheet on restart if private space became locked while stopped"
-  bug: "338125945"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
   name: "fix_shortcut_loader_job_leak"
   namespace: "intentresolver"
   description: "User a nested coroutine scope for shortcut loader instances"
