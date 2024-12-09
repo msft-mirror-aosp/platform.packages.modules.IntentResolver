@@ -24,7 +24,6 @@ import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.Flags.fixDrawerOffsetOnConfigChange;
-import static com.android.intentresolver.Flags.fixEmptyStatePaddingBug;
 import static com.android.intentresolver.Flags.fixMissingDrawerOffsetCalculation;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
@@ -2688,10 +2687,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
         mSystemWindowInsets = insets.getInsets(WindowInsets.Type.systemBars());
-        if (fixEmptyStatePaddingBug() || mProfiles.getWorkProfilePresent()) {
-            mChooserMultiProfilePagerAdapter
-                    .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
-        }
+        mChooserMultiProfilePagerAdapter
+                .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
 
         mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
                 mSystemWindowInsets.right, 0);

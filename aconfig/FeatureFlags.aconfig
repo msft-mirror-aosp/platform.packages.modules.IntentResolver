@@ -36,23 +36,6 @@ flag {
 }
 
 flag {
-  name: "fix_empty_state_padding"
-  namespace: "intentresolver"
-  description: "Always apply systemBar window insets regardless of profiles present"
-  bug: "338447666"
-}
-
-flag {
-  name: "fix_empty_state_padding_bug"
-  namespace: "intentresolver"
-  description: "Always apply systemBar window insets regardless of profiles present"
-  bug: "338447666"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
   name: "fix_missing_drawer_offset_calculation"
   namespace: "intentresolver"
   description: "Recalculate drawer offset upon the preview size change when the targets list remains unchanged"
