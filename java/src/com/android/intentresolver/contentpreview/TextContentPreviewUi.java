@@ -30,10 +30,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 
 import com.android.intentresolver.ContentTypeHint;
 import com.android.intentresolver.R;
 import com.android.intentresolver.widget.ActionRow;
+import com.android.intentresolver.widget.ViewRoleDescriptionAccessibilityDelegate;
 
 import kotlinx.coroutines.CoroutineScope;
 
@@ -138,10 +140,17 @@ class TextContentPreviewUi extends ContentPreviewUi {
 
         Runnable onCopy = mActionFactory.getCopyButtonRunnable();
         View copyButton = contentPreviewLayout.findViewById(R.id.copy);
-        if (onCopy != null) {
-            copyButton.setOnClickListener((v) -> onCopy.run());
-        } else {
-            copyButton.setVisibility(View.GONE);
+        if (copyButton != null) {
+            if (onCopy != null) {
+                copyButton.setOnClickListener((v) -> onCopy.run());
+                ViewCompat.setAccessibilityDelegate(
+                        copyButton,
+                        new ViewRoleDescriptionAccessibilityDelegate(
+                                layoutInflater.getContext()
+                                        .getString(R.string.role_description_button)));
+            } else {
+                copyButton.setVisibility(View.GONE);
+            }
         }
 
         String headlineText = (mContentTypeHint == ContentTypeHint.ALBUM)
