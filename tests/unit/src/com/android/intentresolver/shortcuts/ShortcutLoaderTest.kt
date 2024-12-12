@@ -31,7 +31,6 @@ import android.platform.test.annotations.EnableFlags
 import android.platform.test.flag.junit.SetFlagsRule
 import androidx.test.filters.SmallTest
 import com.android.intentresolver.Flags.FLAG_FIX_SHORTCUTS_FLASHING
-import com.android.intentresolver.Flags.FLAG_FIX_SHORTCUT_LOADER_JOB_LEAK
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.createAppTarget
 import com.android.intentresolver.createShareShortcutInfo
@@ -109,7 +108,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -122,7 +121,7 @@ class ShortcutLoaderTest {
                     // ignored
                     createAppTarget(
                         createShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
-                    )
+                    ),
                 )
             val appPredictorCallbackCaptor = argumentCaptor<AppPredictor.Callback>()
             verify(appPredictor, atLeastOnce())
@@ -137,7 +136,7 @@ class ShortcutLoaderTest {
             assertArrayEquals(
                 "Wrong input app targets in the result",
                 appTargets,
-                result.appTargets
+                result.appTargets,
             )
             assertEquals("Wrong shortcut count", 1, result.shortcutsByApp.size)
             assertEquals("Wrong app target", appTarget, result.shortcutsByApp[0].appTarget)
@@ -145,12 +144,12 @@ class ShortcutLoaderTest {
                 assertEquals(
                     "Wrong AppTarget in the cache",
                     matchingAppTarget,
-                    result.directShareAppTargetCache[shortcut]
+                    result.directShareAppTargetCache[shortcut],
                 )
                 assertEquals(
                     "Wrong ShortcutInfo in the cache",
                     matchingShortcutInfo,
-                    result.directShareShortcutInfoCache[shortcut]
+                    result.directShareShortcutInfoCache[shortcut],
                 )
             }
         }
@@ -162,7 +161,7 @@ class ShortcutLoaderTest {
                 listOf(
                     ShortcutManager.ShareShortcutInfo(matchingShortcutInfo, componentName),
                     // mismatching shortcut
-                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
+                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1),
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
@@ -178,7 +177,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -191,19 +190,19 @@ class ShortcutLoaderTest {
             assertArrayEquals(
                 "Wrong input app targets in the result",
                 appTargets,
-                result.appTargets
+                result.appTargets,
             )
             assertEquals("Wrong shortcut count", 1, result.shortcutsByApp.size)
             assertEquals("Wrong app target", appTarget, result.shortcutsByApp[0].appTarget)
             for (shortcut in result.shortcutsByApp[0].shortcuts) {
                 assertTrue(
                     "AppTargets are not expected the cache of a ShortcutManager result",
-                    result.directShareAppTargetCache.isEmpty()
+                    result.directShareAppTargetCache.isEmpty(),
                 )
                 assertEquals(
                     "Wrong ShortcutInfo in the cache",
                     matchingShortcutInfo,
-                    result.directShareShortcutInfoCache[shortcut]
+                    result.directShareShortcutInfoCache[shortcut],
                 )
             }
         }
@@ -215,7 +214,7 @@ class ShortcutLoaderTest {
                 listOf(
                     ShortcutManager.ShareShortcutInfo(matchingShortcutInfo, componentName),
                     // mismatching shortcut
-                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
+                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1),
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
@@ -231,7 +230,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -250,19 +249,19 @@ class ShortcutLoaderTest {
             assertArrayEquals(
                 "Wrong input app targets in the result",
                 appTargets,
-                result.appTargets
+                result.appTargets,
             )
             assertEquals("Wrong shortcut count", 1, result.shortcutsByApp.size)
             assertEquals("Wrong app target", appTarget, result.shortcutsByApp[0].appTarget)
             for (shortcut in result.shortcutsByApp[0].shortcuts) {
                 assertTrue(
                     "AppTargets are not expected the cache of a ShortcutManager result",
-                    result.directShareAppTargetCache.isEmpty()
+                    result.directShareAppTargetCache.isEmpty(),
                 )
                 assertEquals(
                     "Wrong ShortcutInfo in the cache",
                     matchingShortcutInfo,
-                    result.directShareShortcutInfoCache[shortcut]
+                    result.directShareShortcutInfoCache[shortcut],
                 )
             }
         }
@@ -274,7 +273,7 @@ class ShortcutLoaderTest {
                 listOf(
                     ShortcutManager.ShareShortcutInfo(matchingShortcutInfo, componentName),
                     // mismatching shortcut
-                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
+                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1),
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
@@ -292,7 +291,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -307,19 +306,19 @@ class ShortcutLoaderTest {
             assertArrayEquals(
                 "Wrong input app targets in the result",
                 appTargets,
-                result.appTargets
+                result.appTargets,
             )
             assertEquals("Wrong shortcut count", 1, result.shortcutsByApp.size)
             assertEquals("Wrong app target", appTarget, result.shortcutsByApp[0].appTarget)
             for (shortcut in result.shortcutsByApp[0].shortcuts) {
                 assertTrue(
                     "AppTargets are not expected the cache of a ShortcutManager result",
-                    result.directShareAppTargetCache.isEmpty()
+                    result.directShareAppTargetCache.isEmpty(),
                 )
                 assertEquals(
                     "Wrong ShortcutInfo in the cache",
                     matchingShortcutInfo,
-                    result.directShareShortcutInfoCache[shortcut]
+                    result.directShareShortcutInfoCache[shortcut],
                 )
             }
         }
@@ -332,7 +331,7 @@ class ShortcutLoaderTest {
                 listOf(
                     ShortcutManager.ShareShortcutInfo(matchingShortcutInfo, componentName),
                     // mismatching shortcut
-                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
+                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1),
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
@@ -348,7 +347,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -373,7 +372,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -386,7 +385,7 @@ class ShortcutLoaderTest {
                     // ignored
                     createAppTarget(
                         createShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
-                    )
+                    ),
                 )
             val appPredictorCallbackCaptor = argumentCaptor<AppPredictor.Callback>()
             verify(appPredictor, atLeastOnce())
@@ -406,7 +405,7 @@ class ShortcutLoaderTest {
                 listOf(
                     ShortcutManager.ShareShortcutInfo(matchingShortcutInfo, componentName),
                     // mismatching shortcut
-                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
+                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1),
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
@@ -422,7 +421,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -472,7 +471,7 @@ class ShortcutLoaderTest {
                 true,
                 intentFilter,
                 dispatcher,
-                callback
+                callback,
             )
 
             verify(appPredictor, times(1)).requestPredictionUpdate()
@@ -486,7 +485,7 @@ class ShortcutLoaderTest {
                 listOf(
                     ShortcutManager.ShareShortcutInfo(matchingShortcutInfo, componentName),
                     // mismatching shortcut
-                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1)
+                    createShareShortcutInfo("id-1", ComponentName("mismatching.pkg", "Class"), 1),
                 )
             val shortcutManager =
                 mock<ShortcutManager> {
@@ -502,7 +501,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             verify(shortcutManager, times(1)).getShareTargets(any())
@@ -530,7 +529,7 @@ class ShortcutLoaderTest {
                 true,
                 intentFilter,
                 dispatcher,
-                callback
+                callback,
             )
 
             verify(appPredictor, never()).unregisterPredictionUpdates(any())
@@ -553,7 +552,7 @@ class ShortcutLoaderTest {
                     isPersonalProfile = true,
                     targetIntentFilter = null,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -575,7 +574,7 @@ class ShortcutLoaderTest {
             assertArrayEquals(
                 "Wrong input app targets in the result",
                 appTargets,
-                result.appTargets
+                result.appTargets,
             )
             assertWithMessage("An empty result is expected").that(result.shortcutsByApp).isEmpty()
         }
@@ -611,7 +610,6 @@ class ShortcutLoaderTest {
     }
 
     @Test
-    @EnableFlags(FLAG_FIX_SHORTCUT_LOADER_JOB_LEAK)
     fun test_ShortcutLoaderDestroyed_appPredictorCallbackUnregisteredAndWatchdogCancelled() {
         scope.runTest {
             val testSubject =
@@ -623,7 +621,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(appTargets)
@@ -637,7 +635,7 @@ class ShortcutLoaderTest {
     private fun testDisabledWorkProfileDoNotCallSystem(
         isUserRunning: Boolean = true,
         isUserUnlocked: Boolean = true,
-        isQuietModeEnabled: Boolean = false
+        isQuietModeEnabled: Boolean = false,
     ) =
         scope.runTest {
             val userHandle = UserHandle.of(10)
@@ -658,7 +656,7 @@ class ShortcutLoaderTest {
                     false,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(arrayOf<DisplayResolveInfo>(mock()))
@@ -669,7 +667,7 @@ class ShortcutLoaderTest {
     private fun testAlwaysCallSystemForMainProfile(
         isUserRunning: Boolean = true,
         isUserUnlocked: Boolean = true,
-        isQuietModeEnabled: Boolean = false
+        isQuietModeEnabled: Boolean = false,
     ) =
         scope.runTest {
             val userHandle = UserHandle.of(10)
@@ -690,7 +688,7 @@ class ShortcutLoaderTest {
                     true,
                     intentFilter,
                     dispatcher,
-                    callback
+                    callback,
                 )
 
             testSubject.updateAppTargets(arrayOf<DisplayResolveInfo>(mock()))
