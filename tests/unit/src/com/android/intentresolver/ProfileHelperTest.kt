@@ -16,11 +16,9 @@
 
 package com.android.intentresolver
 
-import com.android.intentresolver.Flags.FLAG_ENABLE_PRIVATE_PROFILE
 import com.android.intentresolver.annotation.JavaInterop
 import com.android.intentresolver.data.repository.FakeUserRepository
 import com.android.intentresolver.domain.interactor.UserInteractor
-import com.android.intentresolver.inject.FakeIntentResolverFlags
 import com.android.intentresolver.shared.model.Profile
 import com.android.intentresolver.shared.model.User
 import com.google.common.truth.Truth.assertThat
@@ -43,14 +41,11 @@ class ProfileHelperTest {
     private val privateUser = User(12, User.Role.PRIVATE)
     private val privateProfile = Profile(Profile.Type.PRIVATE, privateUser)
 
-    private val flags =
-        FakeIntentResolverFlags().apply { setFlag(FLAG_ENABLE_PRIVATE_PROFILE, true) }
-
     private fun assertProfiles(
         helper: ProfileHelper,
         personalProfile: Profile,
         workProfile: Profile? = null,
-        privateProfile: Profile? = null
+        privateProfile: Profile? = null,
     ) {
         assertThat(helper.personalProfile).isEqualTo(personalProfile)
         assertThat(helper.personalHandle).isEqualTo(personalProfile.primary.handle)
@@ -92,13 +87,7 @@ class ProfileHelperTest {
         val repository = FakeUserRepository(listOf(personalUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
 
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
+        val helper = ProfileHelper(interactor = interactor, background = Dispatchers.Unconfined)
 
         assertProfiles(helper, personalProfile)
 
@@ -114,13 +103,7 @@ class ProfileHelperTest {
         val repository = FakeUserRepository(listOf(personalUser, cloneUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
 
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
+        val helper = ProfileHelper(interactor = interactor, background = Dispatchers.Unconfined)
 
         assertProfiles(helper, personalWithCloneProfile)
 
@@ -135,13 +118,7 @@ class ProfileHelperTest {
         val repository = FakeUserRepository(listOf(personalUser, cloneUser))
         val interactor = UserInteractor(repository, launchedAs = cloneUser.handle)
 
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
+        val helper = ProfileHelper(interactor = interactor, background = Dispatchers.Unconfined)
 
         assertProfiles(helper, personalWithCloneProfile)
 
@@ -158,13 +135,7 @@ class ProfileHelperTest {
         val repository = FakeUserRepository(listOf(personalUser, workUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
 
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
+        val helper = ProfileHelper(interactor = interactor, background = Dispatchers.Unconfined)
 
         assertProfiles(helper, personalProfile = personalProfile, workProfile = workProfile)
 
@@ -182,13 +153,7 @@ class ProfileHelperTest {
         val repository = FakeUserRepository(listOf(personalUser, workUser))
         val interactor = UserInteractor(repository, launchedAs = workUser.handle)
 
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
+        val helper = ProfileHelper(interactor = interactor, background = Dispatchers.Unconfined)
 
         assertProfiles(helper, personalProfile = personalProfile, workProfile = workProfile)
 
@@ -206,13 +171,7 @@ class ProfileHelperTest {
         val repository = FakeUserRepository(listOf(personalUser, privateUser))
         val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
 
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
+        val helper = ProfileHelper(interactor = interactor, background = Dispatchers.Unconfined)
 
         assertProfiles(helper, personalProfile = personalProfile, privateProfile = privateProfile)
 
@@ -230,13 +189,7 @@ class ProfileHelperTest {
         val repository = FakeUserRepository(listOf(personalUser, privateUser))
         val interactor = UserInteractor(repository, launchedAs = privateUser.handle)
 
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
+        val helper = ProfileHelper(interactor = interactor, background = Dispatchers.Unconfined)
 
         assertProfiles(helper, personalProfile = personalProfile, privateProfile = privateProfile)
 
@@ -247,29 +200,5 @@ class ProfileHelperTest {
         assertThat(helper.getQueryIntentsHandle(privateProfile.primary.handle))
             .isEqualTo(privateProfile.primary.handle)
         assertThat(helper.tabOwnerUserHandleForLaunch).isEqualTo(privateProfile.primary.handle)
-    }
-
-    @Test
-    fun launchedByPersonal_withPrivate_privateDisabled() = runTest {
-        flags.setFlag(FLAG_ENABLE_PRIVATE_PROFILE, false)
-
-        val repository = FakeUserRepository(listOf(personalUser, privateUser))
-        val interactor = UserInteractor(repository, launchedAs = personalUser.handle)
-
-        val helper =
-            ProfileHelper(
-                interactor = interactor,
-                scope = this,
-                background = Dispatchers.Unconfined,
-                flags = flags
-            )
-
-        assertProfiles(helper, personalProfile = personalProfile, privateProfile = null)
-
-        assertThat(helper.isLaunchedAsCloneProfile).isFalse()
-        assertThat(helper.launchedAsProfileType).isEqualTo(Profile.Type.PERSONAL)
-        assertThat(helper.getQueryIntentsHandle(personalProfile.primary.handle))
-            .isEqualTo(personalProfile.primary.handle)
-        assertThat(helper.tabOwnerUserHandleForLaunch).isEqualTo(personalProfile.primary.handle)
     }
 }

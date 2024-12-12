@@ -20,12 +20,10 @@ import android.os.UserHandle
 import androidx.annotation.MainThread
 import com.android.intentresolver.annotation.JavaInterop
 import com.android.intentresolver.domain.interactor.UserInteractor
-import com.android.intentresolver.inject.IntentResolverFlags
 import com.android.intentresolver.shared.model.Profile
 import com.android.intentresolver.shared.model.User
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -33,12 +31,7 @@ import kotlinx.coroutines.runBlocking
 @MainThread
 class ProfileHelper
 @Inject
-constructor(
-    interactor: UserInteractor,
-    private val scope: CoroutineScope,
-    private val background: CoroutineDispatcher,
-    private val flags: IntentResolverFlags,
-) {
+constructor(interactor: UserInteractor, private val background: CoroutineDispatcher) {
     private val launchedByHandle: UserHandle = interactor.launchedAs
 
     val launchedAsProfile by lazy {
