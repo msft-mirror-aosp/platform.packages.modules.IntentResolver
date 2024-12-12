@@ -16,7 +16,7 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel
 
 import android.util.Size
-import com.android.intentresolver.Flags
+import com.android.intentresolver.Flags.previewImageLoader
 import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.contentpreview.CachingImagePreviewImageLoader
 import com.android.intentresolver.contentpreview.HeadlineGenerator
@@ -65,7 +65,7 @@ data class ShareouselViewModel(
     /** Creates a [ShareouselPreviewViewModel] for a [PreviewModel] present in [previews]. */
     val preview:
         (
-            key: PreviewModel, previewHeight: Int, index: Int?, scope: CoroutineScope
+            key: PreviewModel, previewHeight: Int, index: Int?, scope: CoroutineScope,
         ) -> ShareouselPreviewViewModel,
 )
 
@@ -77,9 +77,9 @@ object ShareouselViewModelModule {
     @PayloadToggle
     fun imageLoader(
         cachingImageLoader: Provider<CachingImagePreviewImageLoader>,
-        previewImageLoader: Provider<PreviewImageLoader>
+        previewImageLoader: Provider<PreviewImageLoader>,
     ): ImageLoader =
-        if (Flags.previewImageLoader()) {
+        if (previewImageLoader()) {
             previewImageLoader.get()
         } else {
             cachingImageLoader.get()
@@ -97,12 +97,7 @@ object ShareouselViewModelModule {
         // TODO: remove if possible
         @ViewModelOwned scope: CoroutineScope,
     ): ShareouselViewModel {
-        val keySet =
-            interactor.previews.stateIn(
-                scope,
-                SharingStarted.Eagerly,
-                initialValue = null,
-            )
+        val keySet = interactor.previews.stateIn(scope, SharingStarted.Eagerly, initialValue = null)
         return ShareouselViewModel(
             headline =
                 selectionInteractor.aggregateContentType.zip(selectionInteractor.amountSelected) {
