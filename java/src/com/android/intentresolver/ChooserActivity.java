@@ -23,7 +23,6 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
-import static com.android.intentresolver.Flags.fixDrawerOffsetOnConfigChange;
 import static com.android.intentresolver.Flags.fixMissingDrawerOffsetCalculation;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
@@ -2327,11 +2326,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 updateTabPadding();
             }
 
-            int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
-            int initialProfile = fixDrawerOffsetOnConfigChange()
-                    ? mInitialProfile
-                    : findSelectedProfile();
-            if (currentProfile != initialProfile) {
+            if (mChooserMultiProfilePagerAdapter.getActiveProfile() != mInitialProfile) {
                 return;
             }
 
