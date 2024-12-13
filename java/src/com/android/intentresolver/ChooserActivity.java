@@ -23,8 +23,6 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
-import static com.android.intentresolver.Flags.fixDrawerOffsetOnConfigChange;
-import static com.android.intentresolver.Flags.fixMissingDrawerOffsetCalculation;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
 import static com.android.intentresolver.Flags.rebuildAdaptersOnTargetPinning;
@@ -2309,47 +2307,31 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 || recyclerView.getAdapter() == null
                 || availableWidth != mCurrAvailableWidth;
 
-        boolean insetsChanged = !Objects.equals(mLastAppliedInsets, mSystemWindowInsets);
+        mCurrAvailableWidth = availableWidth;
+        if (isLayoutUpdated) {
+            // It is very important we call setAdapter from here. Otherwise in some cases
+            // the resolver list doesn't get populated, such as b/150922090, b/150918223
+            // and b/150936654
+            recyclerView.setAdapter(gridAdapter);
+            ((GridLayoutManager) recyclerView.getLayoutManager()).setSpanCount(
+                    mMaxTargetsPerRow);
 
-        if (isLayoutUpdated
-                || insetsChanged
-                || mLastNumberOfChildren != recyclerView.getChildCount()
-                || fixMissingDrawerOffsetCalculation()) {
-            mCurrAvailableWidth = availableWidth;
-            if (isLayoutUpdated) {
-                // It is very important we call setAdapter from here. Otherwise in some cases
-                // the resolver list doesn't get populated, such as b/150922090, b/150918223
-                // and b/150936654
-                recyclerView.setAdapter(gridAdapter);
-                ((GridLayoutManager) recyclerView.getLayoutManager()).setSpanCount(
-                        mMaxTargetsPerRow);
-
-                updateTabPadding();
-            }
-
-            int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
-            int initialProfile = fixDrawerOffsetOnConfigChange()
-                    ? mInitialProfile
-                    : findSelectedProfile();
-            if (currentProfile != initialProfile) {
-                return;
-            }
-
-            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged
-                    && !fixMissingDrawerOffsetCalculation()) {
-                return;
-            }
-
-            getMainThreadHandler().post(() -> {
-                if (mResolverDrawerLayout == null || gridAdapter == null) {
-                    return;
-                }
-                int offset = calculateDrawerOffset(top, bottom, recyclerView, gridAdapter);
-                mResolverDrawerLayout.setCollapsibleHeightReserved(offset);
-                mEnterTransitionAnimationDelegate.markOffsetCalculated();
-                mLastAppliedInsets = mSystemWindowInsets;
-            });
+            updateTabPadding();
         }
+
+        if (mChooserMultiProfilePagerAdapter.getActiveProfile() != mInitialProfile) {
+            return;
+        }
+
+        getMainThreadHandler().post(() -> {
+            if (mResolverDrawerLayout == null || gridAdapter == null) {
+                return;
+            }
+            int offset = calculateDrawerOffset(top, bottom, recyclerView, gridAdapter);
+            mResolverDrawerLayout.setCollapsibleHeightReserved(offset);
+            mEnterTransitionAnimationDelegate.markOffsetCalculated();
+            mLastAppliedInsets = mSystemWindowInsets;
+        });
     }
 
     private int calculateDrawerOffset(
