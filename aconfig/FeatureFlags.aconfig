@@ -6,20 +6,6 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
-  name: "modular_framework"
-  namespace: "intentresolver"
-  description: "Enables the new modular framework"
-  bug: "302113519"
-}
-
-flag {
-  name: "enable_private_profile"
-  namespace: "intentresolver"
-  description: "Enable private profile support"
-  bug: "328029692"
-}
-
-flag {
   name: "individual_metadata_title_read"
   namespace: "intentresolver"
   description: "Enables separate title URI metadata calls"
@@ -50,37 +36,10 @@ flag {
 }
 
 flag {
-  name: "fix_empty_state_padding"
-  namespace: "intentresolver"
-  description: "Always apply systemBar window insets regardless of profiles present"
-  bug: "338447666"
-}
-
-flag {
-  name: "fix_empty_state_padding_bug"
-  namespace: "intentresolver"
-  description: "Always apply systemBar window insets regardless of profiles present"
-  bug: "338447666"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
   name: "fix_missing_drawer_offset_calculation"
   namespace: "intentresolver"
   description: "Recalculate drawer offset upon the preview size change when the targets list remains unchanged"
   bug: "347316548"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
-  name: "fix_private_space_locked_on_restart"
-  namespace: "intentresolver"
-  description: "Dismiss Share sheet on restart if private space became locked while stopped"
-  bug: "338125945"
   metadata {
     purpose: PURPOSE_BUGFIX
   }
