@@ -17,6 +17,7 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor
 
 import android.content.Intent
+import com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.CustomAction
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.PendingIntentSender
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.toCustomActionModel
@@ -49,6 +50,12 @@ constructor(
                     update.refinementIntentSender.getOrDefault(current.refinementIntentSender),
                 metadataText = update.metadataText.getOrDefault(current.metadataText),
                 chooserActions = update.customActions.getOrDefault(current.chooserActions),
+                filteredComponentNames =
+                    if (shareouselUpdateExcludeComponentsExtra()) {
+                        update.excludeComponents.getOrDefault(current.filteredComponentNames)
+                    } else {
+                        current.filteredComponentNames
+                    }
             )
         }
         update.customActions.onValue { actions ->

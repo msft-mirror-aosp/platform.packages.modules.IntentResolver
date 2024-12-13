@@ -77,24 +77,25 @@ class ImagePreviewImageLoaderTest {
             contentResolver,
             cacheSize = 1,
         )
+    private val previewSize = Size(500, 500)
 
     @Test
     fun prePopulate_cachesImagesUpToTheCacheSize() =
         scope.runTest {
-            testSubject.prePopulate(listOf(uriOne, uriTwo))
+            testSubject.prePopulate(listOf(uriOne to previewSize, uriTwo to previewSize))
 
             verify(contentResolver, times(1)).loadThumbnail(uriOne, imageSize, null)
             verify(contentResolver, never()).loadThumbnail(uriTwo, imageSize, null)
 
-            testSubject(uriOne)
+            testSubject(uriOne, previewSize)
             verify(contentResolver, times(1)).loadThumbnail(uriOne, imageSize, null)
         }
 
     @Test
     fun invoke_returnCachedImageWhenCalledTwice() =
         scope.runTest {
-            testSubject(uriOne)
-            testSubject(uriOne)
+            testSubject(uriOne, previewSize)
+            testSubject(uriOne, previewSize)
 
             verify(contentResolver, times(1)).loadThumbnail(any(), any(), anyOrNull())
         }
@@ -102,8 +103,8 @@ class ImagePreviewImageLoaderTest {
     @Test
     fun invoke_whenInstructed_doesNotCache() =
         scope.runTest {
-            testSubject(uriOne, false)
-            testSubject(uriOne, false)
+            testSubject(uriOne, previewSize, false)
+            testSubject(uriOne, previewSize, false)
 
             verify(contentResolver, times(2)).loadThumbnail(any(), any(), anyOrNull())
         }
@@ -120,8 +121,8 @@ class ImagePreviewImageLoaderTest {
                     cacheSize = 1,
                 )
             coroutineScope {
-                launch(start = UNDISPATCHED) { testSubject(uriOne, false) }
-                launch(start = UNDISPATCHED) { testSubject(uriOne, false) }
+                launch(start = UNDISPATCHED) { testSubject(uriOne, previewSize, false) }
+                launch(start = UNDISPATCHED) { testSubject(uriOne, previewSize, false) }
                 scheduler.advanceUntilIdle()
             }
 
@@ -131,10 +132,10 @@ class ImagePreviewImageLoaderTest {
     @Test
     fun invoke_oldRecordsEvictedFromTheCache() =
         scope.runTest {
-            testSubject(uriOne)
-            testSubject(uriTwo)
-            testSubject(uriTwo)
-            testSubject(uriOne)
+            testSubject(uriOne, previewSize)
+            testSubject(uriTwo, previewSize)
+            testSubject(uriTwo, previewSize)
+            testSubject(uriOne, previewSize)
 
             verify(contentResolver, times(2)).loadThumbnail(uriOne, imageSize, null)
             verify(contentResolver, times(1)).loadThumbnail(uriTwo, imageSize, null)
@@ -144,8 +145,8 @@ class ImagePreviewImageLoaderTest {
     fun invoke_doNotCacheNulls() =
         scope.runTest {
             whenever(contentResolver.loadThumbnail(any(), any(), anyOrNull())).thenReturn(null)
-            testSubject(uriOne)
-            testSubject(uriOne)
+            testSubject(uriOne, previewSize)
+            testSubject(uriOne, previewSize)
 
             verify(contentResolver, times(2)).loadThumbnail(uriOne, imageSize, null)
         }
@@ -162,7 +163,7 @@ class ImagePreviewImageLoaderTest {
                     cacheSize = 1,
                 )
             imageLoaderScope.cancel()
-            testSubject(uriOne)
+            testSubject(uriOne, previewSize)
         }
 
     @Test(expected = CancellationException::class)
@@ -178,7 +179,8 @@ class ImagePreviewImageLoaderTest {
                     cacheSize = 1,
                 )
             coroutineScope {
-                val deferred = async(start = UNDISPATCHED) { testSubject(uriOne, false) }
+                val deferred =
+                    async(start = UNDISPATCHED) { testSubject(uriOne, previewSize, false) }
                 imageLoaderScope.cancel()
                 scheduler.advanceUntilIdle()
                 deferred.await()
@@ -198,11 +200,11 @@ class ImagePreviewImageLoaderTest {
                     cacheSize = 1,
                 )
             coroutineScope {
-                launch(start = UNDISPATCHED) { testSubject(uriOne, false) }
-                launch(start = UNDISPATCHED) { testSubject(uriOne, true) }
+                launch(start = UNDISPATCHED) { testSubject(uriOne, previewSize, false) }
+                launch(start = UNDISPATCHED) { testSubject(uriOne, previewSize, true) }
                 scheduler.advanceUntilIdle()
             }
-            testSubject(uriOne, true)
+            testSubject(uriOne, previewSize, true)
 
             verify(contentResolver, times(1)).loadThumbnail(uriOne, imageSize, null)
         }
@@ -243,7 +245,7 @@ class ImagePreviewImageLoaderTest {
                     cacheSize = 1,
                     testSemaphore,
                 )
-            testSubject(uriOne, false)
+            testSubject(uriOne, previewSize, false)
 
             verify(contentResolver, times(1)).loadThumbnail(uriOne, imageSize, null)
             assertThat(acquireCount.get()).isEqualTo(1)
@@ -281,7 +283,7 @@ class ImagePreviewImageLoaderTest {
                     cacheSize = 1,
                     testSemaphore,
                 )
-            launch(start = UNDISPATCHED) { testSubject(uriOne, false) }
+            launch(start = UNDISPATCHED) { testSubject(uriOne, previewSize, false) }
 
             verify(contentResolver, never()).loadThumbnail(any(), any(), anyOrNull())
 
@@ -324,7 +326,9 @@ class ImagePreviewImageLoaderTest {
                 )
             coroutineScope {
                 repeat(requestCount) {
-                    launch { testSubject(Uri.parse("content://org.pkg.app/image-$it.png")) }
+                    launch {
+                        testSubject(Uri.parse("content://org.pkg.app/image-$it.png"), previewSize)
+                    }
                 }
                 yield()
                 // wait for all requests to be dispatched

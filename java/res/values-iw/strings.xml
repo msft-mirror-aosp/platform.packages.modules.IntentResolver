@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{שיתוף של תמונה}one{שיתוף של # תמונות}two{שיתוף של # תמונות}other{שיתוף של # תמונות}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{מתבצע שיתוף של סרטון}one{מתבצע שיתוף של # סרטונים}two{מתבצע שיתוף של # סרטונים}other{מתבצע שיתוף של # סרטונים}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{מתבצע שיתוף של קובץ אחד}one{מתבצע שיתוף של # קבצים}two{מתבצע שיתוף של # קבצים}other{מתבצע שיתוף של # קבצים}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"בחירת פריטים לשיתוף"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{שיתוף תמונה עם טקסט}one{שיתוף # תמונות עם טקסט}two{שיתוף # תמונות עם טקסט}other{שיתוף # תמונות עם טקסט}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{שיתוף תמונה עם קישור}one{שיתוף # תמונות עם קישור}two{שיתוף # תמונות עם קישור}other{שיתוף # תמונות עם קישור}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{שיתוף סרטון עם טקסט}one{שיתוף # סרטונים עם טקסט}two{שיתוף # סרטונים עם טקסט}other{שיתוף # סרטונים עם טקסט}}"</string>

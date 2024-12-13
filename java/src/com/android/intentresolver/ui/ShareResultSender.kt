@@ -47,7 +47,7 @@ private const val TAG = "ShareResultSender"
 /** Reports the result of a share to another process across binder, via an [IntentSender] */
 interface ShareResultSender {
     /** Reports user selection of an activity to launch from the provided choices. */
-    fun onComponentSelected(component: ComponentName, directShare: Boolean)
+    fun onComponentSelected(component: ComponentName, directShare: Boolean, crossProfile: Boolean)
 
     /** Reports user invocation of a built-in system action. See [ShareAction]. */
     fun onActionSelected(action: ShareAction)
@@ -88,11 +88,15 @@ class ShareResultSenderImpl(
         IntentSenderDispatcher { sender, intent -> sender.dispatchIntent(context, intent) }
     )
 
-    override fun onComponentSelected(component: ComponentName, directShare: Boolean) {
-        Log.i(TAG, "onComponentSelected: $component directShare=$directShare")
+    override fun onComponentSelected(
+        component: ComponentName,
+        directShare: Boolean,
+        crossProfile: Boolean
+    ) {
+        Log.i(TAG, "onComponentSelected: $component directShare=$directShare cross=$crossProfile")
         scope.launch {
-            val intent = createChosenComponentIntent(component, directShare)
-            intentDispatcher.dispatchIntent(resultSender, intent)
+            val intent = createChosenComponentIntent(component, directShare, crossProfile)
+            intent?.let { intentDispatcher.dispatchIntent(resultSender, it) }
         }
     }
 
@@ -112,20 +116,38 @@ class ShareResultSenderImpl(
     private suspend fun createChosenComponentIntent(
         component: ComponentName,
         direct: Boolean,
-    ): Intent {
-        // Add extra with component name for backwards compatibility.
-        val intent: Intent = Intent().putExtra(Intent.EXTRA_CHOSEN_COMPONENT, component)
-
-        // Add ChooserResult value for Android V+
+        crossProfile: Boolean,
+    ): Intent? {
         if (flags.enableChooserResult() && chooserResultSupported(callerUid)) {
-            intent.putExtra(
-                Intent.EXTRA_CHOOSER_RESULT,
-                ChooserResult(CHOOSER_RESULT_SELECTED_COMPONENT, component, direct)
-            )
+            if (crossProfile) {
+                Log.i(TAG, "Redacting package from cross-profile ${Intent.EXTRA_CHOOSER_RESULT}")
+                return Intent()
+                    .putExtra(
+                        Intent.EXTRA_CHOOSER_RESULT,
+                        ChooserResult(CHOOSER_RESULT_UNKNOWN, null, direct)
+                    )
+            } else {
+                // Add extra with component name for backwards compatibility.
+                val intent: Intent = Intent().putExtra(Intent.EXTRA_CHOSEN_COMPONENT, component)
+
+                // Add ChooserResult value for Android V+
+                intent.putExtra(
+                    Intent.EXTRA_CHOOSER_RESULT,
+                    ChooserResult(CHOOSER_RESULT_SELECTED_COMPONENT, component, direct)
+                )
+                return intent
+            }
         } else {
-            Log.i(TAG, "Not including ${Intent.EXTRA_CHOOSER_RESULT}")
+            if (crossProfile) {
+                // We can only send cross-profile results in the new ChooserResult format.
+                Log.i(TAG, "Omitting selection callback for cross-profile target")
+                return null
+            } else {
+                val intent: Intent = Intent().putExtra(Intent.EXTRA_CHOSEN_COMPONENT, component)
+                Log.i(TAG, "Not including ${Intent.EXTRA_CHOOSER_RESULT}")
+                return intent
+            }
         }
-        return intent
     }
 
     @ResultType

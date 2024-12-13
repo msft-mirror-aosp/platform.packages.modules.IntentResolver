@@ -273,6 +273,11 @@ public class EventLogImpl implements EventLog {
         log(SharesheetStandardEvent.SHARESHEET_EMPTY_DIRECT_SHARE_ROW, mInstanceId);
     }
 
+    @Override
+    public void logPayloadSelectionChanged() {
+        log(SharesheetStandardEvent.SHARESHEET_PAYLOAD_TOGGLED, mInstanceId);
+    }
+
     /**
      * Logs a UiEventReported event for a given share activity
      * @param event
@@ -402,6 +407,9 @@ public class EventLogImpl implements EventLog {
             case ContentPreviewType.CONTENT_PREVIEW_FILE:
                 return FrameworkStatsLog.SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_FILE;
             case ContentPreviewType.CONTENT_PREVIEW_TEXT:
+            case ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION:
+                return FrameworkStatsLog
+                        .SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_TOGGLEABLE_MEDIA;
             default:
                 return FrameworkStatsLog
                         .SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_TYPE_UNKNOWN;

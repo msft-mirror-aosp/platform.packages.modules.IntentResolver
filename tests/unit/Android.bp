@@ -33,6 +33,7 @@ android_test {
         "android.test.mock.stubs.system",
         "framework",
         "framework-res",
+        "flag-junit",
     ],
 
     resource_dirs: ["res"],

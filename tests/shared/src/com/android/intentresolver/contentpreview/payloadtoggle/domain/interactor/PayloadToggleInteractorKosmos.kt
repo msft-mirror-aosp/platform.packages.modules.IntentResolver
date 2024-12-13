@@ -91,6 +91,7 @@ val Kosmos.selectablePreviewsInteractor
         SelectablePreviewsInteractor(
             previewsRepo = cursorPreviewsRepository,
             selectionInteractor = selectionInteractor,
+            eventLog = eventLog,
         )
 
 val Kosmos.selectionInteractor
