@@ -23,11 +23,9 @@ import com.android.intentresolver.annotation.JavaInterop
 import com.android.intentresolver.data.repository.DevicePolicyResources
 import com.android.intentresolver.data.repository.FakeUserRepository
 import com.android.intentresolver.domain.interactor.UserInteractor
-import com.android.intentresolver.inject.FakeIntentResolverFlags
 import com.android.intentresolver.shared.model.User
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Test
 import org.mockito.Mockito.never
@@ -46,7 +44,6 @@ class NoCrossProfileEmptyStateProviderTest {
     private val personalUser = User(0, User.Role.PERSONAL)
     private val workUser = User(10, User.Role.WORK)
     private val privateUser = User(11, User.Role.PRIVATE)
-    private val flags = FakeIntentResolverFlags()
 
     private val userRepository = FakeUserRepository(listOf(personalUser, workUser, privateUser))
 
@@ -84,7 +81,7 @@ class NoCrossProfileEmptyStateProviderTest {
                 hasCrossProfileIntents(
                     /* intents = */ any(),
                     /* source = */ any(),
-                    /* target = */ any()
+                    /* target = */ any(),
                 )
             } doReturn false /* Never allow */
         }
@@ -105,7 +102,7 @@ class NoCrossProfileEmptyStateProviderTest {
                 profileHelper,
                 devicePolicyResources,
                 crossProfileIntentsChecker,
-                /* isShare = */ true
+                /* isShare = */ true,
             )
 
         // Work to work, not blocked
@@ -123,7 +120,7 @@ class NoCrossProfileEmptyStateProviderTest {
                 profileHelper,
                 devicePolicyResources,
                 crossProfileIntentsChecker,
-                /* isShare = */ true
+                /* isShare = */ true,
             )
 
         val result = provider.getEmptyState(workListAdapter)
@@ -143,7 +140,7 @@ class NoCrossProfileEmptyStateProviderTest {
                 profileHelper,
                 devicePolicyResources,
                 crossProfileIntentsChecker,
-                /* isShare = */ true
+                /* isShare = */ true,
             )
 
         val result = provider.getEmptyState(personalListAdapter)
@@ -163,7 +160,7 @@ class NoCrossProfileEmptyStateProviderTest {
                 profileHelper,
                 devicePolicyResources,
                 crossProfileIntentsChecker,
-                /* isShare = */ true
+                /* isShare = */ true,
             )
 
         val result = provider.getEmptyState(privateListAdapter)
@@ -184,7 +181,7 @@ class NoCrossProfileEmptyStateProviderTest {
                 profileHelper,
                 devicePolicyResources,
                 crossProfileIntentsChecker,
-                /* isShare = */ true
+                /* isShare = */ true,
             )
 
         // Private -> Personal is always allowed:
@@ -197,12 +194,7 @@ class NoCrossProfileEmptyStateProviderTest {
     private fun createProfileHelper(launchedAs: User): ProfileHelper {
         val userInteractor = UserInteractor(userRepository, launchedAs = launchedAs.handle)
 
-        return ProfileHelper(
-            userInteractor,
-            CoroutineScope(Dispatchers.Unconfined),
-            Dispatchers.Unconfined,
-            flags
-        )
+        return ProfileHelper(userInteractor, Dispatchers.Unconfined)
     }
 
     private fun CrossProfileIntentsChecker.verifyCalled(
