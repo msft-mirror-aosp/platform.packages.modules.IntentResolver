@@ -26,26 +26,6 @@ flag {
 }
 
 flag {
-  name: "fix_drawer_offset_on_config_change"
-  namespace: "intentresolver"
-  description: "Fix drawer offset calculation after rotating when in a non-initial tab"
-  bug: "344057117"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
-  name: "fix_missing_drawer_offset_calculation"
-  namespace: "intentresolver"
-  description: "Recalculate drawer offset upon the preview size change when the targets list remains unchanged"
-  bug: "347316548"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
   name: "fix_shortcut_loader_job_leak"
   namespace: "intentresolver"
   description: "User a nested coroutine scope for shortcut loader instances"
