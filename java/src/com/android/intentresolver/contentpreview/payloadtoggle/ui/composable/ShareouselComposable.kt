@@ -33,9 +33,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.systemGestureExclusion
@@ -130,15 +130,17 @@ private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewMo
         // Do not compose the list until we have measured values
         if (measurements == PreviewCarouselMeasurements.UNMEASURED) return@Box
 
-        val carouselState =
-            rememberLazyListState(
-                prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() },
-                initialFirstVisibleItemIndex = previews.startIdx,
-                initialFirstVisibleItemScrollOffset =
+        val prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
+        val carouselState = remember {
+            LazyListState(
+                prefetchStrategy = prefetchStrategy,
+                firstVisibleItemIndex = previews.startIdx,
+                firstVisibleItemScrollOffset =
                     measurements.scrollOffsetToCenter(
                         previewModel = previews.previewModels[previews.startIdx]
                     ),
             )
+        }
 
         LazyRow(
             state = carouselState,

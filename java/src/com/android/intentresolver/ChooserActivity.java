@@ -26,6 +26,7 @@ import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
 import static com.android.intentresolver.Flags.rebuildAdaptersOnTargetPinning;
+import static com.android.intentresolver.Flags.refineSystemActions;
 import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.Flags.unselectFinalItem;
 import static com.android.intentresolver.ext.CreationExtrasExtKt.replaceDefaultArgs;
@@ -256,7 +257,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Inject public UserInteractor mUserInteractor;
     @Inject @Background public CoroutineDispatcher mBackgroundDispatcher;
     @Inject public ChooserHelper mChooserHelper;
-    @Inject public FeatureFlags mFeatureFlags;
     @Inject public EventLog mEventLog;
     @Inject @AppPredictionAvailable public boolean mAppPredictionAvailable;
     @Inject @ImageEditor public Optional<ComponentName> mImageEditor;
@@ -422,13 +422,11 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Override
     protected final void onRestart() {
         super.onRestart();
-        if (mFeatureFlags.fixPrivateSpaceLockedOnRestart()) {
-            if (mChooserMultiProfilePagerAdapter.hasPageForProfile(Profile.Type.PRIVATE.ordinal())
-                    && !mProfileAvailability.isAvailable(mProfiles.getPrivateProfile())) {
-                Log.d(TAG, "Exiting due to unavailable profile");
-                finish();
-                return;
-            }
+        if (mChooserMultiProfilePagerAdapter.hasPageForProfile(Profile.Type.PRIVATE.ordinal())
+                && !mProfileAvailability.isAvailable(mProfiles.getPrivateProfile())) {
+            Log.d(TAG, "Exiting due to unavailable profile");
+            finish();
+            return;
         }
 
         if (!mRegistered) {
@@ -481,9 +479,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         mProfiles =  new ProfileHelper(
                 mUserInteractor,
-                getCoroutineScope(getLifecycle()),
-                mBackgroundDispatcher,
-                mFeatureFlags);
+                mBackgroundDispatcher);
 
         mProfileAvailability = new ProfileAvailability(
                 mUserInteractor,
@@ -2073,8 +2069,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 },
                 chooserListAdapter,
                 shouldShowContentPreview(),
-                mMaxTargetsPerRow,
-                mFeatureFlags);
+                mMaxTargetsPerRow);
     }
 
     @VisibleForTesting
@@ -2168,7 +2163,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     private ChooserContentPreviewUi.ActionFactory decorateActionFactoryWithRefinement(
             ChooserContentPreviewUi.ActionFactory originalFactory) {
-        if (!mFeatureFlags.refineSystemActions()) {
+        if (!refineSystemActions()) {
             return originalFactory;
         }
 
@@ -2312,47 +2307,31 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 || recyclerView.getAdapter() == null
                 || availableWidth != mCurrAvailableWidth;
 
-        boolean insetsChanged = !Objects.equals(mLastAppliedInsets, mSystemWindowInsets);
+        mCurrAvailableWidth = availableWidth;
+        if (isLayoutUpdated) {
+            // It is very important we call setAdapter from here. Otherwise in some cases
+            // the resolver list doesn't get populated, such as b/150922090, b/150918223
+            // and b/150936654
+            recyclerView.setAdapter(gridAdapter);
+            ((GridLayoutManager) recyclerView.getLayoutManager()).setSpanCount(
+                    mMaxTargetsPerRow);
 
-        if (isLayoutUpdated
-                || insetsChanged
-                || mLastNumberOfChildren != recyclerView.getChildCount()
-                || mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
-            mCurrAvailableWidth = availableWidth;
-            if (isLayoutUpdated) {
-                // It is very important we call setAdapter from here. Otherwise in some cases
-                // the resolver list doesn't get populated, such as b/150922090, b/150918223
-                // and b/150936654
-                recyclerView.setAdapter(gridAdapter);
-                ((GridLayoutManager) recyclerView.getLayoutManager()).setSpanCount(
-                        mMaxTargetsPerRow);
-
-                updateTabPadding();
-            }
-
-            int currentProfile = mChooserMultiProfilePagerAdapter.getActiveProfile();
-            int initialProfile = Flags.fixDrawerOffsetOnConfigChange()
-                    ? mInitialProfile
-                    : findSelectedProfile();
-            if (currentProfile != initialProfile) {
-                return;
-            }
-
-            if (mLastNumberOfChildren == recyclerView.getChildCount() && !insetsChanged
-                    && !mFeatureFlags.fixMissingDrawerOffsetCalculation()) {
-                return;
-            }
-
-            getMainThreadHandler().post(() -> {
-                if (mResolverDrawerLayout == null || gridAdapter == null) {
-                    return;
-                }
-                int offset = calculateDrawerOffset(top, bottom, recyclerView, gridAdapter);
-                mResolverDrawerLayout.setCollapsibleHeightReserved(offset);
-                mEnterTransitionAnimationDelegate.markOffsetCalculated();
-                mLastAppliedInsets = mSystemWindowInsets;
-            });
+            updateTabPadding();
         }
+
+        if (mChooserMultiProfilePagerAdapter.getActiveProfile() != mInitialProfile) {
+            return;
+        }
+
+        getMainThreadHandler().post(() -> {
+            if (mResolverDrawerLayout == null || gridAdapter == null) {
+                return;
+            }
+            int offset = calculateDrawerOffset(top, bottom, recyclerView, gridAdapter);
+            mResolverDrawerLayout.setCollapsibleHeightReserved(offset);
+            mEnterTransitionAnimationDelegate.markOffsetCalculated();
+            mLastAppliedInsets = mSystemWindowInsets;
+        });
     }
 
     private int calculateDrawerOffset(
@@ -2690,10 +2669,8 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
     protected WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
         mSystemWindowInsets = insets.getInsets(WindowInsets.Type.systemBars());
-        if (mFeatureFlags.fixEmptyStatePaddingBug() || mProfiles.getWorkProfilePresent()) {
-            mChooserMultiProfilePagerAdapter
-                    .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
-        }
+        mChooserMultiProfilePagerAdapter
+                .setEmptyStateBottomOffset(mSystemWindowInsets.bottom);
 
         mResolverDrawerLayout.setPadding(mSystemWindowInsets.left, mSystemWindowInsets.top,
                 mSystemWindowInsets.right, 0);
