@@ -46,6 +46,13 @@ flag {
 }
 
 flag {
+  name: "interactive_session"
+  namespace: "intentresolver"
+  description: "Enables interactive chooser session (a.k.a 'Splitti') feature."
+  bug: "358166090"
+}
+
+flag {
   name: "keyboard_navigation_fix"
   namespace: "intentresolver"
   description: "Enable Chooser keyboard navigation bugfix"

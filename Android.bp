@@ -24,6 +24,7 @@ java_defaults {
     srcs: [
         "java/src/**/*.java",
         "java/src/**/*.kt",
+        "java/aidl/**/I*.aidl",
     ],
     resource_dirs: [
         "java/res",
@@ -76,6 +77,9 @@ android_library {
         "-Adagger.explicitBindingConflictsWithInject=ERROR",
         "-Adagger.strictMultibindingValidation=enabled",
     ],
+    aidl: {
+        local_include_dirs: [ "java/aidl" ],
+    }
 }
 
 java_defaults {
