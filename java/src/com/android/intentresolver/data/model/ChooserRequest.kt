@@ -28,6 +28,7 @@ import android.service.chooser.ChooserAction
 import android.service.chooser.ChooserTarget
 import androidx.annotation.StringRes
 import com.android.intentresolver.ContentTypeHint
+import com.android.intentresolver.IChooserInteractiveSessionCallback
 import com.android.intentresolver.ext.hasAction
 
 const val ANDROID_APP_SCHEME = "android-app"
@@ -182,6 +183,7 @@ data class ChooserRequest(
      * Specified by the [Intent.EXTRA_METADATA_TEXT]
      */
     val metadataText: CharSequence? = null,
+    val interactiveSessionCallback: IChooserInteractiveSessionCallback? = null,
 ) {
     val referrerPackage = referrer?.takeIf { it.scheme == ANDROID_APP_SCHEME }?.authority
 

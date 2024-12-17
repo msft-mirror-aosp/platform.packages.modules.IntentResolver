@@ -278,6 +278,10 @@ public class ResolverDrawerLayout extends ViewGroup {
         mDismissLocked = locked;
     }
 
+    int getTopOffset() {
+        return mTopOffset;
+    }
+
     private boolean isMoving() {
         return mIsDragging || !mScroller.isFinished();
     }

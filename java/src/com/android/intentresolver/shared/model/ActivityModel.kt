@@ -35,6 +35,8 @@ data class ActivityModel(
     val launchedFromPackage: String,
     /** The referrer as supplied to the activity. */
     val referrer: Uri?,
+    /** True if the activity is the first activity in the task */
+    val isTaskRoot: Boolean,
 ) : Parcelable {
     constructor(
         source: Parcel
@@ -43,6 +45,7 @@ data class ActivityModel(
         launchedFromUid = source.readInt(),
         launchedFromPackage = requireNotNull(source.readString()),
         referrer = source.readParcelable(),
+        isTaskRoot = source.readBoolean(),
     )
 
     /** A package name from referrer, if it is an android-app URI */
@@ -55,6 +58,7 @@ data class ActivityModel(
         dest.writeInt(launchedFromUid)
         dest.writeString(launchedFromPackage)
         dest.writeParcelable(referrer, flags)
+        dest.writeBoolean(isTaskRoot)
     }
 
     companion object {
@@ -74,6 +78,7 @@ data class ActivityModel(
                 activity.launchedFromUid,
                 Objects.requireNonNull<String>(activity.launchedFromPackage),
                 activity.referrer,
+                activity.isTaskRoot,
             )
         }
     }
