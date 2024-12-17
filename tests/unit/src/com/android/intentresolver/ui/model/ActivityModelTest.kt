@@ -30,7 +30,7 @@ class ActivityModelTest {
 
     @Test
     fun testDefaultValues() {
-        val input = ActivityModel(Intent(ACTION_CHOOSER), 0, "example.com", null)
+        val input = ActivityModel(Intent(ACTION_CHOOSER), 0, "example.com", null, false)
 
         val output = input.toParcelAndBack()
 
@@ -41,7 +41,13 @@ class ActivityModelTest {
     fun testCommonValues() {
         val intent = Intent(ACTION_CHOOSER).apply { putExtra(EXTRA_TEXT, "Test") }
         val input =
-            ActivityModel(intent, 1234, "com.example", Uri.parse("android-app://example.com"))
+            ActivityModel(
+                intent,
+                1234,
+                "com.example",
+                Uri.parse("android-app://example.com"),
+                false,
+            )
 
         val output = input.toParcelAndBack()
 
@@ -56,6 +62,7 @@ class ActivityModelTest {
                 launchedFromUid = 1000,
                 launchedFromPackage = "other.example.com",
                 referrer = Uri.parse("android-app://app.example.com"),
+                false,
             )
 
         assertThat(launch1.referrerPackage).isEqualTo("app.example.com")
@@ -69,6 +76,7 @@ class ActivityModelTest {
                 launchedFromUid = 1000,
                 launchedFromPackage = "example.com",
                 referrer = Uri.parse("http://some.other.value"),
+                false,
             )
 
         assertThat(launch.referrerPackage).isNull()
@@ -82,6 +90,7 @@ class ActivityModelTest {
                 launchedFromUid = 1000,
                 launchedFromPackage = "example.com",
                 referrer = null,
+                false,
             )
 
         assertThat(launch.referrerPackage).isNull()
