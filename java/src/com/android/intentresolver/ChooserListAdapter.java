@@ -48,6 +48,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
+import com.android.intentresolver.chooser.DisplayResolveInfoAzInfoComparator;
 import com.android.intentresolver.chooser.MultiDisplayResolveInfo;
 import com.android.intentresolver.chooser.NotSelectableTargetInfo;
 import com.android.intentresolver.chooser.SelectableTargetInfo;
@@ -110,7 +111,6 @@ public class ChooserListAdapter extends ResolverListAdapter {
     // Reserve spots for incoming direct share targets by adding placeholders
     private final TargetInfo mPlaceHolderTargetInfo;
     private final TargetDataLoader mTargetDataLoader;
-    private final boolean mUseBadgeTextViewForLabels;
     private final List<TargetInfo> mServiceTargets = new ArrayList<>();
     private final List<DisplayResolveInfo> mCallerTargets = new ArrayList<>();
 
@@ -152,6 +152,10 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 }
             };
 
+    private boolean mAnimateItems = true;
+    private boolean mTargetsEnabled = true;
+    private boolean mDirectTargetsEnabled = true;
+
     public ChooserListAdapter(
             Context context,
             List<Intent> payloadIntents,
@@ -168,8 +172,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             int maxRankedTargets,
             UserHandle initialIntentsUserSpace,
             TargetDataLoader targetDataLoader,
-            @Nullable PackageChangeCallback packageChangeCallback,
-            FeatureFlags featureFlags) {
+            @Nullable PackageChangeCallback packageChangeCallback) {
         this(
                 context,
                 payloadIntents,
@@ -188,8 +191,8 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 targetDataLoader,
                 packageChangeCallback,
                 AsyncTask.SERIAL_EXECUTOR,
-                context.getMainExecutor(),
-                featureFlags);
+                context.getMainExecutor()
+        );
     }
 
     @VisibleForTesting
@@ -211,8 +214,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             TargetDataLoader targetDataLoader,
             @Nullable PackageChangeCallback packageChangeCallback,
             Executor bgExecutor,
-            Executor mainExecutor,
-            FeatureFlags featureFlags) {
+            Executor mainExecutor) {
         // Don't send the initial intents through the shared ResolverActivity path,
         // we want to separate them into a different section.
         super(
@@ -236,7 +238,6 @@ public class ChooserListAdapter extends ResolverListAdapter {
         mPlaceHolderTargetInfo = NotSelectableTargetInfo.newPlaceHolderTargetInfo(context);
         mTargetDataLoader = targetDataLoader;
         mPackageChangeCallback = packageChangeCallback;
-        mUseBadgeTextViewForLabels = featureFlags.bespokeLabelView();
         createPlaceHolders();
         mEventLog = eventLog;
         mShortcutSelectionLogic = new ShortcutSelectionLogic(
@@ -307,6 +308,32 @@ public class ChooserListAdapter extends ResolverListAdapter {
         }
     }
 
+    /**
+     * Set the enabled state for all targets.
+     */
+    public void setTargetsEnabled(boolean isEnabled) {
+        if (mTargetsEnabled != isEnabled) {
+            mTargetsEnabled = isEnabled;
+            notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Set the enabled state for direct targets.
+     */
+    public void setDirectTargetsEnabled(boolean isEnabled) {
+        if (mDirectTargetsEnabled != isEnabled) {
+            mDirectTargetsEnabled = isEnabled;
+            if (!mServiceTargets.isEmpty() && !isDirectTargetRowEmptyState()) {
+                notifyDataSetChanged();
+            }
+        }
+    }
+
+    public void setAnimateItems(boolean animateItems) {
+        mAnimateItems = animateItems;
+    }
+
     @Override
     public void handlePackagesChanged() {
         if (mPackageChangeCallback != null) {
@@ -338,17 +365,20 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     @Override
     View onCreateView(ViewGroup parent) {
-        return mInflater.inflate(
-                mUseBadgeTextViewForLabels
-                        ? R.layout.chooser_grid_item
-                        : R.layout.resolve_grid_item,
-                parent,
-                false);
+        return mInflater.inflate(R.layout.chooser_grid_item, parent, false);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        notifyDataSetChanged();
     }
 
     @VisibleForTesting
     @Override
     public void onBindView(View view, TargetInfo info, int position) {
+        final boolean isEnabled = !isDestroyed() && mTargetsEnabled;
+        view.setEnabled(isEnabled);
         final ViewHolder holder = (ViewHolder) view.getTag();
 
         resetViewHolder(holder);
@@ -363,19 +393,17 @@ public class ChooserListAdapter extends ResolverListAdapter {
         final CharSequence displayLabel = Objects.requireNonNullElse(info.getDisplayLabel(), "");
         final CharSequence extendedInfo = Objects.requireNonNullElse(info.getExtendedInfo(), "");
         holder.bindLabel(displayLabel, extendedInfo);
-        if (!TextUtils.isEmpty(displayLabel)) {
+        if (mAnimateItems && !TextUtils.isEmpty(displayLabel)) {
             mAnimationTracker.animateLabel(holder.text, info);
         }
-        if (!TextUtils.isEmpty(extendedInfo) && holder.text2.getVisibility() == View.VISIBLE) {
+        if (mAnimateItems
+                && !TextUtils.isEmpty(extendedInfo)
+                && holder.text2.getVisibility() == View.VISIBLE) {
             mAnimationTracker.animateLabel(holder.text2, info);
         }
 
-        holder.bindIcon(info);
-        if (info.hasDisplayIcon()) {
-            mAnimationTracker.animateIcon(holder.icon, info);
-        }
-
         if (info.isSelectableTargetInfo()) {
+            view.setEnabled(isEnabled && mDirectTargetsEnabled);
             // direct share targets should append the application name for a better readout
             DisplayResolveInfo rInfo = info.getDisplayResolveInfo();
             CharSequence appName =
@@ -410,6 +438,11 @@ public class ChooserListAdapter extends ResolverListAdapter {
             }
         }
 
+        holder.bindIcon(info, mTargetsEnabled);
+        if (mAnimateItems && info.hasDisplayIcon()) {
+            mAnimationTracker.animateIcon(holder.icon, info);
+        }
+
         if (info.isPlaceHolderTargetInfo()) {
             bindPlaceholder(holder);
         }
@@ -432,9 +465,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
         holder.reset();
         holder.itemView.setBackground(holder.defaultItemViewBackground);
 
-        if (mUseBadgeTextViewForLabels) {
-            ((BadgeTextView) holder.text).setBadgeDrawable(null);
-        }
+        ((BadgeTextView) holder.text).setBadgeDrawable(null);
         holder.text.setBackground(null);
         holder.text.setPaddingRelative(0, 0, 0, 0);
     }
@@ -448,12 +479,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
     }
 
     private void bindGroupIndicator(ViewHolder holder, Drawable indicator) {
-        if (mUseBadgeTextViewForLabels) {
-            ((BadgeTextView) holder.text).setBadgeDrawable(indicator);
-        } else {
-            holder.text.setPaddingRelative(0, 0, /*end = */indicator.getIntrinsicWidth(), 0);
-            holder.text.setBackground(indicator);
-        }
+        ((BadgeTextView) holder.text).setBadgeDrawable(indicator);
     }
 
     private void bindPinnedIndicator(ViewHolder holder, Drawable indicator) {
@@ -463,23 +489,39 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     private void loadDirectShareIcon(SelectableTargetInfo info) {
         if (mRequestedIcons.add(info)) {
-            mTargetDataLoader.loadDirectShareIcon(
+            Drawable icon = mTargetDataLoader.getOrLoadDirectShareIcon(
                     info,
                     getUserHandle(),
-                    (drawable) -> onDirectShareIconLoaded(info, drawable));
+                    (drawable) -> onDirectShareIconLoaded(info, drawable, true));
+            if (icon != null) {
+                onDirectShareIconLoaded(info, icon, false);
+            }
         }
     }
 
-    private void onDirectShareIconLoaded(SelectableTargetInfo mTargetInfo, Drawable icon) {
+    private void onDirectShareIconLoaded(
+            SelectableTargetInfo mTargetInfo, @Nullable Drawable icon, boolean notify) {
         if (icon != null && !mTargetInfo.hasDisplayIcon()) {
             mTargetInfo.getDisplayIconHolder().setDisplayIcon(icon);
-            notifyDataSetChanged();
+            if (notify) {
+                notifyDataSetChanged();
+            }
         }
     }
 
+    /**
+     * Group application targets
+     */
     public void updateAlphabeticalList() {
-        final ChooserActivity.AzInfoComparator comparator =
-                new ChooserActivity.AzInfoComparator(mContext);
+        updateAlphabeticalList(() -> {});
+    }
+
+    /**
+     * Group application targets
+     */
+    public void updateAlphabeticalList(Runnable onCompleted) {
+        final DisplayResolveInfoAzInfoComparator
+                comparator = new DisplayResolveInfoAzInfoComparator(mContext);
         final List<DisplayResolveInfo> allTargets = new ArrayList<>();
         allTargets.addAll(getTargetsInCurrentDisplayList());
         allTargets.addAll(mCallerTargets);
@@ -522,6 +564,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
                 mSortedList.clear();
                 mSortedList.addAll(newList);
                 notifyDataSetChanged();
+                onCompleted.run();
             }
 
             private void loadMissingLabels(List<DisplayResolveInfo> targets) {
@@ -711,11 +754,11 @@ public class ChooserListAdapter extends ResolverListAdapter {
     public void addServiceResults(
             @Nullable DisplayResolveInfo origTarget,
             List<ChooserTarget> targets,
-            @ChooserActivity.ShareTargetType int targetType,
+            int targetType,
             Map<ChooserTarget, ShortcutInfo> directShareToShortcutInfos,
             Map<ChooserTarget, AppTarget> directShareToAppTargets) {
         // Avoid inserting any potentially late results.
-        if ((mServiceTargets.size() == 1) && mServiceTargets.get(0).isEmptyTargetInfo()) {
+        if (isDirectTargetRowEmptyState()) {
             return;
         }
         boolean isShortcutResult = targetType == TARGET_TYPE_SHORTCUTS_FROM_SHORTCUT_MANAGER
@@ -738,6 +781,22 @@ public class ChooserListAdapter extends ResolverListAdapter {
     }
 
     /**
+     * Copy direct targets from another ChooserListAdapter instance
+     */
+    public void copyDirectTargetsFrom(ChooserListAdapter adapter) {
+        if (adapter.isDirectTargetRowEmptyState()) {
+            return;
+        }
+
+        mServiceTargets.clear();
+        mServiceTargets.addAll(adapter.mServiceTargets);
+    }
+
+    private boolean isDirectTargetRowEmptyState() {
+        return (mServiceTargets.size() == 1) && mServiceTargets.get(0).isEmptyTargetInfo();
+    }
+
+    /**
      * Use the scoring system along with artificial boosts to create up to 4 distinct buckets:
      * <ol>
      *   <li>App-supplied targets
@@ -748,7 +807,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
      */
     public float getBaseScore(
             DisplayResolveInfo target,
-            @ChooserActivity.ShareTargetType int targetType) {
+            int targetType) {
         if (target == null) {
             return CALLER_TARGET_SCORE_BOOST;
         }

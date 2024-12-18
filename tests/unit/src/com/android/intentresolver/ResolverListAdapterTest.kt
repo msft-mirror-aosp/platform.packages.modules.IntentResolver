@@ -29,11 +29,17 @@ import com.android.intentresolver.ResolverListAdapter.ResolverListCommunicator
 import com.android.intentresolver.icons.TargetDataLoader
 import com.android.intentresolver.util.TestExecutor
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
-import org.mockito.Mockito.anyBoolean
-import org.mockito.Mockito.inOrder
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.inOrder
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 private const val PKG_NAME = "org.pkg.app"
 private const val PKG_NAME_TWO = "org.pkg.two.app"
@@ -43,20 +49,15 @@ private const val CLASS_NAME = "org.pkg.app.TheClass"
 class ResolverListAdapterTest {
     private val layoutInflater = mock<LayoutInflater>()
     private val packageManager = mock<PackageManager>()
-    private val userManager = mock<UserManager> { whenever(isManagedProfile).thenReturn(false) }
+    private val userManager = mock<UserManager> { on { isManagedProfile } doReturn (false) }
     private val context =
         mock<Context> {
-            whenever(getSystemService(Context.LAYOUT_INFLATER_SERVICE)).thenReturn(layoutInflater)
-            whenever(getSystemService(Context.USER_SERVICE)).thenReturn(userManager)
-            whenever(packageManager).thenReturn(this@ResolverListAdapterTest.packageManager)
+            on { getSystemService(Context.LAYOUT_INFLATER_SERVICE) } doReturn layoutInflater
+            on { getSystemService(Context.USER_SERVICE) } doReturn userManager
+            on { packageManager } doReturn this@ResolverListAdapterTest.packageManager
         }
     private val targetIntent = Intent(Intent.ACTION_SEND)
     private val payloadIntents = listOf(targetIntent)
-    private val resolverListController =
-        mock<ResolverListController> {
-            whenever(filterIneligibleActivities(any(), anyBoolean())).thenReturn(null)
-            whenever(filterLowPriority(any(), anyBoolean())).thenReturn(null)
-        }
     private val resolverListCommunicator = FakeResolverListCommunicator()
     private val userHandle = UserHandle.of(UserHandle.USER_CURRENT)
     private val targetDataLoader = mock<TargetDataLoader>()
@@ -66,16 +67,20 @@ class ResolverListAdapterTest {
     @Test
     fun test_oneTargetNoLastChosen_oneTargetInAdapter() {
         val resolvedTargets = createResolvedComponents(ComponentName(PKG_NAME, CLASS_NAME))
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -111,18 +116,21 @@ class ResolverListAdapterTest {
     @Test
     fun test_oneTargetThatWasLastChosen_NoTargetsInAdapter() {
         val resolvedTargets = createResolvedComponents(ComponentName(PKG_NAME, CLASS_NAME))
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
-        whenever(resolverListController.lastChosen)
-            .thenReturn(resolvedTargets[0].getResolveInfoAt(0))
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -157,18 +165,21 @@ class ResolverListAdapterTest {
     @Test
     fun test_oneTargetLastChosenNotInTheList_oneTargetInAdapter() {
         val resolvedTargets = createResolvedComponents(ComponentName(PKG_NAME, CLASS_NAME))
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
-        whenever(resolverListController.lastChosen)
-            .thenReturn(createResolveInfo(PKG_NAME_TWO, CLASS_NAME))
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { lastChosen } doReturn createResolveInfo(PKG_NAME_TWO, CLASS_NAME, userHandle)
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -195,7 +206,9 @@ class ResolverListAdapterTest {
         assertThat(testSubject.hasFilteredItem()).isTrue()
         assertThat(testSubject.filteredItem).isNull()
         assertThat(testSubject.filteredPosition).isLessThan(0)
-        assertThat(testSubject.unfilteredResolveList).containsExactlyElementsIn(resolvedTargets)
+        assertWithMessage("unfilteredResolveList")
+            .that(testSubject.unfilteredResolveList)
+            .containsExactlyElementsIn(resolvedTargets)
         assertThat(testSubject.isTabLoaded).isTrue()
         assertThat(backgroundExecutor.pendingCommandCount).isEqualTo(0)
     }
@@ -203,18 +216,21 @@ class ResolverListAdapterTest {
     @Test
     fun test_oneTargetThatWasLastChosenFilteringDisabled_oneTargetInAdapter() {
         val resolvedTargets = createResolvedComponents(ComponentName(PKG_NAME, CLASS_NAME))
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
-        whenever(resolverListController.lastChosen)
-            .thenReturn(resolvedTargets[0].getResolveInfoAt(0))
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -242,7 +258,9 @@ class ResolverListAdapterTest {
         assertThat(testSubject.hasFilteredItem()).isFalse()
         assertThat(testSubject.filteredItem).isNull()
         assertThat(testSubject.filteredPosition).isLessThan(0)
-        assertThat(testSubject.unfilteredResolveList).containsExactlyElementsIn(resolvedTargets)
+        assertWithMessage("unfilteredResolveList")
+            .that(testSubject.unfilteredResolveList)
+            .containsExactlyElementsIn(resolvedTargets)
         assertThat(testSubject.isTabLoaded).isTrue()
     }
 
@@ -272,20 +290,23 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        if (hasLastChosen) {
-            whenever(resolverListController.lastChosen)
-                .thenReturn(resolvedTargets[0].getResolveInfoAt(0))
-        }
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                if (hasLastChosen) {
+                    on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
+                }
+            }
         val resolverListCommunicator = FakeResolverListCommunicator(useLayoutWithDefaults)
         val testSubject =
             ResolverListAdapter(
@@ -346,18 +367,21 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        whenever(resolverListController.lastChosen)
-            .thenReturn(createResolveInfo(PKG_NAME, CLASS_NAME + "2"))
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { lastChosen } doReturn createResolveInfo(PKG_NAME, CLASS_NAME + "2", userHandle)
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -410,19 +434,21 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
         resolvedTargets[1].getResolveInfoAt(0).targetUserId = 10
-        whenever(resolvedTargets[1].getResolveInfoAt(0).loadLabel(any())).thenReturn("Label")
-        whenever(resolverListController.lastChosen)
-            .thenReturn(resolvedTargets[0].getResolveInfoAt(0))
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { lastChosen } doReturn resolvedTargets[0].getResolveInfoAt(0)
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -450,7 +476,9 @@ class ResolverListAdapterTest {
         assertThat(testSubject.hasFilteredItem()).isFalse()
         assertThat(testSubject.filteredItem).isNull()
         assertThat(testSubject.filteredPosition).isLessThan(0)
-        assertThat(testSubject.unfilteredResolveList).containsExactlyElementsIn(resolvedTargets)
+        // The following must be an old bug i.e. unfilteredResolveList should be equal to
+        // resolvedTargets. Also see comments in the code.
+        assertThat(testSubject.unfilteredResolveList).containsExactly(resolvedTargets[0])
         assertThat(testSubject.isTabLoaded).isTrue()
         assertThat(backgroundExecutor.pendingCommandCount).isEqualTo(0)
     }
@@ -463,21 +491,26 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
-        whenever(resolverListController.sort(any())).thenAnswer { invocation ->
-            val components = invocation.arguments[0] as MutableList<ResolvedComponentInfo>
-            components[0] = components[1].also { components[1] = components[0] }
-            null
-        }
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { sort(any()) } doAnswer
+                    {
+                        val components = it.arguments[0] as MutableList<ResolvedComponentInfo>
+                        components[0] = components[1].also { components[1] = components[0] }
+                        null
+                    }
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -500,11 +533,10 @@ class ResolverListAdapterTest {
 
         backgroundExecutor.runUntilIdle()
 
-        // we don't reset placeholder count (legacy logic, likely an oversight?)
         assertThat(testSubject.count).isEqualTo(resolvedTargets.size)
-        assertThat(resolvedTargets[0].getResolveInfoAt(0).activityInfo.packageName)
+        assertThat(testSubject.getDisplayResolveInfo(0).resolveInfo.activityInfo.packageName)
             .isEqualTo(PKG_NAME_TWO)
-        assertThat(resolvedTargets[1].getResolveInfoAt(0).activityInfo.packageName)
+        assertThat(testSubject.getDisplayResolveInfo(1).resolveInfo.activityInfo.packageName)
             .isEqualTo(PKG_NAME)
     }
 
@@ -516,22 +548,26 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
-        whenever(resolverListController.filterIneligibleActivities(any(), anyBoolean()))
-            .thenAnswer { invocation ->
-                val components = invocation.arguments[0] as MutableList<ResolvedComponentInfo>
-                val original = ArrayList(components)
-                components.removeAt(1)
-                original
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { filterIneligibleActivities(any(), any()) } doAnswer
+                    {
+                        val components = it.arguments[0] as MutableList<ResolvedComponentInfo>
+                        val original = ArrayList(components)
+                        components.removeAt(1)
+                        original
+                    }
             }
         val testSubject =
             ResolverListAdapter(
@@ -565,24 +601,28 @@ class ResolverListAdapterTest {
     @Suppress("UNCHECKED_CAST")
     @Test
     fun test_baseResolveList_excludedFromIneligibleActivityFiltering() {
-        val rList = listOf(createResolveInfo(PKG_NAME, CLASS_NAME))
-        whenever(resolverListController.addResolveListDedupe(any(), eq(targetIntent), eq(rList)))
-            .thenAnswer { invocation ->
-                val result = invocation.arguments[0] as MutableList<ResolvedComponentInfo>
-                result.addAll(
-                    createResolvedComponents(
-                        ComponentName(PKG_NAME, CLASS_NAME),
-                        ComponentName(PKG_NAME_TWO, CLASS_NAME),
-                    )
-                )
-                null
-            }
-        whenever(resolverListController.filterIneligibleActivities(any(), anyBoolean()))
-            .thenAnswer { invocation ->
-                val components = invocation.arguments[0] as MutableList<ResolvedComponentInfo>
-                val original = ArrayList(components)
-                components.clear()
-                original
+        val rList = listOf(createResolveInfo(PKG_NAME, CLASS_NAME, userHandle))
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterLowPriority(any(), any()) } doReturn null
+                on { addResolveListDedupe(any(), eq(targetIntent), eq(rList)) } doAnswer
+                    {
+                        val result = it.arguments[0] as MutableList<ResolvedComponentInfo>
+                        result.addAll(
+                            createResolvedComponents(
+                                ComponentName(PKG_NAME, CLASS_NAME),
+                                ComponentName(PKG_NAME_TWO, CLASS_NAME),
+                            )
+                        )
+                        null
+                    }
+                on { filterIneligibleActivities(any(), any()) } doAnswer
+                    {
+                        val components = it.arguments[0] as MutableList<ResolvedComponentInfo>
+                        val original = ArrayList(components)
+                        components.clear()
+                        original
+                    }
             }
         val testSubject =
             ResolverListAdapter(
@@ -606,7 +646,6 @@ class ResolverListAdapterTest {
 
         backgroundExecutor.runUntilIdle()
 
-        // we don't reset placeholder count (legacy logic, likely an oversight?)
         assertThat(testSubject.count).isEqualTo(2)
         assertThat(testSubject.unfilteredResolveList).hasSize(2)
     }
@@ -619,23 +658,26 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
-        whenever(resolverListController.filterLowPriority(any(), anyBoolean())).thenAnswer {
-            invocation ->
-            val components = invocation.arguments[0] as MutableList<ResolvedComponentInfo>
-            val original = ArrayList(components)
-            components.removeAt(1)
-            original
-        }
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+                on { filterLowPriority(any(), any()) } doAnswer
+                    {
+                        val components = it.arguments[0] as MutableList<ResolvedComponentInfo>
+                        val original = ArrayList(components)
+                        components.removeAt(1)
+                        original
+                    }
+            }
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -672,19 +714,23 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
         val initialComponent = ComponentName(PKG_NAME_THREE, CLASS_NAME)
         val initialIntents =
             arrayOf(Intent(Intent.ACTION_SEND).apply { component = initialComponent })
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+            }
         whenever(packageManager.getActivityInfo(eq(initialComponent), eq(0)))
             .thenReturn(createActivityInfo(initialComponent))
         val testSubject =
@@ -742,16 +788,20 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    true,
-                    resolverListCommunicator.shouldGetActivityMetadata(),
-                    resolverListCommunicator.shouldGetOnlyDefaultActivities(),
-                    payloadIntents,
-                    userHandle
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on {
+                    getResolversForIntentAsUser(
+                        true,
+                        resolverListCommunicator.shouldGetActivityMetadata(),
+                        resolverListCommunicator.shouldGetOnlyDefaultActivities(),
+                        payloadIntents,
+                        userHandle
+                    )
+                } doReturn ArrayList(resolvedTargets)
+            }
         val initialComponent = ComponentName(PKG_NAME_TWO, CLASS_NAME)
         val initialIntents =
             arrayOf(Intent(Intent.ACTION_SEND).apply { component = initialComponent })
@@ -808,6 +858,7 @@ class ResolverListAdapterTest {
     @Test
     fun testPostListReadyAtEndOfRebuild_synchronous() {
         val communicator = mock<ResolverListCommunicator> {}
+        val resolverListController = mock<ResolverListController>()
         val testSubject =
             ResolverListAdapter(
                 context,
@@ -839,26 +890,16 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        // TODO: there's a lot of boilerplate required for this test even to trigger the expected
-        // conditions; if the configuration is incorrect, the test may accidentally pass for the
-        // wrong reasons. Separating responsibilities to other components will help minimize the
-        // *amount* of boilerplate, but we should also consider setting up test defaults that work
-        // according to our usual expectations so that we don't overlook false-negative results.
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on { getResolversForIntentAsUser(any(), any(), any(), any(), any()) } doReturn
+                    ArrayList(resolvedTargets)
+            }
         val communicator =
             mock<ResolverListCommunicator> {
-                whenever(getReplacementIntent(any(), any())).thenAnswer { invocation ->
-                    invocation.arguments[1]
-                }
+                on { getReplacementIntent(any(), any()) } doAnswer { it.arguments[1] as Intent }
             }
         val testSubject =
             ResolverListAdapter(
@@ -897,26 +938,16 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        // TODO: there's a lot of boilerplate required for this test even to trigger the expected
-        // conditions; if the configuration is incorrect, the test may accidentally pass for the
-        // wrong reasons. Separating responsibilities to other components will help minimize the
-        // *amount* of boilerplate, but we should also consider setting up test defaults that work
-        // according to our usual expectations so that we don't overlook false-negative results.
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on { getResolversForIntentAsUser(any(), any(), any(), any(), any()) } doReturn
+                    ArrayList(resolvedTargets)
+            }
         val communicator =
             mock<ResolverListCommunicator> {
-                whenever(getReplacementIntent(any(), any())).thenAnswer { invocation ->
-                    invocation.arguments[1]
-                }
+                on { getReplacementIntent(any(), any()) } doAnswer { it.arguments[1] as Intent }
             }
         val testSubject =
             ResolverListAdapter(
@@ -962,26 +993,16 @@ class ResolverListAdapterTest {
                 ComponentName(PKG_NAME, CLASS_NAME),
                 ComponentName(PKG_NAME_TWO, CLASS_NAME),
             )
-        // TODO: there's a lot of boilerplate required for this test even to trigger the expected
-        // conditions; if the configuration is incorrect, the test may accidentally pass for the
-        // wrong reasons. Separating responsibilities to other components will help minimize the
-        // *amount* of boilerplate, but we should also consider setting up test defaults that work
-        // according to our usual expectations so that we don't overlook false-negative results.
-        whenever(
-                resolverListController.getResolversForIntentAsUser(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                )
-            )
-            .thenReturn(resolvedTargets)
+        val resolverListController =
+            mock<ResolverListController> {
+                on { filterIneligibleActivities(any(), any()) } doReturn null
+                on { filterLowPriority(any(), any()) } doReturn null
+                on { getResolversForIntentAsUser(any(), any(), any(), any(), any()) } doReturn
+                    ArrayList(resolvedTargets)
+            }
         val communicator =
             mock<ResolverListCommunicator> {
-                whenever(getReplacementIntent(any(), any())).thenAnswer { invocation ->
-                    invocation.arguments[1]
-                }
+                on { getReplacementIntent(any(), any()) } doAnswer { it.arguments[1] as Intent }
             }
         val testSubject =
             ResolverListAdapter(
@@ -1023,17 +1044,23 @@ class ResolverListAdapterTest {
                 ResolvedComponentInfo(
                     ComponentName(PKG_NAME, CLASS_NAME),
                     targetIntent,
-                    createResolveInfo(component.packageName, component.className)
+                    createResolveInfo(component.packageName, component.className, userHandle)
                 )
             result.add(resolvedComponentInfo)
         }
         return result
     }
 
-    private fun createResolveInfo(packageName: String, className: String): ResolveInfo =
-        mock<ResolveInfo> {
+    private fun createResolveInfo(
+        packageName: String,
+        className: String,
+        handle: UserHandle,
+        label: String? = null
+    ): ResolveInfo =
+        ResolveInfo().apply {
             activityInfo = createActivityInfo(ComponentName(packageName, className))
-            targetUserId = this@ResolverListAdapterTest.userHandle.identifier
-            userHandle = this@ResolverListAdapterTest.userHandle
+            targetUserId = handle.identifier
+            userHandle = handle
+            nonLocalizedLabel = label
         }
 }

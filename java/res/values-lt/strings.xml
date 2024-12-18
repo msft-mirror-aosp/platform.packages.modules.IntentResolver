@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Bendrinamas vaizdas}one{Bendrinamas # vaizdas}few{Bendrinami # vaizdai}many{Bendrinama # vaizdo}other{Bendrinama # vaizdų}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Bendrinamas vaizdo įrašas}one{Bendrinamas # vaizdo įrašas}few{Bendrinami # vaizdo įrašai}many{Bendrinama # vaizdo įrašo}other{Bendrinama # vaizdo įrašų}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Bendrinamas # failas}one{Bendrinamas # failas}few{Bendrinami # failai}many{Bendrinama # failo}other{Bendrinama # failų}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Norimų bendrinti elementų pasirinkimas"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Bendrinamas vaizdas su tekstu}one{Bendrinamas # vaizdas su tekstu}few{Bendrinami # vaizdai su tekstu}many{Bendrinama # vaizdo su tekstu}other{Bendrinama # vaizdų su tekstu}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Bendrinamas vaizdas su nuoroda}one{Bendrinamas # vaizdas su nuoroda}few{Bendrinami # vaizdai su nuoroda}many{Bendrinama # vaizdo su nuoroda}other{Bendrinama # vaizdų su nuoroda}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Bendrinamas vaizdo įrašas su tekstu}one{Bendrinamas # vaizdo įrašas su tekstu}few{Bendrinami # vaizdo įrašai su tekstu}many{Bendrinama # vaizdo įrašo su tekstu}other{Bendrinama # vaizdo įrašų su tekstu}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Šio turinio negalima atidaryti naudojant darbo programas"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Šio turinio negalima bendrinti su asmeninėmis programomis"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Šio turinio negalima atidaryti naudojant asmenines programas"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Šio turinio negalima bendrinti su privačiomis programomis"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Šio turinio negalima atidaryti naudojant privačias programas"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Darbo programos pristabdytos"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Atšaukti pristabdymą"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Nėra darbo programų"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Nėra asmeninių programų"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Nėra privačių programų"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Atidaryti „<xliff:g id="APP">%s</xliff:g>“ asmeniniame profilyje?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Atidaryti „<xliff:g id="APP">%s</xliff:g>“ darbo profilyje?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Naudoti asmeninę naršyklę"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Išskirti nuorodą"</string>
     <string name="include_link" msgid="827855767220339802">"Įtraukti nuorodą"</string>
     <string name="pinned" msgid="7623664001331394139">"Prisegta"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Pasirenkamas vaizdas"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Pasirenkamas vaizdo įrašas"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Pasirenkamas elementas"</string>
 </resources>

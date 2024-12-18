@@ -45,11 +45,11 @@
     <string name="use_a_different_app" msgid="2062380818535918975">"استخدام تطبيق آخر"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"اختيار إجراء"</string>
     <string name="noApplications" msgid="1139487441772284671">"ليست هناك تطبيقات يمكنها تنفيذ هذا الإجراء."</string>
-    <string name="forward_intent_to_owner" msgid="6454987608971162379">"أنت تستخدم هذا التطبيق خارج ملفك الشخصي للعمل"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"أنت تستخدم هذا التطبيق في ملفك الشخصي للعمل"</string>
+    <string name="forward_intent_to_owner" msgid="6454987608971162379">"أنت تستخدم هذا التطبيق خارج ملف العمل الخاص بك"</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"أنت تستخدم هذا التطبيق في ملف العمل الخاص بك"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"دائمًا"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"مرة واحدة فقط"</string>
-    <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"لا يتوافق تطبيق \"<xliff:g id="APP">%1$s</xliff:g>\" مع الملف الشخصي للعمل."</string>
+    <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"لا يتوافق تطبيق \"<xliff:g id="APP">%1$s</xliff:g>\" مع ملف العمل."</string>
     <string name="pin_specific_target" msgid="5057063421361441406">"تثبيت <xliff:g id="LABEL">%1$s</xliff:g>"</string>
     <string name="unpin_specific_target" msgid="3115158908159857777">"إزالة تثبيت <xliff:g id="LABEL">%1$s</xliff:g>"</string>
     <string name="screenshot_edit" msgid="3857183660047569146">"تعديل"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{جارٍ مشاركة صورة واحدة}zero{جارٍ مشاركة # صورة}two{جارٍ مشاركة صورتَين}few{جارٍ مشاركة # صور}many{جارٍ مشاركة # صورة}other{جارٍ مشاركة # صورة}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{جارٍ مشاركة فيديو واحد}zero{جارٍ مشاركة # فيديو}two{جارٍ مشاركة فيديوهَين}few{جارٍ مشاركة # فيديوهات}many{جارٍ مشاركة # فيديو}other{جارٍ مشاركة # فيديو}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{مشاركة ملف واحد}zero{مشاركة # ملف}two{مشاركة ملفَّين}few{مشاركة # ملفات}many{مشاركة # ملفًّا}other{مشاركة # ملف}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"اختيار العناصر المراد مشاركتها"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{مشاركة صورة واحدة ونص}zero{مشاركة # صورة ونص}two{مشاركة صورتَين ونص}few{مشاركة # صور ونص}many{مشاركة # صورة ونص}other{مشاركة # صورة ونص}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{مشاركة صورة واحدة ورابط}zero{مشاركة # صورة ورابط}two{مشاركة # صورتَين ورابط}few{مشاركة # صور ورابط}many{مشاركة # صورة ورابط}other{مشاركة # صورة ورابط}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{مشاركة فيديو واحد ونص}zero{مشاركة # فيديو ونص}two{مشاركة فيديوهَين ونص}few{مشاركة # فيديوهات ونص}many{مشاركة # فيديو ونص}other{مشاركة # فيديو ونص}}"</string>
@@ -73,10 +74,10 @@
     <string name="image_preview_a11y_description" msgid="297102643932491797">"صورة مصغّرة لمعاينة صورة"</string>
     <string name="video_preview_a11y_description" msgid="683440858811095990">"صورة مصغّرة لمعاينة فيديو"</string>
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"صورة مصغّرة لمعاينة ملف"</string>
-    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"ما مِن أشخاص مقترحين للمشاركة معهم."</string>
+    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"ما مِن أشخاص مقترحين للمشاركة معهم"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏لم يتم منح هذا التطبيق إذن تسجيل، ولكن يمكنه تسجيل الصوت من خلال جهاز USB هذا."</string>
-    <string name="resolver_personal_tab" msgid="1381052735324320565">"شخصي"</string>
-    <string name="resolver_work_tab" msgid="3588325717455216412">"للعمل"</string>
+    <string name="resolver_personal_tab" msgid="1381052735324320565">"المساحة الشخصية"</string>
+    <string name="resolver_work_tab" msgid="3588325717455216412">"مساحة العمل"</string>
     <string name="resolver_private_tab" msgid="3707548826254095157">"المساحة الخاصّة"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"عرض المحتوى الشخصي"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"عرض محتوى العمل"</string>
@@ -86,12 +87,15 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"لا يمكن فتح هذا المحتوى باستخدام تطبيقات العمل."</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"لا يمكن مشاركة هذا المحتوى مع التطبيقات الشخصية."</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"لا يمكن فتح هذا المحتوى باستخدام التطبيقات الشخصية."</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"لا يمكن مشاركة هذا المحتوى مع التطبيقات الخاصة"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"لا يمكن فتح هذا المحتوى باستخدام التطبيقات الخاصة"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"تطبيقات العمل متوقفة مؤقتًا."</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"إلغاء الإيقاف المؤقت"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"ما مِن تطبيقات عمل."</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"ما مِن تطبيقات شخصية."</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"ما مِن تطبيقات خاصة"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"هل تريد فتح <xliff:g id="APP">%s</xliff:g> في ملفك الشخصي؟"</string>
-    <string name="miniresolver_open_in_work" msgid="4271638122142624693">"هل تريد فتح <xliff:g id="APP">%s</xliff:g> في ملفك الشخصي للعمل؟"</string>
+    <string name="miniresolver_open_in_work" msgid="4271638122142624693">"هل تريد فتح <xliff:g id="APP">%s</xliff:g> في ملف العمل الخاص بك؟"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"استخدام المتصفّح الشخصي"</string>
     <string name="miniresolver_use_work_browser" msgid="7892699758493230342">"استخدام متصفّح العمل"</string>
     <string name="exclude_text" msgid="5508128757025928034">"استثناء النص"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"استثناء الرابط"</string>
     <string name="include_link" msgid="827855767220339802">"تضمين الرابط"</string>
     <string name="pinned" msgid="7623664001331394139">"مثبَّت"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"صورة يمكن اختيارها"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"فيديو يمكن اختياره"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"عنصر يمكن اختياره"</string>
 </resources>

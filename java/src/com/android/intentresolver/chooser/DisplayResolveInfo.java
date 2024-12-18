@@ -196,6 +196,7 @@ public class DisplayResolveInfo implements TargetInfo {
     }
 
     @Override
+    @NonNull
     public ComponentName getResolvedComponentName() {
         return new ComponentName(mResolveInfo.activityInfo.packageName,
                 mResolveInfo.activityInfo.name);

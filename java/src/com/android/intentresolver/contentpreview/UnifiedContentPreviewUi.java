@@ -20,6 +20,7 @@ import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTE
 
 import android.content.res.Resources;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,11 +32,13 @@ import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 import com.android.intentresolver.widget.ScrollableImagePreviewView;
 
-import java.util.List;
-import java.util.Objects;
+import kotlin.Pair;
 
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.Flow;
+
+import java.util.List;
+import java.util.Objects;
 
 class UnifiedContentPreviewUi extends ContentPreviewUi {
     private final boolean mShowEditAction;
@@ -54,8 +57,8 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     private List<FileInfo> mFiles;
     @Nullable
     private ViewGroup mContentPreviewView;
-    @Nullable
     private View mHeadlineView;
+    private int mPreviewSize;
 
     UnifiedContentPreviewUi(
             CoroutineScope scope,
@@ -93,18 +96,19 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
-        ViewGroup layout = displayInternal(layoutInflater, parent, headlineViewParent);
-        displayModifyShareAction(
-                headlineViewParent == null ? layout : headlineViewParent, mActionFactory);
-        return layout;
+            View headlineViewParent) {
+        mPreviewSize = resources.getDimensionPixelSize(R.dimen.chooser_preview_image_max_dimen);
+        return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
     private void setFiles(List<FileInfo> files) {
-        mImageLoader.prePopulate(files.stream()
-                .map(FileInfo::getPreviewUri)
-                .filter(Objects::nonNull)
-                .toList());
+        Size previewSize = new Size(mPreviewSize, mPreviewSize);
+        mImageLoader.prePopulate(
+                files.stream()
+                        .map(FileInfo::getPreviewUri)
+                        .filter(Objects::nonNull)
+                        .map((uri -> new Pair<>(uri, previewSize)))
+                        .toList());
         mFiles = files;
         if (mContentPreviewView != null) {
             updatePreviewWithFiles(mContentPreviewView, mHeadlineView, files);
@@ -112,10 +116,10 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
     }
 
     private ViewGroup displayInternal(
-            LayoutInflater layoutInflater, ViewGroup parent, @Nullable View headlineViewParent) {
+            LayoutInflater layoutInflater, ViewGroup parent, View headlineViewParent) {
         mContentPreviewView = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_image, parent, false);
-        mHeadlineView = headlineViewParent == null ? mContentPreviewView : headlineViewParent;
+        mHeadlineView = headlineViewParent;
         inflateHeadline(mHeadlineView);
 
         final ActionRow actionRow =
@@ -125,6 +129,7 @@ class UnifiedContentPreviewUi extends ContentPreviewUi {
 
         ScrollableImagePreviewView imagePreview =
                 mContentPreviewView.requireViewById(R.id.scrollable_image_preview);
+        imagePreview.setPreviewHeight(mPreviewSize);
         imagePreview.setImageLoader(mImageLoader);
         imagePreview.setOnNoPreviewCallback(() -> imagePreview.setVisibility(View.GONE));
         imagePreview.setTransitionElementStatusCallback(mTransitionElementStatusCallback);

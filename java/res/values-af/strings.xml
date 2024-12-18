@@ -36,17 +36,17 @@
     <string name="whichSendToApplication" msgid="2724450540348806267">"Stuur met"</string>
     <string name="whichSendToApplicationNamed" msgid="1996548940365954543">"Stuur met <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichSendToApplicationLabel" msgid="6909037198280591110">"Stuur"</string>
-    <string name="whichHomeApplication" msgid="8797832422254564739">"Kies \'n Tuis-program"</string>
+    <string name="whichHomeApplication" msgid="8797832422254564739">"Kies \'n Tuis-app"</string>
     <string name="whichHomeApplicationNamed" msgid="3943122502791761387">"Gebruik <xliff:g id="APP">%1$s</xliff:g> as Tuis"</string>
     <string name="whichHomeApplicationLabel" msgid="2066319585322981524">"Vang prent vas"</string>
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"Vang prent vas met"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"Vang prent vas met <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"Vang prent vas"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"Gebruik \'n ander program"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"Gebruik ’n ander app"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"Kies \'n handeling"</string>
     <string name="noApplications" msgid="1139487441772284671">"Geen programme kan hierdie handeling uitvoer nie."</string>
-    <string name="forward_intent_to_owner" msgid="6454987608971162379">"Jy gebruik hierdie program buite jou werkprofiel"</string>
-    <string name="forward_intent_to_work" msgid="2906094223089139419">"Jy gebruik tans hierdie program in jou werkprofiel"</string>
+    <string name="forward_intent_to_owner" msgid="6454987608971162379">"Jy gebruik hierdie app buite jou werkprofiel"</string>
+    <string name="forward_intent_to_work" msgid="2906094223089139419">"Jy gebruik tans hierdie app in jou werkprofiel"</string>
     <string name="activity_resolver_use_always" msgid="8674194687637555245">"Altyd"</string>
     <string name="activity_resolver_use_once" msgid="594173435998892989">"Net een keer"</string>
     <string name="activity_resolver_work_profiles_support" msgid="8228711455685203580">"<xliff:g id="APP">%1$s</xliff:g> steun nie werkprofiel nie"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Deel tans prent}other{Deel tans # prente}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Deel tans video}other{Deel tans # video’s}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Deel tans # lêer}other{Deel tans # lêers}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Kies items om te deel"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Deel tans prent met teks}other{Deel tans # prente met teks}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Deel tans prent met skakel}other{Deel tans # prente met skakel}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Deel tans video met teks}other{Deel tans # video’s met teks}}"</string>
@@ -74,7 +75,7 @@
     <string name="video_preview_a11y_description" msgid="683440858811095990">"Videovoorskouminiprent"</string>
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"Lêervoorskouminiprent"</string>
     <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"Geen mense om mee te deel is aanbeveel nie"</string>
-    <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Opneemtoestemming is nie aan hierdie program verleen nie, maar dit kan oudio deur hierdie USB-toestel opneem."</string>
+    <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Opneemtoestemming is nie aan hierdie app verleen nie, maar dit kan oudio deur hierdie USB-toestel opneem."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Persoonlik"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Werk"</string>
     <string name="resolver_private_tab" msgid="3707548826254095157">"Privaat"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Hierdie inhoud kan nie met werkprogramme oopgemaak word nie"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Hierdie inhoud kan nie met persoonlike apps gedeel word nie"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Hierdie inhoud kan nie met persoonlike programme oopgemaak word nie"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Hierdie inhoud kan nie met privaat apps gedeel word nie"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Hierdie inhoud kan nie met privaat apps oopgemaak word nie"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Werkapps word onderbreek"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Hervat"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Geen werkprogramme nie"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Geen persoonlike programme nie"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Geen private apps nie"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Maak <xliff:g id="APP">%s</xliff:g> in jou persoonlike profiel oop?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Maak <xliff:g id="APP">%s</xliff:g> in jou werkprofiel oop?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Gebruik persoonlike blaaier"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Sluit skakel uit"</string>
     <string name="include_link" msgid="827855767220339802">"Sluit skakel in"</string>
     <string name="pinned" msgid="7623664001331394139">"Vasgespeld"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Kiesbare prent"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Kiesbare video"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Kiesbare item"</string>
 </resources>

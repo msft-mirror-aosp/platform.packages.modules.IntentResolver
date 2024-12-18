@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{שיתוף של תמונה}one{שיתוף של # תמונות}two{שיתוף של # תמונות}other{שיתוף של # תמונות}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{מתבצע שיתוף של סרטון}one{מתבצע שיתוף של # סרטונים}two{מתבצע שיתוף של # סרטונים}other{מתבצע שיתוף של # סרטונים}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{מתבצע שיתוף של קובץ אחד}one{מתבצע שיתוף של # קבצים}two{מתבצע שיתוף של # קבצים}other{מתבצע שיתוף של # קבצים}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"בחירת פריטים לשיתוף"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{שיתוף תמונה עם טקסט}one{שיתוף # תמונות עם טקסט}two{שיתוף # תמונות עם טקסט}other{שיתוף # תמונות עם טקסט}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{שיתוף תמונה עם קישור}one{שיתוף # תמונות עם קישור}two{שיתוף # תמונות עם קישור}other{שיתוף # תמונות עם קישור}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{שיתוף סרטון עם טקסט}one{שיתוף # סרטונים עם טקסט}two{שיתוף # סרטונים עם טקסט}other{שיתוף # סרטונים עם טקסט}}"</string>
@@ -73,11 +74,11 @@
     <string name="image_preview_a11y_description" msgid="297102643932491797">"תמונה ממוזערת של תצוגה מקדימה של תמונה"</string>
     <string name="video_preview_a11y_description" msgid="683440858811095990">"תמונה ממוזערת של תצוגה מקדימה של סרטון"</string>
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"תמונה ממוזערת של תצוגה מקדימה של קובץ"</string>
-    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"אין אנשים שניתן לשתף איתם"</string>
+    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"אין המלצות עם מי לשתף"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏לאפליקציה זו לא ניתנה הרשאת הקלטה, אבל אפשר להקליט אודיו באמצעות התקן ה-USB הזה."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"אישי"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"עבודה"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"פרטי"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"מרחב פרטי"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"תצוגה אישית"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"תצוגת עבודה"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"תצוגה פרטית"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"אי אפשר לפתוח את התוכן הזה באמצעות אפליקציות לעבודה"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"אי אפשר לשתף את התוכן הזה עם אפליקציות לשימוש אישי"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"אי אפשר לפתוח את התוכן הזה באמצעות אפליקציות לשימוש אישי"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"אי אפשר לשתף את התוכן הזה עם אפליקציות פרטיות"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"אי אפשר לפתוח את התוכן הזה באפליקציות פרטיות"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"האפליקציות לעבודה מושהות"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ביטול ההשהיה"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"אין אפליקציות לעבודה"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"אין אפליקציות לשימוש אישי"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"התוכן הזה לא זמין לאפליקציות פרטיות"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"לפתוח את <xliff:g id="APP">%s</xliff:g> בפרופיל האישי?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"לפתוח את <xliff:g id="APP">%s</xliff:g> בפרופיל העבודה?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"בדפדפן האישי"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"החרגת הקישור"</string>
     <string name="include_link" msgid="827855767220339802">"הכללת הקישור"</string>
     <string name="pinned" msgid="7623664001331394139">"מוצמד"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"תמונה שניתן לבחור"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"סרטון שניתן לבחור"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"פריט שניתן לבחור"</string>
 </resources>

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ပုံ မျှဝေနေသည်}other{ပုံ # ပုံ မျှဝေနေသည်}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{ဗီဒီယို မျှဝေနေသည်}other{ဗီဒီယို # ခု မျှဝေနေသည်}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# ဖိုင် မျှဝေနေသည်}other{# ဖိုင် မျှဝေနေသည်}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"မျှဝေမည့်အရာများ ရွေးခြင်း"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{စာသားပါသောပုံကို မျှဝေနေသည်}other{စာသားပါသောပုံ # ပုံကို မျှဝေနေသည်}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{လင့်ခ်ပါသောပုံကို မျှဝေနေသည်}other{လင့်ခ်ပါသောပုံ # ပုံကို မျှဝေနေသည်}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{စာသားပါသောဗီဒီယိုကို မျှဝေနေသည်}other{စာသားပါသောဗီဒီယို # ခုကို မျှဝေနေသည်}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ဤအကြောင်းအရာကို အလုပ်သုံးအက်ပ်များဖြင့် မဖွင့်နိုင်ပါ"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"ဤအကြောင်းအရာကို ကိုယ်ပိုင်အက်ပ်များဖြင့် မမျှဝေနိုင်ပါ"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ဤအကြောင်းအရာကို ကိုယ်ပိုင်အက်ပ်များဖြင့် မဖွင့်နိုင်ပါ"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"ဤအကြောင်းအရာကို သီးသန့်အက်ပ်များဖြင့် မမျှဝေနိုင်ပါ"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"ဤအကြောင်းအရာကို သီးသန့်အက်ပ်များဖြင့် မဖွင့်နိုင်ပါ"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"အလုပ်သုံးအက်ပ်များကို ခေတ္တရပ်ထားသည်"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ပြန်ဖွင့်ရန်"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"အလုပ်သုံးအက်ပ်များ မရှိပါ"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"ကိုယ်ပိုင်အက်ပ်များ မရှိပါ"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"သီးသန့်အက်ပ် မရှိပါ"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> ကို သင့်ကိုယ်ပိုင်ပရိုဖိုင်တွင် ဖွင့်မလား။"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> ကို သင့်အလုပ်ပရိုဖိုင်တွင် ဖွင့်မလား။"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ကိုယ်ပိုင်ဘရောင်ဇာ သုံးရန်"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"လင့်ခ် ဖယ်ထုတ်ရန်"</string>
     <string name="include_link" msgid="827855767220339802">"လင့်ခ်ထည့်သွင်းရန်"</string>
     <string name="pinned" msgid="7623664001331394139">"ပင်ထိုးထားသည်"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"ရွေးချယ်နိုင်သောပုံ"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"ရွေးချယ်နိုင်သော ဗီဒီယို"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"ရွေးချယ်နိုင်သောအရာ"</string>
 </resources>

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Отправка изображения}one{Отправка # изображения}few{Отправка # изображений}many{Отправка # изображений}other{Отправка # изображения}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Отправка видео}one{Отправка # видео}few{Отправка # видео}many{Отправка # видео}other{Отправка # видео}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Предоставляется доступ к # файлу}one{Предоставляется доступ к # файлу}few{Предоставляется доступ к # файлам}many{Предоставляется доступ к # файлам}other{Предоставляется доступ к # файла}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Выберите объекты для отправки"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Отправка изображения с текстом}one{Отправка # изображения с текстом}few{Отправка # изображений с текстом}many{Отправка # изображений с текстом}other{Отправка # изображения с текстом}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Отправка изображения со ссылкой}one{Отправка # изображения со ссылкой}few{Отправка # изображений со ссылкой}many{Отправка # изображений со ссылкой}other{Отправка # изображения со ссылкой}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Отправка видео с текстом}one{Отправка # видео с текстом}few{Отправка # видео с текстом}many{Отправка # видео с текстом}other{Отправка # видео с текстом}}"</string>
@@ -75,21 +76,24 @@
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"Значок предварительного просмотра файла"</string>
     <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"Рекомендованных получателей нет."</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Приложению не разрешено записывать звук, однако оно может делать это с помощью этого USB-устройства."</string>
-    <string name="resolver_personal_tab" msgid="1381052735324320565">"Личное"</string>
-    <string name="resolver_work_tab" msgid="3588325717455216412">"Рабочее"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"Личное пространство"</string>
+    <string name="resolver_personal_tab" msgid="1381052735324320565">"Личный"</string>
+    <string name="resolver_work_tab" msgid="3588325717455216412">"Рабочий"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Частный"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Просмотр личных данных"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Просмотр рабочих данных"</string>
-    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Личное пространство"</string>
+    <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Частное пространство"</string>
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Заблокировано вашим администратором"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Этим контентом нельзя делиться с рабочими приложениями."</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Этот контент нельзя открыть в рабочем приложении."</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Этим контентом нельзя делиться с личными приложениями."</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Этот контент нельзя открыть в личном приложении."</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Этим контентом нельзя делиться через частные приложения."</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Этот контент нельзя открыть в частном приложении."</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Рабочие приложения приостановлены"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Включить"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Не поддерживается рабочими приложениями."</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Не поддерживается личными приложениями."</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Частные приложения не поддерживаются."</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Открыть приложение \"<xliff:g id="APP">%s</xliff:g>\" в личном профиле?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Открыть приложение \"<xliff:g id="APP">%s</xliff:g>\" в рабочем профиле?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Использовать личный браузер"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Исключить ссылку"</string>
     <string name="include_link" msgid="827855767220339802">"Вернуть ссылку"</string>
     <string name="pinned" msgid="7623664001331394139">"Закреплено"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Изображение, которое можно выбрать"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Видео, которое можно выбрать"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Объект, который можно выбрать"</string>
 </resources>

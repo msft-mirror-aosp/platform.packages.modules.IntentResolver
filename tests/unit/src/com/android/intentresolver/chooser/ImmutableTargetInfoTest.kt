@@ -23,17 +23,17 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.os.UserHandle
-import com.android.intentresolver.createShortcutInfo
-import com.android.intentresolver.mock
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.intentresolver.ResolverActivity
 import com.android.intentresolver.ResolverDataProvider
+import com.android.intentresolver.createShortcutInfo
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
-import androidx.test.platform.app.InstrumentationRegistry
+import org.mockito.kotlin.mock
 
 class ImmutableTargetInfoTest {
-    private val PERSONAL_USER_HANDLE: UserHandle = InstrumentationRegistry
-            .getInstrumentation().getTargetContext().getUser()
+    private val PERSONAL_USER_HANDLE: UserHandle =
+        InstrumentationRegistry.getInstrumentation().getTargetContext().getUser()
 
     private val resolvedIntent = Intent("resolved")
     private val targetIntent = Intent("target")
@@ -46,61 +46,62 @@ class ImmutableTargetInfoTest {
     private val displayIconHolder: TargetInfo.IconHolder = mock()
     private val sourceIntent1 = Intent("source1")
     private val sourceIntent2 = Intent("source2")
-    private val displayTarget1 = DisplayResolveInfo.newDisplayResolveInfo(
-        Intent("display1"),
-        ResolverDataProvider.createResolveInfo(2, 0, PERSONAL_USER_HANDLE),
-        "display1 label",
-        "display1 extended info",
-        Intent("display1_resolved")
-    )
-    private val displayTarget2 = DisplayResolveInfo.newDisplayResolveInfo(
-        Intent("display2"),
-        ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE),
-        "display2 label",
-        "display2 extended info",
-        Intent("display2_resolved")
-    )
-    private val directShareShortcutInfo = createShortcutInfo(
-        "shortcutid", ResolverDataProvider.createComponentName(4), 4)
-    private val directShareAppTarget = AppTarget(
-        AppTargetId("apptargetid"),
-        "test.directshare",
-        "target",
-        UserHandle.CURRENT)
-    private val displayResolveInfo = DisplayResolveInfo.newDisplayResolveInfo(
-        Intent("displayresolve"),
-        ResolverDataProvider.createResolveInfo(5, 0, PERSONAL_USER_HANDLE),
-        "displayresolve label",
-        "displayresolve extended info",
-        Intent("display_resolved")
-    )
+    private val displayTarget1 =
+        DisplayResolveInfo.newDisplayResolveInfo(
+            Intent("display1"),
+            ResolverDataProvider.createResolveInfo(2, 0, PERSONAL_USER_HANDLE),
+            "display1 label",
+            "display1 extended info",
+            Intent("display1_resolved")
+        )
+    private val displayTarget2 =
+        DisplayResolveInfo.newDisplayResolveInfo(
+            Intent("display2"),
+            ResolverDataProvider.createResolveInfo(3, 0, PERSONAL_USER_HANDLE),
+            "display2 label",
+            "display2 extended info",
+            Intent("display2_resolved")
+        )
+    private val directShareShortcutInfo =
+        createShortcutInfo("shortcutid", ResolverDataProvider.createComponentName(4), 4)
+    private val directShareAppTarget =
+        AppTarget(AppTargetId("apptargetid"), "test.directshare", "target", UserHandle.CURRENT)
+    private val displayResolveInfo =
+        DisplayResolveInfo.newDisplayResolveInfo(
+            Intent("displayresolve"),
+            ResolverDataProvider.createResolveInfo(5, 0, PERSONAL_USER_HANDLE),
+            "displayresolve label",
+            "displayresolve extended info",
+            Intent("display_resolved")
+        )
     private val hashProvider: ImmutableTargetInfo.TargetHashProvider = mock()
 
     @Test
-    fun testBasicProperties() {  // Fields that are reflected back w/o logic.
+    fun testBasicProperties() { // Fields that are reflected back w/o logic.
         // TODO: we could consider passing copies of all the values into the builder so that we can
         // verify that they're not mutated (e.g. no extras added to the intents). For now that
         // should be obvious from the implementation.
-        val info = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(resolvedIntent)
-            .setTargetIntent(targetIntent)
-            .setReferrerFillInIntent(referrerFillInIntent)
-            .setResolvedComponentName(resolvedComponentName)
-            .setChooserTargetComponentName(chooserTargetComponentName)
-            .setResolveInfo(resolveInfo)
-            .setDisplayLabel(displayLabel)
-            .setExtendedInfo(extendedInfo)
-            .setDisplayIconHolder(displayIconHolder)
-            .setAlternateSourceIntents(listOf(sourceIntent1, sourceIntent2))
-            .setAllDisplayTargets(listOf(displayTarget1, displayTarget2))
-            .setIsSuspended(true)
-            .setIsPinned(true)
-            .setModifiedScore(42.0f)
-            .setDirectShareShortcutInfo(directShareShortcutInfo)
-            .setDirectShareAppTarget(directShareAppTarget)
-            .setDisplayResolveInfo(displayResolveInfo)
-            .setHashProvider(hashProvider)
-            .build()
+        val info =
+            ImmutableTargetInfo.newBuilder()
+                .setResolvedIntent(resolvedIntent)
+                .setTargetIntent(targetIntent)
+                .setReferrerFillInIntent(referrerFillInIntent)
+                .setResolvedComponentName(resolvedComponentName)
+                .setChooserTargetComponentName(chooserTargetComponentName)
+                .setResolveInfo(resolveInfo)
+                .setDisplayLabel(displayLabel)
+                .setExtendedInfo(extendedInfo)
+                .setDisplayIconHolder(displayIconHolder)
+                .setAlternateSourceIntents(listOf(sourceIntent1, sourceIntent2))
+                .setAllDisplayTargets(listOf(displayTarget1, displayTarget2))
+                .setIsSuspended(true)
+                .setIsPinned(true)
+                .setModifiedScore(42.0f)
+                .setDirectShareShortcutInfo(directShareShortcutInfo)
+                .setDirectShareAppTarget(directShareAppTarget)
+                .setDisplayResolveInfo(displayResolveInfo)
+                .setHashProvider(hashProvider)
+                .build()
 
         assertThat(info.resolvedIntent).isEqualTo(resolvedIntent)
         assertThat(info.targetIntent).isEqualTo(targetIntent)
@@ -111,8 +112,8 @@ class ImmutableTargetInfoTest {
         assertThat(info.displayLabel).isEqualTo(displayLabel)
         assertThat(info.extendedInfo).isEqualTo(extendedInfo)
         assertThat(info.displayIconHolder).isEqualTo(displayIconHolder)
-        assertThat(info.allSourceIntents).containsExactly(
-            resolvedIntent, sourceIntent1, sourceIntent2)
+        assertThat(info.allSourceIntents)
+            .containsExactly(resolvedIntent, sourceIntent1, sourceIntent2)
         assertThat(info.allDisplayTargets).containsExactly(displayTarget1, displayTarget2)
         assertThat(info.isSuspended).isTrue()
         assertThat(info.isPinned).isTrue()
@@ -134,26 +135,27 @@ class ImmutableTargetInfoTest {
     fun testToBuilderPreservesBasicProperties() {
         // Note this is set up exactly as in `testBasicProperties`, but the assertions will be made
         // against a *copy* of the object instead.
-        val infoToCopyFrom = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(resolvedIntent)
-            .setTargetIntent(targetIntent)
-            .setReferrerFillInIntent(referrerFillInIntent)
-            .setResolvedComponentName(resolvedComponentName)
-            .setChooserTargetComponentName(chooserTargetComponentName)
-            .setResolveInfo(resolveInfo)
-            .setDisplayLabel(displayLabel)
-            .setExtendedInfo(extendedInfo)
-            .setDisplayIconHolder(displayIconHolder)
-            .setAlternateSourceIntents(listOf(sourceIntent1, sourceIntent2))
-            .setAllDisplayTargets(listOf(displayTarget1, displayTarget2))
-            .setIsSuspended(true)
-            .setIsPinned(true)
-            .setModifiedScore(42.0f)
-            .setDirectShareShortcutInfo(directShareShortcutInfo)
-            .setDirectShareAppTarget(directShareAppTarget)
-            .setDisplayResolveInfo(displayResolveInfo)
-            .setHashProvider(hashProvider)
-            .build()
+        val infoToCopyFrom =
+            ImmutableTargetInfo.newBuilder()
+                .setResolvedIntent(resolvedIntent)
+                .setTargetIntent(targetIntent)
+                .setReferrerFillInIntent(referrerFillInIntent)
+                .setResolvedComponentName(resolvedComponentName)
+                .setChooserTargetComponentName(chooserTargetComponentName)
+                .setResolveInfo(resolveInfo)
+                .setDisplayLabel(displayLabel)
+                .setExtendedInfo(extendedInfo)
+                .setDisplayIconHolder(displayIconHolder)
+                .setAlternateSourceIntents(listOf(sourceIntent1, sourceIntent2))
+                .setAllDisplayTargets(listOf(displayTarget1, displayTarget2))
+                .setIsSuspended(true)
+                .setIsPinned(true)
+                .setModifiedScore(42.0f)
+                .setDirectShareShortcutInfo(directShareShortcutInfo)
+                .setDirectShareAppTarget(directShareAppTarget)
+                .setDisplayResolveInfo(displayResolveInfo)
+                .setHashProvider(hashProvider)
+                .build()
 
         val info = infoToCopyFrom.toBuilder().build()
 
@@ -166,8 +168,8 @@ class ImmutableTargetInfoTest {
         assertThat(info.displayLabel).isEqualTo(displayLabel)
         assertThat(info.extendedInfo).isEqualTo(extendedInfo)
         assertThat(info.displayIconHolder).isEqualTo(displayIconHolder)
-        assertThat(info.allSourceIntents).containsExactly(
-            resolvedIntent, sourceIntent1, sourceIntent2)
+        assertThat(info.allSourceIntents)
+            .containsExactly(resolvedIntent, sourceIntent1, sourceIntent2)
         assertThat(info.allDisplayTargets).containsExactly(displayTarget1, displayTarget2)
         assertThat(info.isSuspended).isTrue()
         assertThat(info.isPinned).isTrue()
@@ -199,12 +201,13 @@ class ImmutableTargetInfoTest {
         val referrerFillInIntent = Intent("REFERRER_FILL_IN")
         referrerFillInIntent.setPackage("referrer")
 
-        val info = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(originalIntent)
-            .setReferrerFillInIntent(referrerFillInIntent)
-            .build()
+        val info =
+            ImmutableTargetInfo.newBuilder()
+                .setResolvedIntent(originalIntent)
+                .setReferrerFillInIntent(referrerFillInIntent)
+                .build()
 
-        assertThat(info.baseIntentToSend.getPackage()).isEqualTo("original")  // Only fill if empty.
+        assertThat(info.baseIntentToSend.getPackage()).isEqualTo("original") // Only fill if empty.
         assertThat(info.baseIntentToSend.action).isEqualTo("REFERRER_FILL_IN")
     }
 
@@ -216,13 +219,12 @@ class ImmutableTargetInfoTest {
         val refinementIntent = Intent()
         refinementIntent.putExtra("REFINEMENT", true)
 
-        val originalInfo = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(originalIntent)
-            .build()
+        val originalInfo =
+            ImmutableTargetInfo.newBuilder().setResolvedIntent(originalIntent).build()
         val info = checkNotNull(originalInfo.tryToCloneWithAppliedRefinement(refinementIntent))
 
-        assertThat(info?.baseIntentToSend?.getBooleanExtra("ORIGINAL", false)).isTrue()
-        assertThat(info?.baseIntentToSend?.getBooleanExtra("REFINEMENT", false)).isTrue()
+        assertThat(info.baseIntentToSend?.getBooleanExtra("ORIGINAL", false)).isTrue()
+        assertThat(info.baseIntentToSend?.getBooleanExtra("REFINEMENT", false)).isTrue()
     }
 
     @Test
@@ -234,20 +236,21 @@ class ImmutableTargetInfoTest {
         referrerFillInIntent.setPackage("referrer_pkg")
         referrerFillInIntent.setType("test/referrer")
 
-        val infoWithReferrerFillIn = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(originalIntent)
-            .setReferrerFillInIntent(referrerFillInIntent)
-            .build()
+        val infoWithReferrerFillIn =
+            ImmutableTargetInfo.newBuilder()
+                .setResolvedIntent(originalIntent)
+                .setReferrerFillInIntent(referrerFillInIntent)
+                .build()
 
         val refinementIntent = Intent("REFINE_ME")
-        refinementIntent.setPackage("original")  // Has to match for refinement.
+        refinementIntent.setPackage("original") // Has to match for refinement.
 
         val info =
             checkNotNull(infoWithReferrerFillIn.tryToCloneWithAppliedRefinement(refinementIntent))
 
-        assertThat(info?.baseIntentToSend?.getPackage()).isEqualTo("original")  // Set all along.
-        assertThat(info?.baseIntentToSend?.action).isEqualTo("REFINE_ME")  // Refinement wins.
-        assertThat(info?.baseIntentToSend?.type).isEqualTo("test/referrer")  // Left for referrer.
+        assertThat(info.baseIntentToSend?.getPackage()).isEqualTo("original") // Set all along.
+        assertThat(info.baseIntentToSend?.action).isEqualTo("REFINE_ME") // Refinement wins.
+        assertThat(info.baseIntentToSend?.type).isEqualTo("test/referrer") // Left for referrer.
     }
 
     @Test
@@ -260,25 +263,26 @@ class ImmutableTargetInfoTest {
         val refinementIntent2 = Intent("REFINE_ME")
         refinementIntent2.putExtra("TEST2", "2")
 
-        val originalInfo = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(originalIntent)
-            .setReferrerFillInIntent(referrerFillInIntent)
-            .build()
+        val originalInfo =
+            ImmutableTargetInfo.newBuilder()
+                .setResolvedIntent(originalIntent)
+                .setReferrerFillInIntent(referrerFillInIntent)
+                .build()
 
         val refined1 = checkNotNull(originalInfo.tryToCloneWithAppliedRefinement(refinementIntent1))
         // Cloned clone.
         val refined2 = checkNotNull(refined1.tryToCloneWithAppliedRefinement(refinementIntent2))
 
         // Both clones get the same values filled in from the referrer intent.
-        assertThat(refined1?.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
-        assertThat(refined2?.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
+        assertThat(refined1.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
+        assertThat(refined2.baseIntentToSend?.getStringExtra("TEST")).isEqualTo("REFERRER")
         // Each clone has the respective value that was set in their own refinement request.
-        assertThat(refined1?.baseIntentToSend?.getStringExtra("TEST1")).isEqualTo("1")
-        assertThat(refined2?.baseIntentToSend?.getStringExtra("TEST2")).isEqualTo("2")
+        assertThat(refined1.baseIntentToSend?.getStringExtra("TEST1")).isEqualTo("1")
+        assertThat(refined2.baseIntentToSend?.getStringExtra("TEST2")).isEqualTo("2")
         // The clones don't have the data from each other's refinements, even though the intent
         // field is empty (thus able to be populated by filling-in).
-        assertThat(refined1?.baseIntentToSend?.getStringExtra("TEST2")).isNull()
-        assertThat(refined2?.baseIntentToSend?.getStringExtra("TEST1")).isNull()
+        assertThat(refined1.baseIntentToSend?.getStringExtra("TEST2")).isNull()
+        assertThat(refined2.baseIntentToSend?.getStringExtra("TEST1")).isNull()
     }
 
     @Test
@@ -292,25 +296,27 @@ class ImmutableTargetInfoTest {
         val extraMatch = Intent("REFINE_ME")
         extraMatch.putExtra("extraMatch", true)
 
-        val originalInfo = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(originalIntent)
-            .setAllSourceIntents(listOf(
-                    originalIntent, mismatchedAlternate, targetAlternate, extraMatch))
-            .build()
+        val originalInfo =
+            ImmutableTargetInfo.newBuilder()
+                .setResolvedIntent(originalIntent)
+                .setAllSourceIntents(
+                    listOf(originalIntent, mismatchedAlternate, targetAlternate, extraMatch)
+                )
+                .build()
 
-        val refinement = Intent("REFINE_ME")  // First match is `targetAlternate`
+        val refinement = Intent("REFINE_ME") // First match is `targetAlternate`
         refinement.putExtra("refinement", true)
 
         val refinedResult = checkNotNull(originalInfo.tryToCloneWithAppliedRefinement(refinement))
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("refinement", false)).isTrue()
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("targetAlternate", false))
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("refinement", false)).isTrue()
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("targetAlternate", false))
             .isTrue()
         // None of the other source intents got merged in (not even the later one that matched):
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("originalIntent", false))
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("originalIntent", false))
             .isFalse()
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("mismatchedAlternate", false))
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("mismatchedAlternate", false))
             .isFalse()
-        assertThat(refinedResult?.baseIntentToSend?.getBooleanExtra("extraMatch", false)).isFalse()
+        assertThat(refinedResult.baseIntentToSend?.getBooleanExtra("extraMatch", false)).isFalse()
     }
 
     @Test
@@ -320,10 +326,11 @@ class ImmutableTargetInfoTest {
         val mismatchedAlternate = Intent("DOESNT_MATCH")
         mismatchedAlternate.putExtra("mismatchedAlternate", true)
 
-        val originalInfo = ImmutableTargetInfo.newBuilder()
-            .setResolvedIntent(originalIntent)
-            .setAllSourceIntents(listOf(originalIntent, mismatchedAlternate))
-            .build()
+        val originalInfo =
+            ImmutableTargetInfo.newBuilder()
+                .setResolvedIntent(originalIntent)
+                .setAllSourceIntents(listOf(originalIntent, mismatchedAlternate))
+                .build()
 
         val refinement = Intent("PROPOSED_REFINEMENT")
         assertThat(originalInfo.tryToCloneWithAppliedRefinement(refinement)).isNull()
@@ -331,9 +338,10 @@ class ImmutableTargetInfoTest {
 
     @Test
     fun testLegacySubclassRelationships_empty() {
-        val info = ImmutableTargetInfo.newBuilder()
-            .setLegacyType(ImmutableTargetInfo.LegacyTargetType.EMPTY_TARGET_INFO)
-            .build()
+        val info =
+            ImmutableTargetInfo.newBuilder()
+                .setLegacyType(ImmutableTargetInfo.LegacyTargetType.EMPTY_TARGET_INFO)
+                .build()
 
         assertThat(info.isEmptyTargetInfo).isTrue()
         assertThat(info.isPlaceHolderTargetInfo).isFalse()
@@ -346,9 +354,10 @@ class ImmutableTargetInfoTest {
 
     @Test
     fun testLegacySubclassRelationships_placeholder() {
-        val info = ImmutableTargetInfo.newBuilder()
-            .setLegacyType(ImmutableTargetInfo.LegacyTargetType.PLACEHOLDER_TARGET_INFO)
-            .build()
+        val info =
+            ImmutableTargetInfo.newBuilder()
+                .setLegacyType(ImmutableTargetInfo.LegacyTargetType.PLACEHOLDER_TARGET_INFO)
+                .build()
 
         assertThat(info.isEmptyTargetInfo).isFalse()
         assertThat(info.isPlaceHolderTargetInfo).isTrue()
@@ -361,9 +370,10 @@ class ImmutableTargetInfoTest {
 
     @Test
     fun testLegacySubclassRelationships_selectable() {
-        val info = ImmutableTargetInfo.newBuilder()
-            .setLegacyType(ImmutableTargetInfo.LegacyTargetType.SELECTABLE_TARGET_INFO)
-            .build()
+        val info =
+            ImmutableTargetInfo.newBuilder()
+                .setLegacyType(ImmutableTargetInfo.LegacyTargetType.SELECTABLE_TARGET_INFO)
+                .build()
 
         assertThat(info.isEmptyTargetInfo).isFalse()
         assertThat(info.isPlaceHolderTargetInfo).isFalse()
@@ -376,9 +386,10 @@ class ImmutableTargetInfoTest {
 
     @Test
     fun testLegacySubclassRelationships_displayResolveInfo() {
-        val info = ImmutableTargetInfo.newBuilder()
-            .setLegacyType(ImmutableTargetInfo.LegacyTargetType.DISPLAY_RESOLVE_INFO)
-            .build()
+        val info =
+            ImmutableTargetInfo.newBuilder()
+                .setLegacyType(ImmutableTargetInfo.LegacyTargetType.DISPLAY_RESOLVE_INFO)
+                .build()
 
         assertThat(info.isEmptyTargetInfo).isFalse()
         assertThat(info.isPlaceHolderTargetInfo).isFalse()
@@ -391,9 +402,10 @@ class ImmutableTargetInfoTest {
 
     @Test
     fun testLegacySubclassRelationships_multiDisplayResolveInfo() {
-        val info = ImmutableTargetInfo.newBuilder()
-            .setLegacyType(ImmutableTargetInfo.LegacyTargetType.MULTI_DISPLAY_RESOLVE_INFO)
-            .build()
+        val info =
+            ImmutableTargetInfo.newBuilder()
+                .setLegacyType(ImmutableTargetInfo.LegacyTargetType.MULTI_DISPLAY_RESOLVE_INFO)
+                .build()
 
         assertThat(info.isEmptyTargetInfo).isFalse()
         assertThat(info.isPlaceHolderTargetInfo).isFalse()
@@ -406,13 +418,17 @@ class ImmutableTargetInfoTest {
 
     @Test
     fun testActivityStarter_correctNumberOfInvocations_startAsCaller() {
-        val activityStarter = object : TestActivityStarter() {
-            override fun startAsUser(
-                target: TargetInfo, activity: Activity, options: Bundle, user: UserHandle
-            ): Boolean {
-                throw RuntimeException("Wrong API used: startAsUser")
+        val activityStarter =
+            object : TestActivityStarter() {
+                override fun startAsUser(
+                    target: TargetInfo,
+                    activity: Activity,
+                    options: Bundle,
+                    user: UserHandle
+                ): Boolean {
+                    throw RuntimeException("Wrong API used: startAsUser")
+                }
             }
-        }
 
         val info = ImmutableTargetInfo.newBuilder().setActivityStarter(activityStarter).build()
         val activity: ResolverActivity = mock()
@@ -431,12 +447,17 @@ class ImmutableTargetInfoTest {
 
     @Test
     fun testActivityStarter_correctNumberOfInvocations_startAsUser() {
-        val activityStarter = object : TestActivityStarter() {
-            override fun startAsCaller(
-                target: TargetInfo, activity: Activity, options: Bundle, userId: Int): Boolean {
-                throw RuntimeException("Wrong API used: startAsCaller")
+        val activityStarter =
+            object : TestActivityStarter() {
+                override fun startAsCaller(
+                    target: TargetInfo,
+                    activity: Activity,
+                    options: Bundle,
+                    userId: Int
+                ): Boolean {
+                    throw RuntimeException("Wrong API used: startAsCaller")
+                }
             }
-        }
 
         val info = ImmutableTargetInfo.newBuilder().setActivityStarter(activityStarter).build()
         val activity: Activity = mock()
@@ -466,7 +487,7 @@ class ImmutableTargetInfoTest {
         info2.startAsUser(mock(), Bundle(), UserHandle.of(42))
         assertThat(activityStarter.lastInvocationTargetInfo).isEqualTo(info2)
 
-        assertThat(activityStarter.totalInvocations).isEqualTo(3)  // Instance is still shared.
+        assertThat(activityStarter.totalInvocations).isEqualTo(3) // Instance is still shared.
     }
 }
 
@@ -475,27 +496,35 @@ private open class TestActivityStarter : ImmutableTargetInfo.TargetActivityStart
     var lastInvocationTargetInfo: TargetInfo? = null
     var lastInvocationActivity: Activity? = null
     var lastInvocationOptions: Bundle? = null
-    var lastInvocationUserId: Integer? = null
+    var lastInvocationUserId: Int? = null
     var lastInvocationAsCaller = false
 
     override fun startAsCaller(
-            target: TargetInfo, activity: Activity, options: Bundle, userId: Int): Boolean {
+        target: TargetInfo,
+        activity: Activity,
+        options: Bundle,
+        userId: Int
+    ): Boolean {
         ++totalInvocations
         lastInvocationTargetInfo = target
         lastInvocationActivity = activity
         lastInvocationOptions = options
-        lastInvocationUserId = Integer(userId)
+        lastInvocationUserId = userId
         lastInvocationAsCaller = true
         return true
     }
 
     override fun startAsUser(
-            target: TargetInfo, activity: Activity, options: Bundle, user: UserHandle): Boolean {
+        target: TargetInfo,
+        activity: Activity,
+        options: Bundle,
+        user: UserHandle
+    ): Boolean {
         ++totalInvocations
         lastInvocationTargetInfo = target
         lastInvocationActivity = activity
         lastInvocationOptions = options
-        lastInvocationUserId = Integer(user.identifier)
+        lastInvocationUserId = user.identifier
         lastInvocationAsCaller = false
         return true
     }

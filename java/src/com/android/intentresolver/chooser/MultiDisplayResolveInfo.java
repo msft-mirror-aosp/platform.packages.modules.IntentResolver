@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -123,6 +124,7 @@ public class MultiDisplayResolveInfo extends DisplayResolveInfo {
     }
 
     @Override
+    @NonNull
     public ComponentName getResolvedComponentName() {
         if (hasSelected()) {
             return mTargetInfos.get(mSelected).getResolvedComponentName();

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Jaetaan kuvaa}other{Jaetaan # kuvaa}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Jaetaan videota}other{Jaetaan # videota}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Jaetaan # tiedosto}other{Jaetaan # tiedostoa}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Valitse jaettavat kohteet"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Kuvaa ja tekstiä jaetaan}other{# kuvaa ja tekstiä jaetaan}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Kuvaa ja linkkiä jaetaan}other{# kuvaa ja linkkiä jaetaan}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Videota ja tekstiä jaetaan}other{# videota ja tekstiä jaetaan}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Tätä sisältöä ei voi avata työsovelluksilla"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Tätä sisältöä ei voi jakaa henkilökohtaisilla sovelluksilla"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Tätä sisältöä ei voi avata henkilökohtaisilla sovelluksilla"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Tätä sisältöä ei voi jakaa yksityisillä sovelluksilla"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Tätä sisältöä ei voi avata yksityisillä sovelluksilla"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Työsovellukset on keskeytetty"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Jatka käyttöä"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Ei työsovelluksia"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Ei henkilökohtaisia sovelluksia"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Ei yksityisiä sovelluksia"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Avataanko <xliff:g id="APP">%s</xliff:g> henkilökohtaisessa profiilissa?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Avataanko <xliff:g id="APP">%s</xliff:g> työprofiilissa?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Käytä henkilökohtaista selainta"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Jätä linkki pois"</string>
     <string name="include_link" msgid="827855767220339802">"Liitä linkki mukaan"</string>
     <string name="pinned" msgid="7623664001331394139">"Kiinnitetty"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Valittava kuva"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Valittava video"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Valittava kohde"</string>
 </resources>

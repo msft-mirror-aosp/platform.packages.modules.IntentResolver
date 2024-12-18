@@ -22,7 +22,6 @@ import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTE
 import static com.android.intentresolver.contentpreview.ContentPreviewType.CONTENT_PREVIEW_TEXT;
 
 import android.content.ClipData;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -34,13 +33,15 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.intentresolver.ContentTypeHint;
+import com.android.intentresolver.data.model.ChooserRequest;
 import com.android.intentresolver.widget.ActionRow;
 import com.android.intentresolver.widget.ImagePreviewView.TransitionElementStatusCallback;
 
+import kotlinx.coroutines.CoroutineScope;
+
 import java.util.List;
 import java.util.function.Consumer;
-
-import kotlinx.coroutines.CoroutineScope;
+import java.util.function.Supplier;
 
 /**
  * Collection of helpers for building the content preview UI displayed in
@@ -77,7 +78,9 @@ public final class ChooserContentPreviewUi {
          * Provides a share modification action, if any.
          */
         @Nullable
-        ActionRow.Action getModifyShareAction();
+        default ActionRow.Action getModifyShareAction() {
+            return null;
+        }
 
         /**
          * <p>
@@ -93,13 +96,16 @@ public final class ChooserContentPreviewUi {
 
     @VisibleForTesting
     final ContentPreviewUi mContentPreviewUi;
+    private final Supplier</*@Nullable*/ActionRow.Action> mModifyShareActionFactory;
+    private View mHeadlineParent;
 
     public ChooserContentPreviewUi(
             CoroutineScope scope,
             PreviewDataProvider previewData,
-            Intent targetIntent,
+            ChooserRequest chooserRequest,
             ImageLoader imageLoader,
             ActionFactory actionFactory,
+            Supplier</*@Nullable*/ActionRow.Action> modifyShareActionFactory,
             TransitionElementStatusCallback transitionElementStatusCallback,
             HeadlineGenerator headlineGenerator,
             ContentTypeHint contentTypeHint,
@@ -108,9 +114,10 @@ public final class ChooserContentPreviewUi {
             boolean isPayloadTogglingEnabled) {
         mScope = scope;
         mIsPayloadTogglingEnabled = isPayloadTogglingEnabled;
+        mModifyShareActionFactory = modifyShareActionFactory;
         mContentPreviewUi = createContentPreview(
                 previewData,
-                targetIntent,
+                chooserRequest,
                 DefaultMimeTypeClassifier.INSTANCE,
                 imageLoader,
                 actionFactory,
@@ -126,7 +133,7 @@ public final class ChooserContentPreviewUi {
 
     private ContentPreviewUi createContentPreview(
             PreviewDataProvider previewData,
-            Intent targetIntent,
+            ChooserRequest chooserRequest,
             MimeTypeClassifier typeClassifier,
             ImageLoader imageLoader,
             ActionFactory actionFactory,
@@ -139,7 +146,9 @@ public final class ChooserContentPreviewUi {
         if (previewType == CONTENT_PREVIEW_TEXT) {
             return createTextPreview(
                     mScope,
-                    targetIntent,
+                    chooserRequest.getTargetIntent().getClipData(),
+                    chooserRequest.getSharedText(),
+                    chooserRequest.getSharedTextTitle(),
                     actionFactory,
                     imageLoader,
                     headlineGenerator,
@@ -162,20 +171,19 @@ public final class ChooserContentPreviewUi {
 
         if (previewType == CONTENT_PREVIEW_PAYLOAD_SELECTION && mIsPayloadTogglingEnabled) {
             transitionElementStatusCallback.onAllTransitionElementsReady(); // TODO
-            return new ShareouselContentPreviewUi(actionFactory);
+            return new ShareouselContentPreviewUi();
         }
 
         boolean isSingleImageShare = previewData.getUriCount() == 1
                 && typeClassifier.isImageType(previewData.getFirstFileInfo().getMimeType());
-        CharSequence text = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-        if (!TextUtils.isEmpty(text)) {
+        if (!TextUtils.isEmpty(chooserRequest.getSharedText())) {
             FilesPlusTextContentPreviewUi previewUi =
                     new FilesPlusTextContentPreviewUi(
                             mScope,
                             isSingleImageShare,
                             previewData.getUriCount(),
-                            targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT),
-                            targetIntent.getType(),
+                            chooserRequest.getSharedText(),
+                            chooserRequest.getTargetType(),
                             actionFactory,
                             imageLoader,
                             typeClassifier,
@@ -194,7 +202,7 @@ public final class ChooserContentPreviewUi {
         return new UnifiedContentPreviewUi(
                 mScope,
                 isSingleImageShare,
-                targetIntent.getType(),
+                chooserRequest.getTargetType(),
                 actionFactory,
                 imageLoader,
                 typeClassifier,
@@ -218,23 +226,33 @@ public final class ChooserContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
 
-        return mContentPreviewUi.display(resources, layoutInflater, parent, headlineViewParent);
+        ViewGroup layout =
+                mContentPreviewUi.display(resources, layoutInflater, parent, headlineViewParent);
+        mHeadlineParent = headlineViewParent;
+        ContentPreviewUi.displayModifyShareAction(mHeadlineParent, mModifyShareActionFactory.get());
+        return layout;
+    }
+
+    /**
+     * Update Modify Share Action, if it is inflated.
+     */
+    public void updateModifyShareAction() {
+        ContentPreviewUi.displayModifyShareAction(mHeadlineParent, mModifyShareActionFactory.get());
     }
 
     private static TextContentPreviewUi createTextPreview(
             CoroutineScope scope,
-            Intent targetIntent,
+            ClipData previewData,
+            @Nullable CharSequence sharingText,
+            @Nullable CharSequence previewTitle,
             ChooserContentPreviewUi.ActionFactory actionFactory,
             ImageLoader imageLoader,
             HeadlineGenerator headlineGenerator,
             ContentTypeHint contentTypeHint,
             @Nullable CharSequence metadata
     ) {
-        CharSequence sharingText = targetIntent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-        CharSequence previewTitle = targetIntent.getCharSequenceExtra(Intent.EXTRA_TITLE);
-        ClipData previewData = targetIntent.getClipData();
         Uri previewThumbnail = null;
         if (previewData != null) {
             if (previewData.getItemCount() > 0) {

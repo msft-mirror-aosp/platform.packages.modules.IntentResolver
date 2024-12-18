@@ -32,7 +32,7 @@
     <string name="whichEditApplicationLabel" msgid="5992662938338600364">"ଏଡିଟ କରନ୍ତୁ"</string>
     <string name="whichSendApplication" msgid="59510564281035884">"ସେୟାର କରନ୍ତୁ"</string>
     <string name="whichSendApplicationNamed" msgid="495577664218765855">"<xliff:g id="APP">%1$s</xliff:g> ସହ ସେୟାର କରନ୍ତୁ"</string>
-    <string name="whichSendApplicationLabel" msgid="2391198069286568035">"ସେୟାର୍‌ କରନ୍ତୁ"</string>
+    <string name="whichSendApplicationLabel" msgid="2391198069286568035">"ସେୟାର କରନ୍ତୁ"</string>
     <string name="whichSendToApplication" msgid="2724450540348806267">"ଏହା ଜରିଆରେ ପଠାନ୍ତୁ"</string>
     <string name="whichSendToApplicationNamed" msgid="1996548940365954543">"<xliff:g id="APP">%1$s</xliff:g> ବ୍ୟବହାର କରି ପଠାନ୍ତୁ"</string>
     <string name="whichSendToApplicationLabel" msgid="6909037198280591110">"ପଠାନ୍ତୁ"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ଇମେଜ ସେୟାର କରାଯାଉଛି}other{#ଟିି ଇମେଜ ସେୟାର କରାଯାଉଛି}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{ଭିଡିଓ ସେୟାର କରାଯାଉଛି}other{#ଟି ଭିଡିଓ ସେୟାର କରାଯାଉଛି}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{#ଟି ଫାଇଲ ସେୟାର କରାଯାଉଛି}other{#ଟି ଫାଇଲ ସେୟାର କରାଯାଉଛି}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"ସେୟାର କରିବା ପାଇଁ ଆଇଟମଗୁଡ଼ିକ ଚୟନ କରନ୍ତୁ"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{ଟେକ୍ସଟ ସହ ଇମେଜ ସେୟାର କରାଯାଉଛି}other{ଟେକ୍ସଟ ସହ #ଟି ଇମେଜ ସେୟାର କରାଯାଉଛି}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{ଲିଙ୍କ ସହ ଇମେଜ ସେୟାର କରାଯାଉଛି}other{ଲିଙ୍କ ସହ #ଟି ଇମେଜ ସେୟାର କରାଯାଉଛି}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{ଟେକ୍ସଟ ସହ ଭିଡିଓ ସେୟାର କରାଯାଉଛି}other{ଟେକ୍ସଟ ସହ #ଟି ଭିଡିଓ ସେୟାର କରାଯାଉଛି}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ଏହି ବିଷୟବସ୍ତୁ ୱାର୍କ ଆପଗୁଡ଼ିକରେ ଖୋଲାଯାଇପାରିବ ନାହିଁ"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"ଏହି ବିଷୟବସ୍ତୁ ବ୍ୟକ୍ତିଗତ ଆପଗୁଡ଼ିକରେ ସେୟାର୍ କରାଯାଇପାରିବ ନାହିଁ"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ଏହି ବିଷୟବସ୍ତୁ ବ୍ୟକ୍ତିଗତ ଆପଗୁଡ଼ିକରେ ଖୋଲାଯାଇପାରିବ ନାହିଁ"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"ଏହି ବିଷୟବସ୍ତୁକୁ ପ୍ରାଇଭେଟ ଆପ୍ସରେ ସେୟାର କରାଯାଇପାରିବ ନାହିଁ"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"ଏହି ବିଷୟବସ୍ତୁକୁ ପ୍ରାଇଭେଟ ଆପ୍ସରେ ଖୋଲାଯାଇପାରିବ ନାହିଁ"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"ୱାର୍କ ଆପ୍ସକୁ ବିରତ କରାଯାଇଛି"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ପୁଣି ଚାଲୁ କରନ୍ତୁ"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"କୌଣସି ୱାର୍କ ଆପ୍ ନାହିଁ"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"କୌଣସି ବ୍ୟକ୍ତିଗତ ଆପ୍ ନାହିଁ"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"କୌଣସି ପ୍ରାଇଭେଟ ଆପ୍ସ ନାହିଁ"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g>କୁ ଆପଣଙ୍କ ବ୍ୟକ୍ତିଗତ ପ୍ରୋଫାଇଲରେ ଖୋଲିବେ?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g>କୁ ଆପଣଙ୍କ ୱାର୍କ ପ୍ରୋଫାଇଲରେ ଖୋଲିବେ?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ବ୍ୟକ୍ତିଗତ ବ୍ରାଉଜର୍ ବ୍ୟବହାର କରନ୍ତୁ"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"ଲିଙ୍କକୁ ବାଦ ଦିଅନ୍ତୁ"</string>
     <string name="include_link" msgid="827855767220339802">"ଲିଙ୍କକୁ ଅନ୍ତର୍ଭୁକ୍ତ କରନ୍ତୁ"</string>
     <string name="pinned" msgid="7623664001331394139">"ପିନ କରାଯାଇଛି"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"ଚୟନ କରାଯାଇପାରୁଥିବା ଇମେଜ"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"ଚୟନ କରାଯାଇପାରୁଥିବା ଭିଡିଓ"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"ଚୟନ କରାଯାଇପାରୁଥିବା ଆଇଟମ"</string>
 </resources>

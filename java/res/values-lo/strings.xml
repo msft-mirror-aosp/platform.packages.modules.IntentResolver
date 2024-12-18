@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"ບັນທຶກຮູບພາບດ້ວຍ"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"ບັນທຶກຮູບພາບດ້ວຍ <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"ບັນທຶກຮູບພາບ"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"ນຳໃຊ້ແອັບຯອື່ນ"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"ໃຊ້ແອັບອື່ນ"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"ເລືອກຄຳສັ່ງ"</string>
     <string name="noApplications" msgid="1139487441772284671">"ບໍ່ມີແອັບຯໃດສາມາດເຮັດວຽກນີ້ໄດ້."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"​ທ່ານ​ກຳ​ລັງ​ໃຊ້​ແອັບຯ​ນີ້ນອກ​ໂປຣ​ໄຟລ໌​ບ່ອນ​ເຮັດ​ວຽກ​ຂອງ​ທ່ານ"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ກຳລັງແບ່ງປັນຮູບ}other{ກຳລັງແບ່ງປັນ # ຮູບ}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{ກຳລັງແບ່ງປັນວິດີໂອ}other{ກຳລັງແບ່ງປັນ # ວິດີໂອ}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{ກຳລັງຈະແບ່ງປັນ # ໄຟລ໌}other{ກຳລັງຈະແບ່ງປັນ # ໄຟລ໌}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"ເລືອກລາຍການທີ່ຈະແບ່ງປັນ"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{ກຳລັງແບ່ງປັນຮູບພ້ອມຂໍ້ຄວາມ}other{ກຳລັງແບ່ງປັນ # ຮູບພ້ອມຂໍ້ຄວາມ}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{ກຳລັງແບ່ງປັນຮູບພ້ອມລິ້ງ}other{ກຳລັງແບ່ງປັນ # ຮູບພ້ອມລິ້ງ}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{ກຳລັງແບ່ງປັນວິດີໂອພ້ອມຂໍ້ຄວາມ}other{ກຳລັງແບ່ງປັນ # ວິດີໂອພ້ອມຂໍ້ຄວາມ}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ເນື້ອຫານີ້ບໍ່ສາມາດຖືກເປີດໄດ້ດ້ວຍແອັບບ່ອນເຮັດວຽກ"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"ເນື້ອຫານີ້ບໍ່ສາມາດຖືກແບ່ງປັນກັບແອັບສ່ວນຕົວໄດ້"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ເນື້ອຫານີ້ບໍ່ສາມາດຖືກເປີດໄດ້ດ້ວຍແອັບສ່ວນຕົວ"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"ບໍ່ສາມາດແບ່ງປັນເນື້ອຫານີ້ໂດຍໃຊ້ແອັບສ່ວນຕົວໄດ້"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"ບໍ່ສາມາດເປີດເນື້ອຫານີ້ໂດຍໃຊ້ແອັບສ່ວນຕົວໄດ້"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"ຢຸດແອັບບ່ອນເຮັດວຽກໄວ້ຊົ່ວຄາວແລ້ວ"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ຍົກເລີກການຢຸດຊົ່ວຄາວ"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"ບໍ່ມີແອັບບ່ອນເຮັດວຽກ"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"ບໍ່ມີແອັບສ່ວນຕົວ"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"ບໍ່ມີແອັບສ່ວນຕົວ"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"ເປີດ <xliff:g id="APP">%s</xliff:g> ໃນໂປຣໄຟລ໌ສ່ວນຕົວຂອງທ່ານບໍ?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"ເປີດ <xliff:g id="APP">%s</xliff:g> ໃນ​ໂປຣ​ໄຟລ໌​ບ່ອນ​ເຮັດ​ວຽກຂອງທ່ານບໍ?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ໃຊ້ໂປຣແກຣມທ່ອງເວັບສ່ວນຕົວ"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"ບໍ່ຮວມລິ້ງ"</string>
     <string name="include_link" msgid="827855767220339802">"ຮວມລິ້ງ"</string>
     <string name="pinned" msgid="7623664001331394139">"ປັກໝຸດແລ້ວ"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"ຮູບທີ່ເລືອກໄດ້"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"ວິດີໂອທີ່ເລືອກໄດ້"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"ລາຍການທີ່ເລືອກໄດ້"</string>
 </resources>

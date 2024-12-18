@@ -16,14 +16,13 @@
 
 package com.android.intentresolver;
 
+import android.annotation.Nullable;
 import android.app.prediction.AppPredictor;
 import android.app.usage.UsageStatsManager;
-import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -31,17 +30,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.lifecycle.ViewModelProvider;
-
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.emptystate.CrossProfileIntentsChecker;
-import com.android.intentresolver.grid.ChooserGridAdapter;
-import com.android.intentresolver.icons.TargetDataLoader;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
-import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -55,7 +47,7 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
     private UsageStatsManager mUsm;
 
     @Override
-    public ChooserListAdapter createChooserListAdapter(
+    public final ChooserListAdapter createChooserListAdapter(
             Context context,
             List<Intent> payloadIntents,
             Intent[] initialIntents,
@@ -64,30 +56,26 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
             ResolverListController resolverListController,
             UserHandle userHandle,
             Intent targetIntent,
-            Intent referrrerFillInIntent,
-            int maxTargetsPerRow,
-            TargetDataLoader targetDataLoader) {
-        PackageManager packageManager =
-                sOverrides.packageManager == null ? context.getPackageManager()
-                        : sOverrides.packageManager;
+            Intent referrerFillInIntent,
+            int maxTargetsPerRow) {
+
         return new ChooserListAdapter(
                 context,
                 payloadIntents,
                 initialIntents,
                 rList,
                 filterLastUsed,
-                createListController(userHandle),
+                resolverListController,
                 userHandle,
                 targetIntent,
-                referrrerFillInIntent,
+                referrerFillInIntent,
                 this,
-                packageManager,
+                mPackageManager,
                 getEventLog(),
                 maxTargetsPerRow,
                 userHandle,
-                targetDataLoader,
-                null,
-                mFeatureFlags);
+                mTargetDataLoader,
+                null);
     }
 
     @Override
@@ -97,32 +85,17 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
 
     @Override
     public ChooserListAdapter getPersonalListAdapter() {
-        return ((ChooserGridAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(0))
-                .getListAdapter();
+        return mChooserMultiProfilePagerAdapter.getPersonalListAdapter();
     }
 
     @Override
     public ChooserListAdapter getWorkListAdapter() {
-        if (mMultiProfilePagerAdapter.getInactiveListAdapter() == null) {
-            return null;
-        }
-        return ((ChooserGridAdapter) mMultiProfilePagerAdapter.getAdapterForIndex(1))
-                .getListAdapter();
+        return mChooserMultiProfilePagerAdapter.getWorkListAdapter();
     }
 
     @Override
     public boolean getIsSelected() {
         return mIsSuccessfullySelected;
-    }
-
-    @Override
-    protected ChooserIntegratedDeviceComponents getIntegratedDeviceComponents() {
-        return new ChooserIntegratedDeviceComponents(
-                /* editSharingComponent=*/ null,
-                // An arbitrary pre-installed activity that handles this type of intent:
-                /* nearbySharingComponent=*/ new ComponentName(
-                        "com.google.android.apps.messaging",
-                        ".ui.conversationlist.ShareIntentActivity"));
     }
 
     @Override
@@ -150,14 +123,6 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
     }
 
     @Override
-    protected WorkProfileAvailabilityManager createWorkProfileAvailabilityManager() {
-        if (sOverrides.mWorkProfileAvailability != null) {
-            return sOverrides.mWorkProfileAvailability;
-        }
-        return super.createWorkProfileAvailabilityManager();
-    }
-
-    @Override
     public void safelyStartActivityInternal(TargetInfo cti, UserHandle user,
             @Nullable Bundle options) {
         if (sOverrides.onSafelyStartInternalCallback != null
@@ -168,19 +133,11 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
     }
 
     @Override
-    protected ChooserListController createListController(UserHandle userHandle) {
+    public final ChooserListController createListController(UserHandle userHandle) {
         if (userHandle == UserHandle.SYSTEM) {
             return sOverrides.resolverListController;
         }
         return sOverrides.workResolverListController;
-    }
-
-    @Override
-    public PackageManager getPackageManager() {
-        if (sOverrides.createPackageManager != null) {
-            return sOverrides.createPackageManager.apply(super.getPackageManager());
-        }
-        return super.getPackageManager();
     }
 
     @Override
@@ -189,13 +146,6 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
             return sOverrides.resources;
         }
         return super.getResources();
-    }
-
-    @Override
-    protected ViewModelProvider.Factory createPreviewViewModelFactory() {
-        return TestContentPreviewViewModel.Companion.wrap(
-                super.createPreviewViewModelFactory(),
-                sOverrides.imageLoader);
     }
 
     @Override
@@ -209,14 +159,6 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
         }
 
         return super.queryResolver(resolver, uri);
-    }
-
-    @Override
-    protected boolean isWorkProfile() {
-        if (sOverrides.alternateProfileSetting != 0) {
-            return sOverrides.alternateProfileSetting == MetricsEvent.MANAGED_PROFILE;
-        }
-        return super.isWorkProfile();
     }
 
     @Override
@@ -235,16 +177,10 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
     }
 
     @Override
-    protected AnnotatedUserHandles computeAnnotatedUserHandles() {
-        return sOverrides.annotatedUserHandles;
-    }
-
-    @Override
     public UserHandle getCurrentUserHandle() {
-        return mMultiProfilePagerAdapter.getCurrentUserHandle();
+        return mChooserMultiProfilePagerAdapter.getCurrentUserHandle();
     }
 
-    @NonNull
     @Override
     public Context createContextAsUser(UserHandle user, int flags) {
         // return the current context as a work profile doesn't really exist in these tests

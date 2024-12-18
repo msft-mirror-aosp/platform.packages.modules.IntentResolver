@@ -59,7 +59,8 @@
     <string name="sharing_link" msgid="2307694372813942916">"Compartir vínculo"</string>
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Compartir la imagen}many{Compartir # de imágenes}other{Compartir # imágenes}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Compartiendo video}many{Compartiendo # de videos}other{Compartiendo # videos}}"</string>
-    <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Se compartirá # archivo}many{Se compartirán # de archivos}other{Se compartirán # archivos}}"</string>
+    <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Compartiendo # archivo}many{Compartiendo # de archivos}other{Compartiendo # archivos}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Selecciona los elementos para compartir"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Compartir imagen con texto}many{Compartir # de imágenes con texto}other{Compartir # imágenes con texto}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Compartir imagen con vínculo}many{Compartir # de imágenes con vínculo}other{Compartir # imágenes con vínculo}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Compartir video con texto}many{Compartir # de videos con texto}other{Compartir # videos con texto}}"</string>
@@ -77,7 +78,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Aunque no se le otorgó permiso de grabación a esta app, puede capturar audio con este dispositivo USB."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Personal"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Trabajo"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"Privada"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Privado"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Vista personal"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Vista de trabajo"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Vista privada"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"No se puede abrir este contenido con apps de trabajo"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"No se pueden usar apps personales para compartir este contenido"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"No se puede abrir este contenido con apps personales"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"No se puede compartir este contenido con apps privadas"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"No se puede abrir este contenido con apps privadas"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Se pausaron las apps de trabajo"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Reanudar"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"El contenido no es compatible con apps de trabajo"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"El contenido no es compatible con apps personales"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"No hay apps privadas"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"¿Quieres abrir <xliff:g id="APP">%s</xliff:g> en tu perfil personal?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"¿Quieres abrir <xliff:g id="APP">%s</xliff:g> en tu perfil de trabajo?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Usar un navegador personal"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Excluir vínculo"</string>
     <string name="include_link" msgid="827855767220339802">"Incluir vínculo"</string>
     <string name="pinned" msgid="7623664001331394139">"Fijado"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Imagen seleccionable"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Video seleccionable"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Elemento seleccionable"</string>
 </resources>

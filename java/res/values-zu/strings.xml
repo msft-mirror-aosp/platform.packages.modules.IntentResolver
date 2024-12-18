@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Yabelana ngomfanekiso}one{Yabelana ngemifanekiso engu-#}other{Yabelana ngemifanekiso engu-#}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Yabelana ngevidiyo}one{Yabelana ngamavidiyo angu-#}other{Yabelana ngamavidiyo angu-#}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Yabelana ngefayela eli-#}one{Yabelana ngamafayela angu-#}other{Yabelana ngamafayela angu-#}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Khetha izinto ongabelana ngazo"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Yabelana ngomfanekiso ngombhalo}one{Yabelana ngemifanekiso engu-# ngombhalo}other{Yabelana ngemifanekiso engu-# ngombhalo}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Yabelana ngomfanekiso ngelinki}one{Yabelana ngemifanekiso engu-# ngelinki}other{Yabelana ngemifanekiso engu-# ngelinki}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Yabelana ngevidiyo ngombhalo}one{Yabelana ngamavidiyo angu-# ngombhalo}other{Yabelana ngamavidiyo angu-# ngombhalo}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Lokhu okuqukethwe akukwazi ukukopishwa ngama-app womsebenzi"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Lokhu okuqukethwe akukwazi ukwabiwa nama-app womuntu siqu"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Lokhu okuqukethwe akukwazi ukukopishwa ngama-app womuntu siqu"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Lokhu okuqukethwe akukwazi ukwabiwa ngama-app agodliwe"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Lokhu okuqukethwe akukwazi ukuvulwa ngama-app agodliwe"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Ama-app omsebenzi amisiwe"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Qhubekisa"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Awekho ama-app womsebenzi"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Awekho ama-app womuntu siqu"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Awekho ama-app ayimfihlo"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Vula i-<xliff:g id="APP">%s</xliff:g> kwiphrofayela yakho siqu?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Vula i-<xliff:g id="APP">%s</xliff:g> kwiphrofayela yakho yomsebenzi?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Sebenzisa isiphequluli somuntu siqu"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Ungafaki ilinki"</string>
     <string name="include_link" msgid="827855767220339802">"Faka ilinki"</string>
     <string name="pinned" msgid="7623664001331394139">"Kuphiniwe"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Umfanekiso okhethekayo"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Ividiyo ekhethekayo"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Into ekhethekayo"</string>
 </resources>

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Сүрөт бөлүшүү}other{# сүрөт бөлүшүлүүдө}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Видео бөлүшүлүүдө}other{# видео бөлүшүлүүдө}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# файл бөлүшүлүүдө}other{# файл бөлүшүлүүдө}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Бөлүшө турган нерселерди тандаңыз"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Сүрөттү текст менен жөнөтүү}other{# cүрөттү текст менен жөнөтүү}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Сүрөттү шилтеме менен жөнөтүү}other{# сүрөттү шилтеме менен жөнөтүү}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Видеону текст менен жөнөтүү}other{# видеону текст менен жөнөтүү}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Бул нерсени жумуш колдонмолору менен ача албайсыз"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Бул нерсени жеке колдонмолор менен бөлүшө албайсыз"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Бул нерсени жеке колдонмолор менен ача албайсыз"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Бул мазмун жеке колдонмолор менен бөлүшүлбөйт"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Бул мазмун жеке колдонмолор менен ачылбайт"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Жумуш колдонмолору тындырылды"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Иштетүү"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Жумуш колдонмолору жок"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Жеке колдонмолор жок"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Жеке колдонмолор жок"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> колдонмосу жеке профилде ачылсынбы?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> колдонмосу жумуш профилинде ачылсынбы?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Жеке серепчини колдонуу"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Шилтемени чыгарып салуу"</string>
     <string name="include_link" msgid="827855767220339802">"Шилтеме кошуу"</string>
     <string name="pinned" msgid="7623664001331394139">"Кадалган"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Тандала турган сүрөт"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Тандала турган видео"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Тандала турган нерсе"</string>
 </resources>

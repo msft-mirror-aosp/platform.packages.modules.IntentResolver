@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Պատկերի ուղարկում}one{# պատկերի ուղարկում}other{# պատկերի ուղարկում}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Տեսանյութի ուղարկում}one{# տեսանյութի ուղարկում}other{# տեսանյութի ուղարկում}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Ուղարկվում է # ֆայլ}one{Ուղարկվում է # ֆայլ}other{Ուղարկվում է # ֆայլ}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Ընտրեք տարրեր՝ կիսվելու համար"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Պատկերի ուղարկում տեքստային հաղորդագրության միջոցով}one{# պատկերի ուղարկում տեքստային հաղորդագրության միջոցով}other{# պատկերի ուղարկում տեքստային հաղորդագրության միջոցով}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Պատկերի ուղարկում հղման միջոցով}one{# պատկերի ուղարկում հղման միջոցով}other{# պատկերի ուղարկում հղման միջոցով}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Տեսանյութի ուղարկում տեքստային հաղորդագրության միջոցով}one{# տեսանյութի ուղարկում տեքստային հաղորդագրության միջոցով}other{# տեսանյութի ուղարկում տեքստային հաղորդագրության միջոցով}}"</string>
@@ -77,7 +78,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Հավելվածը ձայնագրելու թույլտվություն չունի, սակայն կկարողանա գրանցել ձայնն այս USB սարքի միջոցով։"</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Անձնական"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Աշխատանքային"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"Անձնական"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Մասնավոր"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Անձնական"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Աշխատանքային"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Անձնական դիտակերպ"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Այս բովանդակությունը հնարավոր չէ բացել աշխատանքային հավելվածներով"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Այս բովանդակությունը հնարավոր չէ ուղարկել անձնական հավելվածներով"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Այս բովանդակությունը հնարավոր չէ բացել անձնական հավելվածներով"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Այս բովանդակությամբ հնարավոր չէ կիսվել մասնավոր հավելվածներով"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Այս բովանդակությունը հնարավոր չէ բացել մասնավոր հավելվածներով"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Աշխատանքային հավելվածները դադարեցված են"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Նորից միացնել"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Աշխատանքային հավելվածներ չկան"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Անձնական հավելվածներ չկան"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Անձնական հավելվածները չեն աջակցում որոշակի բովանդակություն"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Բացե՞լ <xliff:g id="APP">%s</xliff:g> հավելվածը ձեր անձնական պրոֆիլում"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Բացե՞լ <xliff:g id="APP">%s</xliff:g> հավելվածը ձեր աշխատանքային պրոֆիլում"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Օգտագործել անձնական դիտարկիչը"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Բացառել հղումը"</string>
     <string name="include_link" msgid="827855767220339802">"Ներառել հղումը"</string>
     <string name="pinned" msgid="7623664001331394139">"Ամրացված է"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Ընտրելու հնարավորությամբ պատկեր"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Ընտրելու հնարավորությամբ տեսանյութ"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Ընտրելու հնարավորությամբ տարր"</string>
 </resources>

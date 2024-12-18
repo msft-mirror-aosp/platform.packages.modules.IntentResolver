@@ -21,11 +21,9 @@ import android.content.Intent
 import android.database.MatrixCursor
 import android.media.MediaMetadata
 import android.net.Uri
-import android.platform.test.flag.junit.CheckFlagsRule
-import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import android.provider.DocumentsContract
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
+import android.service.chooser.FakeFeatureFlagsImpl
+import android.service.chooser.Flags
 import com.google.common.truth.Truth.assertThat
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -34,19 +32,21 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito.any
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PreviewDataProviderTest {
     private val contentResolver = mock<ContentInterface>()
     private val mimeTypeClassifier = DefaultMimeTypeClassifier
     private val testScope = TestScope(EmptyCoroutineContext + UnconfinedTestDispatcher())
-    @get:Rule val checkFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
+    private val featureFlags =
+        FakeFeatureFlagsImpl().apply { setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, false) }
 
     private fun createDataProvider(
         targetIntent: Intent,
@@ -54,14 +54,13 @@ class PreviewDataProviderTest {
         additionalContentUri: Uri? = null,
         resolver: ContentInterface = contentResolver,
         typeClassifier: MimeTypeClassifier = mimeTypeClassifier,
-        isPayloadTogglingEnabled: Boolean = false
     ) =
         PreviewDataProvider(
             scope,
             targetIntent,
             additionalContentUri,
             resolver,
-            isPayloadTogglingEnabled,
+            featureFlags,
             typeClassifier,
         )
 
@@ -377,11 +376,11 @@ class PreviewDataProviderTest {
         val uri = Uri.parse("content://org.pkg.app/image.png")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getType(uri)).thenReturn("image/png")
+        featureFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val testSubject =
             createDataProvider(
                 targetIntent,
                 additionalContentUri = Uri.parse("content://org.pkg.app.extracontent"),
-                isPayloadTogglingEnabled = true,
             )
 
         assertThat(testSubject.previewType)
@@ -415,11 +414,11 @@ class PreviewDataProviderTest {
         val uri = Uri.parse("content://org.pkg.app/image.png")
         val targetIntent = Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uri) }
         whenever(contentResolver.getType(uri)).thenReturn("image/png")
+        featureFlags.setFlag(Flags.FLAG_CHOOSER_PAYLOAD_TOGGLING, true)
         val testSubject =
             createDataProvider(
                 targetIntent,
                 additionalContentUri = Uri.parse("content://org.pkg.app/extracontent"),
-                isPayloadTogglingEnabled = true,
             )
 
         assertThat(testSubject.previewType).isEqualTo(ContentPreviewType.CONTENT_PREVIEW_IMAGE)

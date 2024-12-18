@@ -21,13 +21,13 @@ import android.database.MatrixCursor
 import android.media.MediaMetadata
 import android.net.Uri
 import android.provider.DocumentsContract
-import com.android.intentresolver.any
-import com.android.intentresolver.anyOrNull
-import com.android.intentresolver.eq
-import com.android.intentresolver.mock
-import com.android.intentresolver.whenever
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class UriMetadataReaderTest {
     private val uri = Uri.parse("content://org.pkg.app/item")
@@ -37,7 +37,7 @@ class UriMetadataReaderTest {
     fun testImageUri() {
         val mimeType = "image/png"
         whenever(contentResolver.getType(uri)).thenReturn(mimeType)
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)
@@ -52,7 +52,7 @@ class UriMetadataReaderTest {
         val imageType = "image/png"
         whenever(contentResolver.getType(uri)).thenReturn(mimeType)
         whenever(contentResolver.getStreamTypes(eq(uri), any())).thenReturn(arrayOf(imageType))
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)
@@ -72,7 +72,7 @@ class UriMetadataReaderTest {
                     addRow(arrayOf(DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL))
                 }
             )
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)
@@ -89,7 +89,7 @@ class UriMetadataReaderTest {
         val columns = arrayOf(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI)
         whenever(contentResolver.query(eq(uri), eq(columns), anyOrNull(), anyOrNull()))
             .thenReturn(MatrixCursor(columns).apply { addRow(arrayOf(previewUri.toString())) })
-        val testSubject = UriMetadataReader(contentResolver, DefaultMimeTypeClassifier)
+        val testSubject = UriMetadataReaderImpl(contentResolver, DefaultMimeTypeClassifier)
 
         testSubject.getMetadata(uri).let { fileInfo ->
             assertWithMessage("Wrong uri").that(fileInfo.uri).isEqualTo(uri)

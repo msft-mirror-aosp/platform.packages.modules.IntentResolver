@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{ఈ ఇమేజ్‌ను షేర్ చేస్తున్నారు}other{ఈ # ఇమేజ్‌లను షేర్ చేస్తున్నారు}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{వీడియోను షేర్ చేయడం}other{# వీడియోలను షేర్ చేయడం}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# ఫైల్‌ను షేర్ చేస్తోంది}other{# ఫైళ్లను షేర్ చేస్తోంది}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"షేర్ చేయడానికి ఐటెమ్‌లను ఎంచుకోండి"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా ఇమేజ్‌ను షేర్ చేయడం}other{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా # ఇమేజ్‌లను షేర్ చేయడం}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{లింక్ చేయడం ద్వారా ఇమేజ్‌ను షేర్ చేయడం}other{లింక్ చేయడం ద్వారా # ఇమేజ్‌లను షేర్ చేయడం}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా వీడియోను షేర్ చేయడం}other{టెక్స్ట్ మెసేజ్ పంపడం ద్వారా # వీడియోలను షేర్ చేయడం}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ఈ కంటెంట్ వర్క్ యాప్‌తో తెరవడం సాధ్యం కాదు"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"ఈ కంటెంట్‌ను వ్యక్తిగత యాప్స్ లోకి షేర్ చేయడం సాధ్యం కాదు"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ఈ కంటెంట్ వ్యక్తిగత యాప్‌తో తెరవడం సాధ్యం కాదు"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"ఈ కంటెంట్‌ను ప్రైవేట్ యాప్‌లతో షేర్ చేయడం సాధ్యం కాదు"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"ఈ కంటెంట్‌ను ప్రైవేట్ యాప్‌లతో తెరవడం సాధ్యం కాదు"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"వర్క్ యాప్‌లు పాజ్ చేయబడ్డాయి"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"అన్‌పాజ్ చేయండి"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"వర్క్ యాప్‌లు లేవు"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"వ్యక్తిగత యాప్‌లు లేవు"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"ప్రైవేట్ యాప్‌లు ఏవీ లేవు"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g>ను మీ వ్యక్తిగత ప్రొఫైల్‌లో తెరవాలా?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g>ను మీ వర్క్ ప్రొఫైల్‌లో తెరవాలా?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"వ్యక్తిగత బ్రౌజర్‌ను ఉపయోగించండి"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"లింక్‌ను మినహాయించండి"</string>
     <string name="include_link" msgid="827855767220339802">"లింక్‌ను చేర్చండి"</string>
     <string name="pinned" msgid="7623664001331394139">"పిన్ చేయబడింది"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"ఎంచుకోదగిన ఇమేజ్"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"ఎంచుకోదగిన వీడియో"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"ఎంచుకోదగిన ఐటెమ్"</string>
 </resources>

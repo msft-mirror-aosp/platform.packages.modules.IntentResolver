@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{分享圖片}other{分享 # 張圖片}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{正在分享影片}other{正在分享 # 部影片}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{正在分享 # 個檔案}other{正在分享 # 個檔案}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"選取要分享的項目"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{正在分享圖片 (含有文字)}other{正在分享 # 張圖片 (含有文字)}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{正在分享圖片 (含有連結)}other{正在分享 # 張圖片 (含有連結)}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{正在分享影片 (含有文字)}other{正在分享 # 部影片 (含有文字)}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"無法使用工作應用程式開啟此內容"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"無法與個人應用程式分享此內容"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"無法使用個人應用程式開啟此內容"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"無法使用私人應用程式分享此內容"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"無法使用私人應用程式開啟此內容"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"已暫停工作應用程式"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"取消暫停"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"沒有適用的工作應用程式"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"沒有適用的個人應用程式"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"沒有私人應用程式"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"要在個人設定檔中開啟「<xliff:g id="APP">%s</xliff:g>」嗎？"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"要在工作設定檔中開啟「<xliff:g id="APP">%s</xliff:g>」嗎？"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"使用個人瀏覽器"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"不包括連結"</string>
     <string name="include_link" msgid="827855767220339802">"加入連結"</string>
     <string name="pinned" msgid="7623664001331394139">"固定咗"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"可以揀嘅圖片"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"可以揀嘅影片"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"可以揀嘅項目"</string>
 </resources>

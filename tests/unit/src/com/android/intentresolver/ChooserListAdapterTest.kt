@@ -39,8 +39,11 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 @RunWith(AndroidJUnit4::class)
 class ChooserListAdapterTest {
@@ -49,7 +52,7 @@ class ChooserListAdapterTest {
 
     private val packageManager =
         mock<PackageManager> {
-            whenever(resolveActivity(any(), any<ResolveInfoFlags>())).thenReturn(mock())
+            on { resolveActivity(any(), any<ResolveInfoFlags>()) } doReturn (mock())
         }
     private val context = InstrumentationRegistry.getInstrumentation().context
     private val resolverListController = mock<ResolverListController>()
@@ -58,7 +61,6 @@ class ChooserListAdapterTest {
     private val mEventLog = mock<EventLogImpl>()
     private val mTargetDataLoader = mock<TargetDataLoader>()
     private val mPackageChangeCallback = mock<ChooserListAdapter.PackageChangeCallback>()
-    private val featureFlags = FeatureFlagsImpl()
 
     private val testSubject by lazy {
         ChooserListAdapter(
@@ -78,7 +80,6 @@ class ChooserListAdapterTest {
             null,
             mTargetDataLoader,
             mPackageChangeCallback,
-            featureFlags,
         )
     }
 
@@ -98,7 +99,7 @@ class ChooserListAdapterTest {
         val targetInfo = createSelectableTargetInfo()
         testSubject.onBindView(view, targetInfo, 0)
 
-        verify(mTargetDataLoader, times(1)).loadDirectShareIcon(any(), any(), any())
+        verify(mTargetDataLoader, times(1)).getOrLoadDirectShareIcon(any(), any(), any())
     }
 
     @Test
@@ -114,7 +115,7 @@ class ChooserListAdapterTest {
 
         testSubject.onBindView(view, targetInfo, 0)
 
-        verify(mTargetDataLoader, times(1)).loadDirectShareIcon(any(), any(), any())
+        verify(mTargetDataLoader, times(1)).getOrLoadDirectShareIcon(any(), any(), any())
     }
 
     @Test
@@ -137,7 +138,7 @@ class ChooserListAdapterTest {
 
         testSubject.onBindView(view, targetInfo, 0)
 
-        verify(mTargetDataLoader, times(1)).loadAppTargetIcon(any(), any(), any())
+        verify(mTargetDataLoader, times(1)).getOrLoadAppTargetIcon(any(), any(), any())
     }
 
     @Test
@@ -219,15 +220,10 @@ class ChooserListAdapterTest {
 
     private fun createView(): View {
         val view = FrameLayout(context)
-        if (featureFlags.bespokeLabelView()) {
-                BadgeTextView(context)
-            } else {
-                TextView(context)
-            }
-            .apply {
-                id = R.id.text1
-                view.addView(this)
-            }
+        BadgeTextView(context).apply {
+            id = R.id.text1
+            view.addView(this)
+        }
         TextView(context).apply {
             id = R.id.text2
             view.addView(this)

@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"यस मार्फत छविलाई कैंद गर्नुहोस्"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"<xliff:g id="APP">%1$s</xliff:g> मार्फत फोटो खिच्नुहोस्"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"छविलाई कैंद गर्नुहोस्"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"फरक एप प्रयोग गर्नुहोस्"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"अर्को एप प्रयोग गर्नुहोस्"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"कारबाही चयन गर्नुहोस्"</string>
     <string name="noApplications" msgid="1139487441772284671">"कुनै पनि एपहरूले यो कार्य गर्न सक्दैनन्।"</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"तपाईं तपाईंको कार्य प्रोफाइल बाहिर यो एप प्रयोग गरिरहनु भएको छ"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{फोटो सेयर गरिँदै छ}other{# वटा फोटो सेयर गरिँदै छ}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{भिडियो सेयर गरिँदै छ}other{# वटा भिडियो सेयर गरिँदै छ}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# वटा फाइल सेयर गरिँदै छ}other{# वटा फाइल सेयर गरिँदै छ}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"आफूले सेयर गर्न चाहेका सामग्री चयन गर्नुहोस्"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{टेक्स्ट भएको फोटो सेयर गरिँदै छ}other{टेक्स्ट भएका # वटा फोटो सेयर गरिँदै छन्}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{लिंक भएको फोटो सेयर गरिँदै छ}other{लिंक भएका # वटा फोटो सेयर गरिँदै छन्}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{टेक्स्ट भएको भिडियो सेयर गरिँदै छ}other{टेक्स्ट भएका # वटा भिडियो सेयर गरिँदै छन्}}"</string>
@@ -77,7 +78,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"यो एपलाई रेकर्ड गर्ने अनुमति प्रदान गरिएको छैन तर यसले यो USB यन्त्रमार्फत अडियो क्याप्चर गर्न सक्छ।"</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"व्यक्तिगत"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"काम"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"निजी"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"निजी स्पेस"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"व्यक्तिगत दृश्य"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"कार्य दृश्य"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"निजी भ्यू"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"यो सामग्री कामसम्बन्धी एपहरूमार्फत खोल्न मिल्दैन"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"यो सामग्री व्यक्तिगत एपहरूमार्फत सेयर गर्न मिल्दैन"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"यो सामग्री व्यक्तिगत एपहरूमार्फत खोल्न मिल्दैन"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"यो सामग्री निजी एपहरूमार्फत सेयर गर्न मिल्दैन"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"यो सामग्री निजी एपहरूमार्फत खोल्न मिल्दैन"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"कामसम्बन्धी एपहरू पज गरिएका छन्"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"अनपज गर्नुहोस्"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"यो सामग्री खोल्न मिल्ने कुनै पनि कामसम्बन्धी एप छैन"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"यो सामग्री खोल्न मिल्ने कुनै पनि व्यक्तिगत एप छैन"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"कुनै पनि निजी एप छैन"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"<xliff:g id="APP">%s</xliff:g> तपाईंको व्यक्तिगत प्रोफाइलमा खोल्ने हो?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"<xliff:g id="APP">%s</xliff:g> तपाईंको कार्य प्रोफाइलमा खोल्ने हो?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"व्यक्तिगत ब्राउजर प्रयोग गर्नुहोस्"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"लिंक हटाउनुहोस्"</string>
     <string name="include_link" msgid="827855767220339802">"लिंक समावेश गर्नुहोस्"</string>
     <string name="pinned" msgid="7623664001331394139">"पिन गरिएको"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"चयन गर्न मिल्ने फोटो"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"चयन गर्न मिल्ने भिडियो"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"चयन गर्न मिल्ने वस्तु"</string>
 </resources>

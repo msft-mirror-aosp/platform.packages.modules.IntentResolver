@@ -55,11 +55,12 @@
     <string name="screenshot_edit" msgid="3857183660047569146">"Upraviť"</string>
     <string name="other_files" msgid="4501185823517473875">"{count,plural, =1{+ # súbor}few{+ # súbory}many{+ # files}other{+ # súborov}}"</string>
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{a # ďalší súbor}few{a # ďalšie súbory}many{+ # more files}other{a # ďalších súborov}}"</string>
-    <string name="sharing_text" msgid="8137537443603304062">"Zdieľa sa textová správa"</string>
+    <string name="sharing_text" msgid="8137537443603304062">"Zdieľanie textu"</string>
     <string name="sharing_link" msgid="2307694372813942916">"Zdieľa sa odkaz"</string>
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Zdieľanie obrázku}few{Zdieľanie # obrázkov}many{Sharing # images}other{Zdieľanie # obrázkov}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Zdieľa sa video}few{Zdieľajú sa # videá}many{Sharing # videos}other{Zdieľa sa # videí}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Zdieľa sa # súbor}few{Zdieľajú sa # súbory}many{Sharing # files}other{Zdieľa sa # súborov}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Vyberte položky na zdieľanie"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Zdieľa sa obrázok s textom}few{Zdieľajú sa # obrázky s textom}many{Sharing # images with text}other{Zdieľa sa # obrázkov s textom}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Zdieľa sa obrázok s odkazom}few{Zdieľajú sa # obrázky s odkazom}many{Sharing # images with link}other{Zdieľa sa # obrázkov s odkazom}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Zdieľa sa video s textom}few{Zdieľajú sa # videá s textom}many{Sharing # videos with text}other{Zdieľa sa # videí s textom}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Tento obsah sa nedá otvoriť pomocou pracovných aplikácií"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Tento obsah sa nedá zdieľať pomocou osobných aplikácií"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Tento obsah sa nedá otvoriť pomocou osobných aplikácií"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Tento obsah sa nedá zdieľať pomocou súkromných aplikácií"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Tento obsah sa nedá otvoriť pomocou súkromných aplikácií"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Pracovné aplikácie sú pozastavené"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Zrušiť pozastavenie"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Žiadne pracovné aplikácie"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Žiadne osobné aplikácie"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Žiadne súkromné aplikácie"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Chcete otvoriť <xliff:g id="APP">%s</xliff:g> v osobnom profile?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Chcete otvoriť <xliff:g id="APP">%s</xliff:g> v pracovnom profile?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Použiť osobný prehliadač"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Vylúčiť odkaz"</string>
     <string name="include_link" msgid="827855767220339802">"Zahrnúť odkaz"</string>
     <string name="pinned" msgid="7623664001331394139">"Pripnuté"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Vybrateľný obrázok"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Vybrateľné video"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Vybrateľná položka"</string>
 </resources>

@@ -58,7 +58,6 @@ import org.xmlpull.v1.XmlPullParser;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-
 /**
  * @deprecated Use the Launcher3 Iconloaderlib at packages/apps/Launcher3/iconloaderlib. This class
  * is a temporary fork of Iconloader. It combines all necessary methods to render app icons that are

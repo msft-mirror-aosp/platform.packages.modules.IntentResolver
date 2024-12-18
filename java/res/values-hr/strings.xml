@@ -56,10 +56,11 @@
     <string name="other_files" msgid="4501185823517473875">"{count,plural, =1{+ # datoteka}one{+ # datoteka}few{+ # datoteke}other{+ # datoteka}}"</string>
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{i još # datoteka}one{i još # datoteka}few{i još # datoteke}other{i još # datoteka}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"Dijeli se tekst"</string>
-    <string name="sharing_link" msgid="2307694372813942916">"Dijeli se veza"</string>
+    <string name="sharing_link" msgid="2307694372813942916">"Veza za dijeljenje"</string>
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Podijelite sliku}one{Podijelite # sliku}few{Podijelite # slike}other{Podijelite # slika}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Dijeli se videozapis}one{Dijeli se # videozapis}few{Dijele se # videozapisa}other{Dijeli se # videozapisa}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Dijeli se # datoteka}one{Dijeli se # datoteka}few{Dijele se # datoteke}other{Dijeli se # datoteka}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Odaberite stavke za dijeljenje"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Dijeli se slika s tekstom}one{Dijeli se # slika s tekstom}few{Dijele se # slike s tekstom}other{Dijeli se # slika s tekstom}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Dijeli se slika s vezom}one{Dijeli se # slika s vezom}few{Dijele se # slike s vezom}other{Dijeli se # slika s vezom}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Dijeli se videozapis s tekstom}one{Dijeli se # videozapis s tekstom}few{Dijele se # videozapisa s tekstom}other{Dijeli se # videozapisa s tekstom}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Taj se sadržaj ne može otvoriti pomoću poslovnih aplikacija"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Taj se sadržaj ne može dijeliti pomoću osobnih aplikacija"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Taj se sadržaj ne može otvoriti pomoću osobnih aplikacija"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Taj se sadržaj ne može dijeliti pomoću privatnih aplikacija"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Taj se sadržaj ne može otvoriti pomoću privatnih aplikacija"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Poslovne aplikacije su pauzirane"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Ponovno pokreni"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Poslovne aplikacije nisu dostupne"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Osobne aplikacije nisu dostupne"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Nema privatnih aplikacija"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Želite li otvoriti aplikaciju <xliff:g id="APP">%s</xliff:g> na osobnom profilu?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Želite li otvoriti aplikaciju <xliff:g id="APP">%s</xliff:g> na poslovnom profilu?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Koristi osobni preglednik"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Isključi vezu"</string>
     <string name="include_link" msgid="827855767220339802">"Uključi vezu"</string>
     <string name="pinned" msgid="7623664001331394139">"Prikvačeno"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Slika koja se može odabrati"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Videozapis koji se može odabrati"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Stavka koja se može odabrati"</string>
 </resources>

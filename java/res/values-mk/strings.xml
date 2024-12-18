@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"Сними слика со"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"Снимање слика со <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"Сними слика"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"Користи различна апликација"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"Употреби друга апликација"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"Избирање дејство"</string>
     <string name="noApplications" msgid="1139487441772284671">"Нема апликации што можат да го извршат ова дејство."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"Ја користите апликацијата надвор од работниот профил"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Споделување слика}one{Споделување # слика}other{Споделување # слики}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Се споделува видео}one{Се споделува # видео}other{Се споделуваат # видеа}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Се споделува # датотека}one{Се споделуваат # датотека}other{Се споделуваат # датотеки}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Изберете ставки за споделување"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Се споделува слика со SMS}one{Се споделуваат # слика со SMS}other{Се споделуваат # слики со SMS}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Се споделува слика со линк}one{Се споделуваат # слика со линк}other{Се споделуваат # слики со линк}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Се споделува видео со SMS}one{Се споделуваат # видео со SMS}other{Се споделуваат # видеа со SMS}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Овие содржини не може да се отвораат со работни апликации"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Овие содржини не може да се споделуваат со лични апликации"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Овие содржини не може да се отвораат со лични апликации"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Овие содржини не може да се споделуваат со приватни апликации"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Овие содржини не може да се отвораат со лични апликации"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Работните апликации се паузирани"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Прекини ја паузата"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Нема работни апликации"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Нема лични апликации"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Нема приватни апликации"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Да се отвори <xliff:g id="APP">%s</xliff:g> во личниот профил?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Да се отвори <xliff:g id="APP">%s</xliff:g> во работниот профил?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Користи личен прелистувач"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Исклучи линк"</string>
     <string name="include_link" msgid="827855767220339802">"Вклучи линк"</string>
     <string name="pinned" msgid="7623664001331394139">"Закачено"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Слика што може да се избере"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Видео што може да се избере"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Ставка што може да се избере"</string>
 </resources>

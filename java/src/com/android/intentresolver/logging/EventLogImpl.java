@@ -273,6 +273,11 @@ public class EventLogImpl implements EventLog {
         log(SharesheetStandardEvent.SHARESHEET_EMPTY_DIRECT_SHARE_ROW, mInstanceId);
     }
 
+    @Override
+    public void logPayloadSelectionChanged() {
+        log(SharesheetStandardEvent.SHARESHEET_PAYLOAD_TOGGLED, mInstanceId);
+    }
+
     /**
      * Logs a UiEventReported event for a given share activity
      * @param event
@@ -379,7 +384,9 @@ public class EventLogImpl implements EventLog {
         @UiEvent(doc = "Sharesheet app share ranking timed out.")
         SHARESHEET_APP_SHARE_RANKING_TIMEOUT(831),
         @UiEvent(doc = "Sharesheet empty direct share row.")
-        SHARESHEET_EMPTY_DIRECT_SHARE_ROW(828);
+        SHARESHEET_EMPTY_DIRECT_SHARE_ROW(828),
+        @UiEvent(doc = "Shareousel payload item toggled")
+        SHARESHEET_PAYLOAD_TOGGLED(1662);
 
         private final int mId;
         SharesheetStandardEvent(int id) {
@@ -400,6 +407,9 @@ public class EventLogImpl implements EventLog {
             case ContentPreviewType.CONTENT_PREVIEW_FILE:
                 return FrameworkStatsLog.SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_FILE;
             case ContentPreviewType.CONTENT_PREVIEW_TEXT:
+            case ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION:
+                return FrameworkStatsLog
+                        .SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_TOGGLEABLE_MEDIA;
             default:
                 return FrameworkStatsLog
                         .SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_TYPE_UNKNOWN;

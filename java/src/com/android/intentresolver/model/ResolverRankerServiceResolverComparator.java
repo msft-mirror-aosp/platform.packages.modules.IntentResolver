@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.metrics.LogMaker;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
@@ -48,6 +49,7 @@ import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 
 import com.google.android.collect.Lists;
 
+import java.lang.ref.WeakReference;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -392,20 +394,7 @@ public class ResolverRankerServiceResolverComparator extends AbstractResolverCom
         }
 
         public final IResolverRankerResult resolverRankerResult =
-                new IResolverRankerResult.Stub() {
-            @Override
-            public void sendResult(List<ResolverTarget> targets) throws RemoteException {
-                if (DEBUG) {
-                    Log.d(TAG, "Sending Result back to Resolver: " + targets);
-                }
-                synchronized (mLock) {
-                    final Message msg = Message.obtain();
-                    msg.what = RANKER_SERVICE_RESULT;
-                    msg.obj = targets;
-                    mHandler.sendMessage(msg);
-                }
-            }
-        };
+                new ResolverRankerResultCallback(mLock, mHandler);
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -433,6 +422,32 @@ public class ResolverRankerServiceResolverComparator extends AbstractResolverCom
             synchronized (mLock) {
                 mRanker = null;
                 mComparatorModel = buildUpdatedModel();
+            }
+        }
+    }
+
+    private static class ResolverRankerResultCallback extends IResolverRankerResult.Stub {
+        private final Object mLock;
+        private final WeakReference<Handler> mHandlerRef;
+
+        private ResolverRankerResultCallback(Object lock, Handler handler) {
+            mLock = lock;
+            mHandlerRef = new WeakReference<>(handler);
+        }
+
+        @Override
+        public void sendResult(List<ResolverTarget> targets) throws RemoteException {
+            if (DEBUG) {
+                Log.d(TAG, "Sending Result back to Resolver: " + targets);
+            }
+            synchronized (mLock) {
+                final Message msg = Message.obtain();
+                msg.what = RANKER_SERVICE_RESULT;
+                msg.obj = targets;
+                Handler handler = mHandlerRef.get();
+                if (handler != null) {
+                    handler.sendMessage(msg);
+                }
             }
         }
     }

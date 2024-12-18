@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{កំពុងចែក​រំលែករូបភាព}other{កំពុងចែក​រំលែករូបភាព #}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{កំពុងចែករំលែកវីដេអូ}other{កំពុងចែករំលែកវីដេអូ #}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{កំពុង​ចែករំលែកឯកសារ #}other{កំពុង​ចែករំលែកឯកសារ #}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"ជ្រើសរើសធាតុដែលត្រូវចែករំលែក"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{ចែករំលែករូបភាពជាមួយអក្សរ}other{ចែករំលែករូបភាព # ជាមួយអក្សរ}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{ចែករំលែករូបភាពជាមួយតំណ}other{ចែករំលែករូបភាព # ជាមួយតំណ}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{ចែករំលែកវីដេអូជាមួយអក្សរ}other{ចែករំលែក # វីដេអូជាមួយអក្សរ}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"ខ្លឹមសារនេះ​មិនអាចបើក​តាមរយៈ​កម្មវិធី​ការងារ​បានទេ"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"មិនអាចចែករំលែកខ្លឹមសារនេះ​ជាមួយ​កម្មវិធី​ផ្ទាល់ខ្លួន​បានទេ"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"ខ្លឹមសារនេះ​មិនអាចបើក​តាមរយៈ​កម្មវិធី​ផ្ទាល់ខ្លួន​បានទេ"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"មិនអាចចែករំលែកខ្លឹមសារនេះជាមួយកម្មវិធីឯកជនបានទេ"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"មិនអាចបើកខ្លឹមសារនេះដោយប្រើកម្មវិធីឯកជនបានទេ"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"កម្មវិធី​ការងារ​ត្រូវបានផ្អាក"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"ឈប់ផ្អាក"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"គ្មាន​កម្មវិធី​ការងារ​ទេ"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"គ្មាន​កម្មវិធី​ផ្ទាល់ខ្លួន​ទេ"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"គ្មានកម្មវិធីឯកជនទេ"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"បើក <xliff:g id="APP">%s</xliff:g> នៅក្នុងកម្រង​ព័ត៌មាន​ផ្ទាល់​ខ្លួនរបស់អ្នកឬ?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"បើក <xliff:g id="APP">%s</xliff:g> នៅក្នុងកម្រងព័ត៌មានការងាររបស់អ្នកឬ?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"ប្រើ​កម្មវិធីរុករក​តាមអ៊ីនធឺណិត​ផ្ទាល់ខ្លួន"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"មិនរួមបញ្ចូលតំណ"</string>
     <string name="include_link" msgid="827855767220339802">"រួមបញ្ចូល​តំណ"</string>
     <string name="pinned" msgid="7623664001331394139">"បាន​ខ្ទាស់"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"រូបភាពដែល​អាចជ្រើសរើសបាន"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"វីដេអូដែល​អាចជ្រើសរើសបាន"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"ធាតុដែល​អាចជ្រើសរើសបាន"</string>
 </resources>

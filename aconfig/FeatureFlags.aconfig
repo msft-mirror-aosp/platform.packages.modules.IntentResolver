@@ -6,30 +6,6 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
-  name: "fix_target_list_footer"
-  namespace: "intentresolver"
-  description: "Update app target grid footer on window insets change"
-  bug: "324011248"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
-  name: "scrollable_preview"
-  namespace: "intentresolver"
-  description: "Makes preview scrollable with multiple profiles"
-  bug: "287102904"
-}
-
-flag {
-  name: "target_data_caching"
-  namespace: "intentresolver"
-  description: "Enables caching target icons and labels in a local DB"
-  bug: "285314844"
-}
-
-flag {
   name: "modular_framework"
   namespace: "intentresolver"
   description: "Enables the new modular framework"
@@ -37,15 +13,113 @@ flag {
 }
 
 flag {
-  name: "bespoke_label_view"
-  namespace: "intentresolver"
-  description: "Use a custom view to draw target labels"
-  bug: "302188527"
-}
-
-flag {
   name: "enable_private_profile"
   namespace: "intentresolver"
   description: "Enable private profile support"
-  bug: "311348033"
+  bug: "328029692"
+}
+
+flag {
+  name: "refine_system_actions"
+  namespace: "intentresolver"
+  description: "This flag enables sending system actions to the caller refinement flow"
+  bug: "331206205"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_drawer_offset_on_config_change"
+  namespace: "intentresolver"
+  description: "Fix drawer offset calculation after rotating when in a non-initial tab"
+  bug: "344057117"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_empty_state_padding"
+  namespace: "intentresolver"
+  description: "Always apply systemBar window insets regardless of profiles present"
+  bug: "338447666"
+}
+
+flag {
+  name: "fix_empty_state_padding_bug"
+  namespace: "intentresolver"
+  description: "Always apply systemBar window insets regardless of profiles present"
+  bug: "338447666"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_missing_drawer_offset_calculation"
+  namespace: "intentresolver"
+  description: "Recalculate drawer offset upon the preview size change when the targets list remains unchanged"
+  bug: "347316548"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_private_space_locked_on_restart"
+  namespace: "intentresolver"
+  description: "Dismiss Share sheet on restart if private space became locked while stopped"
+  bug: "338125945"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_shortcut_loader_job_leak"
+  namespace: "intentresolver"
+  description: "User a nested coroutine scope for shortcut loader instances"
+  bug: "358135601"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "fix_shortcuts_flashing"
+  namespace: "intentresolver"
+  description: "Do not flash shortcuts on payload selection change"
+  bug: "343300158"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "preview_image_loader"
+  namespace: "intentresolver"
+  description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
+  bug: "348665058"
+}
+
+flag {
+  name: "shareousel_update_exclude_components_extra"
+  namespace: "intentresolver"
+  description: "Allow Shareousel selection change callback to update Intent#EXTRA_EXCLUDE_COMPONENTS"
+  bug: "352496527"
+}
+
+flag {
+  name: "unselect_final_item"
+  namespace: "intentresolver"
+  description: "Allow toggling of final Shareousel item"
+  bug: "349468879"
+}
+
+flag {
+  name: "shareousel_scroll_offscreen_selections"
+  namespace: "intentresolver"
+  description: "Whether to scroll items onscreen when they are partially offscreen and selected/unselected."
+  bug: "351883537"
 }

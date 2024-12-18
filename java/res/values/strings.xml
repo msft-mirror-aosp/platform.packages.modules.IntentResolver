@@ -162,6 +162,9 @@
         }
     </string>
 
+    <!-- Title atop a sharing UI indicating that a selection needs to be made for sharing -->
+    <string name="select_items_to_share">Select items to share</string>
+
     <!-- Title atop a sharing UI indicating that some number of images are being shared
          along with text [CHAR_LIMIT=50] -->
     <string name="sharing_images_with_text">{count, plural,
@@ -284,6 +287,12 @@
     <!-- Error message. This message lets the user know that their IT admin doesn't allow them to open this specific content with an app in their personal profile. [CHAR LIMIT=NONE] -->
     <string name="resolver_cant_access_personal_apps_explanation">This content can\u2019t be opened with personal apps</string>
 
+    <!-- Error message. This text is explaining that the user's IT admin doesn't allow this specific content to be shared with apps in the private profile. [CHAR LIMIT=NONE] -->
+    <string name="resolver_cant_share_with_private_apps_explanation">This content can\u2019t be shared with private apps</string>
+
+    <!-- Error message. This message lets the user know that their IT admin doesn't allow them to open this specific content with an app in their private profile. [CHAR LIMIT=NONE] -->
+    <string name="resolver_cant_access_private_apps_explanation">This content can\u2019t be opened with private apps</string>
+
     <!-- Error message. This text lets the user know that they need to turn on work apps in order to share or open content. There's also a button a user can tap to turn on the apps. [CHAR LIMIT=NONE] -->
     <string name="resolver_turn_on_work_apps">Work apps are paused</string>
     <!-- Button text. This button unpauses a user's work apps and data. [CHAR LIMIT=NONE] -->
@@ -294,6 +303,9 @@
 
     <!-- Error message. This text lets the user know that their current personal apps don't support the specific content. [CHAR LIMIT=NONE] -->
     <string name="resolver_no_personal_apps_available">No personal apps</string>
+
+    <!-- Error message. This text lets the user know that their current private apps don't support the specific content. [CHAR LIMIT=NONE] -->
+    <string name="resolver_no_private_apps_available">No private apps</string>
 
     <!-- Dialog title. User must choose between opening content in a cross-profile app or same-profile browser. [CHAR LIMIT=NONE] -->
     <string name="miniresolver_open_in_personal">Open <xliff:g id="app" example="YouTube">%s</xliff:g> in your personal profile?</string>
@@ -313,7 +325,17 @@
     <!-- Title for a button. Adds back a (previously excluded) web link into the shared content. -->
     <string name="include_link">Include link</string>
 
-    <!-- Accesssibility content description for a sharesheet target that has been pinned to the
+    <!-- Accessibility content description for a sharesheet target that has been pinned to the
          front of the list by the user. [CHAR LIMIT=NONE] -->
     <string name="pinned">Pinned</string>
+
+    <!-- Accessibility content description for an image that the user may select for sharing.
+         [CHAR LIMIT=NONE] -->
+    <string name="selectable_image">Selectable image</string>
+    <!-- Accessibility content description for a video that the user may select for sharing.
+         [CHAR LIMIT=NONE] -->
+    <string name="selectable_video">Selectable video</string>
+    <!-- Accessibility content description for an item that the user may select for sharing.
+         [CHAR LIMIT=NONE] -->
+    <string name="selectable_item">Selectable item</string>
 </resources>

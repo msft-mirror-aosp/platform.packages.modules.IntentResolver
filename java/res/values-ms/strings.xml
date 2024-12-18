@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Berkongsi imej}other{Berkongsi # imej}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Berkongsi video}other{Berkongsi # video}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Berkongsi # fail}other{Berkongsi # fail}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Pilih item untuk dikongsi"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Berkongsi imej dengan teks}other{Berkongsi # imej dengan teks}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Berkongsi imej dengan pautan}other{Berkongsi # imej dengan pautan}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Berkongsi video dengan teks}other{Berkongsi # video dengan teks}}"</string>
@@ -77,7 +78,7 @@
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"Apl ini belum diberikan kebenaran merakam tetapi dapat merakam audio melalui peranti USB ini."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"Peribadi"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Kerja"</string>
-    <string name="resolver_private_tab" msgid="3707548826254095157">"Peribadi"</string>
+    <string name="resolver_private_tab" msgid="3707548826254095157">"Persendirian"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Paparan peribadi"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Paparan kerja"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Paparan peribadi"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Kandungan ini tidak boleh dibuka dengan apl kerja"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Kandungan ini tidak boleh dikongsi dengan apl peribadi"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Kandungan ini tidak boleh dibuka dengan apl peribadi"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Kandungan ini tidak boleh dikongsi dengan apl peribadi"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Kandungan ini tidak boleh dibuka dengan apl peribadi"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Apl kerja dijeda"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Nyahjeda"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Tiada apl kerja"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Tiada apl peribadi"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Tiada apl peribadi"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Buka <xliff:g id="APP">%s</xliff:g> dalam profil peribadi anda?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Buka <xliff:g id="APP">%s</xliff:g> dalam profil kerja anda?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Gunakan penyemak imbas peribadi"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Kecualikan pautan"</string>
     <string name="include_link" msgid="827855767220339802">"Sertakan pautan"</string>
     <string name="pinned" msgid="7623664001331394139">"Disemat"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Imej yang boleh dipilih"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Video yang boleh dipilih"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Item yang boleh dipilih"</string>
 </resources>

@@ -16,14 +16,15 @@
 
 package com.android.intentresolver;
 
+import static com.android.intentresolver.Flags.unselectFinalItem;
+import static com.android.intentresolver.util.graphics.SuspendedMatrixColorFilter.getSuspendedColorMatrix;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.LabeledIntent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.RemoteException;
@@ -62,9 +63,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ResolverListAdapter extends BaseAdapter {
     private static final String TAG = "ResolverListAdapter";
-
-    @Nullable  // TODO: other model for lazy computation? Or just precompute?
-    private static ColorMatrixColorFilter sSuspendedMatrixColorFilter;
 
     protected final Context mContext;
     protected final LayoutInflater mInflater;
@@ -448,6 +446,9 @@ public class ResolverListAdapter extends BaseAdapter {
         // Send an "incomplete" list-ready while the async task is running.
         postListReadyRunnable(doPostProcessing, /* rebuildCompleted */ false);
         mBgExecutor.execute(() -> {
+            if (isDestroyed()) {
+                return;
+            }
             List<ResolvedComponentInfo> sortedComponents = null;
             //TODO: the try-catch logic here is to formally match the AsyncTask's behavior.
             // Empirically, we don't need it as in the case on an exception, the app will crash and
@@ -736,26 +737,31 @@ public class ResolverListAdapter extends BaseAdapter {
                 holder.bindLabel("", "");
                 loadLabel(dri);
             }
-            holder.bindIcon(info);
             if (!dri.hasDisplayIcon()) {
                 loadIcon(dri);
             }
+            holder.bindIcon(info);
         }
     }
 
     protected final void loadIcon(DisplayResolveInfo info) {
         if (mRequestedIcons.add(info)) {
-            mTargetDataLoader.loadAppTargetIcon(
+            Drawable icon = mTargetDataLoader.getOrLoadAppTargetIcon(
                     info,
                     getUserHandle(),
-                    (drawable) -> onIconLoaded(info, drawable));
+                    (drawable) -> {
+                        onIconLoaded(info, drawable);
+                        notifyDataSetChanged();
+                    });
+            if (icon != null) {
+                onIconLoaded(info, icon);
+            }
         }
     }
 
     private void onIconLoaded(DisplayResolveInfo displayResolveInfo, Drawable drawable) {
         if (!displayResolveInfo.hasDisplayIcon()) {
             displayResolveInfo.getDisplayIconHolder().setDisplayIcon(drawable);
-            notifyDataSetChanged();
         }
     }
 
@@ -785,27 +791,8 @@ public class ResolverListAdapter extends BaseAdapter {
         mRequestedLabels.clear();
     }
 
-    private static ColorMatrixColorFilter getSuspendedColorMatrix() {
-        if (sSuspendedMatrixColorFilter == null) {
-
-            int grayValue = 127;
-            float scale = 0.5f; // half bright
-
-            ColorMatrix tempBrightnessMatrix = new ColorMatrix();
-            float[] mat = tempBrightnessMatrix.getArray();
-            mat[0] = scale;
-            mat[6] = scale;
-            mat[12] = scale;
-            mat[4] = grayValue;
-            mat[9] = grayValue;
-            mat[14] = grayValue;
-
-            ColorMatrix matrix = new ColorMatrix();
-            matrix.setSaturation(0.0f);
-            matrix.preConcat(tempBrightnessMatrix);
-            sSuspendedMatrixColorFilter = new ColorMatrixColorFilter(matrix);
-        }
-        return sSuspendedMatrixColorFilter;
+    public final boolean isDestroyed() {
+        return mDestroyed.get();
     }
 
     protected final Drawable loadIconPlaceholder() {
@@ -815,7 +802,7 @@ public class ResolverListAdapter extends BaseAdapter {
     public void loadFilteredItemIconTaskAsync(@NonNull ImageView iconView) {
         final DisplayResolveInfo iconInfo = getFilteredItem();
         if (iconInfo != null) {
-            mTargetDataLoader.loadAppTargetIcon(
+            mTargetDataLoader.getOrLoadAppTargetIcon(
                     iconInfo, getUserHandle(), iconView::setImageDrawable);
         }
     }
@@ -833,7 +820,7 @@ public class ResolverListAdapter extends BaseAdapter {
                 userHandle);
     }
 
-    public final List<Intent> getIntents() {
+    public List<Intent> getIntents() {
         // TODO: immutable copy?
         return mIntents;
     }
@@ -987,13 +974,26 @@ public class ResolverListAdapter extends BaseAdapter {
         /**
          * Bind view holder to a TargetInfo.
          */
-        public void bindIcon(TargetInfo info) {
+        public final void bindIcon(TargetInfo info) {
+            bindIcon(info, true);
+        }
+
+        /**
+         * Bind view holder to a TargetInfo.
+         */
+        public void bindIcon(TargetInfo info, boolean isEnabled) {
             Drawable displayIcon = info.getDisplayIconHolder().getDisplayIcon();
             icon.setImageDrawable(displayIcon);
-            if (info.isSuspended()) {
+            if (info.isSuspended() || !isEnabled) {
                 icon.setColorFilter(getSuspendedColorMatrix());
             } else {
                 icon.setColorFilter(null);
+                if (unselectFinalItem() && displayIcon != null) {
+                    // For some reason, ImageView.setColorFilter() not always propagate the call
+                    // to the drawable and the icon remains grayscale when rebound; reset the filter
+                    // explicitly.
+                    displayIcon.setColorFilter(null);
+                }
             }
         }
     }

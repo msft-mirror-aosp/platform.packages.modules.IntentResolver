@@ -24,16 +24,28 @@ import android.util.Size
 import androidx.annotation.GuardedBy
 import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
-import java.util.function.Consumer
+import com.android.intentresolver.inject.Background
+import javax.inject.Inject
+import javax.inject.Qualifier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 
 private const val TAG = "ImagePreviewImageLoader"
+
+@Qualifier @MustBeDocumented @Retention(AnnotationRetention.BINARY) annotation class ThumbnailSize
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.BINARY)
+annotation class PreviewCacheSize
 
 /**
  * Implements preview image loading for the content preview UI. Provides requests deduplication,
@@ -52,6 +64,26 @@ constructor(
     private val contentResolverSemaphore: Semaphore,
 ) : ImageLoader {
 
+    @Inject
+    constructor(
+        @Background dispatcher: CoroutineDispatcher,
+        @ThumbnailSize thumbnailSize: Int,
+        contentResolver: ContentResolver,
+        @PreviewCacheSize cacheSize: Int,
+    ) : this(
+        CoroutineScope(
+            SupervisorJob() +
+                dispatcher +
+                CoroutineExceptionHandler { _, exception ->
+                    Log.w(TAG, "Uncaught exception in ImageLoader", exception)
+                } +
+                CoroutineName("ImageLoader")
+        ),
+        thumbnailSize,
+        contentResolver,
+        cacheSize,
+    )
+
     constructor(
         scope: CoroutineScope,
         thumbnailSize: Int,
@@ -66,19 +98,11 @@ constructor(
     @GuardedBy("lock") private val cache = LruCache<Uri, RequestRecord>(cacheSize)
     @GuardedBy("lock") private val runningRequests = HashMap<Uri, RequestRecord>()
 
-    override suspend fun invoke(uri: Uri, caching: Boolean): Bitmap? = loadImageAsync(uri, caching)
+    override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap? =
+        loadImageAsync(uri, caching)
 
-    override fun loadImage(callerScope: CoroutineScope, uri: Uri, callback: Consumer<Bitmap?>) {
-        callerScope.launch {
-            val image = loadImageAsync(uri, caching = true)
-            if (isActive) {
-                callback.accept(image)
-            }
-        }
-    }
-
-    override fun prePopulate(uris: List<Uri>) {
-        uris.asSequence().take(cache.maxSize()).forEach { uri ->
+    override fun prePopulate(uriSizePairs: List<Pair<Uri, Size>>) {
+        uriSizePairs.asSequence().take(cache.maxSize()).forEach { (uri, _) ->
             scope.launch { loadImageAsync(uri, caching = true) }
         }
     }

@@ -31,10 +31,11 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.anyInt
-import org.mockito.Mockito.never
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 
 private const val TIMEOUT_MS = 200
 
@@ -48,18 +49,18 @@ class EnterTransitionAnimationDelegateTest {
     private val transitionTargetView =
         mock<View> {
             // avoid the request-layout path in the delegate
-            whenever(isInLayout).thenReturn(true)
+            on { isInLayout } doReturn true
         }
 
     private val windowMock = mock<Window>()
     private val resourcesMock =
-        mock<Resources> { whenever(getInteger(anyInt())).thenReturn(TIMEOUT_MS) }
+        mock<Resources> { on { getInteger(any<Int>()) } doReturn TIMEOUT_MS }
     private val activity =
         mock<ComponentActivity> {
-            whenever(lifecycle).thenReturn(lifecycleOwner.lifecycle)
-            whenever(resources).thenReturn(resourcesMock)
-            whenever(isActivityTransitionRunning).thenReturn(true)
-            whenever(window).thenReturn(windowMock)
+            on { lifecycle } doReturn lifecycleOwner.lifecycle
+            on { resources } doReturn resourcesMock
+            on { isActivityTransitionRunning } doReturn true
+            on { window } doReturn windowMock
         }
 
     private val testSubject = EnterTransitionAnimationDelegate(activity) { transitionTargetView }
@@ -82,8 +83,8 @@ class EnterTransitionAnimationDelegateTest {
         testSubject.markOffsetCalculated()
 
         scheduler.advanceTimeBy(TIMEOUT_MS + 1L)
-        verify(activity, times(1)).startPostponedEnterTransition()
-        verify(windowMock, never()).setWindowAnimations(anyInt())
+        verify(activity) { 1 * { mock.startPostponedEnterTransition() } }
+        verify(windowMock) { 0 * { setWindowAnimations(any<Int>()) } }
     }
 
     @Test
@@ -101,12 +102,12 @@ class EnterTransitionAnimationDelegateTest {
     @Test
     fun test_postponeTransition_resume_animation_conditions() {
         testSubject.postponeTransition()
-        verify(activity, never()).startPostponedEnterTransition()
+        verify(activity) { 0 * { startPostponedEnterTransition() } }
 
         testSubject.markOffsetCalculated()
-        verify(activity, never()).startPostponedEnterTransition()
+        verify(activity) { 0 * { startPostponedEnterTransition() } }
 
         testSubject.onAllTransitionElementsReady()
-        verify(activity, times(1)).startPostponedEnterTransition()
+        verify(activity) { 1 * { startPostponedEnterTransition() } }
     }
 }

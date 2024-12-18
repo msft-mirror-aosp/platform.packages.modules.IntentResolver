@@ -32,10 +32,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.content.Intent;
 import android.metrics.LogMaker;
 
+import com.android.intentresolver.contentpreview.ContentPreviewType;
 import com.android.intentresolver.logging.EventLogImpl.SharesheetStandardEvent;
 import com.android.intentresolver.logging.EventLogImpl.SharesheetStartedEvent;
 import com.android.intentresolver.logging.EventLogImpl.SharesheetTargetSelectedEvent;
-import com.android.intentresolver.contentpreview.ContentPreviewType;
 import com.android.internal.logging.InstanceId;
 import com.android.internal.logging.InstanceIdSequence;
 import com.android.internal.logging.MetricsLogger;
@@ -146,6 +146,45 @@ public final class EventLogImplTest {
                 eq(appProvidedAppTargets),
                 eq(workProfile),
                 eq(FrameworkStatsLog.SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_FILE),
+                eq(FrameworkStatsLog.SHARESHEET_STARTED__INTENT_TYPE__INTENT_ACTION_SENDTO),
+                /* custom actions provided */ eq(numCustomActions),
+                /* reselection action provided */ eq(modifyShareProvided));
+    }
+
+    @Test
+    public void shareStartedWithShareouselAndEnabledReportingFlag_imagePreviewTypeReported() {
+        final String packageName = "com.test.foo";
+        final String mimeType = "text/plain";
+        final int appProvidedDirectTargets = 123;
+        final int appProvidedAppTargets = 456;
+        final boolean workProfile = true;
+        final int previewType = ContentPreviewType.CONTENT_PREVIEW_PAYLOAD_SELECTION;
+        final String intentAction = Intent.ACTION_SENDTO;
+        final int numCustomActions = 3;
+        final boolean modifyShareProvided = true;
+
+        mChooserLogger.logShareStarted(
+                packageName,
+                mimeType,
+                appProvidedDirectTargets,
+                appProvidedAppTargets,
+                workProfile,
+                previewType,
+                intentAction,
+                numCustomActions,
+                modifyShareProvided);
+
+        verify(mFrameworkLog).write(
+                eq(FrameworkStatsLog.SHARESHEET_STARTED),
+                eq(SharesheetStartedEvent.SHARE_STARTED.getId()),
+                eq(packageName),
+                /* instanceId=*/ gt(0),
+                eq(mimeType),
+                eq(appProvidedDirectTargets),
+                eq(appProvidedAppTargets),
+                eq(workProfile),
+                eq(FrameworkStatsLog
+                        .SHARESHEET_STARTED__PREVIEW_TYPE__CONTENT_PREVIEW_TOGGLEABLE_MEDIA),
                 eq(FrameworkStatsLog.SHARESHEET_STARTED__INTENT_TYPE__INTENT_ACTION_SENDTO),
                 /* custom actions provided */ eq(numCustomActions),
                 /* reselection action provided */ eq(modifyShareProvided));

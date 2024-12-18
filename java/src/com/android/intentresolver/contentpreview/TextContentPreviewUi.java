@@ -22,6 +22,7 @@ import android.content.res.Resources;
 import android.net.Uri;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,6 +51,7 @@ class TextContentPreviewUi extends ContentPreviewUi {
     private final ChooserContentPreviewUi.ActionFactory mActionFactory;
     private final HeadlineGenerator mHeadlineGenerator;
     private final ContentTypeHint mContentTypeHint;
+    private int mPreviewSize;
 
     TextContentPreviewUi(
             CoroutineScope scope,
@@ -82,22 +84,17 @@ class TextContentPreviewUi extends ContentPreviewUi {
             Resources resources,
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
-        ViewGroup layout = displayInternal(layoutInflater, parent, headlineViewParent);
-        displayModifyShareAction(
-                headlineViewParent == null ? layout : headlineViewParent, mActionFactory);
-        return layout;
+            View headlineViewParent) {
+        mPreviewSize = resources.getDimensionPixelSize(R.dimen.width_text_image_preview_size);
+        return displayInternal(layoutInflater, parent, headlineViewParent);
     }
 
     private ViewGroup displayInternal(
             LayoutInflater layoutInflater,
             ViewGroup parent,
-            @Nullable View headlineViewParent) {
+            View headlineViewParent) {
         ViewGroup contentPreviewLayout = (ViewGroup) layoutInflater.inflate(
                 R.layout.chooser_grid_preview_text, parent, false);
-        if (headlineViewParent == null) {
-            headlineViewParent = contentPreviewLayout;
-        }
         inflateHeadline(headlineViewParent);
 
         final ActionRow actionRow =
@@ -125,7 +122,7 @@ class TextContentPreviewUi extends ContentPreviewUi {
             previewTitleView.setText(mPreviewTitle);
         }
 
-        ImageView previewThumbnailView = contentPreviewLayout.findViewById(
+        final ImageView previewThumbnailView = contentPreviewLayout.requireViewById(
                 com.android.internal.R.id.content_preview_thumbnail);
         if (!isOwnedByCurrentUser(mPreviewThumbnail)) {
             previewThumbnailView.setVisibility(View.GONE);
@@ -133,9 +130,9 @@ class TextContentPreviewUi extends ContentPreviewUi {
             mImageLoader.loadImage(
                     mScope,
                     mPreviewThumbnail,
+                    new Size(mPreviewSize, mPreviewSize),
                     (bitmap) -> updateViewWithImage(
-                            contentPreviewLayout.findViewById(
-                                    com.android.internal.R.id.content_preview_thumbnail),
+                            previewThumbnailView,
                             bitmap));
         }
 

@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Дељење слике}one{Дељење # слике}few{Дељење # слике}other{Дељење # слика}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Дели се видео}one{Дели се # видео}few{Деле се # видео снимка}other{Дели се # видеа}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Дели се # фајл}one{Дели се # фајл}few{Деле се # фајла}other{Дели се # фајлова}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Изаберите ставке за дељење"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Дели се слика са текстом}one{Дели се # слика са текстом}few{Деле се # слике са текстом}other{Дели се # слика са текстом}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Дели се слика са линком}one{Дели се # слика са линком}few{Деле се # слике са линком}other{Дели се # слика са линком}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Дели се видео са текстом}one{Дели се # видео са текстом}few{Деле се # видео снимка са текстом}other{Дели се # видеа са текстом}}"</string>
@@ -68,7 +69,7 @@
     <string name="sharing_files_with_link" msgid="6052797122358827239">"{count,plural, =1{Дели се фајл са линком}one{Дели се # фајл са линком}few{Деле се # фајла са линком}other{Дели се # фајлова са линком}}"</string>
     <string name="sharing_album" msgid="191743129899503345">"Дељени албум"</string>
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{Само слика}one{Само слике}few{Само слике}other{Само слике}}"</string>
-    <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Само видео}one{Само видео снимци}few{Само видео снимци}other{Само видео снимци}}"</string>
+    <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{Само видео}one{Само видеи}few{Само видеи}other{Само видеи}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{Само фајл}one{Само фајлови}few{Само фајлови}other{Само фајлови}}"</string>
     <string name="image_preview_a11y_description" msgid="297102643932491797">"Сличица за преглед слике"</string>
     <string name="video_preview_a11y_description" msgid="683440858811095990">"Сличица за преглед видеа"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Овај садржај не може да се отвара помоћу пословних апликација"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Овај садржај не може да се дели помоћу личних апликација"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Овај садржај не може да се отвара помоћу личних апликација"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Овај садржај не може да се дели помоћу приватних апликација"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Овај садржај не може да се отвори помоћу приватних апликација"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"Пословне апликације су паузиране"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"Поново активирај"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"Нема пословних апликација"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"Нема личних апликација"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"Без приватних апликација"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"Желите да на личном профилу отворите: <xliff:g id="APP">%s</xliff:g>?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"Желите да на пословном профилу отворите: <xliff:g id="APP">%s</xliff:g>?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"Користи лични прегледач"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Изузми линк"</string>
     <string name="include_link" msgid="827855767220339802">"Уврсти линк"</string>
     <string name="pinned" msgid="7623664001331394139">"Закачено"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"Слика која може да се изабере"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"Видео који може да се изабере"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"Ставка која може да се изабере"</string>
 </resources>

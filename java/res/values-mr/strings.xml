@@ -42,7 +42,7 @@
     <string name="whichImageCaptureApplication" msgid="7830965894804399333">"यासह इमेज कॅप्चर करा"</string>
     <string name="whichImageCaptureApplicationNamed" msgid="5927801386307049780">"<xliff:g id="APP">%1$s</xliff:g> वापरून इमेज कॅप्चर करा"</string>
     <string name="whichImageCaptureApplicationLabel" msgid="987153638235357094">"इमेज कॅप्चर करा"</string>
-    <string name="use_a_different_app" msgid="2062380818535918975">"एक भिन्न अ‍ॅप वापरा"</string>
+    <string name="use_a_different_app" msgid="2062380818535918975">"वेगळे अ‍ॅप वापरा"</string>
     <string name="chooseActivity" msgid="6659724877523973446">"कृती निवडा"</string>
     <string name="noApplications" msgid="1139487441772284671">"कोणतेही अ‍ॅप्स ही क्रिया करू शकत नाहीत."</string>
     <string name="forward_intent_to_owner" msgid="6454987608971162379">"तुम्ही हा अ‍ॅप आपल्‍या कार्य प्रोफाईलच्या बाहेर वापरत आहात"</string>
@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{इमेज शेअर करत आहे}other{# इमेज शेअर करत आहे}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{व्हिडिओ शेअर करत आहे}other{# व्हिडिओ शेअर करत आहे}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# फाइल शेअर करत आहे}other{# फाइल शेअर करत आहे}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"शेअर करण्यासाठी आयटम निवडा"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{मजकुरासह इमेज शेअर करत आहे}other{मजकुरासह # इमेज शेअर करत आहे}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{लिंकसह इमेज शेअर करत आहे}other{लिंकसह # इमेज शेअर करत आहे}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{मजकुरासह व्हिडिओ शेअर करत आहे}other{मजकुरासह # व्हिडिओ शेअर करत आहे}}"</string>
@@ -86,10 +87,13 @@
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"हा आशय कार्य ॲप्स वापरून उघडला जाऊ शकत नाही"</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"हा आशय वैयक्तिक ॲप्ससह शेअर केला जाऊ शकत नाही"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"हा आशय वैयक्तिक ॲप्स वापरून उघडला जाऊ शकत नाही"</string>
+    <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"हा आशय खाजगी ॲप्ससोबत शेअर केला जाऊ शकत नाही"</string>
+    <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"हा आशय खाजगी ॲप्स वापरून उघडला जाऊ शकत नाही"</string>
     <string name="resolver_turn_on_work_apps" msgid="7115260573975624516">"कामाशी संबंधित अ‍ॅप्स थांबवली आहेत"</string>
     <string name="resolver_switch_on_work" msgid="8678893259344318807">"पुन्हा सुरू करा"</string>
     <string name="resolver_no_work_apps_available" msgid="6139818641313189903">"कोणतीही कार्य ॲप्स सपोर्ट करत नाहीत"</string>
     <string name="resolver_no_personal_apps_available" msgid="8479033344701050767">"कोणतीही वैयक्तिक ॲप्स सपोर्ट करत नाहीत"</string>
+    <string name="resolver_no_private_apps_available" msgid="4164473548027417456">"कोणतीही खाजगी अ‍ॅप्स नाहीत"</string>
     <string name="miniresolver_open_in_personal" msgid="8397377137465016575">"तुमच्या वैयक्तिक प्रोफाइलमध्ये <xliff:g id="APP">%s</xliff:g> उघडायचे आहे का?"</string>
     <string name="miniresolver_open_in_work" msgid="4271638122142624693">"तुमच्या कार्य प्रोफाइलमध्ये <xliff:g id="APP">%s</xliff:g> उघडायचे आहे का?"</string>
     <string name="miniresolver_use_personal_browser" msgid="1428911732509069292">"वैयक्तिक ब्राउझर वापरा"</string>
@@ -99,4 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"लिंक वगळा"</string>
     <string name="include_link" msgid="827855767220339802">"लिंक समाविष्ट करा"</string>
     <string name="pinned" msgid="7623664001331394139">"पिन केलेली"</string>
+    <string name="selectable_image" msgid="3157858923437182271">"निवडण्यायोग्य इमेज"</string>
+    <string name="selectable_video" msgid="1271768647699300826">"निवडण्यायोग्य व्हिडिओ"</string>
+    <string name="selectable_item" msgid="7557320816744205280">"निवडण्यायोग्य आयटम"</string>
 </resources>

@@ -17,9 +17,9 @@
 package com.android.intentresolver.emptystate
 
 import com.android.intentresolver.ResolverListAdapter
-import com.android.intentresolver.mock
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
+import org.mockito.kotlin.mock
 
 class CompositeEmptyStateProviderTest {
     val listAdapter = mock<ResolverListAdapter>()
