@@ -21,6 +21,7 @@ import android.content.Intent.ACTION_CHOOSER
 import android.content.Intent.EXTRA_TEXT
 import android.net.Uri
 import com.android.intentresolver.ext.toParcelAndBack
+import com.android.intentresolver.shared.model.ActivityModel
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
@@ -29,7 +30,7 @@ class ActivityModelTest {
 
     @Test
     fun testDefaultValues() {
-        val input = ActivityModel(Intent(ACTION_CHOOSER), 0, "example.com", null)
+        val input = ActivityModel(Intent(ACTION_CHOOSER), 0, "example.com", null, false)
 
         val output = input.toParcelAndBack()
 
@@ -40,7 +41,13 @@ class ActivityModelTest {
     fun testCommonValues() {
         val intent = Intent(ACTION_CHOOSER).apply { putExtra(EXTRA_TEXT, "Test") }
         val input =
-            ActivityModel(intent, 1234, "com.example", Uri.parse("android-app://example.com"))
+            ActivityModel(
+                intent,
+                1234,
+                "com.example",
+                Uri.parse("android-app://example.com"),
+                false,
+            )
 
         val output = input.toParcelAndBack()
 
@@ -54,7 +61,8 @@ class ActivityModelTest {
                 intent = Intent(),
                 launchedFromUid = 1000,
                 launchedFromPackage = "other.example.com",
-                referrer = Uri.parse("android-app://app.example.com")
+                referrer = Uri.parse("android-app://app.example.com"),
+                false,
             )
 
         assertThat(launch1.referrerPackage).isEqualTo("app.example.com")
@@ -67,7 +75,8 @@ class ActivityModelTest {
                 intent = Intent(),
                 launchedFromUid = 1000,
                 launchedFromPackage = "example.com",
-                referrer = Uri.parse("http://some.other.value")
+                referrer = Uri.parse("http://some.other.value"),
+                false,
             )
 
         assertThat(launch.referrerPackage).isNull()
@@ -80,7 +89,8 @@ class ActivityModelTest {
                 intent = Intent(),
                 launchedFromUid = 1000,
                 launchedFromPackage = "example.com",
-                referrer = null
+                referrer = null,
+                false,
             )
 
         assertThat(launch.referrerPackage).isNull()

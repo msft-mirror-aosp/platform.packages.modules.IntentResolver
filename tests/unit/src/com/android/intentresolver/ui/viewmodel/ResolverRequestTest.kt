@@ -22,8 +22,8 @@ import android.os.UserHandle
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import com.android.intentresolver.ResolverActivity.PROFILE_WORK
+import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.shared.model.Profile.Type.WORK
-import com.android.intentresolver.ui.model.ActivityModel
 import com.android.intentresolver.ui.model.ResolverRequest
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.UncaughtException
@@ -34,15 +34,13 @@ import org.junit.Test
 
 private val targetUri = Uri.parse("content://example.com/123")
 
-private fun createActivityModel(
-    targetIntent: Intent,
-    referrer: Uri? = null,
-) =
+private fun createActivityModel(targetIntent: Intent, referrer: Uri? = null) =
     ActivityModel(
         intent = targetIntent,
         launchedFromUid = 10000,
         launchedFromPackage = "com.android.example",
-        referrer = referrer ?: "android-app://com.android.example".toUri()
+        referrer = referrer ?: "android-app://com.android.example".toUri(),
+        false,
     )
 
 class ResolverRequestTest {

@@ -71,10 +71,10 @@
     <string name="sharing_images_only" msgid="7762589767189955438">"{count,plural, =1{فقط تصویر}one{فقط تصویر}other{فقط تصویر}}"</string>
     <string name="sharing_videos_only" msgid="5549729252364968606">"{count,plural, =1{فقط ویدیو}one{فقط ویدیو}other{فقط ویدیو}}"</string>
     <string name="sharing_files_only" msgid="6603666533766964768">"{count,plural, =1{فقط فایل}one{فقط فایل}other{فقط فایل}}"</string>
-    <string name="image_preview_a11y_description" msgid="297102643932491797">"تصویر کوچک پیش‌نمای تصویر"</string>
-    <string name="video_preview_a11y_description" msgid="683440858811095990">"تصویر کوچک پیش‌نمای ویدیو"</string>
-    <string name="file_preview_a11y_description" msgid="7397224827802410602">"تصویر کوچک پیش‌نمای فایل"</string>
-    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"هیچ فردی که با او هم‌رسانی کنید توصیه نشده است"</string>
+    <string name="image_preview_a11y_description" msgid="297102643932491797">"ریزعکس پیش‌نمای تصویر"</string>
+    <string name="video_preview_a11y_description" msgid="683440858811095990">"ریزعکس پیش‌نمای ویدیو"</string>
+    <string name="file_preview_a11y_description" msgid="7397224827802410602">"ریزعکس پیش‌نمای فایل"</string>
+    <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"هیچ فرد توصیه‌شده‌ای برای هم‌رسانی وجود ندارد"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"‏مجوز ضبط به این برنامه داده نشده است اما می‌تواند صدا را ازطریق این دستگاه USB ضبط کند."</string>
     <string name="resolver_personal_tab" msgid="1381052735324320565">"شخصی"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"کاری"</string>
@@ -106,4 +106,5 @@
     <string name="selectable_image" msgid="3157858923437182271">"تصویر قابل‌انتخاب"</string>
     <string name="selectable_video" msgid="1271768647699300826">"ویدیو قابل‌انتخاب"</string>
     <string name="selectable_item" msgid="7557320816744205280">"مورد قابل‌انتخاب"</string>
+    <string name="role_description_button" msgid="4537198530568333649">"دکمه"</string>
 </resources>

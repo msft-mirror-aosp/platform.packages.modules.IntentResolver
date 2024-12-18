@@ -84,7 +84,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/noApplications"
-            android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
+            android:textColor="@androidprv:color/materialColorOnSurfaceVariant"
             android:padding="@dimen/chooser_edge_margin_normal"
             android:gravity="center"/>
     </RelativeLayout>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The Android Open Source Project
+ * Copyright 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.intentresolver.ui.model
+package com.android.intentresolver.shared.model
 
 import android.app.Activity
 import android.content.Intent
@@ -34,7 +34,9 @@ data class ActivityModel(
     /** The package of the sending app */
     val launchedFromPackage: String,
     /** The referrer as supplied to the activity. */
-    val referrer: Uri?
+    val referrer: Uri?,
+    /** True if the activity is the first activity in the task */
+    val isTaskRoot: Boolean,
 ) : Parcelable {
     constructor(
         source: Parcel
@@ -42,7 +44,8 @@ data class ActivityModel(
         intent = source.requireParcelable(),
         launchedFromUid = source.readInt(),
         launchedFromPackage = requireNotNull(source.readString()),
-        referrer = source.readParcelable()
+        referrer = source.readParcelable(),
+        isTaskRoot = source.readBoolean(),
     )
 
     /** A package name from referrer, if it is an android-app URI */
@@ -55,16 +58,16 @@ data class ActivityModel(
         dest.writeInt(launchedFromUid)
         dest.writeString(launchedFromPackage)
         dest.writeParcelable(referrer, flags)
+        dest.writeBoolean(isTaskRoot)
     }
 
     companion object {
-        const val ACTIVITY_MODEL_KEY = "com.android.intentresolver.ACTIVITY_MODEL"
-
         @JvmField
         @Suppress("unused")
         val CREATOR =
             object : Parcelable.Creator<ActivityModel> {
                 override fun newArray(size: Int) = arrayOfNulls<ActivityModel>(size)
+
                 override fun createFromParcel(source: Parcel) = ActivityModel(source)
             }
 
@@ -74,7 +77,8 @@ data class ActivityModel(
                 activity.intent,
                 activity.launchedFromUid,
                 Objects.requireNonNull<String>(activity.launchedFromPackage),
-                activity.referrer
+                activity.referrer,
+                activity.isTaskRoot,
             )
         }
     }

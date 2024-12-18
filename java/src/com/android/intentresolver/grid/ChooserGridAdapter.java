@@ -37,7 +37,6 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.intentresolver.ChooserListAdapter;
-import com.android.intentresolver.FeatureFlags;
 import com.android.intentresolver.R;
 import com.android.intentresolver.ResolverListAdapter.ViewHolder;
 
@@ -88,9 +87,7 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
 
     private final int mMaxTargetsPerRow;
     private final boolean mShouldShowContentPreview;
-    private final int mChooserWidthPixels;
     private final int mChooserRowTextOptionTranslatePixelSize;
-    private final FeatureFlags mFeatureFlags;
     @Nullable
     private RecyclerView mRecyclerView;
 
@@ -105,8 +102,7 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
             ChooserActivityDelegate chooserActivityDelegate,
             ChooserListAdapter wrappedAdapter,
             boolean shouldShowContentPreview,
-            int maxTargetsPerRow,
-            FeatureFlags featureFlags) {
+            int maxTargetsPerRow) {
         super();
 
         mChooserActivityDelegate = chooserActivityDelegate;
@@ -117,10 +113,8 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
         mShouldShowContentPreview = shouldShowContentPreview;
         mMaxTargetsPerRow = maxTargetsPerRow;
 
-        mChooserWidthPixels = context.getResources().getDimensionPixelSize(R.dimen.chooser_width);
         mChooserRowTextOptionTranslatePixelSize = context.getResources().getDimensionPixelSize(
                 R.dimen.chooser_row_text_option_translate);
-        mFeatureFlags = featureFlags;
 
         wrappedAdapter.registerDataSetObserver(new DataSetObserver() {
             @Override
@@ -165,11 +159,6 @@ public final class ChooserGridAdapter extends RecyclerView.Adapter<RecyclerView.
     public boolean calculateChooserTargetWidth(int width) {
         if (width == 0) {
             return false;
-        }
-
-        // Limit width to the maximum width of the chooser activity, if the maximum width is set
-        if (mChooserWidthPixels >= 0) {
-            width = Math.min(mChooserWidthPixels, width);
         }
 
         int newWidth = width / mMaxTargetsPerRow;

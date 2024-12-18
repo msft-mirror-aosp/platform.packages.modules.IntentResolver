@@ -84,7 +84,7 @@ class ChooserListAdapterDataTest {
                     userHandle
                 )
             )
-            .thenReturn(resolvedTargets)
+            .thenReturn(ArrayList(resolvedTargets))
         val initialActivityInfo = createActivityInfo(3)
         val initialIntents =
             arrayOf(
@@ -149,7 +149,7 @@ class ChooserListAdapterDataTest {
                     userHandle
                 )
             )
-            .thenReturn(resolvedTargets)
+            .thenReturn(ArrayList(resolvedTargets))
         val activityInfo = resolvedTargets[1].getResolveInfoAt(0).activityInfo
         val initialIntents =
             arrayOf(Intent(Intent.ACTION_SEND).apply { component = activityInfo.componentName })
