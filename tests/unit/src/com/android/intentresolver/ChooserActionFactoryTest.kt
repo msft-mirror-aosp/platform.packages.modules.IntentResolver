@@ -69,8 +69,6 @@ class ChooserActionFactoryTest {
                 latestReturn = resultCode
             }
         }
-    private val featureFlags =
-        FakeFeatureFlagsImpl().apply { setFlag(Flags.FLAG_FIX_PARTIAL_IMAGE_EDIT_TRANSITION, true) }
 
     @Before
     fun setup() {
@@ -121,7 +119,6 @@ class ChooserActionFactoryTest {
                 /* shareResultSender = */ null,
                 /* finishCallback = */ {},
                 /* clipboardManager = */ mock(),
-                /* featureFlags = */ featureFlags,
             )
         assertThat(testSubject.copyButtonRunnable).isNull()
     }
@@ -143,7 +140,6 @@ class ChooserActionFactoryTest {
                 /* shareResultSender = */ null,
                 /* finishCallback = */ {},
                 /* clipboardManager = */ mock(),
-                /* featureFlags = */ featureFlags,
             )
         assertThat(testSubject.copyButtonRunnable).isNull()
     }
@@ -166,7 +162,6 @@ class ChooserActionFactoryTest {
                 /* shareResultSender = */ resultSender,
                 /* finishCallback = */ {},
                 /* clipboardManager = */ mock(),
-                /* featureFlags = */ featureFlags,
             )
         assertThat(testSubject.copyButtonRunnable).isNotNull()
 
@@ -199,7 +194,6 @@ class ChooserActionFactoryTest {
             /* shareResultSender = */ null,
             /* finishCallback = */ resultConsumer,
             /* clipboardManager = */ mock(),
-            /* featureFlags = */ featureFlags,
         )
     }
 }

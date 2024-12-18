@@ -20,6 +20,8 @@ import android.content.ContentInterface
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.provider.MediaStore.MediaColumns.HEIGHT
+import android.provider.MediaStore.MediaColumns.WIDTH
 import android.service.chooser.AdditionalContentContract.Columns.URI
 import androidx.core.os.bundleOf
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
@@ -48,8 +50,7 @@ constructor(
         runCatching {
                 contentResolver.query(
                     cursorUri,
-                    // TODO: uncomment to start using that data
-                    arrayOf(URI /*, WIDTH, HEIGHT*/),
+                    arrayOf(URI, WIDTH, HEIGHT),
                     bundleOf(Intent.EXTRA_INTENT to chooserIntent),
                     signal,
                 )

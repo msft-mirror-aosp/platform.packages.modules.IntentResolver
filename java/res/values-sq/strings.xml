@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Po ndahet imazh}other{Po ndahen # imazhe}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Po ndahet videoja}other{Po ndahen # video}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Po ndahet # skedar}other{Po ndahen # skedarë}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Zgjidh artikujt për t\'i ndarë"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Po ndahet një imazh me tekst}other{Po ndahen # imazhe me tekst}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Po ndahet një imazh me lidhje}other{Po ndahen # imazhe me lidhje}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Po ndahet një video me tekst}other{Po ndahen # video me tekst}}"</string>

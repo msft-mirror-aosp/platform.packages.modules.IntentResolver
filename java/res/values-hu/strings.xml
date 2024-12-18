@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Kép megosztása}other{# kép megosztása}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Videó megosztása}other{# videó megosztása}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# fájl megosztása}other{# fájl megosztása}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Válassza ki a megosztani kívánt elemeket"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Kép megosztása szöveggel}other{# kép megosztása szöveggel}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Kép megosztása linkkel}other{# kép megosztása linkkel}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Videó megosztása szöveggel}other{# videó megosztása szöveggel}}"</string>

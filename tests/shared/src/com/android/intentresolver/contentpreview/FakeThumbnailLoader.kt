@@ -18,18 +18,23 @@ package com.android.intentresolver.contentpreview
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Size
 
 /** Fake implementation of [ThumbnailLoader] for use in testing. */
-class FakeThumbnailLoader : ThumbnailLoader {
+class FakeThumbnailLoader(private val defaultSize: Size = Size(100, 100)) : ThumbnailLoader {
 
-    val fakeInvoke = mutableMapOf<Uri, suspend () -> Bitmap?>()
+    val fakeInvoke = mutableMapOf<Uri, suspend (Size) -> Bitmap?>()
     val invokeCalls = mutableListOf<Uri>()
     var unfinishedInvokeCount = 0
 
-    override suspend fun invoke(uri: Uri): Bitmap? {
+    override suspend fun loadThumbnail(uri: Uri): Bitmap? = getBitmap(uri, defaultSize)
+
+    override suspend fun loadThumbnail(uri: Uri, size: Size): Bitmap? = getBitmap(uri, size)
+
+    private suspend fun getBitmap(uri: Uri, size: Size): Bitmap? {
         invokeCalls.add(uri)
         unfinishedInvokeCount++
-        val result = fakeInvoke[uri]?.invoke()
+        val result = fakeInvoke[uri]?.invoke(size)
         unfinishedInvokeCount--
         return result
     }
