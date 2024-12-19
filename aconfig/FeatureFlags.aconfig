@@ -116,3 +116,10 @@ flag {
   description: "Whether to scroll items onscreen when they are partially offscreen and selected/unselected."
   bug: "351883537"
 }
+
+flag {
+  name: "shareousel_selection_shrink"
+  namespace: "intentresolver"
+  description: "Whether to shrink Shareousel items when they are selected."
+  bug: "361792274"
+}
