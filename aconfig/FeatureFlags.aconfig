@@ -26,16 +26,6 @@ flag {
 }
 
 flag {
-  name: "fix_shortcut_loader_job_leak"
-  namespace: "intentresolver"
-  description: "User a nested coroutine scope for shortcut loader instances"
-  bug: "358135601"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
   name: "fix_shortcuts_flashing"
   namespace: "intentresolver"
   description: "Do not flash shortcuts on payload selection change"
