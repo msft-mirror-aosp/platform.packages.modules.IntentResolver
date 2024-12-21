@@ -16,6 +16,7 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -52,8 +53,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -68,6 +71,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.Flags.shareouselScrollOffscreenSelections
+import com.android.intentresolver.Flags.shareouselSelectionShrink
 import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
@@ -247,43 +251,52 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, aspectRatio: F
             ContentType.Video -> stringResource(R.string.selectable_video)
             else -> stringResource(R.string.selectable_item)
         }
-    Crossfade(
-        targetState = bitmapLoadState,
-        modifier =
-            Modifier.semantics { this.contentDescription = contentDescription }
-                .clip(RoundedCornerShape(size = 12.dp))
-                .toggleable(
-                    value = selected,
-                    onValueChange = { scope.launch { viewModel.setSelected(it) } },
-                ),
-    ) { state ->
-        if (state is ValueUpdate.Value) {
-            state.getOrDefault(null).let { bitmap ->
-                ShareouselCard(
-                    image = {
-                        bitmap?.let {
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.aspectRatio(aspectRatio),
-                            )
-                        } ?: PlaceholderBox(aspectRatio)
-                    },
-                    contentType = viewModel.contentType,
-                    selected = selected,
-                    modifier =
-                        Modifier.thenIf(selected) {
-                            Modifier.border(
-                                width = 4.dp,
-                                color = borderColor,
-                                shape = RoundedCornerShape(size = 12.dp),
-                            )
+    Box(
+        modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio),
+        contentAlignment = Alignment.Center,
+    ) {
+        Crossfade(
+            targetState = bitmapLoadState,
+            modifier =
+                Modifier.semantics { this.contentDescription = contentDescription }
+                    .toggleable(
+                        value = selected,
+                        onValueChange = { scope.launch { viewModel.setSelected(it) } },
+                    )
+                    .conditional(shareouselSelectionShrink()) {
+                        val selectionScale by animateFloatAsState(if (selected) 0.95f else 1f)
+                        scale(selectionScale)
+                    }
+                    .clip(RoundedCornerShape(size = 12.dp)),
+        ) { state ->
+            if (state is ValueUpdate.Value) {
+                state.getOrDefault(null).let { bitmap ->
+                    ShareouselCard(
+                        image = {
+                            bitmap?.let {
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.aspectRatio(aspectRatio),
+                                )
+                            } ?: PlaceholderBox(aspectRatio)
                         },
-                )
+                        contentType = viewModel.contentType,
+                        selected = selected,
+                        modifier =
+                            Modifier.conditional(selected) {
+                                border(
+                                    width = 4.dp,
+                                    color = borderColor,
+                                    shape = RoundedCornerShape(size = 12.dp),
+                                )
+                            },
+                    )
+                }
+            } else {
+                PlaceholderBox(aspectRatio)
             }
-        } else {
-            PlaceholderBox(aspectRatio)
         }
     }
 }
@@ -370,8 +383,11 @@ private fun ShareouselAction(
     )
 }
 
-inline fun Modifier.thenIf(condition: Boolean, crossinline factory: () -> Modifier): Modifier =
-    if (condition) this.then(factory()) else this
+@Composable
+private inline fun Modifier.conditional(
+    condition: Boolean,
+    crossinline whenTrue: @Composable Modifier.() -> Modifier,
+): Modifier = if (condition) this.whenTrue() else this
 
 private data class PreviewCarouselMeasurements(
     val viewportHeightPx: Int,
