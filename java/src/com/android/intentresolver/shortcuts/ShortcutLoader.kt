@@ -35,7 +35,6 @@ import androidx.annotation.MainThread
 import androidx.annotation.OpenForTesting
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.WorkerThread
-import com.android.intentresolver.Flags.fixShortcutLoaderJobLeak
 import com.android.intentresolver.Flags.fixShortcutsFlashing
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.measurements.Tracer
@@ -80,8 +79,7 @@ constructor(
     private val dispatcher: CoroutineDispatcher,
     private val callback: Consumer<Result>,
 ) {
-    private val scope =
-        if (fixShortcutLoaderJobLeak()) parentScope.createChildScope() else parentScope
+    private val scope = parentScope.createChildScope()
     private val shortcutToChooserTargetConverter = ShortcutToChooserTargetConverter()
     private val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
     private val appPredictorWatchdog = AtomicReference<Job?>(null)
@@ -170,9 +168,7 @@ constructor(
 
     @OpenForTesting
     open fun destroy() {
-        if (fixShortcutLoaderJobLeak()) {
-            scope.cancel()
-        }
+        scope.cancel()
     }
 
     @WorkerThread
