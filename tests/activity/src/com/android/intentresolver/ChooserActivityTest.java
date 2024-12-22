@@ -124,6 +124,7 @@ import com.android.intentresolver.contentpreview.ImageLoaderModule;
 import com.android.intentresolver.contentpreview.PreviewCacheSize;
 import com.android.intentresolver.contentpreview.PreviewMaxConcurrency;
 import com.android.intentresolver.contentpreview.ThumbnailLoader;
+import com.android.intentresolver.contentpreview.ThumbnailSize;
 import com.android.intentresolver.data.repository.FakeUserRepository;
 import com.android.intentresolver.data.repository.UserRepository;
 import com.android.intentresolver.data.repository.UserRepositoryModule;
@@ -285,6 +286,10 @@ public class ChooserActivityTest {
     int mPreviewMaxConcurrency = 4;
 
     @BindValue
+    @ThumbnailSize
+    int mPreviewThumbnailSize = 500;
+
+    @BindValue
     ThumbnailLoader mThumbnailLoader = new FakeThumbnailLoader();
 
     @Before
@@ -305,9 +310,6 @@ public class ChooserActivityTest {
         // values to the dependency graph at activity launch time. This allows replacing
         // arbitrary bindings per-test case if needed.
         mPackageManager = mContext.getPackageManager();
-
-        // TODO: inject image loader in the prod code and remove this override
-        ChooserActivityOverrideData.getInstance().imageLoader = mFakeImageLoader;
     }
 
     public ChooserActivityTest(boolean appPredictionAvailable) {

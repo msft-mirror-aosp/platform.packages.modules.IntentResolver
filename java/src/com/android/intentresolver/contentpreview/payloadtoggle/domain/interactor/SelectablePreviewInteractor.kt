@@ -18,6 +18,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.net.Uri
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
+import com.android.intentresolver.logging.EventLog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.map
 class SelectablePreviewInteractor(
     private val key: PreviewModel,
     private val selectionInteractor: SelectionInteractor,
+    private val eventLog: EventLog,
 ) {
     val uri: Uri = key.uri
 
@@ -33,6 +35,7 @@ class SelectablePreviewInteractor(
 
     /** Sets whether this preview is selected by the user. */
     fun setSelected(isSelected: Boolean) {
+        eventLog.logPayloadSelectionChanged()
         if (isSelected) {
             selectionInteractor.select(key)
         } else {

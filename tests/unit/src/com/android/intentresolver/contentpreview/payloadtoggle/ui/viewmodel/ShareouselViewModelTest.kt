@@ -76,23 +76,25 @@ class ShareouselViewModelTest {
             scope = viewModelScope,
         )
     }
+    private val previewHeight = 500
 
     @Test
     fun headline_images() = runTest {
         assertThat(shareouselViewModel.headline.first()).isEqualTo("FILES: 1")
         previewSelectionsRepository.selections.value =
             listOf(
-                PreviewModel(
-                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                    mimeType = "image/png",
-                    order = 0,
-                ),
-                PreviewModel(
-                    uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                    mimeType = "image/jpeg",
-                    order = 1,
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                        mimeType = "image/png",
+                        order = 0,
+                    ),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                        mimeType = "image/jpeg",
+                        order = 1,
+                    )
                 )
-            ).associateBy { it.uri }
+                .associateBy { it.uri }
         runCurrent()
         assertThat(shareouselViewModel.headline.first()).isEqualTo("IMAGES: 2")
     }
@@ -101,17 +103,18 @@ class ShareouselViewModelTest {
     fun headline_videos() = runTest {
         previewSelectionsRepository.selections.value =
             listOf(
-                PreviewModel(
-                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                    mimeType = "video/mpeg",
-                    order = 0,
-                ),
-                PreviewModel(
-                    uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                    mimeType = "video/mpeg",
-                    order = 1,
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                        mimeType = "video/mpeg",
+                        order = 0,
+                    ),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                        mimeType = "video/mpeg",
+                        order = 1,
+                    )
                 )
-            ).associateBy { it.uri }
+                .associateBy { it.uri }
         runCurrent()
         assertThat(shareouselViewModel.headline.first()).isEqualTo("VIDEOS: 2")
     }
@@ -120,17 +123,18 @@ class ShareouselViewModelTest {
     fun headline_mixed() = runTest {
         previewSelectionsRepository.selections.value =
             listOf(
-                PreviewModel(
-                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                    mimeType = "image/jpeg",
-                    order = 0,
-                ),
-                PreviewModel(
-                    uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
-                    mimeType = "video/mpeg",
-                    order = 1,
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                        mimeType = "image/jpeg",
+                        order = 0,
+                    ),
+                    PreviewModel(
+                        uri = Uri.fromParts("scheme1", "ssp1", "fragment1"),
+                        mimeType = "video/mpeg",
+                        order = 1,
+                    )
                 )
-            ).associateBy { it.uri }
+                .associateBy { it.uri }
         runCurrent()
         assertThat(shareouselViewModel.headline.first()).isEqualTo("FILES: 2")
     }
@@ -194,6 +198,7 @@ class ShareouselViewModelTest {
                         mimeType = "video/mpeg",
                         order = 0,
                     ),
+                    previewHeight,
                     /* index = */ 1,
                     viewModelScope,
                 )
@@ -245,6 +250,7 @@ class ShareouselViewModelTest {
                         mimeType = "video/mpeg",
                         order = 1,
                     ),
+                    previewHeight,
                     /* index = */ 1,
                     viewModelScope,
                 )
@@ -308,10 +314,11 @@ class ShareouselViewModelTest {
         this.targetIntentModifier = targetIntentModifier
         previewSelectionsRepository.selections.value =
             PreviewModel(
-                uri = Uri.fromParts("scheme", "ssp", "fragment"),
-                mimeType = null,
-                order = 0,
-            ).let { mapOf(it.uri to it) }
+                    uri = Uri.fromParts("scheme", "ssp", "fragment"),
+                    mimeType = null,
+                    order = 0,
+                )
+                .let { mapOf(it.uri to it) }
         payloadToggleImageLoader =
             FakeImageLoader(
                 initialBitmaps =
@@ -340,6 +347,8 @@ class ShareouselViewModelTest {
                 override fun getVideosHeadline(count: Int): String = "VIDEOS: $count"
 
                 override fun getFilesHeadline(count: Int): String = "FILES: $count"
+
+                override fun getNotItemsSelectedHeadline() = "Select items to share"
             }
         // instantiate the view model, and then runCurrent() so that it is fully hydrated before
         // starting the test

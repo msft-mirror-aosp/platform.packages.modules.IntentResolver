@@ -20,6 +20,7 @@ package com.android.intentresolver.contentpreview.payloadtoggle.domain.interacto
 
 import android.net.Uri
 import android.service.chooser.AdditionalContentContract.CursorExtraKeys.POSITION
+import android.util.Log
 import com.android.intentresolver.contentpreview.UriMetadataReader
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.LoadDirection
@@ -50,6 +51,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapLatest
+
+private const val TAG = "CursorPreviewsIntr"
 
 /** Queries data from a remote cursor, and caches it locally for presentation in Shareousel. */
 class CursorPreviewsInteractor
@@ -273,8 +276,7 @@ constructor(
         pagedCursor
             .getPageRows(pageNum) // TODO: what do we do if the load fails?
             ?.filter { it.uri !in state.merged }
-            ?.toPage(this, unclaimedRecords)
-            ?: this
+            ?.toPage(this, unclaimedRecords) ?: this
 
     private suspend fun <M : MutablePreviewMap> Sequence<CursorRow>.toPage(
         destination: M,
@@ -288,26 +290,32 @@ constructor(
     private fun createPreviewModel(
         row: CursorRow,
         unclaimedRecords: MutableUnclaimedMap,
-    ): PreviewModel = uriMetadataReader.getMetadata(row.uri).let { metadata ->
-            val size =
-                row.previewSize
-                    ?: metadata.previewUri?.let { uriMetadataReader.readPreviewSize(it) }
-            PreviewModel(
-                uri = row.uri,
-                previewUri = metadata.previewUri,
-                mimeType = metadata.mimeType,
-                aspectRatio = size.aspectRatioOrDefault(1f),
-                order = row.position,
-            )
-        }.also { updated ->
-            if (unclaimedRecords.remove(row.uri) != null) {
-                // unclaimedRecords contains initially shared (and thus selected) items with unknown
-                // cursor position. Update selection records when any of those items is encountered
-                // in the cursor to maintain proper selection order should other items also be
-                // selected.
-                selectionInteractor.updateSelection(updated)
+    ): PreviewModel =
+        uriMetadataReader
+            .getMetadata(row.uri)
+            .let { metadata ->
+                val size =
+                    row.previewSize
+                        ?: metadata.previewUri?.let { uriMetadataReader.readPreviewSize(it) }
+                PreviewModel(
+                    uri = row.uri,
+                    previewUri = metadata.previewUri,
+                    mimeType = metadata.mimeType,
+                    aspectRatio = size.aspectRatioOrDefault(1f),
+                    order = row.position,
+                )
             }
-        }
+            .also { updated ->
+                if (unclaimedRecords.remove(row.uri) != null) {
+                    // unclaimedRecords contains initially shared (and thus selected) items with
+                    // unknown
+                    // cursor position. Update selection records when any of those items is
+                    // encountered
+                    // in the cursor to maintain proper selection order should other items also be
+                    // selected.
+                    selectionInteractor.updateSelection(updated)
+                }
+            }
 
     private fun <M : MutablePreviewMap> M.putAllUnclaimedRight(unclaimed: UnclaimedMap): M =
         putAllUnclaimedWhere(unclaimed) { it >= focusedItemIdx }
@@ -343,7 +351,28 @@ private fun <M : MutablePreviewMap> M.putAllUnclaimedWhere(
         .toMap(this)
 
 private fun PagedCursor<CursorRow?>.getPageRows(pageNum: Int): Sequence<CursorRow>? =
-    get(pageNum)?.filterNotNull()
+    runCatching { get(pageNum) }
+        .onFailure { Log.e(TAG, "Failed to read additional content cursor page #$pageNum", it) }
+        .getOrNull()
+        ?.asSafeSequence()
+        ?.filterNotNull()
+
+private fun <T> Sequence<T>.asSafeSequence(): Sequence<T> {
+    return if (this is SafeSequence) this else SafeSequence(this)
+}
+
+private class SafeSequence<T>(private val sequence: Sequence<T>) : Sequence<T> {
+    override fun iterator(): Iterator<T> =
+        sequence.iterator().let { if (it is SafeIterator) it else SafeIterator(it) }
+}
+
+private class SafeIterator<T>(private val iterator: Iterator<T>) : Iterator<T> by iterator {
+    override fun hasNext(): Boolean {
+        return runCatching { iterator.hasNext() }
+            .onFailure { Log.e(TAG, "Failed to read cursor", it) }
+            .getOrDefault(false)
+    }
+}
 
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.RUNTIME) annotation class PageSize
 

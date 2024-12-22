@@ -16,6 +16,7 @@
 
 package com.android.intentresolver.contentpreview.payloadtoggle.domain.model
 
+import android.content.ComponentName
 import android.content.Intent
 import android.content.IntentSender
 import android.service.chooser.ChooserAction
@@ -31,4 +32,5 @@ data class ShareouselUpdate(
     val refinementIntentSender: ValueUpdate<IntentSender?> = ValueUpdate.Absent,
     val resultIntentSender: ValueUpdate<IntentSender?> = ValueUpdate.Absent,
     val metadataText: ValueUpdate<CharSequence?> = ValueUpdate.Absent,
+    val excludeComponents: ValueUpdate<List<ComponentName>> = ValueUpdate.Absent,
 )

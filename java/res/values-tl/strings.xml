@@ -60,6 +60,7 @@
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Shine-share ang larawan}one{Shine-share ang # larawan}other{Shine-share ang # na larawan}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Ibinabahagi ang video}one{Ibinabahagi ang # video}other{Ibinabahagi ang # na video}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Nagshe-share ng # file}one{Nagshe-share ng # file}other{Nagshe-share ng # na file}}"</string>
+    <string name="select_items_to_share" msgid="1026071777275022579">"Pumili ng mga item na ibabahagi"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Nagbabahagi ng larawang may text}one{Nagbabahagi ng # larawang may text}other{Nagbabahagi ng # na larawang may text}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Nagbabahagi ng larawang may link}one{Nagbabahagi ng # larawang may link}other{Nagbabahagi ng # na larawang may link}}"</string>
     <string name="sharing_videos_with_text" msgid="4169898442482118146">"{count,plural, =1{Nagbabahagi ng video na may text}one{Nagbabahagi ng # video na may text}other{Nagbabahagi ng # na video na may text}}"</string>

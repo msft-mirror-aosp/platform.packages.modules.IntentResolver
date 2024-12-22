@@ -18,7 +18,10 @@ package com.android.intentresolver.ui.viewmodel
 import android.content.ComponentName
 import android.content.Intent
 import android.content.Intent.EXTRA_ALTERNATE_INTENTS
+import android.content.Intent.EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI
+import android.content.Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT
 import android.content.Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
+import android.content.Intent.EXTRA_CHOOSER_FOCUSED_ITEM_POSITION
 import android.content.Intent.EXTRA_CHOOSER_MODIFY_SHARE_ACTION
 import android.content.Intent.EXTRA_CHOOSER_REFINEMENT_INTENT_SENDER
 import android.content.Intent.EXTRA_CHOOSER_RESULT_INTENT_SENDER
@@ -95,8 +98,7 @@ fun readChooserRequest(
         val initialIntents =
             optional(array<Intent>(EXTRA_INITIAL_INTENTS))?.take(MAX_INITIAL_INTENTS)?.map {
                 it.maybeAddSendActionFlags()
-            }
-                ?: emptyList()
+            } ?: emptyList()
 
         val chosenComponentSender =
             optional(value<IntentSender>(EXTRA_CHOOSER_RESULT_INTENT_SENDER))
@@ -115,7 +117,8 @@ fun readChooserRequest(
         val retainInOnStop =
             optional(value<Boolean>(ChooserActivity.EXTRA_PRIVATE_RETAIN_IN_ON_STOP)) ?: false
 
-        val sharedText = optional(value<CharSequence>(EXTRA_TEXT))
+        val sharedTextTitle = targetIntent.getCharSequenceExtra(EXTRA_TITLE)
+        val sharedText = targetIntent.getCharSequenceExtra(EXTRA_TEXT)
 
         val chooserActions = readChooserActions() ?: emptyList()
 
@@ -124,29 +127,20 @@ fun readChooserRequest(
         val additionalContentUri: Uri?
         val focusedItemPos: Int
         if (isSendAction && flags.chooserPayloadToggling()) {
-            additionalContentUri = optional(value<Uri>(Intent.EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI))
-            focusedItemPos = optional(value<Int>(Intent.EXTRA_CHOOSER_FOCUSED_ITEM_POSITION)) ?: 0
+            additionalContentUri = optional(value<Uri>(EXTRA_CHOOSER_ADDITIONAL_CONTENT_URI))
+            focusedItemPos = optional(value<Int>(EXTRA_CHOOSER_FOCUSED_ITEM_POSITION)) ?: 0
         } else {
             additionalContentUri = null
             focusedItemPos = 0
         }
 
         val contentTypeHint =
-            if (flags.chooserAlbumText()) {
-                when (optional(value<Int>(Intent.EXTRA_CHOOSER_CONTENT_TYPE_HINT))) {
-                    Intent.CHOOSER_CONTENT_TYPE_ALBUM -> ContentTypeHint.ALBUM
-                    else -> ContentTypeHint.NONE
-                }
-            } else {
-                ContentTypeHint.NONE
+            when (optional(value<Int>(EXTRA_CHOOSER_CONTENT_TYPE_HINT))) {
+                Intent.CHOOSER_CONTENT_TYPE_ALBUM -> ContentTypeHint.ALBUM
+                else -> ContentTypeHint.NONE
             }
 
-        val metadataText =
-            if (flags.enableSharesheetMetadataExtra()) {
-                optional(value<CharSequence>(EXTRA_METADATA_TEXT))
-            } else {
-                null
-            }
+        val metadataText = optional(value<CharSequence>(EXTRA_METADATA_TEXT))
 
         ChooserRequest(
             targetIntent = targetIntent,
@@ -171,6 +165,7 @@ fun readChooserRequest(
             chosenComponentSender = chosenComponentSender,
             refinementIntentSender = refinementIntentSender,
             sharedText = sharedText,
+            sharedTextTitle = sharedTextTitle,
             shareTargetFilter = targetIntent.toShareTargetFilter(),
             additionalContentUri = additionalContentUri,
             focusedItemPosition = focusedItemPos,
