@@ -62,6 +62,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
     private final CharSequence mMetadata;
     private final boolean mIsSingleImage;
     private final int mFileCount;
+    private final boolean mAllowTextToggle;
     private ViewGroup mContentPreviewView;
     private View mHeadliveView;
     private boolean mIsMetadataUpdated = false;
@@ -70,8 +71,6 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
     private boolean mAllImages;
     private boolean mAllVideos;
     private int mPreviewSize;
-    // TODO(b/285309527): make this a flag
-    private static final boolean SHOW_TOGGLE_CHECKMARK = false;
 
     FilesPlusTextContentPreviewUi(
             CoroutineScope scope,
@@ -83,7 +82,8 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             ImageLoader imageLoader,
             MimeTypeClassifier typeClassifier,
             HeadlineGenerator headlineGenerator,
-            @Nullable CharSequence metadata) {
+            @Nullable CharSequence metadata,
+            boolean allowTextToggle) {
         if (isSingleImage && fileCount != 1) {
             throw new IllegalArgumentException(
                     "fileCount = " + fileCount + " and isSingleImage = true");
@@ -98,6 +98,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
         mTypeClassifier = typeClassifier;
         mHeadlineGenerator = headlineGenerator;
         mMetadata = metadata;
+        mAllowTextToggle = allowTextToggle;
     }
 
     @Override
@@ -234,7 +235,7 @@ class FilesPlusTextContentPreviewUi extends ContentPreviewUi {
             shareTextAction.accept(!isChecked);
             updateHeadline(headlineView, mFileCount, mAllImages, mAllVideos);
         });
-        if (SHOW_TOGGLE_CHECKMARK) {
+        if (mAllowTextToggle) {
             includeText.setVisibility(View.VISIBLE);
         }
     }
