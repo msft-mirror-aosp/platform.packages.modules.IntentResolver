@@ -25,10 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @ViewModelScoped
 class ChooserRequestRepository
 @Inject
-constructor(
-    initialRequest: ChooserRequest,
-    initialActions: List<CustomActionModel>,
-) {
+constructor(val initialRequest: ChooserRequest, initialActions: List<CustomActionModel>) {
     /** All information from the sharing application pertaining to the chooser. */
     val chooserRequest: MutableStateFlow<ChooserRequest> = MutableStateFlow(initialRequest)
 

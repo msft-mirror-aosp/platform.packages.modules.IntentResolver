@@ -29,14 +29,14 @@
             <item android:state_selected="false">
                 <shape android:shape="rectangle">
                     <corners android:radius="12dp" />
-                    <solid android:color="?androidprv:attr/materialColorSurfaceContainerHighest" />
+                    <solid android:color="@androidprv:color/materialColorSurfaceContainerHighest" />
                 </shape>
             </item>
 
             <item android:state_selected="true">
                 <shape android:shape="rectangle">
                     <corners android:radius="12dp" />
-                    <solid android:color="?androidprv:attr/materialColorPrimary" />
+                    <solid android:color="@androidprv:color/materialColorPrimary" />
                 </shape>
             </item>
         </selector>

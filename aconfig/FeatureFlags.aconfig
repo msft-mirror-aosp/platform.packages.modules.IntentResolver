@@ -6,20 +6,6 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
-  name: "modular_framework"
-  namespace: "intentresolver"
-  description: "Enables the new modular framework"
-  bug: "302113519"
-}
-
-flag {
-  name: "enable_private_profile"
-  namespace: "intentresolver"
-  description: "Enable private profile support"
-  bug: "328029692"
-}
-
-flag {
   name: "individual_metadata_title_read"
   namespace: "intentresolver"
   description: "Enables separate title URI metadata calls"
@@ -40,63 +26,6 @@ flag {
 }
 
 flag {
-  name: "fix_drawer_offset_on_config_change"
-  namespace: "intentresolver"
-  description: "Fix drawer offset calculation after rotating when in a non-initial tab"
-  bug: "344057117"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
-  name: "fix_empty_state_padding"
-  namespace: "intentresolver"
-  description: "Always apply systemBar window insets regardless of profiles present"
-  bug: "338447666"
-}
-
-flag {
-  name: "fix_empty_state_padding_bug"
-  namespace: "intentresolver"
-  description: "Always apply systemBar window insets regardless of profiles present"
-  bug: "338447666"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
-  name: "fix_missing_drawer_offset_calculation"
-  namespace: "intentresolver"
-  description: "Recalculate drawer offset upon the preview size change when the targets list remains unchanged"
-  bug: "347316548"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
-  name: "fix_private_space_locked_on_restart"
-  namespace: "intentresolver"
-  description: "Dismiss Share sheet on restart if private space became locked while stopped"
-  bug: "338125945"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
-  name: "fix_shortcut_loader_job_leak"
-  namespace: "intentresolver"
-  description: "User a nested coroutine scope for shortcut loader instances"
-  bug: "358135601"
-  metadata {
-    purpose: PURPOSE_BUGFIX
-  }
-}
-
-flag {
   name: "fix_shortcuts_flashing"
   namespace: "intentresolver"
   description: "Do not flash shortcuts on payload selection change"
@@ -107,10 +36,27 @@ flag {
 }
 
 flag {
+  name: "interactive_session"
+  namespace: "intentresolver"
+  description: "Enables interactive chooser session (a.k.a 'Splitti') feature."
+  bug: "358166090"
+}
+
+flag {
   name: "keyboard_navigation_fix"
   namespace: "intentresolver"
   description: "Enable Chooser keyboard navigation bugfix"
   bug: "325259478"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "rebuild_adapters_on_target_pinning"
+  namespace: "intentresolver"
+  description: "Rebuild and swap adapters when a target gets (un)pinned to avoid flickering."
+  bug: "230703572"
   metadata {
     purpose: PURPOSE_BUGFIX
   }
@@ -159,4 +105,11 @@ flag {
   namespace: "intentresolver"
   description: "Whether to scroll items onscreen when they are partially offscreen and selected/unselected."
   bug: "351883537"
+}
+
+flag {
+  name: "shareousel_selection_shrink"
+  namespace: "intentresolver"
+  description: "Whether to shrink Shareousel items when they are selected."
+  bug: "361792274"
 }

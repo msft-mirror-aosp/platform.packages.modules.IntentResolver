@@ -36,14 +36,15 @@ import android.content.Intent.EXTRA_TEXT
 import android.content.Intent.EXTRA_TITLE
 import android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT
-import android.content.IntentFilter
 import android.content.IntentSender
 import android.net.Uri
 import android.os.Bundle
 import android.service.chooser.ChooserAction
+import android.service.chooser.ChooserSession
 import android.service.chooser.ChooserTarget
 import com.android.intentresolver.ChooserActivity
 import com.android.intentresolver.ContentTypeHint
+import com.android.intentresolver.Flags.interactiveSession
 import com.android.intentresolver.R
 import com.android.intentresolver.data.model.ChooserRequest
 import com.android.intentresolver.ext.hasSendAction
@@ -59,6 +60,8 @@ import com.android.intentresolver.validation.validateFrom
 
 private const val MAX_CHOOSER_ACTIONS = 5
 private const val MAX_INITIAL_INTENTS = 2
+private const val EXTRA_CHOOSER_INTERACTIVE_CALLBACK =
+    "com.android.extra.EXTRA_CHOOSER_INTERACTIVE_CALLBACK"
 
 internal fun Intent.maybeAddSendActionFlags() =
     ifMatch(Intent::hasSendAction) {
@@ -69,6 +72,14 @@ internal fun Intent.maybeAddSendActionFlags() =
 fun readChooserRequest(
     model: ActivityModel,
     savedState: Bundle = model.intent.extras ?: Bundle(),
+): ValidationResult<ChooserRequest> {
+    return readChooserRequest(savedState, model.launchedFromPackage, model.referrer)
+}
+
+fun readChooserRequest(
+    savedState: Bundle,
+    launchedFromPackage: String,
+    referrer: Uri?,
 ): ValidationResult<ChooserRequest> {
     @Suppress("DEPRECATION")
     return validateFrom(savedState::get) {
@@ -140,18 +151,26 @@ fun readChooserRequest(
 
         val metadataText = optional(value<CharSequence>(EXTRA_METADATA_TEXT))
 
+        val interactiveSessionCallback =
+            if (interactiveSession()) {
+                optional(value<ChooserSession>(EXTRA_CHOOSER_INTERACTIVE_CALLBACK))
+                    ?.sessionCallbackBinder
+            } else {
+                null
+            }
+
         ChooserRequest(
             targetIntent = targetIntent,
             targetAction = targetIntent.action,
             isSendActionTarget = isSendAction,
             targetType = targetIntent.type,
             launchedFromPackage =
-                requireNotNull(model.launchedFromPackage) {
+                requireNotNull(launchedFromPackage) {
                     "launch.fromPackage was null, See Activity.getLaunchedFromPackage()"
                 },
             title = customTitle,
             defaultTitleResource = defaultTitleResource,
-            referrer = model.referrer,
+            referrer = referrer,
             filteredComponentNames = filteredComponents,
             callerChooserTargets = callerChooserTargets,
             chooserActions = chooserActions,
@@ -164,11 +183,12 @@ fun readChooserRequest(
             refinementIntentSender = refinementIntentSender,
             sharedText = sharedText,
             sharedTextTitle = sharedTextTitle,
-            shareTargetFilter = targetIntent.toShareTargetFilter(),
+            shareTargetFilter = targetIntent.createIntentFilter(),
             additionalContentUri = additionalContentUri,
             focusedItemPosition = focusedItemPos,
             contentTypeHint = contentTypeHint,
             metadataText = metadataText,
+            interactiveSessionCallback = interactiveSessionCallback,
         )
     }
 }
@@ -180,12 +200,3 @@ fun Validation.readChooserActions(): List<ChooserAction>? =
     optional(array<ChooserAction>(EXTRA_CHOOSER_CUSTOM_ACTIONS))
         ?.filter { hasValidIcon(it) }
         ?.take(MAX_CHOOSER_ACTIONS)
-
-private fun Intent.toShareTargetFilter(): IntentFilter? {
-    return type?.let {
-        IntentFilter().apply {
-            action?.also { addAction(it) }
-            addDataType(it)
-        }
-    }
-}

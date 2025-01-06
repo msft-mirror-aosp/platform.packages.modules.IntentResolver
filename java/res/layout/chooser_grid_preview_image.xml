@@ -24,7 +24,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:importantForAccessibility="no"
-    android:background="?androidprv:attr/materialColorSurfaceContainer">
+    android:background="@androidprv:color/materialColorSurfaceContainer">
 
     <ViewStub
         android:id="@+id/chooser_headline_row_stub"

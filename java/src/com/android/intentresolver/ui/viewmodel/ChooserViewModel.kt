@@ -21,6 +21,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.intentresolver.Flags.interactiveSession
 import com.android.intentresolver.Flags.saveShareouselState
 import com.android.intentresolver.contentpreview.ImageLoader
 import com.android.intentresolver.contentpreview.PreviewDataProvider
@@ -32,6 +33,7 @@ import com.android.intentresolver.data.repository.ActivityModelRepository
 import com.android.intentresolver.data.repository.ChooserRequestRepository
 import com.android.intentresolver.domain.saveUpdates
 import com.android.intentresolver.inject.Background
+import com.android.intentresolver.interactive.domain.interactor.InteractiveSessionInteractor
 import com.android.intentresolver.shared.model.ActivityModel
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.Valid
@@ -67,6 +69,7 @@ constructor(
     private val chooserRequestRepository: Lazy<ChooserRequestRepository>,
     private val contentResolver: ContentInterface,
     val imageLoader: ImageLoader,
+    private val interactiveSessionInteractorLazy: Lazy<InteractiveSessionInteractor>,
 ) : ViewModel() {
 
     /** Parcelable-only references provided from the creating Activity */
@@ -98,6 +101,9 @@ constructor(
         )
     }
 
+    val interactiveSessionInteractor: InteractiveSessionInteractor
+        get() = interactiveSessionInteractorLazy.get()
+
     init {
         when (initialRequest) {
             is Invalid -> {
@@ -115,6 +121,9 @@ constructor(
                                 ?.saveUpdates(result)
                         }
                     }
+                }
+                if (interactiveSession()) {
+                    viewModelScope.launch(bgDispatcher) { interactiveSessionInteractor.activate() }
                 }
             }
         }

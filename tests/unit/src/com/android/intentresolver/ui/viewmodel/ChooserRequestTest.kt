@@ -53,6 +53,7 @@ private fun createActivityModel(
         launchedFromUid = 10000,
         launchedFromPackage = "com.android.example",
         referrer = referrer ?: "android-app://com.android.example".toUri(),
+        false,
     )
 
 class ChooserRequestTest {

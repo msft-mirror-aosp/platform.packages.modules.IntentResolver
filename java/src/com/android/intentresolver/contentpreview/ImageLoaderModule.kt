@@ -17,7 +17,7 @@
 package com.android.intentresolver.contentpreview
 
 import android.content.res.Resources
-import com.android.intentresolver.Flags
+import com.android.intentresolver.Flags.previewImageLoader
 import com.android.intentresolver.R
 import com.android.intentresolver.inject.ApplicationOwned
 import dagger.Binds
@@ -36,9 +36,9 @@ interface ImageLoaderModule {
         @Provides
         fun imageLoader(
             imagePreviewImageLoader: Provider<ImagePreviewImageLoader>,
-            previewImageLoader: Provider<PreviewImageLoader>
+            previewImageLoader: Provider<PreviewImageLoader>,
         ): ImageLoader =
-            if (Flags.previewImageLoader()) {
+            if (previewImageLoader()) {
                 previewImageLoader.get()
             } else {
                 imagePreviewImageLoader.get()
