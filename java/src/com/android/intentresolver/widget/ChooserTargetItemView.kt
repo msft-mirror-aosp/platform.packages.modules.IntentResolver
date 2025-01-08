@@ -22,7 +22,10 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.InputDevice.SOURCE_MOUSE
 import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_HOVER_ENTER
+import android.view.MotionEvent.ACTION_HOVER_MOVE
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -93,7 +96,7 @@ class ChooserTargetItemView(
         val iconView = iconView ?: return false
         if (!isEnabled) return true
         when (event.action) {
-            MotionEvent.ACTION_HOVER_ENTER -> {
+            ACTION_HOVER_ENTER -> {
                 iconView.isHovered = true
             }
             MotionEvent.ACTION_HOVER_EXIT -> {
@@ -103,7 +106,17 @@ class ChooserTargetItemView(
         return true
     }
 
-    override fun onInterceptHoverEvent(event: MotionEvent?) = true
+    override fun onInterceptHoverEvent(event: MotionEvent) =
+        if (event.isFromSource(SOURCE_MOUSE)) {
+            // This is the same logic as in super.onInterceptHoverEvent (ViewGroup) minus the check
+            // that the pointer fall on the scroll bar as we need to control the hover state of the
+            // icon.
+            // We also want to intercept only MOUSE hover events as the TalkBack's Explore by Touch
+            // (including single taps) reported as a hover event.
+            event.action == ACTION_HOVER_MOVE || event.action == ACTION_HOVER_ENTER
+        } else {
+            super.onInterceptHoverEvent(event)
+        }
 
     override fun dispatchDraw(canvas: Canvas) {
         super.dispatchDraw(canvas)
