@@ -16,14 +16,10 @@
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel
 
 import android.util.Size
-import com.android.intentresolver.Flags.previewImageLoader
 import com.android.intentresolver.Flags.unselectFinalItem
-import com.android.intentresolver.contentpreview.CachingImagePreviewImageLoader
 import com.android.intentresolver.contentpreview.HeadlineGenerator
 import com.android.intentresolver.contentpreview.ImageLoader
 import com.android.intentresolver.contentpreview.MimeTypeClassifier
-import com.android.intentresolver.contentpreview.PreviewImageLoader
-import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.PayloadToggle
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.ChooserRequestInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.CustomActionsInteractor
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.interactor.SelectablePreviewsInteractor
@@ -37,7 +33,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
-import javax.inject.Provider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -74,21 +69,9 @@ data class ShareouselViewModel(
 object ShareouselViewModelModule {
 
     @Provides
-    @PayloadToggle
-    fun imageLoader(
-        cachingImageLoader: Provider<CachingImagePreviewImageLoader>,
-        previewImageLoader: Provider<PreviewImageLoader>,
-    ): ImageLoader =
-        if (previewImageLoader()) {
-            previewImageLoader.get()
-        } else {
-            cachingImageLoader.get()
-        }
-
-    @Provides
     fun create(
         interactor: SelectablePreviewsInteractor,
-        @PayloadToggle imageLoader: ImageLoader,
+        imageLoader: ImageLoader,
         actionsInteractor: CustomActionsInteractor,
         headlineGenerator: HeadlineGenerator,
         selectionInteractor: SelectionInteractor,

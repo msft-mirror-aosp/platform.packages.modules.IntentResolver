@@ -70,13 +70,6 @@ flag {
 }
 
 flag {
-  name: "preview_image_loader"
-  namespace: "intentresolver"
-  description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
-  bug: "348665058"
-}
-
-flag {
   name: "save_shareousel_state"
   namespace: "intentresolver"
   description: "Preserve Shareousel state over a system-initiated process death."
