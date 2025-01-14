@@ -28,6 +28,9 @@ import android.content.Intent.EXTRA_REFERRER
 import android.content.Intent.EXTRA_TEXT
 import android.content.Intent.EXTRA_TITLE
 import android.net.Uri
+import android.platform.test.annotations.DisableFlags
+import android.platform.test.annotations.EnableFlags
+import android.platform.test.flag.junit.SetFlagsRule
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import com.android.intentresolver.ContentTypeHint
@@ -37,13 +40,16 @@ import com.android.intentresolver.validation.Importance
 import com.android.intentresolver.validation.Invalid
 import com.android.intentresolver.validation.NoValue
 import com.android.intentresolver.validation.Valid
+import com.android.systemui.shared.Flags
 import com.google.common.truth.Truth.assertThat
+import org.junit.Rule
 import org.junit.Test
 
 private fun createActivityModel(
     targetIntent: Intent?,
     referrer: Uri? = null,
     additionalIntents: List<Intent>? = null,
+    launchedFromPackage: String = "com.android.example",
 ) =
     ActivityModel(
         Intent(ACTION_CHOOSER).apply {
@@ -51,12 +57,13 @@ private fun createActivityModel(
             additionalIntents?.also { putExtra(EXTRA_ALTERNATE_INTENTS, it.toTypedArray()) }
         },
         launchedFromUid = 10000,
-        launchedFromPackage = "com.android.example",
-        referrer = referrer ?: "android-app://com.android.example".toUri(),
+        launchedFromPackage = launchedFromPackage,
+        referrer = referrer ?: "android-app://$launchedFromPackage".toUri(),
         false,
     )
 
 class ChooserRequestTest {
+    @get:Rule val flagsRule = SetFlagsRule()
 
     @Test
     fun missingIntent() {
@@ -264,5 +271,47 @@ class ChooserRequestTest {
             assertThat(request.sharedText).isEqualTo(text)
             assertThat(request.sharedTextTitle).isEqualTo(title)
         }
+    }
+
+    @Test
+    @DisableFlags(Flags.FLAG_SCREENSHOT_CONTEXT_URL)
+    fun testCallerAllowsTextToggle_flagOff() {
+        val intent = Intent().putExtras(bundleOf(EXTRA_INTENT to Intent(ACTION_SEND)))
+        val model =
+            createActivityModel(targetIntent = intent, launchedFromPackage = "com.android.systemui")
+        val result = readChooserRequest(model)
+
+        assertThat(result).isInstanceOf(Valid::class.java)
+        result as Valid<ChooserRequest>
+
+        assertThat(result.value.callerAllowsTextToggle).isFalse()
+    }
+
+    @Test
+    @EnableFlags(Flags.FLAG_SCREENSHOT_CONTEXT_URL)
+    fun testCallerAllowsTextToggle_sysuiPackage() {
+        val intent = Intent().putExtras(bundleOf(EXTRA_INTENT to Intent(ACTION_SEND)))
+        val model =
+            createActivityModel(targetIntent = intent, launchedFromPackage = "com.android.systemui")
+        val result = readChooserRequest(model)
+
+        assertThat(result).isInstanceOf(Valid::class.java)
+        result as Valid<ChooserRequest>
+
+        assertThat(result.value.callerAllowsTextToggle).isTrue()
+    }
+
+    @Test
+    @EnableFlags(Flags.FLAG_SCREENSHOT_CONTEXT_URL)
+    fun testCallerAllowsTextToggle_otherPackage() {
+        val intent = Intent().putExtras(bundleOf(EXTRA_INTENT to Intent(ACTION_SEND)))
+        val model =
+            createActivityModel(targetIntent = intent, launchedFromPackage = "com.hello.world")
+        val result = readChooserRequest(model)
+
+        assertThat(result).isInstanceOf(Valid::class.java)
+        result as Valid<ChooserRequest>
+
+        assertThat(result.value.callerAllowsTextToggle).isFalse()
     }
 }

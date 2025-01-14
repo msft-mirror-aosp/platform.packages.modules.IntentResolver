@@ -184,7 +184,8 @@ public final class ChooserContentPreviewUi {
                             imageLoader,
                             typeClassifier,
                             headlineGenerator,
-                            metadata
+                            metadata,
+                            chooserRequest.getCallerAllowsTextToggle()
                     );
             if (previewData.getUriCount() > 0) {
                 JavaFlowHelper.collectToList(
