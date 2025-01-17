@@ -16,5 +16,5 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
     <item android:color="@androidprv:color/materialColorOnPrimary" android:state_selected="true"/>
-    <item android:color="@androidprv:color/materialColorOnSurfaceVariant"/>
+    <item android:color="@androidprv:color/materialColorOnSurface"/>
 </selector>
