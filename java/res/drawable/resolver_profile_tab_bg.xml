@@ -29,7 +29,7 @@
             <item android:state_selected="false">
                 <shape android:shape="rectangle">
                     <corners android:radius="12dp" />
-                    <solid android:color="@androidprv:color/materialColorSurfaceContainerHighest" />
+                    <solid android:color="@androidprv:color/materialColorSurfaceBright" />
                 </shape>
             </item>
 
