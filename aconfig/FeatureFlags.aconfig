@@ -6,6 +6,16 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
+  name: "announce_shortcuts_and_suggested_apps"
+  namespace: "intentresolver"
+  description: "Enable talkback announcement for the app shortcuts and the suggested apps target groups."
+  bug: "379208685"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "individual_metadata_title_read"
   namespace: "intentresolver"
   description: "Enables separate title URI metadata calls"

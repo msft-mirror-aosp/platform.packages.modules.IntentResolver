@@ -16,11 +16,23 @@
 
 package com.android.intentresolver;
 
+import static com.android.intentresolver.Flags.announceShortcutsAndSuggestedApps;
+
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridView;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.CollectionInfoCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.android.intentresolver.grid.ChooserGridAdapter;
 
 /**
  * For a11y and per {@link RecyclerView#onInitializeAccessibilityNodeInfo}, override
@@ -28,6 +40,11 @@ import androidx.recyclerview.widget.RecyclerView;
  */
 public class ChooserGridLayoutManager extends GridLayoutManager {
 
+    private CharSequence mShortcutGroupTitle = "";
+    private CharSequence mSuggestedAppsGroupTitle = "";
+    private CharSequence mAllAppListGroupTitle = "";
+    @Nullable
+    private RecyclerView mRecyclerView;
     private boolean mVerticalScrollEnabled = true;
 
     /**
@@ -39,6 +56,9 @@ public class ChooserGridLayoutManager extends GridLayoutManager {
     public ChooserGridLayoutManager(Context context, AttributeSet attrs, int defStyleAttr,
             int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        if (announceShortcutsAndSuggestedApps()) {
+            readGroupTitles(context);
+        }
     }
 
     /**
@@ -49,6 +69,9 @@ public class ChooserGridLayoutManager extends GridLayoutManager {
      */
     public ChooserGridLayoutManager(Context context, int spanCount) {
         super(context, spanCount);
+        if (announceShortcutsAndSuggestedApps()) {
+            readGroupTitles(context);
+        }
     }
 
     /**
@@ -61,6 +84,27 @@ public class ChooserGridLayoutManager extends GridLayoutManager {
     public ChooserGridLayoutManager(Context context, int spanCount, int orientation,
             boolean reverseLayout) {
         super(context, spanCount, orientation, reverseLayout);
+        if (announceShortcutsAndSuggestedApps()) {
+            readGroupTitles(context);
+        }
+    }
+
+    private void readGroupTitles(Context context) {
+        mShortcutGroupTitle = context.getString(R.string.shortcut_group_a11y_title);
+        mSuggestedAppsGroupTitle = context.getString(R.string.suggested_apps_group_a11y_title);
+        mAllAppListGroupTitle = context.getString(R.string.all_apps_group_a11y_title);
+    }
+
+    @Override
+    public void onAttachedToWindow(RecyclerView view) {
+        super.onAttachedToWindow(view);
+        mRecyclerView = view;
+    }
+
+    @Override
+    public void onDetachedFromWindow(RecyclerView view, RecyclerView.Recycler recycler) {
+        super.onDetachedFromWindow(view, recycler);
+        mRecyclerView = null;
     }
 
     @Override
@@ -77,5 +121,92 @@ public class ChooserGridLayoutManager extends GridLayoutManager {
     @Override
     public boolean canScrollVertically() {
         return mVerticalScrollEnabled && super.canScrollVertically();
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfoForItem(
+            RecyclerView.Recycler recycler,
+            RecyclerView.State state,
+            View host,
+            AccessibilityNodeInfoCompat info) {
+        super.onInitializeAccessibilityNodeInfoForItem(recycler, state, host, info);
+        if (announceShortcutsAndSuggestedApps() && host instanceof ViewGroup) {
+            if (host.getId() == R.id.shortcuts_container) {
+                info.setClassName(GridView.class.getName());
+                info.setContainerTitle(mShortcutGroupTitle);
+                info.setCollectionInfo(createShortcutsA11yCollectionInfo((ViewGroup) host));
+            } else if (host.getId() == R.id.suggested_apps_container) {
+                RecyclerView.Adapter adapter =
+                        mRecyclerView == null ? null : mRecyclerView.getAdapter();
+                ChooserListAdapter gridAdapter = adapter instanceof ChooserGridAdapter
+                        ? ((ChooserGridAdapter) adapter).getListAdapter()
+                        : null;
+                info.setClassName(GridView.class.getName());
+                info.setCollectionInfo(createSuggestedAppsA11yCollectionInfo((ViewGroup) host));
+                if (gridAdapter == null || gridAdapter.getAlphaTargetCount() > 0) {
+                    info.setContainerTitle(mSuggestedAppsGroupTitle);
+                } else {
+                    // if all applications fit into one row, they will be put into the suggested
+                    // applications group.
+                    info.setContainerTitle(mAllAppListGroupTitle);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfo(@NonNull RecyclerView.Recycler recycler,
+            @NonNull RecyclerView.State state, @NonNull AccessibilityNodeInfoCompat info) {
+        super.onInitializeAccessibilityNodeInfo(recycler, state, info);
+        if (announceShortcutsAndSuggestedApps()) {
+            info.setContainerTitle(mAllAppListGroupTitle);
+        }
+    }
+
+    @Override
+    public boolean isLayoutHierarchical(
+            @NonNull RecyclerView.Recycler recycler, @NonNull RecyclerView.State state) {
+        return announceShortcutsAndSuggestedApps() || super.isLayoutHierarchical(recycler, state);
+    }
+
+    private CollectionInfoCompat createShortcutsA11yCollectionInfo(ViewGroup container) {
+        // TODO: create a custom view for the shortcuts row and move this logic there.
+        int rowCount = 0;
+        int columnCount = 0;
+        for (int i = 0; i < container.getChildCount(); i++) {
+            View row = container.getChildAt(i);
+            int rowColumnCount = 0;
+            if (row instanceof ViewGroup rowGroup && row.getVisibility() == View.VISIBLE) {
+                for (int j = 0; j < rowGroup.getChildCount(); j++) {
+                    View v = rowGroup.getChildAt(j);
+                    if (v != null && v.getVisibility() == View.VISIBLE) {
+                        rowColumnCount++;
+                        if (v instanceof TextView) {
+                            // A special case of the no-targets message that also contains an
+                            // off-screen item (which looks like a bug).
+                            rowColumnCount = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (rowColumnCount > 0) {
+                rowCount++;
+                columnCount = Math.max(columnCount, rowColumnCount);
+            }
+        }
+        return CollectionInfoCompat.obtain(rowCount, columnCount, false);
+    }
+
+    private CollectionInfoCompat createSuggestedAppsA11yCollectionInfo(ViewGroup container) {
+        // TODO: create a custom view for the suggested apps row and move this logic there.
+        int columnCount = 0;
+        for (int i = 0; i < container.getChildCount(); i++) {
+            View v = container.getChildAt(i);
+            if (v.getVisibility() == View.VISIBLE) {
+                columnCount++;
+            }
+        }
+        return CollectionInfoCompat.obtain(1, columnCount, false);
     }
 }
