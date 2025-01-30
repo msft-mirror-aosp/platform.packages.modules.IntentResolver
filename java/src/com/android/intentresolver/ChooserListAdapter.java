@@ -811,6 +811,13 @@ public class ChooserListAdapter extends ResolverListAdapter {
         mServiceTargets.addAll(adapter.mServiceTargets);
     }
 
+    /**
+     * Reset direct targets
+     */
+    public void resetDirectTargets() {
+        createPlaceHolders();
+    }
+
     private boolean isDirectTargetRowEmptyState() {
         return (mServiceTargets.size() == 1) && mServiceTargets.get(0).isEmptyTargetInfo();
     }
