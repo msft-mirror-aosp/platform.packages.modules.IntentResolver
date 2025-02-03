@@ -107,4 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"Video inayoweza kuchaguliwa"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Kipengee kinachoweza kuchaguliwa"</string>
     <string name="role_description_button" msgid="4537198530568333649">"Kitufe"</string>
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"Chaguo za kutuma maudhui moja kwa moja"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"Mapendekezo ya programu"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"Orodha ya programu"</string>
 </resources>
