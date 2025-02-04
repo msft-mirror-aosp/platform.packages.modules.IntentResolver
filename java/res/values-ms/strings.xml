@@ -107,4 +107,10 @@
     <string name="selectable_video" msgid="1271768647699300826">"Video yang boleh dipilih"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Item yang boleh dipilih"</string>
     <string name="role_description_button" msgid="4537198530568333649">"Butang"</string>
+    <!-- no translation found for shortcut_group_a11y_title (3097624986281770746) -->
+    <skip />
+    <!-- no translation found for suggested_apps_group_a11y_title (2394561651436551139) -->
+    <skip />
+    <!-- no translation found for all_apps_group_a11y_title (2646382370571120047) -->
+    <skip />
 </resources>
