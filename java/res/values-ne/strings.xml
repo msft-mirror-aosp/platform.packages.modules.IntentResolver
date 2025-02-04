@@ -107,10 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"चयन गर्न मिल्ने भिडियो"</string>
     <string name="selectable_item" msgid="7557320816744205280">"चयन गर्न मिल्ने वस्तु"</string>
     <string name="role_description_button" msgid="4537198530568333649">"बटन"</string>
-    <!-- no translation found for shortcut_group_a11y_title (3097624986281770746) -->
-    <skip />
-    <!-- no translation found for suggested_apps_group_a11y_title (2394561651436551139) -->
-    <skip />
-    <!-- no translation found for all_apps_group_a11y_title (2646382370571120047) -->
-    <skip />
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"सामग्री सीधै सेयर गर्नका निम्ति चयन गरिएका व्यक्ति वा समूहहरू"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"सिफारिस गरिएका एपहरू"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"एपहरूको सूची"</string>
 </resources>
