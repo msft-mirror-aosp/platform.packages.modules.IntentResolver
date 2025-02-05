@@ -1,2 +1,5 @@
 # Class referenced from xml drawable
--keep class com.android.intentresolver.SimpleIconFactory$FixedScaleDrawable
+# TODO(b/373579455): Evaluate if <init> needs to be kept.
+-keep class com.android.intentresolver.SimpleIconFactory$FixedScaleDrawable {
+    void <init>();
+}
