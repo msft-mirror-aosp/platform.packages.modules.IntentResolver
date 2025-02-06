@@ -107,10 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"বেছে নেওয়া যাবে এমন ভিডিও"</string>
     <string name="selectable_item" msgid="7557320816744205280">"বেছে নেওয়া যাবে এমন আইটেম"</string>
     <string name="role_description_button" msgid="4537198530568333649">"বোতাম"</string>
-    <!-- no translation found for shortcut_group_a11y_title (3097624986281770746) -->
-    <skip />
-    <!-- no translation found for suggested_apps_group_a11y_title (2394561651436551139) -->
-    <skip />
-    <!-- no translation found for all_apps_group_a11y_title (2646382370571120047) -->
-    <skip />
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"সরাসরি টার্গেট শেয়ার করুন"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"অ্যাপ সাজেশন"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"অ্যাপ তালিকা"</string>
 </resources>
