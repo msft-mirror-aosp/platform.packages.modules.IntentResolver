@@ -107,4 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"ఎంచుకోదగిన వీడియో"</string>
     <string name="selectable_item" msgid="7557320816744205280">"ఎంచుకోదగిన ఐటెమ్"</string>
     <string name="role_description_button" msgid="4537198530568333649">"బటన్"</string>
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"టార్గెట్‌లను నేరుగా షేర్ చేయడం"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"యాప్ సూచనలు"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"యాప్ లిస్ట్"</string>
 </resources>

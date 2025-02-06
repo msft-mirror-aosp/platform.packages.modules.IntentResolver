@@ -6,6 +6,16 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
+  name: "announce_shortcuts_and_suggested_apps"
+  namespace: "intentresolver"
+  description: "Enable talkback announcement for the app shortcuts and the suggested apps target groups."
+  bug: "379208685"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "individual_metadata_title_read"
   namespace: "intentresolver"
   description: "Enables separate title URI metadata calls"
@@ -26,7 +36,7 @@ flag {
 }
 
 flag {
-  name: "fix_shortcuts_flashing"
+  name: "fix_shortcuts_flashing_fixed"
   namespace: "intentresolver"
   description: "Do not flash shortcuts on payload selection change"
   bug: "343300158"
@@ -67,13 +77,6 @@ flag {
   namespace: "intentresolver"
   description: "Adopt Launcher pointer hover and keyboard novigation focus effects for targets."
   bug: "295175912"
-}
-
-flag {
-  name: "preview_image_loader"
-  namespace: "intentresolver"
-  description: "Use the unified preview image loader for all preview variations; support variable preview sizes."
-  bug: "348665058"
 }
 
 flag {

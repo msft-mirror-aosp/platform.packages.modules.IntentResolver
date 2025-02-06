@@ -107,4 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"選択可能な動画"</string>
     <string name="selectable_item" msgid="7557320816744205280">"選択可能なアイテム"</string>
     <string name="role_description_button" msgid="4537198530568333649">"ボタン"</string>
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"ダイレクト シェア ターゲット"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"アプリの候補"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"アプリリスト"</string>
 </resources>

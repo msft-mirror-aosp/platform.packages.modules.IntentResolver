@@ -107,4 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"วิดีโอที่เลือกได้"</string>
     <string name="selectable_item" msgid="7557320816744205280">"รายการที่เลือกได้"</string>
     <string name="role_description_button" msgid="4537198530568333649">"ปุ่ม"</string>
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"เป้าหมายการแชร์โดยตรง"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"คำแนะนำเกี่ยวกับแอป"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"รายการแอป"</string>
 </resources>

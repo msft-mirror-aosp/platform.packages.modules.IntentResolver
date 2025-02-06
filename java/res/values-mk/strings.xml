@@ -85,7 +85,7 @@
     <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Блокирано од IT-администраторот"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Овие содржини не може да се споделуваат со работни апликации"</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Овие содржини не може да се отвораат со работни апликации"</string>
-    <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Овие содржини не може да се споделуваат со лични апликации"</string>
+    <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Содржиниве не може да се споделуваат со лични апликации"</string>
     <string name="resolver_cant_access_personal_apps_explanation" msgid="6209543716289792706">"Овие содржини не може да се отвораат со лични апликации"</string>
     <string name="resolver_cant_share_with_private_apps_explanation" msgid="1781980997411434697">"Овие содржини не може да се споделуваат со приватни апликации"</string>
     <string name="resolver_cant_access_private_apps_explanation" msgid="5978609934961648342">"Овие содржини не може да се отвораат со лични апликации"</string>
@@ -107,4 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"Видео што може да се избере"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Ставка што може да се избере"</string>
     <string name="role_description_button" msgid="4537198530568333649">"Копче"</string>
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"Директни цели на споделување"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"Предлози за апликации"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"Список со апликации"</string>
 </resources>

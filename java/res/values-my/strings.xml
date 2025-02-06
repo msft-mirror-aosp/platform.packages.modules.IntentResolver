@@ -107,4 +107,7 @@
     <string name="selectable_video" msgid="1271768647699300826">"ရွေးချယ်နိုင်သော ဗီဒီယို"</string>
     <string name="selectable_item" msgid="7557320816744205280">"ရွေးချယ်နိုင်သောအရာ"</string>
     <string name="role_description_button" msgid="4537198530568333649">"ခလုတ်"</string>
+    <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"တိုက်ရိုက်မျှဝေသည့် ပစ်မှတ်များ"</string>
+    <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"အက်ပ်အကြံပြုချက်များ"</string>
+    <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"အက်ပ်စာရင်း"</string>
 </resources>

@@ -25,6 +25,7 @@ import com.android.intentresolver.inject.Background
 import com.android.intentresolver.inject.ViewModelOwned
 import javax.annotation.concurrent.GuardedBy
 import javax.inject.Inject
+import javax.inject.Qualifier
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,6 +41,18 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
 private const val TAG = "PayloadSelImageLoader"
+
+@Qualifier @MustBeDocumented @Retention(AnnotationRetention.BINARY) annotation class ThumbnailSize
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.BINARY)
+annotation class PreviewCacheSize
+
+@Qualifier
+@MustBeDocumented
+@Retention(AnnotationRetention.BINARY)
+annotation class PreviewMaxConcurrency
 
 /**
  * Implements preview image loading for the payload selection UI. Cancels preview loading for items
@@ -69,7 +82,7 @@ constructor(
                 if (oldRec !== newRec) {
                     onRecordEvictedFromCache(oldRec)
                 }
-            }
+            },
         )
 
     override suspend fun invoke(uri: Uri, size: Size, caching: Boolean): Bitmap? =
@@ -104,7 +117,7 @@ constructor(
     private suspend fun withRequestRecord(
         uri: Uri,
         caching: Boolean,
-        block: suspend (RequestRecord) -> Bitmap?
+        block: suspend (RequestRecord) -> Bitmap?,
     ): Bitmap? {
         val record = trackRecordRunning(uri, caching)
         return try {

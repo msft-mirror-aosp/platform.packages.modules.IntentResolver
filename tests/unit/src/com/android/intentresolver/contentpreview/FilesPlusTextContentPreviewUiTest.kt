@@ -20,6 +20,7 @@ import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.TextView
 import androidx.annotation.IdRes
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -192,6 +193,7 @@ class FilesPlusTextContentPreviewUiTest {
                 DefaultMimeTypeClassifier,
                 headlineGenerator,
                 testMetadataText,
+                /* allowTextToggle=*/ false,
             )
         val layoutInflater = LayoutInflater.from(context)
         val gridLayout =
@@ -203,7 +205,7 @@ class FilesPlusTextContentPreviewUiTest {
             context.resources,
             LayoutInflater.from(context),
             gridLayout,
-            headlineRow
+            headlineRow,
         )
 
         verify(headlineGenerator, times(1)).getFilesHeadline(sharedFileCount)
@@ -234,6 +236,7 @@ class FilesPlusTextContentPreviewUiTest {
                 DefaultMimeTypeClassifier,
                 headlineGenerator,
                 testMetadataText,
+                /* allowTextToggle=*/ false,
             )
         val layoutInflater = LayoutInflater.from(context)
         val gridLayout =
@@ -253,7 +256,7 @@ class FilesPlusTextContentPreviewUiTest {
                 context.resources,
                 LayoutInflater.from(context),
                 gridLayout,
-                headlineRow
+                headlineRow,
             )
 
         verify(headlineGenerator, times(1)).getFilesHeadline(sharedFileCount)
@@ -268,6 +271,73 @@ class FilesPlusTextContentPreviewUiTest {
         verify(headlineGenerator, times(1)).getImagesHeadline(sharedFileCount)
         verifyPreviewHeadline(headlineRow, HEADLINE_IMAGES)
         verifyPreviewMetadata(headlineRow, testMetadataText)
+    }
+
+    @Test
+    fun test_allowToggle() {
+        val testSubject =
+            FilesPlusTextContentPreviewUi(
+                testScope,
+                /*isSingleImage=*/ false,
+                /* fileCount=*/ 1,
+                SHARED_TEXT,
+                /*intentMimeType=*/ "*/*",
+                actionFactory,
+                imageLoader,
+                DefaultMimeTypeClassifier,
+                headlineGenerator,
+                testMetadataText,
+                /* allowTextToggle=*/ true,
+            )
+        val layoutInflater = LayoutInflater.from(context)
+        val gridLayout =
+            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
+                as ViewGroup
+        val headlineRow = gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
+
+        testSubject.display(
+            context.resources,
+            LayoutInflater.from(context),
+            gridLayout,
+            headlineRow,
+        )
+
+        val checkbox = headlineRow.requireViewById<CheckBox>(R.id.include_text_action)
+        assertThat(checkbox.visibility).isEqualTo(View.VISIBLE)
+        assertThat(checkbox.isChecked).isTrue()
+    }
+
+    @Test
+    fun test_hideTextToggle() {
+        val testSubject =
+            FilesPlusTextContentPreviewUi(
+                testScope,
+                /*isSingleImage=*/ false,
+                /* fileCount=*/ 1,
+                SHARED_TEXT,
+                /*intentMimeType=*/ "*/*",
+                actionFactory,
+                imageLoader,
+                DefaultMimeTypeClassifier,
+                headlineGenerator,
+                testMetadataText,
+                /* allowTextToggle=*/ false,
+            )
+        val layoutInflater = LayoutInflater.from(context)
+        val gridLayout =
+            layoutInflater.inflate(R.layout.chooser_grid_scrollable_preview, null, false)
+                as ViewGroup
+        val headlineRow = gridLayout.requireViewById<View>(R.id.chooser_headline_row_container)
+
+        testSubject.display(
+            context.resources,
+            LayoutInflater.from(context),
+            gridLayout,
+            headlineRow,
+        )
+
+        val checkbox = headlineRow.requireViewById<CheckBox>(R.id.include_text_action)
+        assertThat(checkbox.visibility).isNotEqualTo(View.VISIBLE)
     }
 
     private fun testLoadingHeadline(
@@ -287,6 +357,7 @@ class FilesPlusTextContentPreviewUiTest {
                 DefaultMimeTypeClassifier,
                 headlineGenerator,
                 testMetadataText,
+                /* allowTextToggle=*/ false,
             )
         val layoutInflater = LayoutInflater.from(context)
         val gridLayout =
@@ -307,7 +378,7 @@ class FilesPlusTextContentPreviewUiTest {
             context.resources,
             LayoutInflater.from(context),
             gridLayout,
-            headlineRow
+            headlineRow,
         ) to headlineRow
     }
 
