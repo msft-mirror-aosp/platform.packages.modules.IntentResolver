@@ -70,6 +70,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.intentresolver.Flags.announceShareouselItemListPosition
 import com.android.intentresolver.Flags.shareouselScrollOffscreenSelections
 import com.android.intentresolver.Flags.shareouselSelectionShrink
 import com.android.intentresolver.Flags.unselectFinalItem
@@ -233,6 +234,7 @@ private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewMo
                 ShareouselCard(
                     viewModel = previewModel,
                     aspectRatio = measurements.coerceAspectRatio(previewModel.aspectRatio),
+                    annotateWithPosition = previews.previewModels.size > 1,
                 )
             }
         }
@@ -240,17 +242,37 @@ private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewMo
 }
 
 @Composable
-private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, aspectRatio: Float) {
+private fun ShareouselCard(
+    viewModel: ShareouselPreviewViewModel,
+    aspectRatio: Float,
+    annotateWithPosition: Boolean,
+) {
     val bitmapLoadState by viewModel.bitmapLoadState.collectAsStateWithLifecycle()
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
     val borderColor = MaterialTheme.colorScheme.primary
     val scope = rememberCoroutineScope()
-    val contentDescription =
-        when (viewModel.contentType) {
-            ContentType.Image -> stringResource(R.string.selectable_image)
-            ContentType.Video -> stringResource(R.string.selectable_video)
-            else -> stringResource(R.string.selectable_item)
+    val contentDescription = buildString {
+        if (
+            announceShareouselItemListPosition() &&
+                annotateWithPosition &&
+                viewModel.cursorPosition >= 0
+        ) {
+            // If item cursor position is not known, do not announce item position.
+            // We can have items with an unknown cursor position only when:
+            // * when we haven't got the cursor and showing the initially shared items;
+            // * when we've got an inconsistent data from the app (some initially shared items
+            //   are missing in the cursor);
+            append(stringResource(R.string.item_position_label, viewModel.cursorPosition + 1))
+            append(", ")
         }
+        append(
+            when (viewModel.contentType) {
+                ContentType.Image -> stringResource(R.string.selectable_image)
+                ContentType.Video -> stringResource(R.string.selectable_video)
+                else -> stringResource(R.string.selectable_item)
+            }
+        )
+    }
     Box(
         modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio),
         contentAlignment = Alignment.Center,

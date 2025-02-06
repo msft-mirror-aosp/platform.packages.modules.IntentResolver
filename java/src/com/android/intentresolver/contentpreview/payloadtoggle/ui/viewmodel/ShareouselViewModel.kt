@@ -152,6 +152,8 @@ object ShareouselViewModelModule {
                     isSelected = previewInteractor.isSelected,
                     setSelected = previewInteractor::setSelected,
                     aspectRatio = key.aspectRatio,
+                    // only items with a final key has a known cursor position
+                    cursorPosition = if (key.key.isFinal) key.order else -1,
                 )
             },
         )
