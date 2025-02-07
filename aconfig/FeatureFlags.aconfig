@@ -126,3 +126,10 @@ flag {
   description: "Whether to shrink Shareousel items when they are selected."
   bug: "361792274"
 }
+
+flag {
+  name: "shareousel_tap_to_scroll"
+  namespace: "intentresolver"
+  description: "Whether to enable tap to scroll."
+  bug: "384656926"
+}
