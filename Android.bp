@@ -103,4 +103,9 @@ android_app {
         proguard_flags_files: ["proguard.flags"],
     },
     visibility: ["//visibility:public"],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.intentresolver",
+        "test_com.android.intentresolver",
+    ],
 }
