@@ -329,6 +329,9 @@
          front of the list by the user. [CHAR LIMIT=NONE] -->
     <string name="pinned">Pinned</string>
 
+    <!-- Accessibility content description, item position label e.g. "Item 1" or "Item 345".
+         [CHAR LIMIT=NONE] -->
+    <string name="item_position_label">Item <xliff:g id="item_position" example="123">%1$d</xliff:g></string>
     <!-- Accessibility content description for an image that the user may select for sharing.
          [CHAR LIMIT=NONE] -->
     <string name="selectable_image">Selectable image</string>

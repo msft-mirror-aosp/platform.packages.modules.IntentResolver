@@ -6,6 +6,16 @@ container: "system"
 # bug: "Feature_Bug_#" or "<none>"
 
 flag {
+  name: "announce_shareousel_item_list_position"
+  namespace: "intentresolver"
+  description: "Add item list position to item content description."
+  bug: "379032721"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "announce_shortcuts_and_suggested_apps"
   namespace: "intentresolver"
   description: "Enable talkback announcement for the app shortcuts and the suggested apps target groups."
