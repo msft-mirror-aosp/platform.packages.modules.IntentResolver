@@ -23,13 +23,14 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
-import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.Flags.fixShortcutsFlashing;
+import static com.android.intentresolver.Flags.keyboardNavigationFix;
+import static com.android.intentresolver.Flags.rebuildAdaptersOnTargetPinning;
+import static com.android.intentresolver.Flags.shareouselUpdateExcludeComponentsExtra;
 import static com.android.intentresolver.Flags.unselectFinalItem;
-import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
+import static com.android.intentresolver.ext.CreationExtrasExtKt.replaceDefaultArgs;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_PERSONAL;
 import static com.android.intentresolver.profiles.MultiProfilePagerAdapter.PROFILE_WORK;
-import static com.android.intentresolver.ui.model.ActivityModel.ACTIVITY_MODEL_KEY;
 import static com.android.internal.util.LatencyTracker.ACTION_LOAD_SHARE_SHEET;
 
 import static java.util.Objects.requireNonNull;
@@ -102,6 +103,7 @@ import com.android.intentresolver.chooser.TargetInfo;
 import com.android.intentresolver.contentpreview.ChooserContentPreviewUi;
 import com.android.intentresolver.contentpreview.HeadlineGeneratorImpl;
 import com.android.intentresolver.data.model.ChooserRequest;
+import com.android.intentresolver.data.repository.ActivityModelRepository;
 import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
 import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
@@ -127,6 +129,7 @@ import com.android.intentresolver.profiles.MultiProfilePagerAdapter.ProfileType;
 import com.android.intentresolver.profiles.OnProfileSelectedListener;
 import com.android.intentresolver.profiles.OnSwitchOnWorkSelectedListener;
 import com.android.intentresolver.profiles.TabConfig;
+import com.android.intentresolver.shared.model.ActivityModel;
 import com.android.intentresolver.shared.model.Profile;
 import com.android.intentresolver.shortcuts.AppPredictorFactory;
 import com.android.intentresolver.shortcuts.ShortcutLoader;
@@ -134,9 +137,9 @@ import com.android.intentresolver.ui.ActionTitle;
 import com.android.intentresolver.ui.ProfilePagerResources;
 import com.android.intentresolver.ui.ShareResultSender;
 import com.android.intentresolver.ui.ShareResultSenderFactory;
-import com.android.intentresolver.ui.model.ActivityModel;
 import com.android.intentresolver.ui.viewmodel.ChooserViewModel;
 import com.android.intentresolver.widget.ActionRow;
+import com.android.intentresolver.widget.ChooserNestedScrollView;
 import com.android.intentresolver.widget.ImagePreviewView;
 import com.android.intentresolver.widget.ResolverDrawerLayout;
 import com.android.internal.annotations.VisibleForTesting;
@@ -148,8 +151,6 @@ import com.android.internal.util.LatencyTracker;
 import com.google.common.collect.ImmutableList;
 
 import dagger.hilt.android.AndroidEntryPoint;
-
-import kotlin.Pair;
 
 import kotlinx.coroutines.CoroutineDispatcher;
 
@@ -171,7 +172,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * The Chooser Activity handles intent resolution specifically for sharing intents -
@@ -257,22 +257,20 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @Inject @Background public CoroutineDispatcher mBackgroundDispatcher;
     @Inject public ChooserHelper mChooserHelper;
     @Inject public FeatureFlags mFeatureFlags;
-    @Inject public android.service.chooser.FeatureFlags mChooserServiceFeatureFlags;
     @Inject public EventLog mEventLog;
     @Inject @AppPredictionAvailable public boolean mAppPredictionAvailable;
     @Inject @ImageEditor public Optional<ComponentName> mImageEditor;
     @Inject @NearbyShare public Optional<ComponentName> mNearbyShare;
-    protected TargetDataLoader mTargetDataLoader;
-    @Inject public Provider<TargetDataLoader> mTargetDataLoaderProvider;
     @Inject
     @Caching
-    public Provider<TargetDataLoader> mCachingTargetDataLoaderProvider;
+    public TargetDataLoader mTargetDataLoader;
     @Inject public DevicePolicyResources mDevicePolicyResources;
     @Inject public ProfilePagerResources mProfilePagerResources;
     @Inject public PackageManager mPackageManager;
     @Inject public ClipboardManager mClipboardManager;
     @Inject public IntentForwarding mIntentForwarding;
     @Inject public ShareResultSenderFactory mShareResultSenderFactory;
+    @Inject public ActivityModelRepository mActivityModelRepository;
 
     private ActivityModel mActivityModel;
     private ChooserRequest mRequest;
@@ -331,30 +329,27 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     @NonNull
     @Override
     public CreationExtras getDefaultViewModelCreationExtras() {
-        return addDefaultArgs(
-                super.getDefaultViewModelCreationExtras(),
-                new Pair<>(ACTIVITY_MODEL_KEY, createActivityModel()));
+        // DEFAULT_ARGS_KEY extra is saved for each ViewModel we create. ComponentActivity puts the
+        // initial intent's extra into DEFAULT_ARGS_KEY thus we store these values 2 times (3 if we
+        // count the initial intent). We don't need those values to be saved as they don't capture
+        // the state.
+        return replaceDefaultArgs(super.getDefaultViewModelCreationExtras());
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-
-        mTargetDataLoader = mChooserServiceFeatureFlags.chooserPayloadToggling()
-                ? mCachingTargetDataLoaderProvider.get()
-                : mTargetDataLoaderProvider.get();
+        mActivityModelRepository.initialize(this::createActivityModel);
 
         setTheme(R.style.Theme_DeviceDefault_Chooser);
 
         // Initializer is invoked when this function returns, via Lifecycle.
         mChooserHelper.setInitializer(this::initialize);
-        if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
-            mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
-            mChooserHelper.setOnPendingSelection(this::onPendingSelection);
-            if (unselectFinalItem()) {
-                mChooserHelper.setOnHasSelections(this::onHasSelections);
-            }
+        mChooserHelper.setOnChooserRequestChanged(this::onChooserRequestChanged);
+        mChooserHelper.setOnPendingSelection(this::onPendingSelection);
+        if (unselectFinalItem()) {
+            mChooserHelper.setOnHasSelections(this::onHasSelections);
         }
     }
     private int mInitialProfile = -1;
@@ -655,8 +650,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 mEnterTransitionAnimationDelegate,
                 new HeadlineGeneratorImpl(this),
                 mRequest.getContentTypeHint(),
-                mRequest.getMetadataText(),
-                mChooserServiceFeatureFlags.chooserPayloadToggling());
+                mRequest.getMetadataText());
         updateStickyContentPreview();
         if (shouldShowStickyContentPreview()) {
             getEventLog().logActionShareWithPreview(
@@ -773,9 +767,6 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     }
 
     private void recreatePagerAdapter() {
-        if (!mChooserServiceFeatureFlags.chooserPayloadToggling()) {
-            return;
-        }
         destroyProfileRecords();
         createProfileRecords(
                 new AppPredictorFactory(
@@ -848,6 +839,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
             }
         }
         setTabsViewEnabled(false);
+        if (mSystemWindowInsets != null) {
+            applyFooterView(mSystemWindowInsets.bottom);
+        }
     }
 
     private void setTabsViewEnabled(boolean isEnabled) {
@@ -1282,6 +1276,18 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mTabHost = findViewById(com.android.internal.R.id.profile_tabhost);
         mViewPager = requireViewById(com.android.internal.R.id.profile_pager);
         mChooserMultiProfilePagerAdapter.setupViewPager(mViewPager);
+        ChooserNestedScrollView scrollableContainer =
+                requireViewById(R.id.chooser_scrollable_container);
+        if (keyboardNavigationFix()) {
+            scrollableContainer.setRequestChildFocusPredicate((child, focused) ->
+                    // TabHost view will request focus on the newly activated tab. The RecyclerView
+                    // from the tab gets focused and  notifies its parents (including
+                    // NestedScrollView) about it through #requestChildFocus method call.
+                    // NestedScrollView's view implementation of the method  will  scroll to the
+                    // focused view. As we don't want to change drawer's position upon tab change,
+                    // ignore focus requests from tab RecyclerViews.
+                    focused == null || focused.getId() != com.android.internal.R.id.resolver_list);
+        }
         boolean result = postRebuildList(rebuildCompleted);
         Trace.endSection();
         return result;
@@ -1543,10 +1549,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
     private void handlePackagesChanged(@Nullable ResolverListAdapter listAdapter) {
         // Refresh pinned items
         mPinnedSharedPrefs = getPinnedSharedPrefs(this);
-        if (listAdapter == null) {
-            mChooserMultiProfilePagerAdapter.refreshPackagesInAllTabs();
+        if (rebuildAdaptersOnTargetPinning()) {
+            recreatePagerAdapter();
         } else {
-            listAdapter.handlePackagesChanged();
+            if (listAdapter == null) {
+                mChooserMultiProfilePagerAdapter.refreshPackagesInAllTabs();
+            } else {
+                listAdapter.handlePackagesChanged();
+            }
         }
     }
 
@@ -1566,6 +1576,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         mShouldDisplayLandscape = shouldDisplayLandscape(newConfig.orientation);
         mMaxTargetsPerRow = getResources().getInteger(R.integer.config_chooser_max_targets_per_row);
         mChooserMultiProfilePagerAdapter.setMaxTargetsPerRow(mMaxTargetsPerRow);
+        adjustMaxPreviewWidth();
         adjustPreviewWidth(newConfig.orientation, null);
         updateStickyContentPreview();
         updateTabPadding();
@@ -1576,6 +1587,14 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         // when in the restricted size of multi-window mode. In the future, would be nice
         // to use minimum dp size requirements instead
         return orientation == Configuration.ORIENTATION_LANDSCAPE && !isInMultiWindowMode();
+    }
+
+    private void adjustMaxPreviewWidth() {
+        if (mResolverDrawerLayout == null) {
+            return;
+        }
+        mResolverDrawerLayout.setMaxWidth(
+                getResources().getDimensionPixelSize(R.dimen.chooser_width));
     }
 
     private void adjustPreviewWidth(int orientation, View parent) {
@@ -2284,8 +2303,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
 
         final int availableWidth = right - left - v.getPaddingLeft() - v.getPaddingRight();
+        final int maxChooserWidth = getResources().getDimensionPixelSize(R.dimen.chooser_width);
         boolean isLayoutUpdated =
-                gridAdapter.calculateChooserTargetWidth(availableWidth)
+                gridAdapter.calculateChooserTargetWidth(
+                        maxChooserWidth >= 0
+                                ? Math.min(maxChooserWidth, availableWidth)
+                                : availableWidth)
                 || recyclerView.getAdapter() == null
                 || availableWidth != mCurrAvailableWidth;
 
@@ -2425,17 +2448,12 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         // ResolverListAdapter#mPostListReadyRunnable is executed.
         if (chooserListAdapter.getDisplayResolveInfoCount() == 0) {
             Log.d(TAG, "getDisplayResolveInfoCount() == 0");
-            if (rebuildComplete && mChooserServiceFeatureFlags.chooserPayloadToggling()) {
+            if (rebuildComplete) {
                 onAppTargetsLoaded(listAdapter);
             }
             chooserListAdapter.notifyDataSetChanged();
         } else {
-            if (mChooserServiceFeatureFlags.chooserPayloadToggling()) {
-                chooserListAdapter.updateAlphabeticalList(
-                        () -> onAppTargetsLoaded(listAdapter));
-            } else {
-                chooserListAdapter.updateAlphabeticalList();
-            }
+            chooserListAdapter.updateAlphabeticalList(() -> onAppTargetsLoaded(listAdapter));
         }
 
         if (rebuildComplete) {

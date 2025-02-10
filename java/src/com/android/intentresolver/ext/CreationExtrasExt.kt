@@ -32,3 +32,9 @@ fun CreationExtras.addDefaultArgs(vararg values: Pair<String, Parcelable>): Crea
     defaultArgs.putAll(bundleOf(*values))
     return MutableCreationExtras(this).apply { set(DEFAULT_ARGS_KEY, defaultArgs) }
 }
+
+fun CreationExtras.replaceDefaultArgs(vararg values: Pair<String, Parcelable>): CreationExtras {
+    val mutableExtras = if (this is MutableCreationExtras) this else MutableCreationExtras(this)
+    mutableExtras[DEFAULT_ARGS_KEY] = bundleOf(*values)
+    return mutableExtras
+}

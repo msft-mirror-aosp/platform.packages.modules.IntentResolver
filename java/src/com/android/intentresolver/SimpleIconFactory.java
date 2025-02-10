@@ -64,7 +64,7 @@ import java.util.Optional;
  * possibly badged. It is intended to be used only by Sharesheet for the Q release with custom code.
  */
 @Deprecated
-public class SimpleIconFactory {
+public class SimpleIconFactory implements AutoCloseable {
 
 
     private static final SynchronizedPool<SimpleIconFactory> sPool =
@@ -139,6 +139,11 @@ public class SimpleIconFactory {
                 "Expected theme to define iconfactoryBadgeSize.");
     }
 
+    @Override
+    public void close() {
+        recycle();
+    }
+
     /**
      * Recycles the SimpleIconFactory so others may use it.
      *
@@ -146,9 +151,11 @@ public class SimpleIconFactory {
      */
     @Deprecated
     public void recycle() {
-        // Return to default background color
-        setWrapperBackgroundColor(Color.WHITE);
-        sPool.release(this);
+        if (sPoolEnabled) {
+            // Return to default background color
+            setWrapperBackgroundColor(Color.WHITE);
+            sPool.release(this);
+        }
     }
 
     /**

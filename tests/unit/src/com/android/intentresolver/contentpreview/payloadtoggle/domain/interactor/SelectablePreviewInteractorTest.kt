@@ -24,6 +24,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.p
 import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.previewSelectionsRepository
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.TargetIntentModifier
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.intent.targetIntentModifier
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.data.repository.chooserRequestRepository
 import com.android.intentresolver.logging.FakeEventLog
@@ -44,6 +45,7 @@ class SelectablePreviewInteractorTest {
             SelectablePreviewInteractor(
                 key =
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = null,
                         order = 0,
@@ -63,6 +65,7 @@ class SelectablePreviewInteractorTest {
             SelectablePreviewInteractor(
                 key =
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = "image/bitmap",
                         order = 0,
@@ -75,6 +78,7 @@ class SelectablePreviewInteractorTest {
 
         previewSelectionsRepository.selections.value =
             PreviewModel(
+                    key = PreviewKey.final(1),
                     uri = Uri.fromParts("scheme", "ssp", "fragment"),
                     mimeType = "image/bitmap",
                     order = 0,
@@ -93,6 +97,7 @@ class SelectablePreviewInteractorTest {
             SelectablePreviewInteractor(
                 key =
                     PreviewModel(
+                        key = PreviewKey.final(1),
                         uri = Uri.fromParts("scheme", "ssp", "fragment"),
                         mimeType = "image/bitmap",
                         order = 0,

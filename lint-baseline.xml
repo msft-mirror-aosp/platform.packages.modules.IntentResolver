@@ -2083,8 +2083,8 @@
 
     <issue
         id="Overdraw"
-        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        message="Possible overdraw: Root element paints background `@androidprv:color/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;@androidprv:color/materialColorSurfaceContainer&quot;>"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_file.xml"
@@ -2094,8 +2094,8 @@
 
     <issue
         id="Overdraw"
-        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        message="Possible overdraw: Root element paints background `@androidprv:color/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;@androidprv:color/materialColorSurfaceContainer&quot;>"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_files_text.xml"
@@ -2105,8 +2105,8 @@
 
     <issue
         id="Overdraw"
-        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        message="Possible overdraw: Root element paints background `@androidprv:color/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;@androidprv:color/materialColorSurfaceContainer&quot;>"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_image.xml"
@@ -2116,8 +2116,8 @@
 
     <issue
         id="Overdraw"
-        message="Possible overdraw: Root element paints background `?androidprv:attr/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="    android:background=&quot;?androidprv:attr/materialColorSurfaceContainer&quot;>"
+        message="Possible overdraw: Root element paints background `@androidprv:color/materialColorSurfaceContainer` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
+        errorLine1="    android:background=&quot;@androidprv:color/materialColorSurfaceContainer&quot;>"
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/modules/IntentResolver/java/res/layout/chooser_grid_preview_text.xml"
