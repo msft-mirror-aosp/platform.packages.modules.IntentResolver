@@ -82,7 +82,7 @@
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Жеке көру"</string>
     <string name="resolver_work_tab_accessibility" msgid="7581878836587799920">"Жұмыс деректерін көру"</string>
     <string name="resolver_private_tab_accessibility" msgid="2513122834337197252">"Құпия көрініс"</string>
-    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Әкімшіңіз бөгеген"</string>
+    <string name="resolver_cross_profile_blocked" msgid="3515194063758605377">"Әкімшіңіз блоктаған"</string>
     <string name="resolver_cant_share_with_work_apps_explanation" msgid="2984105853145456723">"Бұл контентті жұмыс қолданбаларымен бөлісу мүмкін емес."</string>
     <string name="resolver_cant_access_work_apps_explanation" msgid="1463093773348988122">"Бұл контентті жұмыс қолданбаларымен ашу мүмкін емес."</string>
     <string name="resolver_cant_share_with_personal_apps_explanation" msgid="6406971348929464569">"Бұл контентті жеке қолданбалармен бөлісу мүмкін емес."</string>
