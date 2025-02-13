@@ -15,12 +15,15 @@
  */
 package com.android.intentresolver.contentpreview.payloadtoggle.ui.composable
 
+import android.graphics.Bitmap
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +40,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.AssistChip
@@ -59,6 +61,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.Placeable
@@ -73,6 +76,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.Flags.announceShareouselItemListPosition
 import com.android.intentresolver.Flags.shareouselScrollOffscreenSelections
 import com.android.intentresolver.Flags.shareouselSelectionShrink
+import com.android.intentresolver.Flags.shareouselTapToScroll
 import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
@@ -85,6 +89,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.Shar
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -131,6 +136,7 @@ private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewMo
                         }
                     layout(placeable.width, placeable.height) { placeable.place(0, 0) }
                 }
+                .systemGestureExclusion()
     ) {
         // Do not compose the list until we have measured values
         if (measurements == PreviewCarouselMeasurements.UNMEASURED) return@Box
@@ -147,95 +153,130 @@ private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewMo
             )
         }
 
-        LazyRow(
+        PreviewCarouselItems(
             state = carouselState,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            contentPadding =
-                PaddingValues(
-                    start = measurements.horizontalPaddingDp,
-                    end = measurements.horizontalPaddingDp,
-                ),
-            modifier = Modifier.fillMaxSize().systemGestureExclusion(),
-        ) {
-            itemsIndexed(
-                items = previews.previewModels,
-                key = { _, model -> model.key.key to model.key.isFinal },
-            ) { index, model ->
-                val visibleItem by remember {
-                    derivedStateOf {
-                        carouselState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
-                    }
-                }
+            measurements = measurements,
+            previews = previews,
+            viewModel = viewModel,
+        )
+    }
+}
 
-                // Index if this is the element in the center of the viewing area, otherwise null
-                val previewIndex by remember {
-                    derivedStateOf {
-                        visibleItem?.let {
-                            val halfPreviewWidth = it.size / 2
-                            val previewCenter = it.offset + halfPreviewWidth
-                            val previewDistanceToViewportCenter =
-                                abs(previewCenter - measurements.viewportCenterPx)
-                            if (previewDistanceToViewportCenter <= halfPreviewWidth) {
-                                index
-                            } else {
-                                null
-                            }
+@Composable
+private fun PreviewCarouselItems(
+    state: LazyListState,
+    measurements: PreviewCarouselMeasurements,
+    previews: PreviewsModel,
+    viewModel: ShareouselViewModel,
+) {
+    LazyRow(
+        state = state,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding =
+            PaddingValues(
+                start = measurements.horizontalPaddingDp,
+                end = measurements.horizontalPaddingDp,
+            ),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        itemsIndexed(
+            items = previews.previewModels,
+            key = { _, model -> model.key.key to model.key.isFinal },
+        ) { index, model ->
+            val visibleItem by remember {
+                derivedStateOf {
+                    state.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
+                }
+            }
+
+            // Index if this is the element in the center of the viewing area, otherwise null
+            val previewIndex by remember {
+                derivedStateOf {
+                    visibleItem?.let {
+                        val halfPreviewWidth = it.size / 2
+                        val previewCenter = it.offset + halfPreviewWidth
+                        val previewDistanceToViewportCenter =
+                            abs(previewCenter - measurements.viewportCenterPx)
+                        if (previewDistanceToViewportCenter <= halfPreviewWidth) {
+                            index
+                        } else {
+                            null
                         }
                     }
                 }
+            }
 
-                val previewModel =
-                    viewModel.preview(
-                        /* key = */ model,
-                        /* previewHeight = */ measurements.viewportHeightPx,
-                        /* index = */ previewIndex,
-                        /* scope = */ rememberCoroutineScope(),
-                    )
+            val previewModel =
+                viewModel.preview(
+                    /* key = */ model,
+                    /* previewHeight = */ measurements.viewportHeightPx,
+                    /* index = */ previewIndex,
+                    /* scope = */ rememberCoroutineScope(),
+                )
 
-                if (shareouselScrollOffscreenSelections()) {
-                    LaunchedEffect(index, model.uri) {
-                        var current: Boolean? = null
-                        previewModel.isSelected.collect { selected ->
-                            when {
-                                // First update will always be the current state, so we just want to
-                                // record the state and do nothing else.
-                                current == null -> current = selected
+            if (shareouselScrollOffscreenSelections()) {
+                ScrollOffscreenSelectionsEffect(
+                    index = index,
+                    previewModel = model,
+                    isSelected = previewModel.isSelected,
+                    state = state,
+                    measurements = measurements,
+                )
+            }
 
-                                // We only want to act when the state changes
-                                current != selected -> {
-                                    current = selected
-                                    with(carouselState.layoutInfo) {
-                                        visibleItemsInfo
-                                            .firstOrNull { it.index == index }
-                                            ?.let { item ->
-                                                when {
-                                                    // Item is partially past start of viewport
-                                                    item.offset < viewportStartOffset ->
-                                                        measurements.scrollOffsetToStartEdge()
-                                                    // Item is partially past end of viewport
-                                                    (item.offset + item.size) > viewportEndOffset ->
-                                                        measurements.scrollOffsetToEndEdge(model)
-                                                    // Item is fully within viewport
-                                                    else -> null
-                                                }?.let { scrollOffset ->
-                                                    carouselState.animateScrollToItem(
-                                                        index = index,
-                                                        scrollOffset = scrollOffset,
-                                                    )
-                                                }
-                                            }
-                                    }
+            ShareouselCard(
+                carouselState = state,
+                measurements = measurements,
+                index = index,
+                viewModel = previewModel,
+                aspectRatio = measurements.coerceAspectRatio(previewModel.aspectRatio),
+                annotateWithPosition = previews.previewModels.size > 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScrollOffscreenSelectionsEffect(
+    index: Int,
+    previewModel: PreviewModel,
+    isSelected: Flow<Boolean>,
+    state: LazyListState,
+    measurements: PreviewCarouselMeasurements,
+) {
+    LaunchedEffect(index, previewModel.uri) {
+        var current: Boolean? = null
+        isSelected.collect { selected ->
+            when {
+                // First update will always be the current state, so we just want to
+                // record the state and do nothing else.
+                current == null -> current = selected
+
+                // We only want to act when the state changes
+                current != selected -> {
+                    current = selected
+                    with(state.layoutInfo) {
+                        visibleItemsInfo
+                            .firstOrNull { it.index == index }
+                            ?.let { item ->
+                                when {
+                                    // Item is partially past start of viewport
+                                    item.offset < viewportStartOffset ->
+                                        measurements.scrollOffsetToStartEdge()
+                                    // Item is partially past end of viewport
+                                    (item.offset + item.size) > viewportEndOffset ->
+                                        measurements.scrollOffsetToEndEdge(previewModel)
+                                    // Item is fully within viewport
+                                    else -> null
+                                }?.let { scrollOffset ->
+                                    state.animateScrollToItem(
+                                        index = index,
+                                        scrollOffset = scrollOffset,
+                                    )
                                 }
                             }
-                        }
                     }
                 }
-
-                ShareouselCard(
-                    viewModel = previewModel,
-                    aspectRatio = measurements.coerceAspectRatio(previewModel.aspectRatio),
-                    annotateWithPosition = previews.previewModels.size > 1,
-                )
             }
         }
     }
@@ -243,48 +284,34 @@ private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewMo
 
 @Composable
 private fun ShareouselCard(
+    carouselState: LazyListState,
+    measurements: PreviewCarouselMeasurements,
+    index: Int,
     viewModel: ShareouselPreviewViewModel,
     aspectRatio: Float,
     annotateWithPosition: Boolean,
 ) {
     val bitmapLoadState by viewModel.bitmapLoadState.collectAsStateWithLifecycle()
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
-    val borderColor = MaterialTheme.colorScheme.primary
-    val scope = rememberCoroutineScope()
-    val contentDescription = buildString {
-        if (
-            announceShareouselItemListPosition() &&
-                annotateWithPosition &&
-                viewModel.cursorPosition >= 0
-        ) {
-            // If item cursor position is not known, do not announce item position.
-            // We can have items with an unknown cursor position only when:
-            // * when we haven't got the cursor and showing the initially shared items;
-            // * when we've got an inconsistent data from the app (some initially shared items
-            //   are missing in the cursor);
-            append(stringResource(R.string.item_position_label, viewModel.cursorPosition + 1))
-            append(", ")
-        }
-        append(
-            when (viewModel.contentType) {
-                ContentType.Image -> stringResource(R.string.selectable_image)
-                ContentType.Video -> stringResource(R.string.selectable_video)
-                else -> stringResource(R.string.selectable_item)
-            }
-        )
-    }
+    val contentDescription =
+        buildContentDescription(annotateWithPosition = annotateWithPosition, viewModel = viewModel)
+
     Box(
         modifier = Modifier.fillMaxHeight().aspectRatio(aspectRatio),
         contentAlignment = Alignment.Center,
     ) {
+        val scope = rememberCoroutineScope()
         Crossfade(
             targetState = bitmapLoadState,
             modifier =
                 Modifier.semantics { this.contentDescription = contentDescription }
-                    .toggleable(
-                        value = selected,
-                        onValueChange = { scope.launch { viewModel.setSelected(it) } },
-                    )
+                    .clickableWithTapToScrollSupport(
+                        state = carouselState,
+                        index = index,
+                        measurements = measurements,
+                    ) {
+                        scope.launch { viewModel.setSelected(!selected) }
+                    }
                     .conditional(shareouselSelectionShrink()) {
                         val selectionScale by animateFloatAsState(if (selected) 0.95f else 1f)
                         scale(selectionScale)
@@ -292,35 +319,121 @@ private fun ShareouselCard(
                     .clip(RoundedCornerShape(size = 12.dp)),
         ) { state ->
             if (state is ValueUpdate.Value) {
-                state.getOrDefault(null).let { bitmap ->
-                    ShareouselCard(
-                        image = {
-                            bitmap?.let {
-                                Image(
-                                    bitmap = bitmap.asImageBitmap(),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.aspectRatio(aspectRatio),
-                                )
-                            } ?: PlaceholderBox(aspectRatio)
-                        },
-                        contentType = viewModel.contentType,
-                        selected = selected,
-                        modifier =
-                            Modifier.conditional(selected) {
-                                border(
-                                    width = 4.dp,
-                                    color = borderColor,
-                                    shape = RoundedCornerShape(size = 12.dp),
-                                )
-                            },
-                    )
-                }
+                ShareouselBitmapCard(
+                    bitmap = state.getOrDefault(null),
+                    aspectRatio = aspectRatio,
+                    contentType = viewModel.contentType,
+                    selected = selected,
+                )
             } else {
                 PlaceholderBox(aspectRatio)
             }
         }
     }
+}
+
+@Composable
+private fun Modifier.clickableWithTapToScrollSupport(
+    state: LazyListState,
+    index: Int,
+    measurements: PreviewCarouselMeasurements,
+    onClick: () -> Unit,
+): Modifier {
+    val scope = rememberCoroutineScope()
+    return pointerInput(Unit) {
+        detectTapGestures { offset ->
+            with(state.layoutInfo) {
+                val item = visibleItemsInfo.firstOrNull { it.index == index }
+                when {
+                    // If the item is not visible, then this was likely an accidental click event
+                    // while flinging so ignore it.
+                    item == null -> {}
+
+                    // If tap to scroll flag is off, do a normal click
+                    !shareouselTapToScroll() -> onClick()
+
+                    // If click is in the start tap to scroll region
+                    (item.offset + offset.x) - viewportStartOffset <
+                        measurements.scrollByTapWidthPx ->
+                        // Scroll towards the start
+                        scope.launch {
+                            state.animateScrollBy(-measurements.viewportCenterPx.toFloat())
+                        }
+
+                    // If click is in the end tap to scroll region
+                    viewportEndOffset - (item.offset + offset.x) <
+                        measurements.scrollByTapWidthPx ->
+                        // Scroll towards the end
+                        scope.launch {
+                            state.animateScrollBy(measurements.viewportCenterPx.toFloat())
+                        }
+
+                    // If click is between the tap to scroll regions, do a normal click
+                    else -> onClick()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun buildContentDescription(
+    annotateWithPosition: Boolean,
+    viewModel: ShareouselPreviewViewModel,
+): String = buildString {
+    if (
+        announceShareouselItemListPosition() &&
+            annotateWithPosition &&
+            viewModel.cursorPosition >= 0
+    ) {
+        // If item cursor position is not known, do not announce item position.
+        // We can have items with an unknown cursor position only when:
+        // * when we haven't got the cursor and showing the initially shared items;
+        // * when we've got an inconsistent data from the app (some initially shared items
+        //   are missing in the cursor);
+        append(stringResource(R.string.item_position_label, viewModel.cursorPosition + 1))
+        append(", ")
+    }
+    append(
+        when (viewModel.contentType) {
+            ContentType.Image -> stringResource(R.string.selectable_image)
+            ContentType.Video -> stringResource(R.string.selectable_video)
+            else -> stringResource(R.string.selectable_item)
+        }
+    )
+}
+
+@Composable
+private fun ShareouselBitmapCard(
+    bitmap: Bitmap?,
+    aspectRatio: Float,
+    contentType: ContentType,
+    selected: Boolean,
+) {
+    ShareouselCard(
+        image = {
+            if (bitmap == null) {
+                PlaceholderBox(aspectRatio)
+            } else {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.aspectRatio(aspectRatio),
+                )
+            }
+        },
+        contentType = contentType,
+        selected = selected,
+        modifier =
+            Modifier.conditional(selected) {
+                border(
+                    width = 4.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(size = 12.dp),
+                )
+            },
+    )
 }
 
 @Composable
@@ -418,6 +531,7 @@ private data class PreviewCarouselMeasurements(
     val maxAspectRatio: Float,
     val horizontalPaddingPx: Int,
     val horizontalPaddingDp: Dp,
+    val scrollByTapWidthPx: Int,
 ) {
     constructor(
         placeable: Placeable,
@@ -435,6 +549,7 @@ private data class PreviewCarouselMeasurements(
             },
         horizontalPaddingPx = horizontalPadding.roundToInt(),
         horizontalPaddingDp = with(measureScope) { horizontalPadding.toDp() },
+        scrollByTapWidthPx = with(measureScope) { SCROLL_BY_TAP_WIDTH.roundToPx() },
     )
 
     fun coerceAspectRatio(ratio: Float): Float = ratio.coerceIn(MIN_ASPECT_RATIO, maxAspectRatio)
@@ -455,6 +570,7 @@ private data class PreviewCarouselMeasurements(
         private const val MIN_ASPECT_RATIO = 0.4f
         private const val MAX_ASPECT_RATIO = 2.5f
 
+        val SCROLL_BY_TAP_WIDTH = 48.dp
         val UNMEASURED =
             PreviewCarouselMeasurements(
                 viewportHeightPx = 0,
@@ -462,6 +578,7 @@ private data class PreviewCarouselMeasurements(
                 maxAspectRatio = 0f,
                 horizontalPaddingPx = 0,
                 horizontalPaddingDp = 0.dp,
+                scrollByTapWidthPx = 0,
             )
     }
 }
