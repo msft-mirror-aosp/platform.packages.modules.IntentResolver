@@ -103,6 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Isključi vezu"</string>
     <string name="include_link" msgid="827855767220339802">"Uključi vezu"</string>
     <string name="pinned" msgid="7623664001331394139">"Prikvačeno"</string>
+    <string name="item_position_label" msgid="5112465518086817859">"Stavka <xliff:g id="ITEM_POSITION">%1$d</xliff:g>"</string>
     <string name="selectable_image" msgid="3157858923437182271">"Slika koja se može odabrati"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Videozapis koji se može odabrati"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Stavka koja se može odabrati"</string>

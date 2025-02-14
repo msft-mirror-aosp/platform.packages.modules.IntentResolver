@@ -57,7 +57,7 @@
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{# fitxer més}many{# de fitxers més}other{# fitxers més}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"S\'està compartint text"</string>
     <string name="sharing_link" msgid="2307694372813942916">"S\'està compartint un enllaç"</string>
-    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Comparteix una imatge}many{Comparteix # d\'imatges}other{Comparteix # imatges}}"</string>
+    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{]S\'està compartint una imatge}many{S\'estan compartint # d\'imatges}other{S\'estan compartint # imatges}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{S\'està compartint un vídeo}many{S\'estan compartint # de vídeos}other{S\'estan compartint # vídeos}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{S\'està compartint # fitxer}many{S\'estan compartint # de fitxers}other{S\'estan compartint # fitxers}}"</string>
     <string name="select_items_to_share" msgid="1026071777275022579">"Selecciona els elements que vols compartir"</string>
@@ -103,6 +103,8 @@
     <string name="exclude_link" msgid="1332778255031992228">"Exclou l\'enllaç"</string>
     <string name="include_link" msgid="827855767220339802">"Inclou l\'enllaç"</string>
     <string name="pinned" msgid="7623664001331394139">"Fixat"</string>
+    <!-- no translation found for item_position_label (5112465518086817859) -->
+    <skip />
     <string name="selectable_image" msgid="3157858923437182271">"Imatge seleccionable"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Vídeo seleccionable"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Element seleccionable"</string>

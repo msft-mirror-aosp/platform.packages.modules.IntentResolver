@@ -103,6 +103,8 @@
     <string name="exclude_link" msgid="1332778255031992228">"排除連結"</string>
     <string name="include_link" msgid="827855767220339802">"加回連結"</string>
     <string name="pinned" msgid="7623664001331394139">"已固定"</string>
+    <!-- no translation found for item_position_label (5112465518086817859) -->
+    <skip />
     <string name="selectable_image" msgid="3157858923437182271">"可選取的圖片"</string>
     <string name="selectable_video" msgid="1271768647699300826">"可選取的影片"</string>
     <string name="selectable_item" msgid="7557320816744205280">"可選取的項目"</string>
