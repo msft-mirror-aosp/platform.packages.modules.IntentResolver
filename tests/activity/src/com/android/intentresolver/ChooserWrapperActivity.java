@@ -134,7 +134,7 @@ public class ChooserWrapperActivity extends ChooserActivity implements IChooserW
 
     @Override
     public final ChooserListController createListController(UserHandle userHandle) {
-        if (userHandle == UserHandle.SYSTEM) {
+        if (userHandle == sOverrides.personalUserHandle) {
             return sOverrides.resolverListController;
         }
         return sOverrides.workResolverListController;

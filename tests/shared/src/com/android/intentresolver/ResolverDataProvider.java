@@ -36,7 +36,7 @@ import androidx.annotation.NonNull;
  */
 public class ResolverDataProvider {
 
-    static private int USER_SOMEONE_ELSE = 10;
+    private static int sUserSomeoneElse = 99;
 
     static ResolvedComponentInfo createResolvedComponentInfo(int i) {
         return new ResolvedComponentInfo(
@@ -73,7 +73,7 @@ public class ResolverDataProvider {
         return new ResolvedComponentInfo(
                 createComponentName(i),
                 createResolverIntent(i),
-                createResolveInfo(i, USER_SOMEONE_ELSE));
+                createResolveInfo(i, sUserSomeoneElse));
     }
 
     public static ResolvedComponentInfo createResolvedComponentInfoWithOtherId(int i,
@@ -81,7 +81,7 @@ public class ResolverDataProvider {
         return new ResolvedComponentInfo(
                 createComponentName(i),
                 createResolverIntent(i),
-                createResolveInfo(i, USER_SOMEONE_ELSE, resolvedForUser));
+                createResolveInfo(i, sUserSomeoneElse, resolvedForUser));
     }
 
     static ResolvedComponentInfo createResolvedComponentInfoWithOtherId(int i, int userId) {
