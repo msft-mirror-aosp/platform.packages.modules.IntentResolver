@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
-private const val TAG = "PayloadSelImageLoader"
+private const val TAG = "ImageLoader"
 
 @Qualifier @MustBeDocumented @Retention(AnnotationRetention.BINARY) annotation class ThumbnailSize
 

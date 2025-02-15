@@ -22,12 +22,12 @@
     <uses-permission android:name="android.permission.WRITE_DEVICE_CONFIG"/>
     <uses-permission android:name="android.permission.READ_DEVICE_CONFIG" />
 
-    <application android:name="dagger.hilt.android.testing.HiltTestApplication">
+    <application android:name="dagger.hilt.android.testing.HiltTestApplication"
+            android:label="IntentResolver Tests">
         <uses-library android:name="android.test.runner" />
         <activity android:name="com.android.intentresolver.ChooserWrapperActivity" />
         <activity android:name="com.android.intentresolver.ResolverWrapperActivity" />
-        <activity android:name="com.android.intentresolver.ChooserWrapperActivity" />
-        <activity android:name="com.android.intentresolver.ResolverWrapperActivity" />
+
         <provider
             android:authorities="com.android.intentresolver.tests"
             android:name="com.android.intentresolver.TestContentProvider"
