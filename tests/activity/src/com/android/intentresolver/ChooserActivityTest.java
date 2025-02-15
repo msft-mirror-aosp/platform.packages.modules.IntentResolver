@@ -202,12 +202,14 @@ public class ChooserActivityTest {
     private static final User PERSONAL_USER =
             new User(PERSONAL_USER_HANDLE.getIdentifier(), User.Role.PERSONAL);
 
-    private static final UserHandle WORK_PROFILE_USER_HANDLE = UserHandle.of(10);
+    private static final UserHandle WORK_PROFILE_USER_HANDLE =
+            UserHandle.of(PERSONAL_USER_HANDLE.getIdentifier() + 1);
 
     private static final User WORK_USER =
             new User(WORK_PROFILE_USER_HANDLE.getIdentifier(), User.Role.WORK);
 
-    private static final UserHandle CLONE_PROFILE_USER_HANDLE = UserHandle.of(11);
+    private static final UserHandle CLONE_PROFILE_USER_HANDLE =
+            UserHandle.of(PERSONAL_USER_HANDLE.getIdentifier() + 2);
 
     private static final User CLONE_USER =
             new User(CLONE_PROFILE_USER_HANDLE.getIdentifier(), User.Role.CLONE);
@@ -302,6 +304,7 @@ public class ChooserActivityTest {
                 .adoptShellPermissionIdentity();
 
         cleanOverrideData();
+        ChooserActivityOverrideData.getInstance().personalUserHandle = PERSONAL_USER_HANDLE;
 
         // Assign @Inject fields
         mHiltAndroidRule.inject();
@@ -1537,7 +1540,8 @@ public class ChooserActivityTest {
         // verify that ShortcutLoader was queried
         ArgumentCaptor<DisplayResolveInfo[]> appTargets =
                 ArgumentCaptor.forClass(DisplayResolveInfo[].class);
-        verify(shortcutLoaders.get(0).first, times(1)).updateAppTargets(appTargets.capture());
+        verify(shortcutLoaders.get(PERSONAL_USER_HANDLE.getIdentifier()).first,
+                times(1)).updateAppTargets(appTargets.capture());
 
         // send shortcuts
         assertThat(
@@ -1557,7 +1561,8 @@ public class ChooserActivityTest {
                 new HashMap<>(),
                 new HashMap<>()
         );
-        activity.getMainExecutor().execute(() -> shortcutLoaders.get(0).second.accept(result));
+        activity.getMainExecutor().execute(() -> shortcutLoaders.get(
+                PERSONAL_USER_HANDLE.getIdentifier()).second.accept(result));
         waitForIdle();
 
         final ChooserListAdapter activeAdapter = activity.getAdapter();
@@ -1611,7 +1616,8 @@ public class ChooserActivityTest {
         // verify that ShortcutLoader was queried
         ArgumentCaptor<DisplayResolveInfo[]> appTargets =
                 ArgumentCaptor.forClass(DisplayResolveInfo[].class);
-        verify(shortcutLoaders.get(0).first, times(1)).updateAppTargets(appTargets.capture());
+        verify(shortcutLoaders.get(PERSONAL_USER_HANDLE.getIdentifier()).first,
+                times(1)).updateAppTargets(appTargets.capture());
 
         // send shortcuts
         assertThat(
@@ -1633,7 +1639,8 @@ public class ChooserActivityTest {
                 new HashMap<>(),
                 new HashMap<>()
         );
-        activity.getMainExecutor().execute(() -> shortcutLoaders.get(0).second.accept(result));
+        activity.getMainExecutor().execute(() -> shortcutLoaders.get(
+                PERSONAL_USER_HANDLE.getIdentifier()).second.accept(result));
         waitForIdle();
 
         final ChooserListAdapter activeAdapter = activity.getAdapter();
@@ -1688,7 +1695,8 @@ public class ChooserActivityTest {
         // verify that ShortcutLoader was queried
         ArgumentCaptor<DisplayResolveInfo[]> appTargets =
                 ArgumentCaptor.forClass(DisplayResolveInfo[].class);
-        verify(shortcutLoaders.get(0).first, times(1)).updateAppTargets(appTargets.capture());
+        verify(shortcutLoaders.get(PERSONAL_USER_HANDLE.getIdentifier()).first,
+                times(1)).updateAppTargets(appTargets.capture());
 
         // send shortcuts
         assertThat(
@@ -1710,7 +1718,8 @@ public class ChooserActivityTest {
                 new HashMap<>(),
                 new HashMap<>()
         );
-        activity.getMainExecutor().execute(() -> shortcutLoaders.get(0).second.accept(result));
+        activity.getMainExecutor().execute(() -> shortcutLoaders.get(
+                PERSONAL_USER_HANDLE.getIdentifier()).second.accept(result));
         waitForIdle();
 
         final ChooserListAdapter activeAdapter = activity.getAdapter();
@@ -1759,7 +1768,8 @@ public class ChooserActivityTest {
         // verify that ShortcutLoader was queried
         ArgumentCaptor<DisplayResolveInfo[]> appTargets =
                 ArgumentCaptor.forClass(DisplayResolveInfo[].class);
-        verify(shortcutLoaders.get(0).first, times(1)).updateAppTargets(appTargets.capture());
+        verify(shortcutLoaders.get(PERSONAL_USER_HANDLE.getIdentifier()).first,
+                times(1)).updateAppTargets(appTargets.capture());
 
         // send shortcuts
         assertThat(
@@ -1781,7 +1791,8 @@ public class ChooserActivityTest {
                 new HashMap<>(),
                 new HashMap<>()
         );
-        activity.getMainExecutor().execute(() -> shortcutLoaders.get(0).second.accept(result));
+        activity.getMainExecutor().execute(() -> shortcutLoaders.get(
+                PERSONAL_USER_HANDLE.getIdentifier()).second.accept(result));
         waitForIdle();
 
         final ChooserListAdapter activeAdapter = activity.getAdapter();
@@ -1848,7 +1859,8 @@ public class ChooserActivityTest {
         // verify that ShortcutLoader was queried
         ArgumentCaptor<DisplayResolveInfo[]> appTargets =
                 ArgumentCaptor.forClass(DisplayResolveInfo[].class);
-        verify(shortcutLoaders.get(0).first, times(1)).updateAppTargets(appTargets.capture());
+        verify(shortcutLoaders.get(PERSONAL_USER_HANDLE.getIdentifier()).first,
+                times(1)).updateAppTargets(appTargets.capture());
 
         // send shortcuts
         assertThat(
@@ -1861,7 +1873,8 @@ public class ChooserActivityTest {
                 new ShortcutLoader.ShortcutResultInfo[0],
                 new HashMap<>(),
                 new HashMap<>());
-        activity.getMainExecutor().execute(() -> shortcutLoaders.get(0).second.accept(result));
+        activity.getMainExecutor().execute(() -> shortcutLoaders.get(
+                PERSONAL_USER_HANDLE.getIdentifier()).second.accept(result));
         waitForIdle();
 
         final ChooserListAdapter activeAdapter = activity.getAdapter();
@@ -2120,9 +2133,10 @@ public class ChooserActivityTest {
                 mActivityRule.launchActivity(Intent.createChooser(sendIntent, "work tab test"));
         waitForIdle();
 
-        assertThat(activity.getCurrentUserHandle().getIdentifier(), is(0));
+        assertThat(activity.getCurrentUserHandle().getIdentifier(),
+                is(PERSONAL_USER_HANDLE.getIdentifier()));
         onView(withText(R.string.resolver_work_tab)).perform(click());
-        assertThat(activity.getCurrentUserHandle().getIdentifier(), is(10));
+        assertThat(activity.getCurrentUserHandle(), is(WORK_PROFILE_USER_HANDLE));
         assertThat(activity.getPersonalListAdapter().getCount(), is(personalProfileTargets));
         assertThat(activity.getWorkListAdapter().getCount(), is(workProfileTargets));
     }
@@ -2389,7 +2403,7 @@ public class ChooserActivityTest {
         // verify that ShortcutLoader was queried
         ArgumentCaptor<DisplayResolveInfo[]> appTargets =
                 ArgumentCaptor.forClass(DisplayResolveInfo[].class);
-        verify(shortcutLoaders.get(0).first, times(1))
+        verify(shortcutLoaders.get(PERSONAL_USER_HANDLE.getIdentifier()).first, times(1))
                 .updateAppTargets(appTargets.capture());
 
         // send shortcuts
@@ -2412,7 +2426,8 @@ public class ChooserActivityTest {
                 new HashMap<>(),
                 new HashMap<>()
         );
-        activity.getMainExecutor().execute(() -> shortcutLoaders.get(0).second.accept(result));
+        activity.getMainExecutor().execute(() -> shortcutLoaders.get(
+                PERSONAL_USER_HANDLE.getIdentifier()).second.accept(result));
         waitForIdle();
 
         assertThat("Chooser should have 3 targets (2 apps, 1 direct)",
@@ -2462,7 +2477,7 @@ public class ChooserActivityTest {
         // verify that ShortcutLoader was queried
         ArgumentCaptor<DisplayResolveInfo[]> appTargets =
                 ArgumentCaptor.forClass(DisplayResolveInfo[].class);
-        verify(shortcutLoaders.get(0).first, times(1))
+        verify(shortcutLoaders.get(PERSONAL_USER_HANDLE.getIdentifier()).first, times(1))
                 .updateAppTargets(appTargets.capture());
 
         // send shortcuts
@@ -2482,7 +2497,8 @@ public class ChooserActivityTest {
                 new HashMap<>(),
                 new HashMap<>()
         );
-        activity.getMainExecutor().execute(() -> shortcutLoaders.get(0).second.accept(result));
+        activity.getMainExecutor().execute(() -> shortcutLoaders.get(
+                PERSONAL_USER_HANDLE.getIdentifier()).second.accept(result));
         waitForIdle();
 
         // Long-click on the direct target
@@ -2709,15 +2725,17 @@ public class ChooserActivityTest {
     public void test_query_shortcut_loader_for_the_selected_tab() {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10);
+                createResolvedComponentsForTestWithOtherProfile(
+                        3,
+                        WORK_PROFILE_USER_HANDLE.getIdentifier());
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(3);
         setupResolverControllers(personalResolvedComponentInfos, workResolvedComponentInfos);
         ShortcutLoader personalProfileShortcutLoader = mock(ShortcutLoader.class);
         ShortcutLoader workProfileShortcutLoader = mock(ShortcutLoader.class);
         final SparseArray<ShortcutLoader> shortcutLoaders = new SparseArray<>();
-        shortcutLoaders.put(0, personalProfileShortcutLoader);
-        shortcutLoaders.put(10, workProfileShortcutLoader);
+        shortcutLoaders.put(PERSONAL_USER_HANDLE.getIdentifier(), personalProfileShortcutLoader);
+        shortcutLoaders.put(WORK_PROFILE_USER_HANDLE.getIdentifier(), workProfileShortcutLoader);
         ChooserActivityOverrideData.getInstance().shortcutLoaderFactory =
                 (userHandle, callback) -> shortcutLoaders.get(userHandle.getIdentifier(), null);
         Intent sendIntent = createSendTextIntent();
