@@ -103,6 +103,8 @@
     <string name="exclude_link" msgid="1332778255031992228">"Excluir enlace"</string>
     <string name="include_link" msgid="827855767220339802">"Incluir enlace"</string>
     <string name="pinned" msgid="7623664001331394139">"Fijado"</string>
+    <!-- no translation found for item_position_label (5112465518086817859) -->
+    <skip />
     <string name="selectable_image" msgid="3157858923437182271">"Imagen seleccionable"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Vídeo seleccionable"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Elemento seleccionable"</string>

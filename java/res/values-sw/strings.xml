@@ -57,9 +57,9 @@
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{Faili nyingine #}other{Faili zingine #}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"Kutuma maandishi"</string>
     <string name="sharing_link" msgid="2307694372813942916">"Inatuma kiungo"</string>
-    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Kutuma picha}other{Kutuma picha #}}"</string>
+    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Inatuma picha}other{Inatuma picha #}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Inatuma video}other{Inatuma video #}}"</string>
-    <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Inashiriki faili #}other{Inashiriki faili #}}"</string>
+    <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{Inatuma faili #}other{Inatuma faili #}}"</string>
     <string name="select_items_to_share" msgid="1026071777275022579">"Chagua vipengee vya kutuma"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Inashiriki picha na maandishi}other{Inashiriki picha # na maandishi}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Inashiriki picha na kiungo}other{Inashiriki picha # na kiungo}}"</string>
@@ -103,6 +103,8 @@
     <string name="exclude_link" msgid="1332778255031992228">"Usijumuishe kiungo"</string>
     <string name="include_link" msgid="827855767220339802">"Jumuisha kiungo"</string>
     <string name="pinned" msgid="7623664001331394139">"Imebandikwa"</string>
+    <!-- no translation found for item_position_label (5112465518086817859) -->
+    <skip />
     <string name="selectable_image" msgid="3157858923437182271">"Picha inayoweza kuchaguliwa"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Video inayoweza kuchaguliwa"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Kipengee kinachoweza kuchaguliwa"</string>

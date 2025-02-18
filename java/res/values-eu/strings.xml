@@ -57,7 +57,7 @@
     <string name="more_files" msgid="1043875756612339842">"{count,plural, =1{eta beste # fitxategi}other{eta beste # fitxategi}}"</string>
     <string name="sharing_text" msgid="8137537443603304062">"Partekatuko den testua"</string>
     <string name="sharing_link" msgid="2307694372813942916">"Esteka partekatzen"</string>
-    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Irudia partekatuko da}other{# irudi partekatuko dira}}"</string>
+    <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Irudia partekatzen}other{# irudi partekatzen}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Bideoa partekatzen}other{# bideo partekatzen}}"</string>
     <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# fitxategi partekatuko da}other{# fitxategi partekatuko dira}}"</string>
     <string name="select_items_to_share" msgid="1026071777275022579">"Hautatu partekatu beharreko elementuak"</string>
@@ -103,6 +103,8 @@
     <string name="exclude_link" msgid="1332778255031992228">"Utzi kanpoan esteka"</string>
     <string name="include_link" msgid="827855767220339802">"Sartu esteka"</string>
     <string name="pinned" msgid="7623664001331394139">"Ainguratuta"</string>
+    <!-- no translation found for item_position_label (5112465518086817859) -->
+    <skip />
     <string name="selectable_image" msgid="3157858923437182271">"Hauta daitekeen irudia"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Hauta daitekeen bideoa"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Hauta daitekeen elementua"</string>

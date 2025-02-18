@@ -103,6 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Link uitsluiten"</string>
     <string name="include_link" msgid="827855767220339802">"Link opnemen"</string>
     <string name="pinned" msgid="7623664001331394139">"Vastgezet"</string>
+    <string name="item_position_label" msgid="5112465518086817859">"Item <xliff:g id="ITEM_POSITION">%1$d</xliff:g>"</string>
     <string name="selectable_image" msgid="3157858923437182271">"Selecteerbare afbeelding"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Selecteerbare video"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Selecteerbaar item"</string>
