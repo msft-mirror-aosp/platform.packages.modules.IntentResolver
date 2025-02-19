@@ -59,7 +59,7 @@
     <string name="sharing_link" msgid="2307694372813942916">"Сілтемені бөлісіп жатыр"</string>
     <string name="sharing_images" msgid="5251443722186962006">"{count,plural, =1{Сурет бөлісіп жатырсыз}other{# сурет бөлісіп жатырсыз}}"</string>
     <string name="sharing_videos" msgid="3583423190182877434">"{count,plural, =1{Бейне бөлісіліп жатыр}other{# бейне бөлісіліп жатыр}}"</string>
-    <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# файлды бөлісіп жатыр}other{# файлды бөлісіп жатыр}}"</string>
+    <string name="sharing_files" msgid="1275646542246028823">"{count,plural, =1{# файлды бөлісіп жатырсыз}other{# файлды бөлісіп жатырсыз}}"</string>
     <string name="select_items_to_share" msgid="1026071777275022579">"Бөлісетін элементтерді таңдау"</string>
     <string name="sharing_images_with_text" msgid="9005717434461730242">"{count,plural, =1{Мәтіні бар сурет жіберу}other{Мәтіні бар # сурет жіберу}}"</string>
     <string name="sharing_images_with_link" msgid="8907893266387877733">"{count,plural, =1{Сілтемесі бар сурет жіберу}other{Сілтемесі бар # сурет жіберу}}"</string>
@@ -103,6 +103,8 @@
     <string name="exclude_link" msgid="1332778255031992228">"Сілтемені шығару"</string>
     <string name="include_link" msgid="827855767220339802">"Сілтеме қосу"</string>
     <string name="pinned" msgid="7623664001331394139">"Бекітілген"</string>
+    <!-- no translation found for item_position_label (5112465518086817859) -->
+    <skip />
     <string name="selectable_image" msgid="3157858923437182271">"Таңдауға болатын сурет"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Таңдауға болатын бейне"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Таңдауға болатын элемент"</string>
