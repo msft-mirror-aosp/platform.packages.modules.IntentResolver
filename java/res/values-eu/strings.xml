@@ -103,8 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"Utzi kanpoan esteka"</string>
     <string name="include_link" msgid="827855767220339802">"Sartu esteka"</string>
     <string name="pinned" msgid="7623664001331394139">"Ainguratuta"</string>
-    <!-- no translation found for item_position_label (5112465518086817859) -->
-    <skip />
+    <string name="item_position_label" msgid="5112465518086817859">"<xliff:g id="ITEM_POSITION">%1$d</xliff:g>garren elementua"</string>
     <string name="selectable_image" msgid="3157858923437182271">"Hauta daitekeen irudia"</string>
     <string name="selectable_video" msgid="1271768647699300826">"Hauta daitekeen bideoa"</string>
     <string name="selectable_item" msgid="7557320816744205280">"Hauta daitekeen elementua"</string>
