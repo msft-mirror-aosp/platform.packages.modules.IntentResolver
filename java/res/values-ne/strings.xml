@@ -103,8 +103,7 @@
     <string name="exclude_link" msgid="1332778255031992228">"लिंक हटाउनुहोस्"</string>
     <string name="include_link" msgid="827855767220339802">"लिंक समावेश गर्नुहोस्"</string>
     <string name="pinned" msgid="7623664001331394139">"पिन गरिएको"</string>
-    <!-- no translation found for item_position_label (5112465518086817859) -->
-    <skip />
+    <string name="item_position_label" msgid="5112465518086817859">"वस्तु <xliff:g id="ITEM_POSITION">%1$d</xliff:g>"</string>
     <string name="selectable_image" msgid="3157858923437182271">"चयन गर्न मिल्ने फोटो"</string>
     <string name="selectable_video" msgid="1271768647699300826">"चयन गर्न मिल्ने भिडियो"</string>
     <string name="selectable_item" msgid="7557320816744205280">"चयन गर्न मिल्ने वस्तु"</string>
