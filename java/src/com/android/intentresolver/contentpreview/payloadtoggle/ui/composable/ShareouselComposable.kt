@@ -66,6 +66,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -305,6 +306,7 @@ private fun ShareouselCard(
             targetState = bitmapLoadState,
             modifier =
                 Modifier.semantics { this.contentDescription = contentDescription }
+                    .testTag(viewModel.testTag)
                     .clickableWithTapToScrollSupport(
                         state = carouselState,
                         index = index,

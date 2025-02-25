@@ -49,7 +49,6 @@ public class ChooserActivityOverrideData {
         return sInstance;
     }
     public Function<TargetInfo, Boolean> onSafelyStartInternalCallback;
-    public Function<TargetInfo, Boolean> onSafelyStartCallback;
     public Function2<UserHandle, Consumer<ShortcutLoader.Result>, ShortcutLoader>
             shortcutLoaderFactory = (userHandle, callback) -> null;
     public ChooserListController resolverListController;
