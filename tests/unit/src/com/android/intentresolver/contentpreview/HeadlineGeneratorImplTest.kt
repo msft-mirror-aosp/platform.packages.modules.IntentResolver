@@ -36,6 +36,12 @@ class HeadlineGeneratorImplTest {
     }
 
     @Test
+    fun testCopyButtonContentDescription() {
+        assertThat(generator.getCopyButtonContentDescription(str)).isEqualTo("Copy text")
+        assertThat(generator.getCopyButtonContentDescription(url)).isEqualTo("Copy link")
+    }
+
+    @Test
     fun testImagesWIthTextHeadline() {
         assertThat(generator.getImagesWithTextHeadline(str, 1)).isEqualTo("Sharing image with text")
         assertThat(generator.getImagesWithTextHeadline(url, 1)).isEqualTo("Sharing image with link")

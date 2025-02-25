@@ -33,11 +33,8 @@ private const val PLURALS_COUNT = "count"
  * HeadlineGenerator generates the text to show at the top of the sharesheet as a brief description
  * of the content being shared.
  */
-class HeadlineGeneratorImpl
-@Inject
-constructor(
-    @ApplicationContext private val context: Context,
-) : HeadlineGenerator {
+class HeadlineGeneratorImpl @Inject constructor(@ApplicationContext private val context: Context) :
+    HeadlineGenerator {
     override fun getTextHeadline(text: CharSequence): String {
         return context.getString(
             getTemplateResource(text, R.string.sharing_link, R.string.sharing_text)
@@ -53,9 +50,9 @@ constructor(
             getTemplateResource(
                 text,
                 R.string.sharing_images_with_link,
-                R.string.sharing_images_with_text
+                R.string.sharing_images_with_text,
             ),
-            count
+            count,
         )
     }
 
@@ -64,9 +61,9 @@ constructor(
             getTemplateResource(
                 text,
                 R.string.sharing_videos_with_link,
-                R.string.sharing_videos_with_text
+                R.string.sharing_videos_with_text,
             ),
-            count
+            count,
         )
     }
 
@@ -75,9 +72,9 @@ constructor(
             getTemplateResource(
                 text,
                 R.string.sharing_files_with_link,
-                R.string.sharing_files_with_text
+                R.string.sharing_files_with_text,
             ),
-            count
+            count,
         )
     }
 
@@ -96,11 +93,17 @@ constructor(
     override fun getNotItemsSelectedHeadline(): String =
         context.getString(R.string.select_items_to_share)
 
+    override fun getCopyButtonContentDescription(sharedText: CharSequence): String {
+        return context.getString(
+            getTemplateResource(sharedText, R.string.copy_link, R.string.copy_text)
+        )
+    }
+
     private fun getPluralString(@StringRes templateResource: Int, count: Int): String {
         return PluralsMessageFormatter.format(
             context.resources,
             mapOf(PLURALS_COUNT to count),
-            templateResource
+            templateResource,
         )
     }
 
@@ -108,7 +111,7 @@ constructor(
     private fun getTemplateResource(
         text: CharSequence,
         @StringRes linkResource: Int,
-        @StringRes nonLinkResource: Int
+        @StringRes nonLinkResource: Int,
     ): Int {
         return if (text.toString().isHttpUri()) linkResource else nonLinkResource
     }

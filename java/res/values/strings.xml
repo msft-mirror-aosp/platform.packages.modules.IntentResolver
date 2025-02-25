@@ -353,4 +353,11 @@
     <!-- Accessibility announcement for the all-applications group in the list of targets.
     [CHAR LIMIT=NONE] -->
     <string name="all_apps_group_a11y_title">App list</string>
+
+    <!-- Content description for an action chip button in the content preview UI when a text is
+         shared. The button is used to copy the text into the clipboard. [CHAR_LIMIT=NONE] -->
+    <string name="copy_text">Copy text</string>
+    <!-- Content description for an action chip button in the content preview UI when a link is
+         shared. The button is used to copy the text into the clipboard. [CHAR_LIMIT=NONE] -->
+    <string name="copy_link">Copy link</string>
 </resources>
