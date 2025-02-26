@@ -27,7 +27,7 @@ class TestContentProvider : ContentProvider() {
         projection: Array<out String>?,
         selection: String?,
         selectionArgs: Array<out String>?,
-        sortOrder: String?
+        sortOrder: String?,
     ): Cursor? = null
 
     override fun getType(uri: Uri): String? =
@@ -44,7 +44,7 @@ class TestContentProvider : ContentProvider() {
                 Thread.currentThread().interrupt()
             }
         }
-        return runCatching { uri.getQueryParameter(PARAM_STREAM_TYPE)?.let { arrayOf(it) } }
+        return runCatching { uri.getQueryParameter(PARAM_STREAM_TYPE)?.split(",")?.toTypedArray() }
             .getOrNull()
     }
 
@@ -56,7 +56,7 @@ class TestContentProvider : ContentProvider() {
         uri: Uri,
         values: ContentValues?,
         selection: String?,
-        selectionArgs: Array<out String>?
+        selectionArgs: Array<out String>?,
     ): Int = 0
 
     override fun onCreate(): Boolean = true
@@ -65,5 +65,27 @@ class TestContentProvider : ContentProvider() {
         const val PARAM_MIME_TYPE = "mimeType"
         const val PARAM_STREAM_TYPE = "streamType"
         const val PARAM_STREAM_TYPE_TIMEOUT = "streamTypeTo"
+
+        @JvmStatic
+        @JvmOverloads
+        fun makeItemUri(
+            name: String,
+            mimeType: String?,
+            streamTypes: Array<String> = emptyArray(),
+            timeout: Long = 0L,
+        ): Uri =
+            Uri.parse("content://com.android.intentresolver.tests/$name")
+                .buildUpon()
+                .appendQueryParameter(PARAM_MIME_TYPE, mimeType)
+                .apply {
+                    mimeType?.let { appendQueryParameter(PARAM_MIME_TYPE, it) }
+                    if (streamTypes.isNotEmpty()) {
+                        appendQueryParameter(PARAM_STREAM_TYPE, streamTypes.joinToString(","))
+                    }
+                    if (timeout > 0) {
+                        appendQueryParameter(PARAM_STREAM_TYPE_TIMEOUT, timeout.toString())
+                    }
+                }
+                .build()
     }
 }

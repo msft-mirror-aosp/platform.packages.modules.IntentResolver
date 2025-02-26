@@ -154,6 +154,7 @@ object ShareouselViewModelModule {
                     aspectRatio = key.aspectRatio,
                     // only items with a final key has a known cursor position
                     cursorPosition = if (key.key.isFinal) key.order else -1,
+                    testTag = key.uri.toString(),
                 )
             },
         )

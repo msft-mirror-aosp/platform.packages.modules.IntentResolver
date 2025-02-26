@@ -43,6 +43,8 @@ android_test {
         "androidx.test.ext.truth",
         "androidx.test.espresso.contrib",
         "androidx.test.espresso.core",
+        "androidx.compose.ui_ui-test-junit4",
+        "androidx.compose.ui_ui-test-manifest",
         "androidx.test.rules",
         "androidx.test.runner",
         "androidx.lifecycle_lifecycle-common-java8",

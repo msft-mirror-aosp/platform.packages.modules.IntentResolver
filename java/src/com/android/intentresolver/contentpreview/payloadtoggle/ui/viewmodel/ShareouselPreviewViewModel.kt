@@ -34,4 +34,5 @@ data class ShareouselPreviewViewModel(
     val setSelected: suspend (Boolean) -> Unit,
     val aspectRatio: Float,
     val cursorPosition: Int,
+    val testTag: String,
 )
