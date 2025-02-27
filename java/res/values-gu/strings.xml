@@ -111,4 +111,8 @@
     <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"સીધા શેર કરવાના લક્ષ્યો"</string>
     <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"ઍપના સૂચનો"</string>
     <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"ઍપની સૂચિ"</string>
+    <!-- no translation found for copy_text (1341801611046464360) -->
+    <skip />
+    <!-- no translation found for copy_link (3822142723771306592) -->
+    <skip />
 </resources>
