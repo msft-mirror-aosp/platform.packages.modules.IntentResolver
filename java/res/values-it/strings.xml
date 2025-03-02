@@ -76,7 +76,7 @@
     <string name="file_preview_a11y_description" msgid="7397224827802410602">"Miniatura di anteprima del file"</string>
     <string name="chooser_no_direct_share_targets" msgid="4233416657754261844">"Nessuna persona consigliata per la condivisione"</string>
     <string name="usb_device_resolve_prompt_warn" msgid="4254493957548169620">"A questa app non è stata concessa l\'autorizzazione di registrazione, ma l\'app potrebbe acquisire l\'audio tramite questo dispositivo USB."</string>
-    <string name="resolver_personal_tab" msgid="1381052735324320565">"Personale"</string>
+    <string name="resolver_personal_tab" msgid="1381052735324320565">"Personali"</string>
     <string name="resolver_work_tab" msgid="3588325717455216412">"Lavoro"</string>
     <string name="resolver_private_tab" msgid="3707548826254095157">"Privato"</string>
     <string name="resolver_personal_tab_accessibility" msgid="4467784352232582574">"Visualizzazione personale"</string>
@@ -111,8 +111,6 @@
     <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"Target di condivisione diretta"</string>
     <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"App suggerite"</string>
     <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"Elenco di app"</string>
-    <!-- no translation found for copy_text (1341801611046464360) -->
-    <skip />
-    <!-- no translation found for copy_link (3822142723771306592) -->
-    <skip />
+    <string name="copy_text" msgid="1341801611046464360">"Copia testo"</string>
+    <string name="copy_link" msgid="3822142723771306592">"Copia link"</string>
 </resources>
