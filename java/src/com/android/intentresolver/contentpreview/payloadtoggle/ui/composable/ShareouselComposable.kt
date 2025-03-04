@@ -22,8 +22,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,7 +60,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.Placeable
@@ -77,7 +75,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.Flags.announceShareouselItemListPosition
 import com.android.intentresolver.Flags.shareouselScrollOffscreenSelections
 import com.android.intentresolver.Flags.shareouselSelectionShrink
-import com.android.intentresolver.Flags.shareouselTapToScroll
+import com.android.intentresolver.Flags.shareouselTapToScrollSupport
 import com.android.intentresolver.Flags.unselectFinalItem
 import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
@@ -178,7 +176,10 @@ private fun PreviewCarouselItems(
                 start = measurements.horizontalPaddingDp,
                 end = measurements.horizontalPaddingDp,
             ),
-        modifier = Modifier.fillMaxSize(),
+        modifier =
+            Modifier.fillMaxSize().conditional(shareouselTapToScrollSupport()) {
+                tapToScroll(scrollableState = state)
+            },
     ) {
         itemsIndexed(
             items = previews.previewModels,
@@ -226,9 +227,6 @@ private fun PreviewCarouselItems(
             }
 
             ShareouselCard(
-                carouselState = state,
-                measurements = measurements,
-                index = index,
                 viewModel = previewModel,
                 aspectRatio = measurements.coerceAspectRatio(previewModel.aspectRatio),
                 annotateWithPosition = previews.previewModels.size > 1,
@@ -285,9 +283,6 @@ private fun ScrollOffscreenSelectionsEffect(
 
 @Composable
 private fun ShareouselCard(
-    carouselState: LazyListState,
-    measurements: PreviewCarouselMeasurements,
-    index: Int,
     viewModel: ShareouselPreviewViewModel,
     aspectRatio: Float,
     annotateWithPosition: Boolean,
@@ -307,13 +302,7 @@ private fun ShareouselCard(
             modifier =
                 Modifier.semantics { this.contentDescription = contentDescription }
                     .testTag(viewModel.testTag)
-                    .clickableWithTapToScrollSupport(
-                        state = carouselState,
-                        index = index,
-                        measurements = measurements,
-                    ) {
-                        scope.launch { viewModel.setSelected(!selected) }
-                    }
+                    .clickable { scope.launch { viewModel.setSelected(!selected) } }
                     .conditional(shareouselSelectionShrink()) {
                         val selectionScale by animateFloatAsState(if (selected) 0.95f else 1f)
                         scale(selectionScale)
@@ -329,50 +318,6 @@ private fun ShareouselCard(
                 )
             } else {
                 PlaceholderBox(aspectRatio)
-            }
-        }
-    }
-}
-
-@Composable
-private fun Modifier.clickableWithTapToScrollSupport(
-    state: LazyListState,
-    index: Int,
-    measurements: PreviewCarouselMeasurements,
-    onClick: () -> Unit,
-): Modifier {
-    val scope = rememberCoroutineScope()
-    return pointerInput(Unit) {
-        detectTapGestures { offset ->
-            with(state.layoutInfo) {
-                val item = visibleItemsInfo.firstOrNull { it.index == index }
-                when {
-                    // If the item is not visible, then this was likely an accidental click event
-                    // while flinging so ignore it.
-                    item == null -> {}
-
-                    // If tap to scroll flag is off, do a normal click
-                    !shareouselTapToScroll() -> onClick()
-
-                    // If click is in the start tap to scroll region
-                    (item.offset + offset.x) - viewportStartOffset <
-                        measurements.scrollByTapWidthPx ->
-                        // Scroll towards the start
-                        scope.launch {
-                            state.animateScrollBy(-measurements.viewportCenterPx.toFloat())
-                        }
-
-                    // If click is in the end tap to scroll region
-                    viewportEndOffset - (item.offset + offset.x) <
-                        measurements.scrollByTapWidthPx ->
-                        // Scroll towards the end
-                        scope.launch {
-                            state.animateScrollBy(measurements.viewportCenterPx.toFloat())
-                        }
-
-                    // If click is between the tap to scroll regions, do a normal click
-                    else -> onClick()
-                }
             }
         }
     }
@@ -520,12 +465,6 @@ private fun ShareouselAction(
     )
 }
 
-@Composable
-private inline fun Modifier.conditional(
-    condition: Boolean,
-    crossinline whenTrue: @Composable Modifier.() -> Modifier,
-): Modifier = if (condition) this.whenTrue() else this
-
 private data class PreviewCarouselMeasurements(
     val viewportHeightPx: Int,
     val viewportWidthPx: Int,
@@ -533,7 +472,6 @@ private data class PreviewCarouselMeasurements(
     val maxAspectRatio: Float,
     val horizontalPaddingPx: Int,
     val horizontalPaddingDp: Dp,
-    val scrollByTapWidthPx: Int,
 ) {
     constructor(
         placeable: Placeable,
@@ -551,7 +489,6 @@ private data class PreviewCarouselMeasurements(
             },
         horizontalPaddingPx = horizontalPadding.roundToInt(),
         horizontalPaddingDp = with(measureScope) { horizontalPadding.toDp() },
-        scrollByTapWidthPx = with(measureScope) { SCROLL_BY_TAP_WIDTH.roundToPx() },
     )
 
     fun coerceAspectRatio(ratio: Float): Float = ratio.coerceIn(MIN_ASPECT_RATIO, maxAspectRatio)
@@ -572,7 +509,6 @@ private data class PreviewCarouselMeasurements(
         private const val MIN_ASPECT_RATIO = 0.4f
         private const val MAX_ASPECT_RATIO = 2.5f
 
-        val SCROLL_BY_TAP_WIDTH = 48.dp
         val UNMEASURED =
             PreviewCarouselMeasurements(
                 viewportHeightPx = 0,
@@ -580,7 +516,6 @@ private data class PreviewCarouselMeasurements(
                 maxAspectRatio = 0f,
                 horizontalPaddingPx = 0,
                 horizontalPaddingDp = 0.dp,
-                scrollByTapWidthPx = 0,
             )
     }
 }
