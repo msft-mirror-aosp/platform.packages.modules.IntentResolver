@@ -111,8 +111,6 @@
     <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"நேரடிப் பகிர்வு இலக்குகள்"</string>
     <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"ஆப்ஸ் பரிந்துரைகள்"</string>
     <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"ஆப்ஸ் பட்டியல்"</string>
-    <!-- no translation found for copy_text (1341801611046464360) -->
-    <skip />
-    <!-- no translation found for copy_link (3822142723771306592) -->
-    <skip />
+    <string name="copy_text" msgid="1341801611046464360">"வார்த்தைகளை நகலெடுக்கும்"</string>
+    <string name="copy_link" msgid="3822142723771306592">"இணைப்பை நகலெடுக்கும்"</string>
 </resources>

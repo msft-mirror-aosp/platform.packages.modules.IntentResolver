@@ -111,8 +111,6 @@
     <string name="shortcut_group_a11y_title" msgid="3097624986281770746">"ଡାଇରେକ୍ଟ ସେୟାର ଟାର୍ଗେଟ"</string>
     <string name="suggested_apps_group_a11y_title" msgid="2394561651436551139">"ଆପ ପରାମର୍ଶ"</string>
     <string name="all_apps_group_a11y_title" msgid="2646382370571120047">"ଆପ ତାଲିକା"</string>
-    <!-- no translation found for copy_text (1341801611046464360) -->
-    <skip />
-    <!-- no translation found for copy_link (3822142723771306592) -->
-    <skip />
+    <string name="copy_text" msgid="1341801611046464360">"ଟେକ୍ସଟ କପି କରନ୍ତୁ"</string>
+    <string name="copy_link" msgid="3822142723771306592">"ଲିଙ୍କ କପି କରନ୍ତୁ"</string>
 </resources>
