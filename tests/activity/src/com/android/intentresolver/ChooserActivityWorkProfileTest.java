@@ -83,7 +83,8 @@ public class ChooserActivityWorkProfileTest {
 
     private static final UserHandle PERSONAL_USER_HANDLE = InstrumentationRegistry
             .getInstrumentation().getTargetContext().getUser();
-    private static final UserHandle WORK_USER_HANDLE = UserHandle.of(10);
+    private static final UserHandle WORK_USER_HANDLE =
+            UserHandle.of(PERSONAL_USER_HANDLE.getIdentifier() + 1);
 
     @Rule(order = 0)
     public HiltAndroidRule mHiltAndroidRule = new HiltAndroidRule(this);
