@@ -91,8 +91,11 @@ public class ResolverActivityTest {
 
     private static final UserHandle PERSONAL_USER_HANDLE =
             getInstrumentation().getTargetContext().getUser();
-    private static final UserHandle WORK_PROFILE_USER_HANDLE = UserHandle.of(10);
-    private static final UserHandle CLONE_PROFILE_USER_HANDLE = UserHandle.of(11);
+    private static final int WORK_PROFILE_USER_ID = PERSONAL_USER_HANDLE.getIdentifier() + 1;
+    private static final UserHandle WORK_PROFILE_USER_HANDLE =
+            UserHandle.of(WORK_PROFILE_USER_ID);
+    private static final UserHandle CLONE_PROFILE_USER_HANDLE =
+            UserHandle.of(PERSONAL_USER_HANDLE.getIdentifier() + 2);
     private static final User WORK_PROFILE_USER =
             new User(WORK_PROFILE_USER_HANDLE.getIdentifier(), User.Role.WORK);
 
@@ -267,7 +270,7 @@ public class ResolverActivityTest {
     @Test
     public void hasOtherProfileOneOption() throws Exception {
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(2, /* userId */ 10,
+                createResolvedComponentsForTestWithOtherProfile(2, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(4,
@@ -290,7 +293,7 @@ public class ResolverActivityTest {
         };
         // Make a stable copy of the components as the original list may be modified
         List<ResolvedComponentInfo> stableCopy =
-                createResolvedComponentsForTestWithOtherProfile(2, /* userId= */ 10,
+                createResolvedComponentsForTestWithOtherProfile(2, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         // We pick the first one as there is another one in the work profile side
         onView(first(withText(stableCopy.get(1).getResolveInfoAt(0).activityInfo.name)))
@@ -402,7 +405,7 @@ public class ResolverActivityTest {
     @Test
     public void testWorkTab_workTabListPopulatedBeforeGoingToTab() throws InterruptedException {
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(3, /* userId = */ 10,
+                createResolvedComponentsForTestWithOtherProfile(3, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(4,
@@ -414,7 +417,7 @@ public class ResolverActivityTest {
         final ResolverWrapperActivity activity = mActivityRule.launchActivity(sendIntent);
         waitForIdle();
 
-        assertThat(activity.getCurrentUserHandle().getIdentifier(), is(0));
+        assertThat(activity.getCurrentUserHandle(), is(PERSONAL_USER_HANDLE));
         // The work list adapter must be populated in advance before tapping the other tab
         assertThat(activity.getWorkListAdapter().getCount(), is(4));
     }
@@ -423,7 +426,7 @@ public class ResolverActivityTest {
     public void testWorkTab_workTabUsesExpectedAdapter() {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10,
+                createResolvedComponentsForTestWithOtherProfile(3, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(4,
                 WORK_PROFILE_USER_HANDLE);
@@ -434,7 +437,7 @@ public class ResolverActivityTest {
         waitForIdle();
         onView(withText(R.string.resolver_work_tab)).perform(click());
 
-        assertThat(activity.getCurrentUserHandle().getIdentifier(), is(10));
+        assertThat(activity.getCurrentUserHandle().getIdentifier(), is(WORK_PROFILE_USER_ID));
         assertThat(activity.getWorkListAdapter().getCount(), is(4));
     }
 
@@ -452,7 +455,7 @@ public class ResolverActivityTest {
         waitForIdle();
         onView(withText(R.string.resolver_work_tab)).perform(click());
 
-        assertThat(activity.getCurrentUserHandle().getIdentifier(), is(10));
+        assertThat(activity.getCurrentUserHandle().getIdentifier(), is(WORK_PROFILE_USER_ID));
         assertThat(activity.getPersonalListAdapter().getCount(), is(2));
     }
 
@@ -460,7 +463,7 @@ public class ResolverActivityTest {
     public void testWorkTab_workProfileHasExpectedNumberOfTargets() throws InterruptedException {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10,
+                createResolvedComponentsForTestWithOtherProfile(3, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(4,
                 WORK_PROFILE_USER_HANDLE);
@@ -576,7 +579,7 @@ public class ResolverActivityTest {
             throws InterruptedException {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(3, /* userId= */ 10,
+                createResolvedComponentsForTestWithOtherProfile(3, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         List<ResolvedComponentInfo> workResolvedComponentInfos = createResolvedComponentsForTest(4,
                 WORK_PROFILE_USER_HANDLE);
@@ -610,7 +613,7 @@ public class ResolverActivityTest {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10,
+                createResolvedComponentsForTestWithOtherProfile(3, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(workProfileTargets, WORK_PROFILE_USER_HANDLE);
@@ -635,7 +638,7 @@ public class ResolverActivityTest {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(3, /* userId */ 10,
+                createResolvedComponentsForTestWithOtherProfile(3, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(workProfileTargets, WORK_PROFILE_USER_HANDLE);
@@ -775,7 +778,7 @@ public class ResolverActivityTest {
         markOtherProfileAvailability(/* workAvailable= */ true, /* cloneAvailable= */ false);
         int workProfileTargets = 4;
         List<ResolvedComponentInfo> personalResolvedComponentInfos =
-                createResolvedComponentsForTestWithOtherProfile(2, /* userId */ 10,
+                createResolvedComponentsForTestWithOtherProfile(2, WORK_PROFILE_USER_ID,
                         PERSONAL_USER_HANDLE);
         List<ResolvedComponentInfo> workResolvedComponentInfos =
                 createResolvedComponentsForTest(workProfileTargets, WORK_PROFILE_USER_HANDLE);
