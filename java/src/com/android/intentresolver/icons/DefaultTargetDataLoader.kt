@@ -16,8 +16,9 @@
 
 package com.android.intentresolver.icons
 
-import android.app.ActivityManager
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.AsyncTask
 import android.os.UserHandle
@@ -26,27 +27,34 @@ import androidx.annotation.GuardedBy
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import com.android.intentresolver.Flags.targetHoverAndKeyboardFocusStates
+import com.android.intentresolver.R
+import com.android.intentresolver.SimpleIconFactory
 import com.android.intentresolver.TargetPresentationGetter
 import com.android.intentresolver.chooser.DisplayResolveInfo
 import com.android.intentresolver.chooser.SelectableTargetInfo
+import com.android.intentresolver.inject.ActivityOwned
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ActivityContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
+import javax.inject.Provider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 
 /** An actual [TargetDataLoader] implementation. */
 // TODO: replace async tasks with coroutines.
-class DefaultTargetDataLoader(
-    private val context: Context,
-    private val lifecycle: Lifecycle,
-    private val isAudioCaptureDevice: Boolean,
-) : TargetDataLoader() {
-    private val presentationFactory =
-        TargetPresentationGetter.Factory(
-            context,
-            context.getSystemService(ActivityManager::class.java)?.launcherLargeIconDensity
-                ?: error("Unable to access ActivityManager")
-        )
+class DefaultTargetDataLoader
+@AssistedInject
+constructor(
+    @ActivityContext private val context: Context,
+    @ActivityOwned private val lifecycle: Lifecycle,
+    private val iconFactoryProvider: Provider<SimpleIconFactory>,
+    private val presentationFactory: TargetPresentationGetter.Factory,
+    @Assisted private val isAudioCaptureDevice: Boolean,
+) : TargetDataLoader {
     private val nextTaskId = AtomicInteger(0)
     @GuardedBy("self") private val activeTasks = SparseArray<AsyncTask<*, *, *>>()
     private val executor = Dispatchers.IO.asExecutor()
@@ -68,9 +76,9 @@ class DefaultTargetDataLoader(
         callback: Consumer<Drawable>,
     ): Drawable? {
         val taskId = nextTaskId.getAndIncrement()
-        LoadIconTask(context, info, userHandle, presentationFactory) { result ->
+        LoadIconTask(context, info, presentationFactory) { bitmap ->
                 removeTask(taskId)
-                callback.accept(result)
+                callback.accept(bitmap?.toDrawable() ?: loadIconPlaceholder())
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
@@ -87,9 +95,10 @@ class DefaultTargetDataLoader(
                 context.createContextAsUser(userHandle, 0),
                 info,
                 presentationFactory,
-            ) { result ->
+                iconFactoryProvider,
+            ) { bitmap ->
                 removeTask(taskId)
-                callback.accept(result)
+                callback.accept(bitmap?.toDrawable() ?: loadIconPlaceholder())
             }
             .also { addTask(taskId, it) }
             .executeOnExecutor(executor)
@@ -123,6 +132,9 @@ class DefaultTargetDataLoader(
         synchronized(activeTasks) { activeTasks.remove(id) }
     }
 
+    private fun loadIconPlaceholder(): Drawable =
+        requireNotNull(context.getDrawable(R.drawable.resolver_icon_placeholder))
+
     private fun destroy() {
         synchronized(activeTasks) {
             for (i in 0 until activeTasks.size()) {
@@ -130,5 +142,18 @@ class DefaultTargetDataLoader(
             }
             activeTasks.clear()
         }
+    }
+
+    private fun Bitmap.toDrawable(): Drawable {
+        return if (targetHoverAndKeyboardFocusStates()) {
+            HoverBitmapDrawable(this)
+        } else {
+            BitmapDrawable(context.resources, this)
+        }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(isAudioCaptureDevice: Boolean): DefaultTargetDataLoader
     }
 }

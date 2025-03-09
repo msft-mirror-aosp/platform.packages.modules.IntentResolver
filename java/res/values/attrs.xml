@@ -55,5 +55,13 @@
         <attr name="itemInnerSpacing" format="dimension" />
         <attr name="itemOuterSpacing" format="dimension" />
         <attr name="maxWidthHint" format="dimension" />
+        <attr name="editButtonRoleDescription" format="string" />
+    </declare-styleable>
+
+    <declare-styleable name="ChooserTargetItemView">
+        <attr name="focusOutlineColor" format="color" />
+        <attr name="focusInnerOutlineColor" format="color" />
+        <attr name="focusOutlineWidth" format="dimension" />
+        <attr name="focusOutlineCornerRadius" format="dimension" />
     </declare-styleable>
 </resources>

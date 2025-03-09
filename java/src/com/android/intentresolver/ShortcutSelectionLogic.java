@@ -16,6 +16,8 @@
 
 package com.android.intentresolver;
 
+import static com.android.intentresolver.Flags.rebuildAdaptersOnTargetPinning;
+
 import android.app.prediction.AppTarget;
 import android.content.Context;
 import android.content.Intent;
@@ -171,16 +173,21 @@ public class ShortcutSelectionLogic {
             List<TargetInfo> serviceTargets) {
 
         // Check for duplicates and abort if found
-        for (TargetInfo otherTargetInfo : serviceTargets) {
+        for (int i = 0; i < serviceTargets.size(); i++) {
+            TargetInfo otherTargetInfo = serviceTargets.get(i);
             if (chooserTargetInfo.isSimilar(otherTargetInfo)) {
+                if (rebuildAdaptersOnTargetPinning()
+                        && chooserTargetInfo.isPinned() != otherTargetInfo.isPinned()) {
+                    serviceTargets.set(i, chooserTargetInfo);
+                    return true;
+                }
                 return false;
             }
         }
 
         int currentSize = serviceTargets.size();
         final float newScore = chooserTargetInfo.getModifiedScore();
-        for (int i = 0; i < Math.min(currentSize, maxRankedTargets);
-                i++) {
+        for (int i = 0; i < Math.min(currentSize, maxRankedTargets); i++) {
             final TargetInfo serviceTarget = serviceTargets.get(i);
             if (serviceTarget == null) {
                 serviceTargets.set(i, chooserTargetInfo);

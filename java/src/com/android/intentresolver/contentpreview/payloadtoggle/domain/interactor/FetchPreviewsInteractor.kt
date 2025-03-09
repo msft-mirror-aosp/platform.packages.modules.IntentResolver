@@ -22,6 +22,7 @@ import com.android.intentresolver.contentpreview.payloadtoggle.data.repository.P
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.CursorResolver
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.cursor.PayloadToggle
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.CursorRow
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewKey
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.inject.ContentUris
 import com.android.intentresolver.inject.FocusedItemIndex
@@ -64,6 +65,12 @@ constructor(
             .mapParallelIndexed(parallelism = 4) { index, uri ->
                 val metadata = uriMetadataReader.getMetadata(uri)
                 PreviewModel(
+                    key =
+                        if (index == focusedItemIdx) {
+                            PreviewKey.final(0)
+                        } else {
+                            PreviewKey.temp(index)
+                        },
                     uri = uri,
                     previewUri = metadata.previewUri,
                     mimeType = metadata.mimeType,
@@ -71,11 +78,12 @@ constructor(
                         metadata.previewUri?.let {
                             uriMetadataReader.readPreviewSize(it).aspectRatioOrDefault(1f)
                         } ?: 1f,
-                    order = when {
-                        index < focusedItemIdx -> Int.MIN_VALUE + index
-                        index == focusedItemIdx -> 0
-                        else -> Int.MAX_VALUE - selectedItems.size + index + 1
-                    }
+                    order =
+                        when {
+                            index < focusedItemIdx -> Int.MIN_VALUE + index
+                            index == focusedItemIdx -> 0
+                            else -> Int.MAX_VALUE - selectedItems.size + index + 1
+                        },
                 )
             }
 }
