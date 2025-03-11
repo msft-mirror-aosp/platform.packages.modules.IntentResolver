@@ -18,14 +18,7 @@
     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:descendantFocusability="blocksDescendants">
-    <!--    ^^^ Block descendants from receiving focus to prevent NestedScrollView
-    (ChooserNestedScrollView) scrolling to the focused view when switching tabs. Without it, TabHost
-    view will request focus on the newly activated tab. The RecyclerView from this layout gets
-    focused and  notifies its parents (including NestedScrollView) about it through
-    #requestChildFocus method call. NestedScrollView's view implementation of the method  will
-    scroll to the focused view. -->
+    android:layout_height="wrap_content">
 
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
@@ -33,7 +26,7 @@
         app:layoutManager="com.android.intentresolver.ChooserGridLayoutManager"
         android:id="@androidprv:id/resolver_list"
         android:clipToPadding="false"
-        android:background="?androidprv:attr/materialColorSurfaceContainer"
+        android:background="@androidprv:color/materialColorSurfaceContainer"
         android:scrollbars="none"
         android:nestedScrollingEnabled="true" />
 

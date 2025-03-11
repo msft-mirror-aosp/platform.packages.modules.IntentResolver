@@ -205,6 +205,7 @@ public class DisplayResolveInfo implements TargetInfo {
     @Override
     public boolean startAsCaller(Activity activity, Bundle options, int userId) {
         TargetInfo.prepareIntentForCrossProfileLaunch(mResolvedIntent, userId);
+        TargetInfo.refreshIntentCreatorToken(mResolvedIntent);
         activity.startActivityAsCaller(mResolvedIntent, options, false, userId);
         return true;
     }
@@ -212,6 +213,7 @@ public class DisplayResolveInfo implements TargetInfo {
     @Override
     public boolean startAsUser(Activity activity, Bundle options, UserHandle user) {
         TargetInfo.prepareIntentForCrossProfileLaunch(mResolvedIntent, user.getIdentifier());
+        TargetInfo.refreshIntentCreatorToken(mResolvedIntent);
         // TODO: is this equivalent to `startActivityAsCaller` with `ignoreTargetSecurity=true`? If
         // so, we can consolidate on the one API method to show that this flag is the only
         // distinction between `startAsCaller` and `startAsUser`. We can even bake that flag into
@@ -238,5 +240,12 @@ public class DisplayResolveInfo implements TargetInfo {
 
     public void setPinned(boolean pinned) {
         mPinned = pinned;
+    }
+
+    /**
+     * Creates a copy of the object.
+     */
+    public DisplayResolveInfo copy() {
+        return new DisplayResolveInfo(this);
     }
 }

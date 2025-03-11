@@ -33,6 +33,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -136,7 +137,7 @@ public class ChooserTargetActionsDialogFragment extends DialogFragment
 
         final TargetPresentationGetter pg = getProvidingAppPresentationGetter();
         title.setText(isShortcutTarget() ? mShortcutTitle : pg.getLabel());
-        icon.setImageDrawable(pg.getIcon(mUserHandle));
+        icon.setImageDrawable(new BitmapDrawable(getResources(), pg.getIconBitmap(mUserHandle)));
         rv.setAdapter(new VHAdapter(items));
 
         return v;
@@ -280,7 +281,11 @@ public class ChooserTargetActionsDialogFragment extends DialogFragment
         final int iconDpi = am.getLauncherLargeIconDensity();
 
         // Use the matching application icon and label for the title, any TargetInfo will do
-        return new TargetPresentationGetter.Factory(getContext(), iconDpi)
+        final Context context = getContext();
+        return new TargetPresentationGetter.Factory(
+                () -> SimpleIconFactory.obtain(context),
+                context.getPackageManager(),
+                iconDpi)
                 .makePresentationGetter(mTargetInfos.get(0).getResolveInfo());
     }
 

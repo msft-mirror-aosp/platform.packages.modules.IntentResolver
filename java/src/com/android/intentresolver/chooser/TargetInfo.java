@@ -17,7 +17,10 @@
 package com.android.intentresolver.chooser;
 
 
+import static android.security.Flags.preventIntentRedirect;
+
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.prediction.AppTarget;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,6 +31,7 @@ import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.service.chooser.ChooserTarget;
 import android.text.TextUtils;
@@ -65,7 +69,7 @@ public interface TargetInfo {
          * @param icon the icon to return on subsequent calls to {@link #getDisplayIcon()}.
          * Implementations may discard this request as a no-op if they don't support setting.
          */
-        void setDisplayIcon(Drawable icon);
+        void setDisplayIcon(@Nullable Drawable icon);
     }
 
     /** A simple mutable-container implementation of {@link IconHolder}. */
@@ -78,7 +82,7 @@ public interface TargetInfo {
             return mDisplayIcon;
         }
 
-        public void setDisplayIcon(Drawable icon) {
+        public void setDisplayIcon(@Nullable Drawable icon) {
             mDisplayIcon = icon;
         }
     }
@@ -459,6 +463,22 @@ public interface TargetInfo {
         final int currentUserId = UserHandle.myUserId();
         if (targetUserId != currentUserId) {
             intent.fixUris(currentUserId);
+        }
+    }
+
+    /**
+     * refreshes intent's creatorToken with its current intent key fields. This allows
+     * ChooserActivity to still keep original creatorToken's creator uid after making changes to
+     * the intent and still keep it valid.
+     * @param intent the intent's creatorToken needs to up refreshed.
+     */
+    static void refreshIntentCreatorToken(Intent intent) {
+        if (!preventIntentRedirect()) return;
+        try {
+            intent.setCreatorToken(ActivityManager.getService().refreshIntentCreatorToken(
+                    intent.cloneForCreatorToken()));
+        } catch (RemoteException e) {
+            throw new RuntimeException("Failure from system", e);
         }
     }
 

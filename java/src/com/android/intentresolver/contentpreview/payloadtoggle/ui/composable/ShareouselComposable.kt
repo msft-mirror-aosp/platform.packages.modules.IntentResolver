@@ -33,9 +33,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.systemGestureExclusion
@@ -57,11 +57,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.intentresolver.Flags.shareouselScrollOffscreenSelections
@@ -70,11 +73,13 @@ import com.android.intentresolver.R
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.ValueUpdate
 import com.android.intentresolver.contentpreview.payloadtoggle.domain.model.getOrDefault
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.ContentType
+import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.shared.model.PreviewsModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselPreviewViewModel
 import com.android.intentresolver.contentpreview.payloadtoggle.ui.viewmodel.ShareouselViewModel
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -96,7 +101,7 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
     Column(
         modifier =
             Modifier.background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(vertical = 16.dp),
+                .padding(vertical = 16.dp)
     ) {
         PreviewCarousel(keySet, viewModel)
         ActionCarousel(viewModel)
@@ -105,59 +110,52 @@ private fun Shareousel(viewModel: ShareouselViewModel, keySet: PreviewsModel) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PreviewCarousel(
-    previews: PreviewsModel,
-    viewModel: ShareouselViewModel,
-) {
-    var maxAspectRatio by remember { mutableStateOf(0f) }
-    var viewportHeight by remember { mutableStateOf(0) }
-    var viewportCenter by remember { mutableStateOf(0) }
-    var horizontalPadding by remember { mutableStateOf(0.dp) }
+private fun PreviewCarousel(previews: PreviewsModel, viewModel: ShareouselViewModel) {
+    var measurements by remember { mutableStateOf(PreviewCarouselMeasurements.UNMEASURED) }
     Box(
         modifier =
             Modifier.fillMaxWidth()
                 .height(dimensionResource(R.dimen.chooser_preview_image_height_tall))
                 .layout { measurable, constraints ->
                     val placeable = measurable.measure(constraints)
-                    val (minItemWidth, maxAR) =
+                    measurements =
                         if (placeable.height <= 0) {
-                            0f to 0f
+                            PreviewCarouselMeasurements.UNMEASURED
                         } else {
-                            val minItemWidth = (MIN_ASPECT_RATIO * placeable.height)
-                            val maxItemWidth = maxOf(0, placeable.width - 32.dp.roundToPx())
-                            val maxAR =
-                                (maxItemWidth.toFloat() / placeable.height).coerceIn(
-                                    0f,
-                                    MAX_ASPECT_RATIO
-                                )
-                            minItemWidth to maxAR
+                            PreviewCarouselMeasurements(placeable, measureScope = this)
                         }
-                    viewportCenter = placeable.width / 2
-                    maxAspectRatio = maxAR
-                    viewportHeight = placeable.height
-                    horizontalPadding = ((placeable.width - minItemWidth) / 2).toDp()
                     layout(placeable.width, placeable.height) { placeable.place(0, 0) }
-                },
+                }
     ) {
-        if (maxAspectRatio <= 0 && previews.previewModels.isNotEmpty()) {
-            // Do not compose the list until we know the viewport size
-            return@Box
-        }
+        // Do not compose the list until we have measured values
+        if (measurements == PreviewCarouselMeasurements.UNMEASURED) return@Box
 
-        var firstSelectedIndex by remember { mutableStateOf(null as Int?) }
-
-        val carouselState =
-            rememberLazyListState(
-                prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() },
+        val prefetchStrategy = remember { ShareouselLazyListPrefetchStrategy() }
+        val carouselState = remember {
+            LazyListState(
+                prefetchStrategy = prefetchStrategy,
+                firstVisibleItemIndex = previews.startIdx,
+                firstVisibleItemScrollOffset =
+                    measurements.scrollOffsetToCenter(
+                        previewModel = previews.previewModels[previews.startIdx]
+                    ),
             )
+        }
 
         LazyRow(
             state = carouselState,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding),
+            contentPadding =
+                PaddingValues(
+                    start = measurements.horizontalPaddingDp,
+                    end = measurements.horizontalPaddingDp,
+                ),
             modifier = Modifier.fillMaxSize().systemGestureExclusion(),
         ) {
-            itemsIndexed(previews.previewModels, key = { _, model -> model.uri }) { index, model ->
+            itemsIndexed(
+                items = previews.previewModels,
+                key = { _, model -> model.key.key to model.key.isFinal },
+            ) { index, model ->
                 val visibleItem by remember {
                     derivedStateOf {
                         carouselState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
@@ -171,7 +169,7 @@ private fun PreviewCarousel(
                             val halfPreviewWidth = it.size / 2
                             val previewCenter = it.offset + halfPreviewWidth
                             val previewDistanceToViewportCenter =
-                                abs(previewCenter - viewportCenter)
+                                abs(previewCenter - measurements.viewportCenterPx)
                             if (previewDistanceToViewportCenter <= halfPreviewWidth) {
                                 index
                             } else {
@@ -182,13 +180,12 @@ private fun PreviewCarousel(
                 }
 
                 val previewModel =
-                    viewModel.preview(model, viewportHeight, previewIndex, rememberCoroutineScope())
-                val selected by
-                    previewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
-
-                if (selected) {
-                    firstSelectedIndex = min(index, firstSelectedIndex ?: Int.MAX_VALUE)
-                }
+                    viewModel.preview(
+                        /* key = */ model,
+                        /* previewHeight = */ measurements.viewportHeightPx,
+                        /* index = */ previewIndex,
+                        /* scope = */ rememberCoroutineScope(),
+                    )
 
                 if (shareouselScrollOffscreenSelections()) {
                     LaunchedEffect(index, model.uri) {
@@ -209,10 +206,10 @@ private fun PreviewCarousel(
                                                 when {
                                                     // Item is partially past start of viewport
                                                     item.offset < viewportStartOffset ->
-                                                        -viewportStartOffset
+                                                        measurements.scrollOffsetToStartEdge()
                                                     // Item is partially past end of viewport
                                                     (item.offset + item.size) > viewportEndOffset ->
-                                                        item.size - viewportEndOffset
+                                                        measurements.scrollOffsetToEndEdge(model)
                                                     // Item is fully within viewport
                                                     else -> null
                                                 }?.let { scrollOffset ->
@@ -230,29 +227,8 @@ private fun PreviewCarousel(
                 }
 
                 ShareouselCard(
-                    viewModel.preview(
-                        model,
-                        viewportHeight,
-                        previewIndex,
-                        rememberCoroutineScope()
-                    ),
-                    maxAspectRatio,
-                )
-            }
-        }
-
-        firstSelectedIndex?.let { index ->
-            LaunchedEffect(Unit) {
-                val visibleItem =
-                    carouselState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
-                val center =
-                    with(carouselState.layoutInfo) {
-                        ((viewportEndOffset - viewportStartOffset) / 2) + viewportStartOffset
-                    }
-
-                carouselState.scrollToItem(
-                    index = index,
-                    scrollOffset = visibleItem?.size?.div(2)?.minus(center) ?: 0,
+                    viewModel = previewModel,
+                    aspectRatio = measurements.coerceAspectRatio(previewModel.aspectRatio),
                 )
             }
         }
@@ -260,7 +236,7 @@ private fun PreviewCarousel(
 }
 
 @Composable
-private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio: Float) {
+private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, aspectRatio: Float) {
     val bitmapLoadState by viewModel.bitmapLoadState.collectAsStateWithLifecycle()
     val selected by viewModel.isSelected.collectAsStateWithLifecycle(initialValue = false)
     val borderColor = MaterialTheme.colorScheme.primary
@@ -279,9 +255,8 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio
                 .toggleable(
                     value = selected,
                     onValueChange = { scope.launch { viewModel.setSelected(it) } },
-                )
+                ),
     ) { state ->
-        val aspectRatio = minOf(maxAspectRatio, maxOf(MIN_ASPECT_RATIO, viewModel.aspectRatio))
         if (state is ValueUpdate.Value) {
             state.getOrDefault(null).let { bitmap ->
                 ShareouselCard(
@@ -304,7 +279,7 @@ private fun ShareouselCard(viewModel: ShareouselPreviewViewModel, maxAspectRatio
                                 color = borderColor,
                                 shape = RoundedCornerShape(size = 12.dp),
                             )
-                        }
+                        },
                 )
             }
         } else {
@@ -355,7 +330,7 @@ private fun ActionCarousel(viewModel: ShareouselViewModel) {
                             Image(
                                 icon = it,
                                 modifier = Modifier.size(16.dp),
-                                colorFilter = ColorFilter.tint(LocalContentColor.current)
+                                colorFilter = ColorFilter.tint(LocalContentColor.current),
                             )
                         }
                     }
@@ -389,7 +364,7 @@ private fun ShareouselAction(
             AssistChipDefaults.assistChipColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 labelColor = MaterialTheme.colorScheme.onSurface,
-                leadingIconContentColor = MaterialTheme.colorScheme.onSurface
+                leadingIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
         modifier = modifier,
     )
@@ -398,5 +373,57 @@ private fun ShareouselAction(
 inline fun Modifier.thenIf(condition: Boolean, crossinline factory: () -> Modifier): Modifier =
     if (condition) this.then(factory()) else this
 
-private const val MIN_ASPECT_RATIO = 0.4f
-private const val MAX_ASPECT_RATIO = 2.5f
+private data class PreviewCarouselMeasurements(
+    val viewportHeightPx: Int,
+    val viewportWidthPx: Int,
+    val viewportCenterPx: Int = viewportWidthPx / 2,
+    val maxAspectRatio: Float,
+    val horizontalPaddingPx: Int,
+    val horizontalPaddingDp: Dp,
+) {
+    constructor(
+        placeable: Placeable,
+        measureScope: MeasureScope,
+        horizontalPadding: Float = (placeable.width - (MIN_ASPECT_RATIO * placeable.height)) / 2,
+    ) : this(
+        viewportHeightPx = placeable.height,
+        viewportWidthPx = placeable.width,
+        maxAspectRatio =
+            with(measureScope) {
+                min(
+                    (placeable.width - 32.dp.roundToPx()).toFloat() / placeable.height,
+                    MAX_ASPECT_RATIO,
+                )
+            },
+        horizontalPaddingPx = horizontalPadding.roundToInt(),
+        horizontalPaddingDp = with(measureScope) { horizontalPadding.toDp() },
+    )
+
+    fun coerceAspectRatio(ratio: Float): Float = ratio.coerceIn(MIN_ASPECT_RATIO, maxAspectRatio)
+
+    fun scrollOffsetToCenter(previewModel: PreviewModel): Int =
+        horizontalPaddingPx + (aspectRatioToWidthPx(previewModel.aspectRatio) / 2) -
+            viewportCenterPx
+
+    fun scrollOffsetToStartEdge(): Int = horizontalPaddingPx
+
+    fun scrollOffsetToEndEdge(previewModel: PreviewModel): Int =
+        horizontalPaddingPx + aspectRatioToWidthPx(previewModel.aspectRatio) - viewportWidthPx
+
+    private fun aspectRatioToWidthPx(ratio: Float): Int =
+        (coerceAspectRatio(ratio) * viewportHeightPx).roundToInt()
+
+    companion object {
+        private const val MIN_ASPECT_RATIO = 0.4f
+        private const val MAX_ASPECT_RATIO = 2.5f
+
+        val UNMEASURED =
+            PreviewCarouselMeasurements(
+                viewportHeightPx = 0,
+                viewportWidthPx = 0,
+                maxAspectRatio = 0f,
+                horizontalPaddingPx = 0,
+                horizontalPaddingDp = 0.dp,
+            )
+    }
+}

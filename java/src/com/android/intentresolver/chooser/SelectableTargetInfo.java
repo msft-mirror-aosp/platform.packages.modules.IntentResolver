@@ -229,6 +229,7 @@ public final class SelectableTargetInfo extends ChooserTargetInfo {
                 intent.setComponent(getChooserTargetComponentName());
                 intent.putExtras(mChooserTargetIntentExtras);
                 TargetInfo.prepareIntentForCrossProfileLaunch(intent, userId);
+                TargetInfo.refreshIntentCreatorToken(intent);
 
                 // Important: we will ignore the target security checks in ActivityManager if and
                 // only if the ChooserTarget's target package is the same package where we got the
