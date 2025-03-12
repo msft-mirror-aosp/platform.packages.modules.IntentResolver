@@ -26,6 +26,16 @@ flag {
 }
 
 flag {
+  name: "delay_drawer_offset_calculation"
+  namespace: "intentresolver"
+  description: "Do not update the drawer offset until app targets are ready."
+  bug: "338229069"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
   name: "individual_metadata_title_read"
   namespace: "intentresolver"
   description: "Enables separate title URI metadata calls"

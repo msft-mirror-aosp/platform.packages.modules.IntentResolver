@@ -23,6 +23,7 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
 import static com.android.intentresolver.ChooserActionFactory.EDIT_SOURCE;
+import static com.android.intentresolver.Flags.delayDrawerOffsetCalculation;
 import static com.android.intentresolver.Flags.fixShortcutsFlashingFixed;
 import static com.android.intentresolver.Flags.interactiveSession;
 import static com.android.intentresolver.Flags.keyboardNavigationFix;
@@ -2353,6 +2354,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
                 || recyclerView.computeVerticalScrollOffset() != 0) {
             return;
         }
+        if (delayDrawerOffsetCalculation() && !gridAdapter.getListAdapter().areAppTargetsReady()) {
+            return;
+        }
 
         final int availableWidth = right - left - v.getPaddingLeft() - v.getPaddingRight();
         final int maxChooserWidth = getResources().getDimensionPixelSize(R.dimen.chooser_width);
@@ -2381,7 +2385,7 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         }
 
         getMainThreadHandler().post(() -> {
-            if (mResolverDrawerLayout == null || gridAdapter == null) {
+            if (mResolverDrawerLayout == null) {
                 return;
             }
             int offset = calculateDrawerOffset(top, bottom, recyclerView, gridAdapter);
@@ -2482,15 +2486,9 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
 
         //TODO: move this block inside ChooserListAdapter (should be called when
         // ResolverListAdapter#mPostListReadyRunnable is executed.
-        if (chooserListAdapter.getDisplayResolveInfoCount() == 0) {
-            Log.d(TAG, "getDisplayResolveInfoCount() == 0");
-            if (rebuildComplete) {
-                onAppTargetsLoaded(listAdapter);
-            }
-            chooserListAdapter.notifyDataSetChanged();
-        } else {
-            chooserListAdapter.updateAlphabeticalList(() -> onAppTargetsLoaded(listAdapter));
-        }
+        chooserListAdapter.updateAlphabeticalList(
+                rebuildComplete,
+                () -> onAppTargetsLoaded(listAdapter));
 
         if (rebuildComplete) {
             long duration = Tracer.INSTANCE.endAppTargetLoadingSection(listProfileUserHandle);
