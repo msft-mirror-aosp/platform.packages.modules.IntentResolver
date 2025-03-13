@@ -23,13 +23,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@androidprv:color/materialColorSurfaceContainer">
+    android:background="@color/chooser_grid_preview_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_horizontal"
+        android:minHeight="@dimen/chooser_content_view_min_height"
         android:layout_marginBottom="8dp"
         android:layout_marginHorizontal="@dimen/chooser_edge_margin_normal"
         android:padding="@dimen/chooser_edge_margin_normal_half"
@@ -53,7 +54,7 @@
             android:maxLines="@integer/text_preview_lines"
             android:ellipsize="end"
             android:linksClickable="false"
-            android:textColor="@androidprv:color/materialColorOnSurfaceVariant"
+            android:textColor="@color/content_preview_text_color"
             android:textAppearance="@style/TextAppearance.ChooserDefault"/>
     </LinearLayout>
 
