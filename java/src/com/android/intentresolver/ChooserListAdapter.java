@@ -124,6 +124,21 @@ public class ChooserListAdapter extends ResolverListAdapter {
 
     private final ItemRevealAnimationTracker mAnimationTracker = new ItemRevealAnimationTracker();
 
+    /**
+     * Indicates whether the app targets are ready. The flag is reset in
+     * {@link #rebuildList(boolean)} and set to true in {@link #updateAlphabeticalList(Runnable)}'s
+     * onPostExecute.
+     * There's one nuance though, {@link #updateAlphabeticalList(Runnable)} is called by the
+     * {@link ChooserActivity} only when {@link #rebuildList(boolean)} was called with {@code true}
+     * It is called with {@code false} only for inactive tabs in the
+     * MultiProfilePagerAdapter.rebuildTabs which, in turn, is called from either
+     * {@link ChooserActivity#recreatePagerAdapter} or {@link ChooserActivity#configureContentView}
+     * and, in both cases, there are no inactive pages in the MultiProfilePagerAdapter and
+     * {@link #rebuildList(boolean)} will be called with true upon navigation to the missing page.
+     * Yeah.
+     */
+    private boolean mAppTargetsReady = false;
+
     // For pinned direct share labels, if the text spans multiple lines, the TextView will consume
     // the full width, even if the characters actually take up less than that. Measure the actual
     // line widths and constrain the View's width based upon that so that the pin doesn't end up
@@ -312,6 +327,13 @@ public class ChooserListAdapter extends ResolverListAdapter {
     }
 
     /**
+     * @return {@code true} if the app targets are ready.
+     */
+    public final boolean areAppTargetsReady() {
+        return mAppTargetsReady;
+    }
+
+    /**
      * Set the enabled state for all targets.
      */
     public void setTargetsEnabled(boolean isEnabled) {
@@ -354,6 +376,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
     public boolean rebuildList(boolean doPostProcessing) {
         mAnimationTracker.reset();
         mSortedList.clear();
+        mAppTargetsReady = false;
         boolean result = super.rebuildList(doPostProcessing);
         notifyDataSetChanged();
         return result;
@@ -518,7 +541,16 @@ public class ChooserListAdapter extends ResolverListAdapter {
     /**
      * Group application targets
      */
-    public void updateAlphabeticalList(Runnable onCompleted) {
+    public void updateAlphabeticalList(boolean rebuildComplete, Runnable onCompleted) {
+        if (getDisplayResolveInfoCount() == 0) {
+            Log.d(TAG, "getDisplayResolveInfoCount() == 0");
+            if (rebuildComplete) {
+                mAppTargetsReady = true;
+                onCompleted.run();
+            }
+            notifyDataSetChanged();
+            return;
+        }
         final DisplayResolveInfoAzInfoComparator
                 comparator = new DisplayResolveInfoAzInfoComparator(mContext);
         ImmutableList<DisplayResolveInfo> displayList = getTargetsInCurrentDisplayList();
@@ -582,6 +614,7 @@ public class ChooserListAdapter extends ResolverListAdapter {
             protected void onPostExecute(List<DisplayResolveInfo> newList) {
                 mSortedList.clear();
                 mSortedList.addAll(newList);
+                mAppTargetsReady = true;
                 notifyDataSetChanged();
                 onCompleted.run();
             }
