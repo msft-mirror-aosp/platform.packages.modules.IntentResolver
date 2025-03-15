@@ -24,8 +24,8 @@
               android:layout_height="wrap_content"
               android:minHeight="100dp"
               android:gravity="top|center_horizontal"
-              android:paddingVertical="@dimen/grid_padding"
-              android:paddingHorizontal="4dp"
+              android:paddingVertical="@dimen/grid_padding_vertical"
+              android:paddingHorizontal="@dimen/grid_padding_horizontal"
               android:focusable="true"
               android:background="?android:attr/selectableItemBackgroundBorderless">
 
@@ -37,7 +37,7 @@
 
     <!-- Size manually tuned to match specs -->
     <Space android:layout_width="1dp"
-           android:layout_height="7dp"/>
+           android:layout_height="@dimen/chooser_grid_item_space_height"/>
 
     <!-- NOTE: for id/text1 and id/text2 below set the width to match parent as a workaround for
          b/269395540 i.e. prevent views bounds change during a transition animation. It does not
@@ -50,7 +50,7 @@
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:textAppearance="?android:attr/textAppearanceSmall"
-              android:textColor="@androidprv:color/materialColorOnSurface"
+              android:textColor="@color/chooser_grid_item_text1_color"
               android:textSize="@dimen/chooser_grid_target_name_text_size"
               android:maxLines="1"
               android:ellipsize="end" />
@@ -59,7 +59,7 @@
     <TextView android:id="@android:id/text2"
               android:textAppearance="?android:attr/textAppearanceSmall"
               android:textSize="@dimen/chooser_grid_activity_name_text_size"
-              android:textColor="@androidprv:color/materialColorOnSurfaceVariant"
+              android:textColor="@color/chooser_grid_item_text2_color"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:lines="1"

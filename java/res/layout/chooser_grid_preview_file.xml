@@ -24,7 +24,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@androidprv:color/materialColorSurfaceContainer">
+    android:background="@color/chooser_grid_preview_background" >
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -32,6 +32,7 @@
         android:layout_gravity="center"
         android:layout_marginHorizontal="@dimen/chooser_edge_margin_normal"
         android:layout_marginBottom="8dp"
+        android:minHeight="@dimen/chooser_content_view_min_height"
         android:padding="@dimen/chooser_edge_margin_normal"
         android:background="@drawable/chooser_content_preview_rounded"
         android:id="@androidprv:id/content_preview_file_layout">
@@ -63,9 +64,9 @@
                 android:gravity="start|top"
                 android:singleLine="true"
                 android:textStyle="bold"
-                android:textColor="@androidprv:color/materialColorOnSurface"
-                android:textSize="12sp"
-                android:lineHeight="16sp"
+                android:textColor="@color/content_preview_filename_text_color"
+                android:textSize="@dimen/content_preview_text_size"
+                android:lineHeight="@dimen/content_preview_filename_line_size"
                 android:textAppearance="@style/TextAppearance.ChooserDefault"/>
 
             <TextView
@@ -74,9 +75,9 @@
                 android:layout_height="wrap_content"
                 android:gravity="start|top"
                 android:singleLine="true"
-                android:textColor="@androidprv:color/materialColorOnSurfaceVariant"
-                android:textSize="12sp"
-                android:lineHeight="16sp"
+                android:textColor="@color/content_preview_more_files_text_color"
+                android:textSize="@dimen/content_preview_more_files_text_size"
+                android:lineHeight="@dimen/content_preview_more_files_line_size"
                 android:textAppearance="@style/TextAppearance.ChooserDefault"/>
 
         </LinearLayout>
