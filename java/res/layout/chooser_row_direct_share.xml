@@ -20,7 +20,7 @@
                 android:id="@+id/shortcuts_container"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="200dp">
+                android:layout_height="@dimen/chooser_row_direct_share_height">
 
 </LinearLayout>
 

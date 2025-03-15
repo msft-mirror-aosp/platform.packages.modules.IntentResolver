@@ -24,7 +24,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:importantForAccessibility="no"
-    android:background="@androidprv:color/materialColorSurfaceContainer">
+    android:background="@color/chooser_grid_preview_background">
 
     <ViewStub
         android:id="@+id/chooser_headline_row_stub"
@@ -39,6 +39,7 @@
         android:layout_width="wrap_content"
         android:layout_height="@dimen/chooser_preview_image_height_tall"
         android:layout_gravity="center_horizontal"
+        android:minHeight="@dimen/chooser_content_view_min_height"
         android:layout_marginBottom="8dp"
         app:itemInnerSpacing="3dp"
         app:itemOuterSpacing="@dimen/chooser_edge_margin_normal"
