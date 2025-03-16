@@ -21,7 +21,7 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 
 import static androidx.lifecycle.LifecycleKt.getCoroutineScope;
 
-import static com.android.intentresolver.ext.CreationExtrasExtKt.addDefaultArgs;
+import static com.android.intentresolver.ext.CreationExtrasExtKt.replaceDefaultArgs;
 import static com.android.internal.annotations.VisibleForTesting.Visibility.PROTECTED;
 
 import static java.util.Objects.requireNonNull;
@@ -85,6 +85,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.android.intentresolver.chooser.DisplayResolveInfo;
 import com.android.intentresolver.chooser.TargetInfo;
+import com.android.intentresolver.data.repository.ActivityModelRepository;
 import com.android.intentresolver.data.repository.DevicePolicyResources;
 import com.android.intentresolver.domain.interactor.UserInteractor;
 import com.android.intentresolver.emptystate.CompositeEmptyStateProvider;
@@ -103,10 +104,10 @@ import com.android.intentresolver.profiles.OnProfileSelectedListener;
 import com.android.intentresolver.profiles.OnSwitchOnWorkSelectedListener;
 import com.android.intentresolver.profiles.ResolverMultiProfilePagerAdapter;
 import com.android.intentresolver.profiles.TabConfig;
+import com.android.intentresolver.shared.model.ActivityModel;
 import com.android.intentresolver.shared.model.Profile;
 import com.android.intentresolver.ui.ActionTitle;
 import com.android.intentresolver.ui.ProfilePagerResources;
-import com.android.intentresolver.ui.model.ActivityModel;
 import com.android.intentresolver.ui.model.ResolverRequest;
 import com.android.intentresolver.ui.viewmodel.ResolverViewModel;
 import com.android.intentresolver.widget.ResolverDrawerLayout;
@@ -118,8 +119,6 @@ import com.android.internal.logging.nano.MetricsProto;
 import com.google.common.collect.ImmutableList;
 
 import dagger.hilt.android.AndroidEntryPoint;
-
-import kotlin.Pair;
 
 import kotlinx.coroutines.CoroutineDispatcher;
 
@@ -150,6 +149,8 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     @Inject public ProfilePagerResources mProfilePagerResources;
     @Inject public IntentForwarding mIntentForwarding;
     @Inject public FeatureFlags mFeatureFlags;
+    @Inject public ActivityModelRepository mActivityModelRepository;
+    @Inject public DefaultTargetDataLoader.Factory mTargetDataLoaderFactory;
 
     private ResolverViewModel mViewModel;
     private ResolverRequest mRequest;
@@ -220,15 +221,14 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
     @NonNull
     @Override
     public CreationExtras getDefaultViewModelCreationExtras() {
-        return addDefaultArgs(
-                super.getDefaultViewModelCreationExtras(),
-                new Pair<>(ActivityModel.ACTIVITY_MODEL_KEY, createActivityModel()));
+        return replaceDefaultArgs(super.getDefaultViewModelCreationExtras());
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
+        mActivityModelRepository.initialize(this::createActivityModel);
         setTheme(R.style.Theme_DeviceDefault_Resolver);
         mResolverHelper.setInitializer(this::initialize);
     }
@@ -335,10 +335,7 @@ public class ResolverActivity extends Hilt_ResolverActivity implements
         mProfileAvailability.setOnProfileStatusChange(this::onWorkProfileStatusUpdated);
 
         mResolvingHome = mRequest.isResolvingHome();
-        mTargetDataLoader = new DefaultTargetDataLoader(
-                this,
-                getLifecycle(),
-                mRequest.isAudioCaptureDevice());
+        mTargetDataLoader = mTargetDataLoaderFactory.create(mRequest.isAudioCaptureDevice());
 
         // The last argument of createResolverListAdapter is whether to do special handling
         // of the last used choice to highlight it in the list.  We need to always

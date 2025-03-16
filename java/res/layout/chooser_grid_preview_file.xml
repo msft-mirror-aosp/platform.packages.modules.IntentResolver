@@ -24,7 +24,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="?androidprv:attr/materialColorSurfaceContainer">
+    android:background="@androidprv:color/materialColorSurfaceContainer">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -63,7 +63,7 @@
                 android:gravity="start|top"
                 android:singleLine="true"
                 android:textStyle="bold"
-                android:textColor="?androidprv:attr/materialColorOnSurface"
+                android:textColor="@androidprv:color/materialColorOnSurface"
                 android:textSize="12sp"
                 android:lineHeight="16sp"
                 android:textAppearance="@style/TextAppearance.ChooserDefault"/>
@@ -74,7 +74,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="start|top"
                 android:singleLine="true"
-                android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
+                android:textColor="@androidprv:color/materialColorOnSurfaceVariant"
                 android:textSize="12sp"
                 android:lineHeight="16sp"
                 android:textAppearance="@style/TextAppearance.ChooserDefault"/>

@@ -106,4 +106,5 @@
     <string name="selectable_image" msgid="3157858923437182271">"বেছে নেওয়া যাবে এমন ছবি"</string>
     <string name="selectable_video" msgid="1271768647699300826">"বেছে নেওয়া যাবে এমন ভিডিও"</string>
     <string name="selectable_item" msgid="7557320816744205280">"বেছে নেওয়া যাবে এমন আইটেম"</string>
+    <string name="role_description_button" msgid="4537198530568333649">"বোতাম"</string>
 </resources>
