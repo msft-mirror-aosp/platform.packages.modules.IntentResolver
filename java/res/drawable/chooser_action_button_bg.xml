@@ -25,7 +25,7 @@
             android:insetBottom="8dp">
             <shape android:shape="rectangle">
                 <corners android:radius="@dimen/chooser_action_corner_radius" />
-                <solid android:color="?androidprv:attr/materialColorSurfaceContainerHigh"/>
+                <solid android:color="@color/chooser_action_button_bg_color"/>
             </shape>
         </inset>
     </item>

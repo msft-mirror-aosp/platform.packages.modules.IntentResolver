@@ -23,7 +23,7 @@
     android:layout_height="wrap_content"
     android:paddingHorizontal="@dimen/chooser_edge_margin_normal"
     android:layout_marginBottom="@dimen/chooser_view_spacing"
->
+    android:layout_gravity="center">
     <TextView
         android:id="@+id/headline"
         android:layout_width="wrap_content"

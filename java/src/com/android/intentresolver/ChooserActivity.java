@@ -1281,6 +1281,10 @@ public class ChooserActivity extends Hilt_ChooserActivity implements
         setContentView(mLayoutId);
         mTabHost = findViewById(com.android.internal.R.id.profile_tabhost);
         mViewPager = requireViewById(com.android.internal.R.id.profile_pager);
+        View exitButton = findViewById(R.id.exit_button);
+        if (exitButton != null) {
+            exitButton.setOnClickListener(v -> finish());
+        }
         mChooserMultiProfilePagerAdapter.setupViewPager(mViewPager);
         boolean result = postRebuildList(rebuildCompleted);
         Trace.endSection();

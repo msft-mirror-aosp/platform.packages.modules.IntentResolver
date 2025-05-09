@@ -18,4 +18,10 @@
     <!-- Note that this is the value for landscape phones, the value for all screens taller than
          480dp is set in values-h480dp/integers.xml -->
     <integer name="text_preview_lines">3</integer>
+    <!-- This is a value used to control whether to show the close button on the chooser grid
+         preview page. 0 is visible, 2 is gone. -->
+    <integer name="preview_close_button_visibility">2</integer>
+    <!-- This is a value used to control whether to show the head for the chooser grid preview on
+         the chooser grid preview page. 0 is visible, 2 is gone. -->
+    <integer name="chooser_header_for_preview_visibility">0</integer>
 </resources>

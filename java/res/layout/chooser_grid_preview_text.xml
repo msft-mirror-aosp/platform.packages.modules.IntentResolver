@@ -25,7 +25,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="?androidprv:attr/materialColorSurfaceContainer">
+    android:background="@color/chooser_grid_preview_background">
 
   <androidx.constraintlayout.widget.ConstraintLayout
       android:layout_width="match_parent"
@@ -67,7 +67,7 @@
         android:textAlignment="gravity"
         android:textDirection="locale"
         android:textStyle="bold"
-        android:textColor="?androidprv:attr/materialColorOnSurface"
+        android:textColor="@color/content_preview_filename_text_color"
         android:fontFamily="@androidprv:string/config_headlineFontFamily"/>
 
     <TextView
@@ -82,7 +82,7 @@
         app:layout_goneMarginStart="0dp"
         android:ellipsize="end"
         android:fontFamily="@androidprv:string/config_headlineFontFamily"
-        android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
+        android:textColor="@color/content_preview_text_color"
         android:textAlignment="gravity"
         android:textDirection="locale"
         android:maxLines="@integer/text_preview_lines"
@@ -105,7 +105,7 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:layout_gravity="center"
-          android:tint="?androidprv:attr/materialColorOnSurfaceVariant"
+          android:tint="@color/content_preview_copy_icon_tint"
           android:src="@androidprv:drawable/ic_menu_copy_material"
           />
     </FrameLayout>

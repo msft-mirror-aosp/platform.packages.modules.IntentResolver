@@ -20,7 +20,7 @@
               xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
               android:orientation="horizontal"
               android:layout_width="match_parent"
-              android:layout_height="100dp"
+              android:layout_height="@dimen/chooser_row_height"
               android:gravity="start|top">
   <TextView
       android:id="@androidprv:id/chooser_row_text_option"
@@ -28,7 +28,7 @@
       android:layout_height="wrap_content"
       android:gravity="center"
       android:layout_gravity="center"
-      android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
+      android:textColor="@color/chooser_row_text_color"
       android:visibility="gone" />
 </LinearLayout>
 
