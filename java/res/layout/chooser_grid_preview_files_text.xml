@@ -23,7 +23,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="?androidprv:attr/materialColorSurfaceContainer">
+    android:background="@color/chooser_grid_preview_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -53,7 +53,7 @@
             android:maxLines="@integer/text_preview_lines"
             android:ellipsize="end"
             android:linksClickable="false"
-            android:textColor="?androidprv:attr/materialColorOnSurfaceVariant"
+            android:textColor="@color/content_preview_text_color"
             android:textAppearance="@style/TextAppearance.ChooserDefault"/>
     </LinearLayout>
 

@@ -66,4 +66,19 @@
     <dimen name="grid_padding">8dp</dimen>
     <dimen name="width_text_image_preview_size">46dp</dimen>
     <!-- END SECTION -->
+
+    <dimen name="chooser_margin_vertical">0dp</dimen>
+    <dimen name="chooser_close_icon_size">16dp</dimen>
+    <dimen name="chooser_close_icon_size_margin">0dp</dimen>
+    <dimen name="chooser_list_padding">0dp</dimen>
+    <dimen name="chooser_content_view_margin_horizontal">0dp</dimen>
+    <dimen name="chooser_content_view_min_height">0dp</dimen>
+    <dimen name="chooser_profile_tabhost_margin_horizontal">0dp</dimen>
+    <dimen name="chooser_row_height">100dp</dimen>
+    <dimen name="content_preview_text_size">12sp</dimen>
+    <dimen name="content_preview_filename_line_size">16sp</dimen>
+    <dimen name="content_preview_more_files_text_size">12sp</dimen>
+    <dimen name="content_preview_more_files_line_size">16sp</dimen>
+    <dimen name="grid_padding_vertical">8dp</dimen>
+    <dimen name="grid_padding_horizontal">4dp</dimen>
 </resources>

@@ -27,7 +27,7 @@
               android:paddingVertical="@dimen/grid_padding"
               android:paddingHorizontal="4dp"
               android:focusable="true"
-              android:background="?android:attr/selectableItemBackgroundBorderless">
+              android:background="@drawable/grid_item_background">
 
     <ImageView android:id="@android:id/icon"
                android:layout_width="@dimen/chooser_icon_size"

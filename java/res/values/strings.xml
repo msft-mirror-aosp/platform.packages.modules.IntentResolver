@@ -338,4 +338,6 @@
     <!-- Accessibility content description for an item that the user may select for sharing.
          [CHAR LIMIT=NONE] -->
     <string name="selectable_item">Selectable item</string>
+    <!-- The content description label for the exit button. [CHAR_LIMIT=NONE] -->
+    <string name="exit_button_label">Dismiss</string>
 </resources>
